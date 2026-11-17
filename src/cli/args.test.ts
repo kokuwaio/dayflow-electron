@@ -36,6 +36,14 @@ describe('parseArgs', () => {
     expect(parseArgs(['timeline', '-x'])).toEqual({ ok: false, message: 'Unknown option "-x". Run `dayflow help`.' })
   })
 
+  it('takes no option as a flag value; a value starting with a dash goes after =', () => {
+    expect(parseArgs(['timeline', 'update', '42', '--title', '--category', 'Work'])).toEqual({ ok: false, message: '--title needs a value; write --title=<value> for one starting with "-".' })
+    expect(parseArgs(['timeline', '--category', '--json'])).toEqual({ ok: false, message: '--category needs a value; write --category=<value> for one starting with "-".' })
+    expect(parseArgs(['timeline', '--title', '--'])).toMatchObject({ ok: false })
+    const ok = parseArgs(['timeline', '--title=--draft'])
+    expect(ok.ok && ok.values.get('--title')).toEqual(['--draft'])
+  })
+
   it('has upstream exit codes, with "app not running" on its own code', () => {
     expect(EXIT).toEqual({ ok: 0, unexpected: 1, usage: 2, notFound: 3, editsDisabled: 4, noData: 5, appNotRunning: 6 })
   })

@@ -52,9 +52,13 @@ export function parseArgs(argv: string[]): ParsedArgs {
       switches.add(name)
     } else if (VALUE_FLAGS.has(name)) {
       let value: string
+      const next = argv[i + 1]
       if (eq > 0) value = arg.slice(eq + 1)
-      else if (i + 1 < argv.length) value = argv[++i]!
-      else return { ok: false, message: `${name} needs a value.` }
+      else if (next === undefined) return { ok: false, message: `${name} needs a value.` }
+      // Another option is a forgotten value, not the value itself.
+      else if (next.startsWith('-') && next !== '-')
+        return { ok: false, message: `${name} needs a value; write ${name}=<value> for one starting with "-".` }
+      else value = argv[++i]!
       values.set(name, [...(values.get(name) ?? []), value])
     } else {
       return { ok: false, message: `Unknown option "${name}". Run \`dayflow help\`.` }

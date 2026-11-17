@@ -155,7 +155,7 @@ export function Chat() {
               </div>
             </li>
           </ul>
-          <ProgressBar value={access.progress} />
+          <ProgressBar value={access.progress} label="Chat unlock progress" text={access.label} />
           <button className="btn-primary" disabled>
             Keep recording to unlock
           </button>

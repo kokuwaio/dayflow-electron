@@ -137,6 +137,7 @@ function ProvidersTab({ settings, status, save }: { settings: Settings; status: 
           >
             <input
               type="password"
+              aria-label="API key"
               autoComplete="off"
               placeholder={keys?.[provider] ? 'Enter a new key to replace it' : 'Paste your API key'}
               value={key}

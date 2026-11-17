@@ -18,16 +18,26 @@ export function LockedFeature(props: { title: string; italic?: boolean; beta?: b
         </h2>
         {props.children}
         <span className="progress-pill">{props.access.label}</span>
-        <ProgressBar value={props.access.progress} />
+        <ProgressBar value={props.access.progress} label={`${props.title}: unlock progress`} text={props.access.label} />
       </div>
     </div>
   )
 }
 
-export function ProgressBar({ value }: { value: number }) {
-  const pct = `${Math.min(1, Math.max(0, value)) * 100}%`
+/** `label` names the bar for screen readers, `text` reads its value out (e.g. "3 of 4 days"). */
+export function ProgressBar({ value, label, text }: { value: number; label: string; text?: string }) {
+  const share = Math.min(1, Math.max(0, value))
+  const pct = `${share * 100}%`
   return (
-    <div className="progress-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(value * 100)}>
+    <div
+      className="progress-bar"
+      role="progressbar"
+      aria-label={label}
+      aria-valuetext={text}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(share * 100)}
+    >
       <span className="fill" style={{ width: pct }} />
       <span className="knob" style={{ left: `clamp(12px, ${pct}, calc(100% - 12px))` }}>
         <Sun size={14} />

@@ -133,10 +133,8 @@ export type AgentClientState =
 export interface AgentAccessInfo {
   /** The command line that starts the CLI (append "mcp" for the MCP server). */
   command: string
-  /** Paste into a terminal to install `dayflow` into ~/.local/bin. */
-  terminalInstall: string
-  /** Paste into a terminal to remove it again. */
-  terminalRemove: string
+  /** Paste into a terminal to install `dayflow` into ~/.local/bin, or remove it; null on Windows. */
+  terminal: { install: string; remove: string } | null
   /** JSON for MCP clients without a registration command. */
   configSnippet: string
 }

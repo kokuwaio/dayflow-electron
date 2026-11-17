@@ -46,6 +46,7 @@ runCli(process.argv.slice(2), {
   send,
   terminalCommand: async (remove) =>
     terminalCommand(remove, {
+      platform: process.platform,
       inFlatpak: !!process.env.FLATPAK_ID,
       home: homedir(),
       path: process.env.PATH ?? '',

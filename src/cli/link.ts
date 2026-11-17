@@ -5,9 +5,11 @@
 
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { TERMINAL_COMMAND_UNSUPPORTED } from '../shared/agent-clients'
 import { type Invocation, TERMINAL_COMMAND_PATH, WRAPPER_MARKER, posixArgv, shellLine, terminalInstallCommand, wrapperScript } from '../main/agent/invocation'
 
 export interface LinkEnv {
+  platform: NodeJS.Platform
   inFlatpak: boolean
   home: string
   path: string
@@ -15,6 +17,8 @@ export interface LinkEnv {
 }
 
 export function terminalCommand(remove: boolean, env: LinkEnv): string[] {
+  // The wrapper is a shell script that neither cmd.exe nor PowerShell runs.
+  if (env.platform === 'win32') throw new Error(TERMINAL_COMMAND_UNSUPPORTED)
   const target = join(env.home, TERMINAL_COMMAND_PATH.replace(/^~\//, ''))
   if (env.inFlatpak) {
     return remove

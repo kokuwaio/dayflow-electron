@@ -5,7 +5,7 @@
 // its config file, Cursor and VS Code through their install links.
 
 import { useEffect, useState } from 'react'
-import { AGENT_CLIENT_NAMES } from '@shared/agent-clients'
+import { AGENT_CLIENT_NAMES, TERMINAL_COMMAND_UNSUPPORTED } from '@shared/agent-clients'
 import type { AgentAccessInfo, AgentClient, AgentClientState, Settings } from '@shared/types'
 import { CommandBlock, Row, Section, StatusDot } from './SettingsLayout'
 
@@ -63,15 +63,17 @@ export function AgentAccessSettings({ settings, save }: { settings: Settings; sa
         title="Terminal command"
         sub="Adds a dayflow command to ~/.local/bin so you can see your timeline from any terminal. It starts the CLI already inside Dayflow, so it always matches the app. Nothing is downloaded and your shell configuration isn't touched."
       >
-        {info && (
+        {info?.terminal ? (
           <>
             <Row label="Install" sub="Run this once in a terminal, then try dayflow timeline." stack>
-              <CommandBlock text={info.terminalInstall} />
+              <CommandBlock text={info.terminal.install} />
             </Row>
             <Row label="Remove" sub="Run this to take the command away again." stack>
-              <CommandBlock text={info.terminalRemove} />
+              <CommandBlock text={info.terminal.remove} />
             </Row>
           </>
+        ) : (
+          info && <Row label="Not available on Windows" sub={TERMINAL_COMMAND_UNSUPPORTED} />
         )}
       </Section>
     </>

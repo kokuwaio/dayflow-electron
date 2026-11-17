@@ -96,7 +96,11 @@ export function Weekly() {
             <span className="progress-pill">
               {formatMinutes(charts.tracked)} / {formatMinutes(WEEKLY_MIN_TRACKED_MINUTES)}
             </span>
-            <ProgressBar value={charts.tracked / WEEKLY_MIN_TRACKED_MINUTES} />
+            <ProgressBar
+              value={charts.tracked / WEEKLY_MIN_TRACKED_MINUTES}
+              label="Weekly unlock progress"
+              text={`${formatMinutes(charts.tracked)} of ${formatMinutes(WEEKLY_MIN_TRACKED_MINUTES)}`}
+            />
             <p className="note">{formatMinutes(WEEKLY_MIN_TRACKED_MINUTES - charts.tracked)} more to see this week's charts.</p>
           </section>
         ) : (

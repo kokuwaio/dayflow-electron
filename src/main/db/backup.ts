@@ -45,17 +45,31 @@ function isCorruption(err: unknown): boolean {
   return typeof code === 'number' && [11, 26].includes(code & 0xff)
 }
 
+/** A damaged database may fail to close too; the error that matters came first. */
+function closeQuietly(store: Store | null): void {
+  try {
+    store?.close()
+  } catch {
+    // ignored, see above
+  }
+}
+
 /** Opens the database; if it is damaged, keeps it aside as .corrupt-<timestamp> and restores the newest backup. */
 export function openWithRecovery(path: string, backupDir: string): { store: Store; restoredFrom: string | null } {
+  let opened: Store | null = null
   try {
-    const store = Store.open(path)
-    if (store.isHealthy()) return { store, restoredFrom: null }
-    store.close()
+    opened = Store.open(path)
+    if (opened.isHealthy()) return { store: opened, restoredFrom: null }
   } catch (err) {
     // Only a damaged file is replaced; a busy database or any other startup
     // error must not cost the live database and its recent changes.
-    if (!isCorruption(err)) throw err
+    if (!isCorruption(err)) {
+      closeQuietly(opened)
+      throw err
+    }
   }
+  // Closed before the file is moved: Windows can't rename an open database.
+  closeQuietly(opened)
   const newest = listBackups(backupDir)[0]
   if (!newest) return { store: Store.open(path), restoredFrom: null }
   const aside = `${path}.corrupt-${stamp(new Date())}`

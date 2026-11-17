@@ -11,3 +11,6 @@ export const AGENT_CLIENT_NAMES: Record<AgentClient, string> = {
 }
 
 export const isAgentClient = (value: unknown): value is AgentClient => typeof value === 'string' && Object.hasOwn(AGENT_CLIENT_NAMES, value)
+
+/** Windows has no ~/.local/bin and does not run the POSIX wrapper. */
+export const TERMINAL_COMMAND_UNSUPPORTED = 'The dayflow terminal command is available on Linux and macOS. On Windows, connect your AI tools under Settings → MCP / CLI.'

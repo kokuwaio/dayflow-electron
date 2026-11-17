@@ -326,7 +326,8 @@ want an agent to delete anything.
 ### The terminal command
 
 **Settings → MCP / CLI → Terminal command** shows a command that adds a small
-`dayflow` script to `~/.local/bin`. Paste it into a terminal once. Without
+`dayflow` script to `~/.local/bin` on Linux and macOS (Windows has no
+terminal command yet; connect AI tools above). Paste it into a terminal once. Without
 it, run `flatpak run --command=dayflow-cli io.github.kokuwaio.DayflowElectron`
 instead of `dayflow`.
 

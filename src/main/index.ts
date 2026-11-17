@@ -477,8 +477,7 @@ async function main(): Promise<void> {
     const inv = agentInvocation()
     return {
       command: shellLine(posixArgv(inv)),
-      terminalInstall: terminalInstallCommand(inv),
-      terminalRemove: terminalRemoveCommand(),
+      terminal: process.platform === 'win32' ? null : { install: terminalInstallCommand(inv), remove: terminalRemoveCommand() },
       configSnippet: manualConfigSnippet(inv)
     }
   })
