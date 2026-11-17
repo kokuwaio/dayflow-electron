@@ -18,11 +18,11 @@ import { type GoalPlan, defaultGoalPlan } from '../shared/day-summary'
 import { exportFileName, rangeMarkdown, timelineText, weekText } from '../shared/export'
 import { weekOf } from '../shared/week'
 import { WEEKLY_MIN_TRACKED_MINUTES, trackedMinutes } from '../shared/weekly'
-import type { AgentAccessInfo, AgentClientState, AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings, StandupEntry, Tab } from '../shared/types'
+import type { AgentAccessInfo, AgentClient, AgentClientState, AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings, StandupEntry, Tab } from '../shared/types'
 import type { Span } from './db/store'
 import { BridgeServer, agentSocketPath } from './agent/bridge'
-import { type ClientEnv, clientStatus, connectClient, disconnectClient } from './agent/clients'
-import { cliInvocation, manualConfigSnippet, shellLine, terminalInstallCommand, terminalRemoveCommand } from './agent/invocation'
+import { type ClientEnv, clientStatus, connectClient, disconnectClient, repairStaleRegistrations } from './agent/clients'
+import { cliInvocation, manualConfigSnippet, posixArgv, shellLine, terminalInstallCommand, terminalRemoveCommand } from './agent/invocation'
 import { WRITE_LOG } from './agent/protocol'
 import { createWriteHandlers } from './agent/writes'
 import { Pipeline } from './analysis/pipeline'
@@ -408,19 +408,36 @@ async function main(): Promise<void> {
   void syncBridge()
   const agentInvocation = () =>
     cliInvocation({ flatpakId: process.env.FLATPAK_ID, execPath: process.execPath, script: join(app.getAppPath(), 'out/main/cli.js') })
-  const clientEnv = (cli: CliName): ClientEnv => ({
+  const clientEnv = (client: AgentClient): ClientEnv => ({
     runner: nodeRunner,
     inFlatpak,
     appId: cliEnv.appId,
     home: cliEnv.home,
-    configuredPath: settings.get().cliPaths[cli],
-    invocation: agentInvocation()
+    configuredPath: client === 'claude' || client === 'codex' ? settings.get().cliPaths[client] : '',
+    invocation: agentInvocation(),
+    places: {
+      platform: process.platform,
+      home: cliEnv.home,
+      // The Flatpak sets its own XDG_CONFIG_HOME; Claude Desktop on the host uses the default.
+      ...(!inFlatpak && process.env.XDG_CONFIG_HOME ? { xdgConfigHome: process.env.XDG_CONFIG_HOME } : {}),
+      ...(process.env.APPDATA ? { appData: process.env.APPDATA } : {}),
+      ...(process.env.LOCALAPPDATA ? { localAppData: process.env.LOCALAPPDATA } : {})
+    },
+    openExternal: (url) => shell.openExternal(url)
   })
+  // Upstream repairs registrations at launch that point at a moved app. Not in
+  // development: that would point the user's tools at the dev build.
+  if (app.isPackaged) {
+    void repairStaleRegistrations(clientEnv).then(
+      (lines) => lines.forEach((line) => log(`agent access: ${line}`)),
+      (err: unknown) => log(`agent access: repairing registrations failed: ${String(err)}`)
+    )
+  }
   ipcMain.handle('app:version', () => app.getVersion())
   ipcMain.handle('agent:info', (): AgentAccessInfo => {
     const inv = agentInvocation()
     return {
-      command: shellLine([inv.command, ...inv.args]),
+      command: shellLine(posixArgv(inv)),
       terminalInstall: terminalInstallCommand(inv),
       terminalRemove: terminalRemoveCommand(),
       configSnippet: manualConfigSnippet(inv)

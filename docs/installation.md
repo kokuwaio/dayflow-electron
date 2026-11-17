@@ -100,8 +100,9 @@ Your data lives in `~/Library/Application Support/dayflow-electron`.
 
 Agent access (the `dayflow` CLI and its MCP server) ships inside every
 package. **Settings → MCP / CLI** shows the command that adds `dayflow` to
-`~/.local/bin` on Linux and macOS, and how to connect Claude Code, Codex or
-other MCP clients; [usage.md](usage.md) explains the commands.
+`~/.local/bin` on Linux and macOS, and connects Claude Code, Codex, Claude
+Desktop, Cursor, VS Code or other MCP clients; [usage.md](usage.md) explains
+the commands.
 
 ## Which version is installed
 

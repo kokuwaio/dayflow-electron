@@ -229,9 +229,11 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   `mcp add` command (or show it to copy without host access), a config
   snippet for other clients, the edits switch, and a `~/.local/bin` install
   command for the terminal.
-- [ ] One-click setup for Claude Desktop, Cursor and VS Code (upstream writes
-  their configs or opens install links; the snippet covers them for now), and
-  repairing stale registrations at launch (only matters outside the Flatpak).
+- [x] One-click setup for Claude Desktop (config merge, through the host in
+  the Flatpak), Cursor and VS Code (install links), and repairing stale
+  registrations at launch (outside the Flatpak; not in development builds).
+  The CLI's `ELECTRON_RUN_AS_NODE` travels in the entry's `env`, so the
+  registrations work on Windows too.
 
 ### M5 Privacy, polish and release
 
