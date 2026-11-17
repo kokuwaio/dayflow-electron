@@ -14,13 +14,13 @@ interface Call {
 }
 
 /** Answers discovery with a fixed path and the CLI call with `reply`; records the CLI call. */
-function fakeCli(reply: Partial<RunResult>) {
+function fakeCli(reply: Partial<RunResult>, help = 'Options: --ignore-user-config --disable <FEATURE> --sandbox <MODE>') {
   const calls: Call[] = []
   const runner: ProcessRunner = {
     async run(command, args, options) {
       const line = [command, ...args].join(' ')
       if (line.includes('command -v')) return { code: 0, stdout: '/home/me/bin/cli\n', stderr: '', timedOut: false }
-      if (line.includes(' --host true') || line.endsWith('exec --help')) return { code: 0, stdout: 'Options: --ignore-user-config', stderr: '', timedOut: false }
+      if (line.includes(' --host true') || line.endsWith('exec --help')) return { code: 0, stdout: help, stderr: '', timedOut: false }
       // Image files must exist while the CLI runs.
       const imagesSeen = args.flatMap((a, i) => (args[i - 1] === '--image' && existsSync(a) ? [readFileSync(a, 'utf8')] : []))
       calls.push({ command, args, options, imagesSeen })
@@ -103,6 +103,12 @@ describe('Claude Code provider', () => {
 })
 
 describe('Codex provider', () => {
+  it('refuses to run a Codex that cannot switch off its shell tool', async () => {
+    const { runner, calls } = fakeCli({ stdout: '' }, 'Options: --ignore-user-config')
+    await expect(codexCliProvider('gpt-6-luna', runner, env()).generate(request)).rejects.toThrow(/update Codex/)
+    expect(calls).toHaveLength(0)
+  })
+
   it('passes frames as image files and returns the last agent message', async () => {
     const stdout = [
       '{"type":"thread.started","thread_id":"t"}',
@@ -117,6 +123,8 @@ describe('Codex provider', () => {
     const cli = calls[0]!.args.slice(5)
     expect(cli.slice(0, 5)).toEqual(['exec', '--skip-git-repo-check', '--json', '-m', 'gpt-6-luna'])
     expect(cli).toEqual(expect.arrayContaining(['-c', 'model_reasoning_effort=high', '-c', 'web_search=disabled', '--ignore-user-config']))
+    // Codex must not run commands or open files: its shell, exec and image-viewer tools are off.
+    expect(cli.join(' ')).toContain('--sandbox read-only --disable shell_tool --disable unified_exec --disable view_image')
     expect(calls[0]!.imagesSeen).toEqual(['A'])
     const prompt = cli[cli.length - 1]!
     expect(cli[cli.length - 2]).toBe('--')

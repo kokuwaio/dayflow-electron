@@ -156,10 +156,14 @@ const MODEL_NOT_FOUND = /model_not_found|unsupported_model|unknown model|model n
 /** Upstream's fallbacks when an account cannot use the newest model yet. */
 const CODEX_FALLBACK: Record<string, string> = { 'gpt-6-luna': 'gpt-5.6-luna', 'gpt-6.1-sol': 'gpt-5.6-sol' }
 
+/** Codex features that can run commands or read files (codex-rs/features: all on by default). */
+const CODEX_DISABLED_TOOLS = ['shell_tool', 'unified_exec', 'view_image']
+
 export function codexCliProvider(model: string, runner: ProcessRunner, env: CliEnv): Provider {
   const run = cliRunner('codex', runner, env)
-  // Upstream skips the user's config.toml (MCP servers, profiles) when this codex supports it.
-  let ignoreUserConfig: boolean | null = null
+  // What this codex supports: upstream skips the user's config.toml (MCP servers, profiles) when it can,
+  // and `--disable <feature>` is how its tools are switched off.
+  let help: { ignoreUserConfig: boolean; disable: boolean } | null = null
 
   async function once(request: GenerateRequest, useModel: string): Promise<GenerateResult> {
     const dir = join(env.scratchDir, `codex-${randomUUID()}`)
@@ -181,10 +185,19 @@ export function codexCliProvider(model: string, runner: ProcessRunner, env: CliE
         }
       })
       lines.push('', 'Do not run commands or use tools; everything you need is in this message.')
-      ignoreUserConfig ??= (await run(['exec', '--help'])).stdout.includes('--ignore-user-config')
+      if (!help) {
+        const text = (await run(['exec', '--help'])).stdout
+        help = { ignoreUserConfig: text.includes('--ignore-user-config'), disable: text.includes('--disable') }
+      }
+      // Without --disable its shell stays on, and the prompt alone cannot keep it from running commands.
+      if (!help.disable) {
+        throw new ProviderError('This Codex version cannot switch off its shell tool. Please update Codex (npm install -g @openai/codex).', false)
+      }
       const args = [
         'exec', '--skip-git-repo-check', '--json', '-m', useModel,
-        ...(ignoreUserConfig ? ['--ignore-user-config'] : []),
+        ...(help.ignoreUserConfig ? ['--ignore-user-config'] : []),
+        // No commands, no files: read-only sandbox, and the tools that run commands or open images are off.
+        '--sandbox', 'read-only', ...CODEX_DISABLED_TOOLS.flatMap((f) => ['--disable', f]),
         '-c', 'model_reasoning_effort=high',
         '-c', 'rmcp_client=false',
         '-c', 'web_search=disabled',
