@@ -283,7 +283,7 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   upstream's look (Original) and Modern (the default), flat neutral greys with
   Inter (bundled with its OFL text), one indigo accent and 1px borders, in
   light and dark. `data-ui-style` on the root element switches the CSS
-  tokens; category colours and the onboarding stay as they are.
+  tokens, the onboarding included; category colours stay as they are.
 - [ ] Goal pop-up trigger: upstream checks at app level and switches to the
   timeline itself; here the check runs when today's day summary is shown
   (the app opens there, so it differs only when another tab is open at 4 AM).

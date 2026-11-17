@@ -15,12 +15,13 @@ the window keeps it recording; quit from the tray.
 
 ## First start
 
-A short setup runs first, in upstream's look: what you do for work (picks the
-categories), a table comparing the ways to run the app (Claude or ChatGPT
-through their CLIs, the Anthropic API, Gemini, an OpenAI-compatible endpoint
-or a local model), a setup wizard for the one you pick with a connection
-test (**Skip for now** leaves it for Settings), and what recording needs on
-your system. **Launch Dayflow Electron** starts recording.
+A short setup runs first, in upstream's flow and the app's theme (Modern by
+default): what you do for work (picks the categories), a table comparing the
+ways to run the app (Claude or ChatGPT through their CLIs, the Anthropic API,
+Gemini, an OpenAI-compatible endpoint or a local model), a setup wizard for
+the one you pick with a connection test (**Skip for now** leaves it for
+Settings), and what recording needs on your system. **Launch Dayflow
+Electron** starts recording.
 
 ### Allow screen recording
 
@@ -446,8 +447,8 @@ light, or to **System** to follow your desktop's light or dark setting.
   panels and serif titles.
 
 Both themes come in light and dark, so Appearance works with either. Your
-category colours stay the same in both. The first-run setup keeps upstream's
-look.
+category colours stay the same in both. The first-run setup follows the theme
+too.
 
 ## Pause, privacy and storage
 
