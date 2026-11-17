@@ -12,7 +12,10 @@ import type { OcrLine } from './regions'
 // Not named `require`: the bundler adds its own `require` shim to the ES module output.
 const requireHere = createRequire(import.meta.url)
 
-/** A frame that takes longer than this has a stuck worker; it is restarted and the batch retried later. */
+/**
+ * A frame that takes longer than this, worker start included, has a stuck
+ * worker; it is restarted and the batch retried later.
+ */
 const READ_TIMEOUT_MS = 120_000
 
 export function tesseractEngine(): OcrEngine {
@@ -40,11 +43,11 @@ export function tesseractEngine(): OcrEngine {
     async read(frame) {
       const current = (worker ??= start())
       let timer: ReturnType<typeof setTimeout> | undefined
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('OCR took too long.')), READ_TIMEOUT_MS)
+      })
       try {
-        const w = await current
-        const timeout = new Promise<never>((_, reject) => {
-          timer = setTimeout(() => reject(new Error('OCR took too long.')), READ_TIMEOUT_MS)
-        })
+        const w = await Promise.race([current, timeout])
         const { data } = await Promise.race([w.recognize(Buffer.from(frame), {}, { blocks: true, text: false }), timeout])
         return toLines(data.blocks ?? [])
       } catch (err) {

@@ -29,30 +29,39 @@ export function publicOnlyLookup(resolve: Resolver = (host) => dnsLookup(host, {
   }
 }
 
-/** GET https://<host><path> through the guarded lookup; null unless it is a 200 image no larger than maxBytes. */
+/**
+ * GET https://<host><path> through the guarded lookup; null unless it is a 200
+ * image no larger than maxBytes. timeoutMs bounds the whole request, so a
+ * server dripping bytes can't hold the connection open.
+ */
 export function fetchPublicImage(host: string, path: string, maxBytes: number, timeoutMs = 5_000): Promise<{ body: Buffer; type: string } | null> {
   return new Promise((resolve) => {
+    let done = false
+    const settle = (result: { body: Buffer; type: string } | null) => {
+      if (done) return
+      done = true
+      clearTimeout(deadline)
+      if (!result) req.destroy()
+      resolve(result)
+    }
     // Redirects are not followed: get() never does.
     const req = get({ host, path, lookup: publicOnlyLookup() as never, timeout: timeoutMs }, (res) => {
       const type = res.headers['content-type']?.split(';')[0]?.trim() ?? ''
-      if (res.statusCode !== 200 || !type.startsWith('image/') || Number(res.headers['content-length'] ?? 0) > maxBytes) {
-        // Drop it rather than drain it: an oversized or endless body is never read.
-        res.destroy()
-        return resolve(null)
-      }
+      // Dropped rather than drained: an oversized or endless body is never read.
+      if (res.statusCode !== 200 || !type.startsWith('image/') || Number(res.headers['content-length'] ?? 0) > maxBytes) return settle(null)
       const chunks: Buffer[] = []
       let size = 0
       res.on('data', (chunk: Buffer) => {
         size += chunk.length
-        if (size > maxBytes) {
-          req.destroy()
-          resolve(null)
-        } else chunks.push(chunk)
+        if (size > maxBytes) settle(null)
+        else chunks.push(chunk)
       })
-      res.on('end', () => resolve(size > 0 && size <= maxBytes ? { body: Buffer.concat(chunks), type } : null))
-      res.on('error', () => resolve(null))
+      res.on('end', () => settle(size > 0 && size <= maxBytes ? { body: Buffer.concat(chunks), type } : null))
+      res.on('error', () => settle(null))
+      res.on('close', () => settle(null))
     })
-    req.on('timeout', () => req.destroy())
-    req.on('error', () => resolve(null))
+    const deadline = setTimeout(() => settle(null), timeoutMs)
+    req.on('timeout', () => settle(null))
+    req.on('error', () => settle(null))
   })
 }
