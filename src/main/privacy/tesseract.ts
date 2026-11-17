@@ -9,7 +9,8 @@ import Tesseract from 'tesseract.js'
 import type { OcrEngine } from './masker'
 import type { OcrLine } from './regions'
 
-const require = createRequire(import.meta.url)
+// Not named `require`: the bundler adds its own `require` shim to the ES module output.
+const requireHere = createRequire(import.meta.url)
 
 /** A frame that takes longer than this has a stuck worker; it is restarted and the batch retried later. */
 const READ_TIMEOUT_MS = 120_000
@@ -20,7 +21,7 @@ export function tesseractEngine(): OcrEngine {
   const start = () =>
     Tesseract.createWorker('eng', Tesseract.OEM.LSTM_ONLY, {
       // Electron's worker threads read app.asar, so the model can stay packed.
-      langPath: join(dirname(require.resolve('@tesseract.js-data/eng/package.json')), '4.0.0_best_int'),
+      langPath: join(dirname(requireHere.resolve('@tesseract.js-data/eng/package.json')), '4.0.0_best_int'),
       // 'none' neither reads nor writes a traineddata cache in the working directory.
       cacheMethod: 'none',
       gzip: true,

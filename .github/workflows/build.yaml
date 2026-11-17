@@ -47,6 +47,8 @@ jobs:
         # electron-builder fetches Electron for each architecture; both unpack as linux-unpacked.
         run: |
           npx electron-vite build
+          # The tests never load the bundles; a syntax error there only shows when the app starts.
+          for bundle in out/main/*.js; do node --check "$bundle"; done
           npx electron-builder --linux dir --x64 --arm64 -c.extraMetadata.version="$VERSION"
           tar -C dist -czf app-x86_64.tar.gz linux-unpacked
           mkdir -p dist/arm64 && mv dist/linux-arm64-unpacked dist/arm64/linux-unpacked
