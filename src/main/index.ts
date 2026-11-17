@@ -86,7 +86,7 @@ if (!app.requestSingleInstanceLock()) {
 
 let window: BrowserWindow | null = null
 /** The visual theme from settings, for the window's first colour and the page's first paint. */
-let uiStyle: UiStyle = 'dayflow'
+let uiStyle: UiStyle = 'modern'
 const changed = () => window?.webContents.send('cards:changed')
 let tray: Tray | null = null
 /** Set once the update check started (Windows and macOS packages). */

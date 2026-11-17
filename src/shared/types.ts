@@ -94,7 +94,7 @@ export interface Settings {
   promptOverrides: PromptOverrides
   /** Window theme; dark unless changed. "system" follows the desktop. */
   theme: Theme
-  /** Visual theme: upstream Dayflow's look (the default) or the flat "Modern" one. */
+  /** Visual theme: the flat "Modern" one (the default) or upstream Dayflow's look. */
   uiStyle: UiStyle
   /** Show app and site icons on cards (fetched from the sites themselves). */
   showAppIcons: boolean
@@ -165,7 +165,7 @@ export const DEFAULT_SETTINGS: Settings = {
   categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })),
   promptOverrides: { title: '', summary: '', detailedSummary: '' },
   theme: 'dark',
-  uiStyle: 'dayflow',
+  uiStyle: 'modern',
   showAppIcons: false,
   showDailyGoalPopups: true,
   onboarded: false,

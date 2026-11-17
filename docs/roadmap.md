@@ -279,7 +279,7 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   goal step (analytics), particles and confetti on the ring, and per-chart
   PNG export.
 - [x] Modern theme (not upstream): Settings → Other → Theme switches between
-  upstream's look (Dayflow, the default) and Modern, flat neutral greys with
+  upstream's look (Dayflow) and Modern (the default), flat neutral greys with
   Inter (bundled with its OFL text), one indigo accent and 1px borders, in
   light and dark. `data-ui-style` on the root element switches the CSS
   tokens; category colours and the onboarding stay as they are.

@@ -439,10 +439,10 @@ light, or to **System** to follow your desktop's light or dark setting.
 
 **Settings → Other → Theme** picks the look:
 
-- **Dayflow** (the default): upstream Dayflow's warm look, with gradients,
-  translucent panels and serif titles.
-- **Modern**: flat neutral greys, the Inter font, one indigo accent and crisp
-  borders; calmer and a little denser.
+- **Modern** (the default): flat neutral greys, the Inter font, one indigo
+  accent and crisp borders; calmer and a little denser.
+- **Dayflow**: upstream Dayflow's warm look, with gradients, translucent
+  panels and serif titles.
 
 Both themes come in light and dark, so Appearance works with either. Your
 category colours stay the same in both. The first-run setup keeps upstream's

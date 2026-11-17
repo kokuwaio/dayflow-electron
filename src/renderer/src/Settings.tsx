@@ -437,7 +437,7 @@ function OtherTab({ settings, save }: { settings: Settings; save: Save }) {
             <option value="system">System</option>
           </select>
         </Row>
-        <Row label="Theme" sub="Dayflow's warm look, or Modern: flat neutral greys with one accent.">
+        <Row label="Theme" sub="Modern: flat neutral greys with one accent, or Dayflow's warm look.">
           <select
             value={settings.uiStyle}
             onChange={(e) => {
@@ -447,8 +447,8 @@ function OtherTab({ settings, save }: { settings: Settings; save: Save }) {
             }}
             aria-label="Theme"
           >
-            <option value="dayflow">Dayflow</option>
             <option value="modern">Modern</option>
+            <option value="dayflow">Dayflow</option>
           </select>
         </Row>
         <Row label="Launch Dayflow at login">

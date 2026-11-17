@@ -4,9 +4,9 @@
 export const UI_STYLES = ['dayflow', 'modern'] as const
 export type UiStyle = (typeof UI_STYLES)[number]
 
-/** A stored or requested style, or the Dayflow look when it is unknown. */
+/** A stored or requested style, or Modern (the default) when it is unknown. */
 export function sanitizeUiStyle(value: unknown): UiStyle {
-  return (UI_STYLES as readonly unknown[]).includes(value) ? (value as UiStyle) : 'dayflow'
+  return (UI_STYLES as readonly unknown[]).includes(value) ? (value as UiStyle) : 'modern'
 }
 
 /** The colour the window shows before the page paints: each style's window background. */

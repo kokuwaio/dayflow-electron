@@ -8,9 +8,9 @@ describe('sanitizeUiStyle', () => {
     expect(sanitizeUiStyle('modern')).toBe('modern')
   })
 
-  it('falls back to the Dayflow look for anything else', () => {
-    for (const value of [undefined, null, '', 'Modern', 'glass', 42, {}]) expect(sanitizeUiStyle(value)).toBe('dayflow')
-    expect(DEFAULT_SETTINGS.uiStyle).toBe('dayflow')
+  it('falls back to Modern, the default, for anything else', () => {
+    for (const value of [undefined, null, '', 'Modern', 'glass', 42, {}]) expect(sanitizeUiStyle(value)).toBe('modern')
+    expect(DEFAULT_SETTINGS.uiStyle).toBe('modern')
   })
 })
 

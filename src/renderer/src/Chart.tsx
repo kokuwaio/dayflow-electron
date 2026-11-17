@@ -80,7 +80,7 @@ function tokenTheme(dark: boolean): object {
 
 /** The visual theme on the root element (`data-ui-style`), while it changes. */
 function useUiStyle(): string {
-  const read = () => document.documentElement.dataset.uiStyle ?? 'dayflow'
+  const read = () => document.documentElement.dataset.uiStyle ?? 'modern'
   const [style, setStyle] = useState(read)
   useEffect(() => {
     const observer = new MutationObserver(() => setStyle(read()))
