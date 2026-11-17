@@ -16,6 +16,8 @@ export interface Rect {
 export interface OcrWord {
   text: string
   box: Rect
+  /** One box per character of `text`, when the OCR has them. */
+  chars?: Rect[]
 }
 
 /** One line of text read off a frame; its text is the words joined by single spaces. */
@@ -86,26 +88,31 @@ function layout(line: OcrLine): Layout {
   return { text: line.words.map((w) => w.text).join(' '), spans }
 }
 
+const union = (a: Rect | null, b: Rect): Rect =>
+  a ? { x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) } : b
+
 /**
  * The box over characters [start, end) of a line: the union of the words they
- * touch. Where the run starts or ends inside a word, the cut is placed by the
- * characters' share of the word's width and widened by one character, since
- * OCR does not give character boxes.
+ * touch. Where the run starts or ends inside a word, the word's character
+ * boxes give the cut; without them, the characters' share of the word's width
+ * does, widened by one character.
  */
 function runBox(lay: Layout, start: number, end: number): Rect | null {
   let box: Rect | null = null
   for (const { word, start: ws, end: we } of lay.spans) {
     if (we <= start || ws >= end) continue
-    const length = Math.max(1, we - ws)
-    const charWidth = (word.box.x1 - word.box.x0) / length
     const from = Math.max(start, ws)
     const to = Math.min(end, we)
-    const x0 = word.box.x0 + (from - ws) * charWidth - (from > ws ? charWidth : 0)
-    const x1 = word.box.x0 + (to - ws) * charWidth + (to < we ? charWidth : 0)
-    const part = { x0: Math.max(word.box.x0, x0), y0: word.box.y0, x1: Math.min(word.box.x1, x1), y1: word.box.y1 }
-    box = box
-      ? { x0: Math.min(box.x0, part.x0), y0: Math.min(box.y0, part.y0), x1: Math.max(box.x1, part.x1), y1: Math.max(box.y1, part.y1) }
-      : part
+    if (from === ws && to === we) {
+      box = union(box, word.box)
+    } else if (word.chars?.length === we - ws) {
+      for (const c of word.chars.slice(from - ws, to - ws)) box = union(box, { ...c, y0: word.box.y0, y1: word.box.y1 })
+    } else {
+      const charWidth = (word.box.x1 - word.box.x0) / Math.max(1, we - ws)
+      const x0 = word.box.x0 + (from - ws) * charWidth - (from > ws ? charWidth : 0)
+      const x1 = word.box.x0 + (to - ws) * charWidth + (to < we ? charWidth : 0)
+      box = union(box, { x0: Math.max(word.box.x0, x0), y0: word.box.y0, x1: Math.min(word.box.x1, x1), y1: word.box.y1 })
+    }
   }
   return box
 }

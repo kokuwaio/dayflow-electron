@@ -33,6 +33,15 @@ describe('secretRects', () => {
     expect(r!.x1).toBe(300 + 3)
   })
 
+  it('boxes part of a word by its character boxes when the OCR has them', () => {
+    const word = 'KEY=sk-proj-7Fq2xL9mWc4RbT'
+    // Characters 10 px wide with 2 px gaps: character i spans x 12i..12i+10.
+    const chars = [...word].map((_, i) => ({ x0: 12 * i, y0: 2, x1: 12 * i + 10, y1: 18 }))
+    const rects = secretRects([{ words: [{ text: word, box: { x0: 0, y0: 0, x1: 12 * word.length, y1: 20 }, chars }] }], 1080)
+    // The key starts at character 4 and runs to the end; the height is the word's.
+    expect(rects).toEqual([{ x0: 48 - 3, y0: -3, x1: 12 * (word.length - 1) + 10 + 3, y1: 23 }])
+  })
+
   it('uses context from the lines above in reading order', () => {
     const heading = line('Your recovery codes', 0, 0)
     const codes = line('a1b2c-3d4e5', 0, 40)
