@@ -3,8 +3,10 @@ name: Build
 # Tests and builds everything for x86_64 and aarch64; CI and releases call
 # this workflow. The Flatpak job packs the app and helper built by the other
 # two jobs, like `npm run flatpak` does locally. The installers job tests on
-# Windows and macOS and builds their installers (one job per OS: macOS
-# minutes cost ten times as much in private repositories).
+# Windows and macOS and builds their installers and the update feeds that
+# electron-updater reads (one job per OS: macOS minutes cost ten times as
+# much in private repositories). Nothing is published here: every
+# electron-builder call has --publish never; the release workflow uploads.
 
 permissions: read-all
 
@@ -49,7 +51,7 @@ jobs:
           npx electron-vite build
           # The tests never load the bundles; a syntax error there only shows when the app starts.
           for bundle in out/main/*.js; do node --check "$bundle"; done
-          npx electron-builder --linux dir --x64 --arm64 -c.extraMetadata.version="$VERSION"
+          npx electron-builder --linux dir --x64 --arm64 --publish never -c.extraMetadata.version="$VERSION"
           tar -C dist -czf app-x86_64.tar.gz linux-unpacked
           mkdir -p dist/arm64 && mv dist/linux-arm64-unpacked dist/arm64/linux-unpacked
           tar -C dist/arm64 -czf app-aarch64.tar.gz linux-unpacked
@@ -184,14 +186,28 @@ jobs:
         include:
           - os: windows
             runner: windows-latest
-            # One NSIS installer per architecture: x64 and arm64.
-            package: npx electron-builder --win nsis --x64 --publish never -c.extraMetadata.version="$VERSION" && npx electron-builder --win nsis --arm64 --publish never -c.extraMetadata.version="$VERSION"
-            files: dist/*.exe
+            # One NSIS installer per architecture: x64 and arm64. Each run writes
+            # latest.yml for its own installer; the feed has to list both.
+            package: >-
+              npx electron-builder --win nsis --x64 --publish never -c.extraMetadata.version="$VERSION" &&
+              mv dist/latest.yml dist/latest-x64.yml &&
+              npx electron-builder --win nsis --arm64 --publish never -c.extraMetadata.version="$VERSION" &&
+              node scripts/merge-update-feeds.ts dist/latest.yml dist/latest-x64.yml dist/latest.yml &&
+              rm dist/latest-x64.yml
+            files: |
+              dist/*.exe
+              dist/*.exe.blockmap
+              dist/latest.yml
           - os: macos
             runner: macos-latest
-            # One dmg per architecture: arm64 and x64.
-            package: npx electron-builder --mac dmg --arm64 --x64 --publish never -c.extraMetadata.version="$VERSION"
-            files: dist/*.dmg
+            # One dmg per architecture: arm64 and x64, plus the zips that
+            # Squirrel.Mac installs updates from; latest-mac.yml lists both.
+            package: npx electron-builder --mac dmg zip --arm64 --x64 --publish never -c.extraMetadata.version="$VERSION"
+            files: |
+              dist/*.dmg
+              dist/*.zip
+              dist/*.blockmap
+              dist/latest-mac.yml
     runs-on: ${{ matrix.runner }}
     env:
       ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
