@@ -18,6 +18,7 @@ machines and not signed.
 
 | Document | What |
 | --- | --- |
+| [docs/installation.md](docs/installation.md) | Every package (Flatpak, Windows installer, macOS disk image, Homebrew) and building from source |
 | [docs/usage.md](docs/usage.md) | Install on Linux, Windows and macOS, providers, local models with Ollama, Claude Code and Codex, the tabs, blocked apps, troubleshooting |
 | [docs/architecture.md](docs/architecture.md) | How the app works, with diagrams |
 | [docs/roadmap.md](docs/roadmap.md) | Every upstream feature mapped to a milestone, with what is done |
@@ -79,7 +80,7 @@ pauses while the screen is locked.
 | `src/renderer/` | React UI: Timeline, Daily, Weekly, Settings, onboarding |
 | `src/shared/` | Pure logic used by both: 4 AM days, categories, Daily and Weekly math, export |
 | `helper/linux/` | Go helper for Linux desktop access: ScreenCast portal + PipeWire, lock/sleep/idle, focused window, autostart |
-| `flatpak/` | Flatpak manifest and desktop file |
+| `packaging/` | Flatpak manifests, desktop file and metainfo (`flatpak/`), Homebrew cask (`homebrew/`) |
 
 [docs/architecture.md](docs/architecture.md) shows how the parts work together.
 

@@ -51,33 +51,80 @@ electron-builder's default entitlements cover what Electron needs under the
 hardened runtime; the app loads no native modules and starts `osascript` as
 a separate program.
 
-## Flathub
+## Homebrew (one-time setup)
+
+macOS users install with `brew install --cask kokuwaio/tap/dayflow-electron`.
+That needs our own tap, because Homebrew's main cask repository only takes
+signed and notarized apps. Everything else is prepared:
+`packaging/homebrew/dayflow-electron.rb.in` is the cask,
+`scripts/homebrew-cask.sh` fills in version and checksums, and every
+published release attaches `dayflow-electron.rb` and pushes it to the tap
+once the token below exists.
+
+1. Make this repository public. Homebrew downloads the disk images without
+   logging in, and assets of private releases need a login.
+2. Create the public repository `kokuwaio/homebrew-tap` (the `homebrew-`
+   prefix is what makes `kokuwaio/tap` work). An empty README is enough; the
+   workflow adds `Casks/dayflow-electron.rb`.
+3. Create a fine-grained personal access token (or a GitHub App token) with
+   **Contents: Read and write** on `kokuwaio/homebrew-tap` only.
+4. Store it in this repository as the Actions secret `HOMEBREW_TAP_TOKEN`
+   (Settings → Secrets and variables → Actions).
+5. Publish a release. The "Update the Homebrew tap" step commits the cask to
+   the tap; without the secret it only attaches the cask to the release.
+6. Check it on a Mac:
+   `brew install --cask kokuwaio/tap/dayflow-electron`, then
+   `brew audit --cask --online kokuwaio/tap/dayflow-electron`.
+
+Later, once the app is signed and notarized (see above) and has users, it can
+move to Homebrew's main repository (`brew install --cask dayflow-electron`).
+
+## Flathub (one-time setup)
 
 Flathub builds apps on its own servers from a manifest in a repository it
 creates per app; a project cannot push builds there from its own CI. The
-manifest is ready in `flatpak/flathub/`. It builds from the release tarball,
-and its `x-checker-data` lets Flathub's update checker open a PR in the
-Flathub repository whenever a new release appears.
+manifest is ready in `packaging/flatpak/flathub/`. It builds from the release tarballs
+(x86_64 and aarch64), and its `x-checker-data` lets Flathub's update checker
+open a PR in the Flathub repository whenever a new release appears.
 
 Before the first submission:
 
-- The repository must be public, so Flathub can download the release assets.
-- The app needs its own name and icon: "Dayflow" and upstream's artwork are
-  not covered by the MIT license (see the roadmap's ground rules). Rename it
-  in the desktop file, the metainfo and `PRODUCT_NAME` in
-  `src/shared/export.ts`.
-- Add screenshots to the metainfo; Flathub's linter requires them.
+1. Make this repository public, so Flathub can download the release assets.
+2. Give the app its own name and icon. "Dayflow" and upstream's artwork are
+   not covered by the MIT license (see the roadmap's ground rules). Rename it
+   in the desktop file, the metainfo, the window title and `PRODUCT_NAME` in
+   `src/shared/export.ts`; the icon needs at least 256×256 pixels (512 is
+   better). The app ID `io.github.kokuwaio.DayflowElectron` can stay.
+3. Add screenshots to the metainfo (`<screenshots>` with image URLs from this
+   repository, e.g. under `docs/screenshots/`); Flathub requires them.
+4. Publish the first GitHub release, then set both archive sources in
+   `packaging/flatpak/flathub/io.github.kokuwaio.DayflowElectron.yml` to that release's
+   tarballs and their `sha256` lines from `SHA256SUMS`.
+5. Check the manifest and metainfo the way Flathub does:
+   ```sh
+   flatpak install --user flathub org.flatpak.Builder
+   flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest packaging/flatpak/flathub/io.github.kokuwaio.DayflowElectron.yml
+   flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream packaging/flatpak/io.github.kokuwaio.DayflowElectron.metainfo.xml
+   ```
 
-Submission, once:
+Submission:
 
-1. Publish the first GitHub release.
-2. In `flatpak/flathub/io.github.kokuwaio.DayflowElectron.yml`, set both
-   archive sources (x86_64 and aarch64) to that release's tarballs and their
-   `sha256` lines from `SHA256SUMS`.
-3. Follow Flathub's [submission guide](https://docs.flathub.org/docs/for-app-authors/submission):
-   open a PR against the `new-pr` branch of `flathub/flathub` with the
-   manifest. The `io.github.kokuwaio` ID is verified through the GitHub
+1. Fork `flathub/flathub` and create a branch from its `new-pr` branch.
+2. Add the manifest at the top level as
+   `io.github.kokuwaio.DayflowElectron.yml` and open a PR against `new-pr`,
+   titled "Add io.github.kokuwaio.DayflowElectron". Flathub's
+   [submission guide](https://docs.flathub.org/docs/for-app-authors/submission)
+   lists what the reviewers check.
+3. Comment `bot, build` on the PR to start a test build; fix what the build
+   and the reviewers report. Expect questions about the permissions (the
+   manifest requests none beyond the basics; KWin and host access stay
+   opt-in) and about building from release binaries instead of sources.
+   Flathub accepts that for Electron apps, but reviewers may ask for a source
+   build with `flatpak-node-generator`.
+4. After the merge, Flathub creates
+   `flathub/io.github.kokuwaio.DayflowElectron` and invites the submitter.
+   Log in at flathub.org with the GitHub account and verify the app: an
+   `io.github.kokuwaio` ID is verified through membership of the `kokuwaio`
    organization.
-4. After the review, Flathub creates `flathub/io.github.kokuwaio.DayflowElectron`
-   and grants the submitter write access. Later releases arrive there as update
-   PRs from the checker; merging one publishes the update.
+5. From then on, the update checker opens a PR in that repository for each
+   new GitHub release; merging it publishes the update.

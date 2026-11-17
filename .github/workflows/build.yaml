@@ -169,7 +169,7 @@ jobs:
       - name: Build Flatpak
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
-          manifest-path: flatpak/io.github.kokuwaio.DayflowElectron.yml
+          manifest-path: packaging/flatpak/io.github.kokuwaio.DayflowElectron.yml
           bundle: dayflow-electron.flatpak
           arch: ${{ matrix.arch }}
           artifact-name: dayflow-electron-flatpak-${{ matrix.arch }}

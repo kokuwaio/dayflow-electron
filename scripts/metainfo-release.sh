@@ -6,7 +6,7 @@
 set -eu
 
 version=${1:?usage: metainfo-release.sh VERSION [FILE]}
-file=${2:-flatpak/io.github.kokuwaio.DayflowElectron.metainfo.xml}
+file=${2:-packaging/flatpak/io.github.kokuwaio.DayflowElectron.metainfo.xml}
 if grep -q "<release version=\"$version\"" "$file"; then
   exit 0
 fi

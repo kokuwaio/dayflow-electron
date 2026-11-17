@@ -2,8 +2,9 @@ name: Release
 
 # Publishing the release that Release Drafter prepared builds the app and
 # attaches, for x86_64 and aarch64, the Flatpak bundle and the tarball that
-# the Flathub manifest (flatpak/flathub/) builds from, plus the Windows
-# installers (x64, arm64) and macOS disk images (arm64, x64).
+# the Flathub manifest (packaging/flatpak/flathub/) builds from, plus the Windows
+# installers (x64, arm64), macOS disk images (arm64, x64) and the Homebrew
+# cask, which it also pushes to the kokuwaio/homebrew-tap repository.
 
 permissions: read-all
 
@@ -47,7 +48,7 @@ jobs:
             mkdir -p "$dir"
             tar -C "$dir" -xzf "artifacts/app-$arch/app-$arch.tar.gz"
             install -m755 "artifacts/helper-$arch/dayflow-linux-helper" "$dir/dayflow-linux-helper"
-            cp resources/icon.png flatpak/io.github.kokuwaio.DayflowElectron.desktop flatpak/io.github.kokuwaio.DayflowElectron.metainfo.xml "$dir/"
+            cp resources/icon.png packaging/flatpak/io.github.kokuwaio.DayflowElectron.desktop packaging/flatpak/io.github.kokuwaio.DayflowElectron.metainfo.xml "$dir/"
             tar -C "release/$arch" -czf "dayflow-electron-$TAG-linux-$arch.tar.gz" dayflow-electron
             cp "artifacts/dayflow-electron-flatpak-$arch/dayflow-electron.flatpak" "dayflow-electron-$TAG-$arch.flatpak"
           done
@@ -57,8 +58,29 @@ jobs:
             cp "$file" "dayflow-electron-$TAG-${name#dayflow-electron-}"
           done
           sha256sum dayflow-electron-"$TAG"-* > SHA256SUMS
+          # The Homebrew cask for the two disk images (packaging/homebrew/).
+          scripts/homebrew-cask.sh "${TAG#v}" "dayflow-electron-$TAG-mac-arm64.dmg" "dayflow-electron-$TAG-mac-x64.dmg" > dayflow-electron.rb
 
       - name: Upload to release
-        run: gh release upload "$TAG" dayflow-electron-"$TAG"-* SHA256SUMS --clobber
+        run: gh release upload "$TAG" dayflow-electron-"$TAG"-* SHA256SUMS dayflow-electron.rb --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update the Homebrew tap
+        # Needs the kokuwaio/homebrew-tap repository and a token that may push to it (docs/release.md).
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$TAP_TOKEN" ]; then
+            echo "::notice::HOMEBREW_TAP_TOKEN is not set; the cask is attached to the release only."
+            exit 0
+          fi
+          git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/kokuwaio/homebrew-tap.git" tap
+          mkdir -p tap/Casks
+          cp dayflow-electron.rb tap/Casks/dayflow-electron.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/dayflow-electron.rb
+          git commit -m "dayflow-electron ${TAG#v}"
+          git push

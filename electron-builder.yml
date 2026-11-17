@@ -1,5 +1,5 @@
 # Packs the built app (out/):
-# - Linux: dist/linux-unpacked, which the Flatpak manifest in flatpak/ wraps.
+# - Linux: dist/linux-unpacked, which the Flatpak manifest in packaging/flatpak/ wraps.
 # - Windows: an NSIS installer per architecture (x64, arm64).
 # - macOS: a dmg per architecture (arm64, x64).
 # Windows and macOS builds are unsigned for now; docs/release.md says where

@@ -145,7 +145,7 @@ JSON-per-day store for SQLite.
       Flatpak).
 - [x] Retention: storage cap for frames (default 10 GB), hourly purge of the
       oldest frames.
-- [x] Flatpak `io.github.kokuwaio.DayflowElectron` (`flatpak/`).
+- [x] Flatpak `io.github.kokuwaio.DayflowElectron` (`packaging/flatpak/`).
 
 **Done when:** a full working day on Linux produces a sensible timeline with
 each of the three providers.

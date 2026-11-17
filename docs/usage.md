@@ -8,42 +8,10 @@ was tested on which Linux desktop.
 
 ## Install
 
-The app starts with a window and a tray icon. Closing the window keeps it
-recording; quit from the tray.
-
-### Linux
-
-The app ships as a Flatpak. Until it is published, build and install it from
-the repository (see the [README](../README.md#flatpak)):
-
-```sh
-npm install
-npm run flatpak
-flatpak run io.github.kokuwaio.DayflowElectron
-```
-
-### Windows
-
-Download `dayflow-electron-<version>-win-x64.exe` (or `-win-arm64.exe` for
-ARM devices) from the release and run it. It installs for your user only, no
-administrator rights needed.
-
-The installer is not signed yet, so Windows SmartScreen warns about an
-unknown publisher: click **More info**, then **Run anyway**.
-
-### macOS
-
-Download `dayflow-electron-<version>-mac-arm64.dmg` (Apple silicon) or
-`-mac-x64.dmg` (Intel), open it and drag the app into **Applications**.
-
-The app is not signed with an Apple Developer ID or notarized yet, so macOS
-refuses the first start. Open it once, then go to **System Settings → Privacy
-& Security** and click **Open Anyway** next to the dayflow-electron message.
-Alternatively, in a terminal:
-
-```sh
-xattr -dr com.apple.quarantine /Applications/dayflow-electron.app
-```
+[installation.md](installation.md) covers every package: the Flatpak on
+Linux, the Windows installer, the macOS disk image and Homebrew cask, and
+building from source. The app starts with a window and a tray icon. Closing
+the window keeps it recording; quit from the tray.
 
 ## First start: allow screen recording
 

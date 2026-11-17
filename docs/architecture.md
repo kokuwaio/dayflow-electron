@@ -281,7 +281,7 @@ flowchart LR
 | `src/renderer/src/` | React views: Timeline, Daily, Weekly, Chat, Settings, Onboarding |
 | `src/shared/` | Pure logic used by both sides: days, categories, day canvas geometry (`canvas.ts`), Daily and Weekly math, export, failure kinds |
 | `helper/linux/` | Go helper: `portal/`, `pipewire/`, `wayland/`, `frames/`, commands in `cmd/` |
-| `flatpak/` | Flatpak manifest and desktop file |
+| `packaging/` | Flatpak manifests, desktop file and metainfo (`flatpak/`), Homebrew cask (`homebrew/`) |
 
 Most logic sits in `src/shared/` and `src/main/analysis/` as pure functions,
 so the tests run without Electron. Run them with `npm test`; run the Go tests

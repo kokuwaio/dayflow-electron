@@ -56,7 +56,7 @@ pack:
 	npx electron-builder --linux dir -c.extraMetadata.version=$(VERSION)
 
 flatpak: pack helper
-	flatpak-builder --user --install --force-clean flatpak/build flatpak/io.github.kokuwaio.DayflowElectron.yml
+	flatpak-builder --user --install --force-clean packaging/flatpak/build packaging/flatpak/io.github.kokuwaio.DayflowElectron.yml
 
 version:
 	@echo $(VERSION)
@@ -71,4 +71,4 @@ dist-mac:
 	npx electron-builder --mac dmg --arm64 --x64 --publish never -c.extraMetadata.version=$(VERSION)
 
 clean:
-	rm -rf out dist flatpak/build flatpak/.flatpak-builder flatpak/repo $(HELPER)/bin
+	rm -rf out dist packaging/flatpak/build packaging/flatpak/.flatpak-builder packaging/flatpak/repo $(HELPER)/bin

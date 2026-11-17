@@ -1,7 +1,6 @@
-# Flatpak for dayflow-electron from a local build (`npm run flatpak`, CI).
-# Releases on Flathub use flatpak/flathub/ instead. Build the inputs first:
-#   npm run build && npx electron-builder --linux dir && npm run helper
-# then: flatpak-builder --user --install --force-clean build flatpak/io.github.kokuwaio.DayflowElectron.yml
+# Flatpak from a local build: `make flatpak` packs the app, builds the Go
+# helper and runs flatpak-builder on this manifest; CI does the same.
+# Releases on Flathub use packaging/flatpak/flathub/ instead.
 id: io.github.kokuwaio.DayflowElectron
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
@@ -40,12 +39,12 @@ modules:
       - install -Dm644 io.github.kokuwaio.DayflowElectron.metainfo.xml /app/share/metainfo/io.github.kokuwaio.DayflowElectron.metainfo.xml
     sources:
       - type: dir
-        path: ../dist/linux-unpacked
+        path: ../../dist/linux-unpacked
         dest: linux-unpacked
       - type: file
-        path: ../helper/linux/bin/dayflow-linux-helper
+        path: ../../helper/linux/bin/dayflow-linux-helper
       - type: file
-        path: ../resources/icon.png
+        path: ../../resources/icon.png
       - type: file
         path: io.github.kokuwaio.DayflowElectron.desktop
       - type: file
