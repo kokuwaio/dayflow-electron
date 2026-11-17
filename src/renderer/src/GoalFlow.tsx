@@ -4,6 +4,7 @@
 // and distraction limit with their categories.
 
 import { type DragEvent, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Brain, Shapes, X } from 'lucide-react'
 import type { Category } from '@shared/categories'
 import { formatMinutes, type GoalPlan } from '@shared/day-summary'
@@ -30,7 +31,8 @@ export function GoalFlow(props: {
     return () => window.removeEventListener('keydown', onKey)
   }, [props])
 
-  return (
+  // On the body: the inspector's backdrop-filter would make it the containing block of a fixed element.
+  return createPortal(
     <div className="goal-flow-backdrop" role="dialog" aria-modal="true" aria-label="Daily goals">
       <div className="goal-flow">
         <button className="goal-flow-close" aria-label="Close without saving" onClick={props.onClose}>
@@ -49,7 +51,8 @@ export function GoalFlow(props: {
           />
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

@@ -3,6 +3,7 @@
 // cards one by one, swiped or keyed as distracted, neutral or focused.
 
 import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Meh, Sparkles, X, Zap } from 'lucide-react'
 import { formatClock } from '@shared/day'
 import { formatMinutes } from '@shared/day-summary'
@@ -101,7 +102,8 @@ export function ReviewOverlay({ day, cards, colorOf, onClose }: { day: string; c
   const hint = drag ? dragRating(drag.x, drag.y, false) : leaving
   const away = leaving ? (leaving === 'neutral' ? { x: 0, y: -900 } : { x: leaving === 'focused' ? 900 : -900, y: 0 }) : (drag ?? { x: 0, y: 0 })
 
-  return (
+  // Over the whole window like upstream, outside the main panel's backdrop-filter.
+  return createPortal(
     <div className="review-overlay" role="dialog" aria-modal="true" aria-label="Review cards">
       <button className="review-close" aria-label="Close" onClick={onClose}>
         <X size={14} strokeWidth={2.5} />
@@ -141,7 +143,8 @@ export function ReviewOverlay({ day, cards, colorOf, onClose }: { day: string; c
           </footer>
         </>
       )}
-    </div>
+    </div>,
+    document.body
   )
 }
 

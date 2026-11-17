@@ -372,7 +372,7 @@
   --right-divider: #e4e4e7;
   --popover-fill: #ffffff;
   --popover-border: #e4e4e7;
-  --scrim: rgb(0 0 0 / 0.2);
+  --scrim: rgb(0 0 0 / 0.3);
   --input-fill: #ffffff;
   --input-border: #e4e4e7;
 
@@ -570,7 +570,7 @@
     --right-divider: #27272a;
     --popover-fill: #1f2026;
     --popover-border: #2e2e33;
-    --scrim: rgb(0 0 0 / 0.5);
+    --scrim: rgb(0 0 0 / 0.75);
     --input-fill: #1f2026;
     --input-border: #2e2e33;
 
