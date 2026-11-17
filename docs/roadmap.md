@@ -38,6 +38,7 @@ a small MIT-licensed Electron port whose analysis loop and providers we reuse
 | Database | SQLite via Node's built-in `node:sqlite` (Electron 45 ships Node 24), WAL mode | No native module to rebuild per Electron version; real migrations (upstream has none) |
 | Frame storage | JPEG files first, `ffmpeg` video segments later | Upstream stores HEVC segments at 1 fps |
 | Timelapses, Gemini video | `ffmpeg` | Bundled or system binary |
+| Secret masking (opt-in) | `tesseract.js` (Tesseract in WebAssembly, Apache-2.0), `jpeg-js` (BSD-3-Clause) | No native module; the English model ships with the app |
 | Secrets | Electron `safeStorage` | KWallet or Secret Service on Linux, Keychain on macOS, DPAPI on Windows |
 | Packaging | Flatpak on Linux (`org.electronjs.Electron2.BaseApp`); `electron-builder` for NSIS and dmg | Flatpak is the only Linux package; capture is built for its sandbox |
 | Tests | Vitest, Playwright for Electron | |
@@ -237,9 +238,15 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   detected from the window title with upstream's localized markers; on by
   default. Upstream's toolbar and URL checks need accessibility APIs (AT-SPI on
   Linux) and stay open, as do its site categories.
-- [ ] Secret masking: rules from upstream `PIIMaskRules` on Tesseract OCR output,
-  opt-in. Upstream's ML model is served from its paid backend and is out of
-  reach.
+- [x] Secret masking: rules from upstream `PIIMaskRules` on Tesseract OCR output,
+  opt-in ("Hide secrets in screenshots"). Applied to the frames sent to the
+  provider; files on disk stay as recorded. Ports the 7 passes that mask
+  without the model (setup keys, password manager screens, labeled passwords,
+  private key blocks, seed phrases, recovery codes, key prefixes); recovery
+  codes need a rules-only stand-in for the model's one-time code guesses.
+  Upstream's ML model is served from its paid backend and is out of reach, so
+  recall is much lower (no cards, bank details, IDs or unlabeled passwords),
+  and Tesseract misreads cost more. OCR takes 2-6 s per 1080p frame.
 - [ ] Dark mode, app language, show/hide icons, pause presets (all but the
   app language done; dark mode follows the system).
 - [x] Deep links: `dayflow-electron://start-recording` and `stop-recording`

@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -6,6 +6,8 @@ import { Store } from '../db/store'
 import { type GenerateRequest, type Provider, ProviderError, type ProviderKind } from '../providers/types'
 import { Pipeline } from './pipeline'
 import { DEFAULT_CATEGORIES } from '../../shared/categories'
+import jpeg from 'jpeg-js'
+import { type OcrEngine, secretFilter } from '../privacy/masker'
 
 const at = (h: number, m: number, s = 0) => new Date(2026, 10, 17, h, m, s).getTime() / 1000
 
@@ -51,8 +53,13 @@ function recordQuarterHour(blockedAt: (t: number) => boolean = () => false) {
 }
 
 function pipelineWith(...providers: Provider[]) {
+  return pipelineWithFilter(undefined, ...providers)
+}
+
+function pipelineWithFilter(prepareFrame: ((frame: Uint8Array) => Promise<Uint8Array>) | undefined, ...providers: Provider[]) {
   return new Pipeline({
     store,
+    ...(prepareFrame ? { prepareFrame } : {}),
     providers: () => providers,
     categories: () => DEFAULT_CATEGORIES,
     language: () => '',
@@ -283,5 +290,75 @@ describe('Pipeline with blocked apps', () => {
       { title: 'Before the vault', endTime: '2:10 PM' },
       { title: 'Private', startTime: '2:10 PM', endTime: '2:15 PM' }
     ])
+  })
+})
+
+describe('Pipeline with secret masking', () => {
+  /** A white 200x40 JPEG, like a recorded frame. */
+  const white = jpeg.encode({ width: 200, height: 40, data: new Uint8Array(200 * 40 * 4).fill(255) }, 90).data
+  const images = (request: GenerateRequest) =>
+    request.turns.flatMap((t) => t.parts.flatMap((p) => (p.type === 'image' ? [p.data] : [])))
+  const brightness = (image: Uint8Array, x: number, y: number) => {
+    const { data, width } = jpeg.decode(image, { useTArray: true })
+    const i = (y * width + x) * 4
+    return (data[i]! + data[i + 1]! + data[i + 2]!) / 3
+  }
+
+  /** OCR that reads an API key at x 10..120 off every frame. */
+  const ocr: OcrEngine = {
+    async read() {
+      return [{ words: [{ text: 'sk-proj-7Fq2xL9mWc4RbT', box: { x0: 10, y0: 10, x1: 120, y1: 30 } }] }]
+    },
+    async close() {}
+  }
+
+  beforeEach(() => {
+    recordQuarterHour()
+    for (const shot of store.unbatchedScreenshots(0)) writeFileSync(shot.filePath, white)
+  })
+
+  it('sends the model frames with the secrets blacked out and leaves the files as recorded', async () => {
+    const primary = scriptedProvider('anthropic', 'claude', [JSON.stringify([card('2:00 PM', '2:16 PM', 'Masked')])])
+    const files = store.unbatchedScreenshots(0).map((s) => s.filePath)
+
+    await pipelineWithFilter(secretFilter(ocr, () => true), primary.provider).tick()
+
+    const sent = images(primary.requests[0]!)
+    expect(sent).toHaveLength(15)
+    for (const image of sent) {
+      expect(brightness(image, 60, 20)).toBeLessThan(20)
+      expect(brightness(image, 180, 20)).toBeGreaterThan(235)
+    }
+    for (const file of files) expect(Buffer.compare(readFileSync(file), Buffer.from(white))).toBe(0)
+  })
+
+  it('masks each frame once per batch, even when the fallback provider takes over', async () => {
+    const primary = scriptedProvider('openai', 'qwen3-vl', [new ProviderError('unreachable', true)])
+    const secondary = scriptedProvider('gemini', 'gemini', [JSON.stringify([card('2:00 PM', '2:16 PM', 'From the secondary')])])
+    let masked = 0
+    const count = async (frame: Uint8Array) => {
+      masked++
+      return frame
+    }
+
+    await pipelineWithFilter(count, primary.provider, secondary.provider).tick()
+
+    expect(masked).toBe(15)
+    expect(store.cardsForDay('2026-11-17').map((c) => c.title)).toEqual(['From the secondary'])
+  })
+
+  it('sends nothing and fails the batch for a retry when masking fails', async () => {
+    const primary = scriptedProvider('anthropic', 'claude', [JSON.stringify([card('2:00 PM', '2:16 PM', 'Unmasked')])])
+    const broken = async (): Promise<Uint8Array> => {
+      throw new Error('OCR worker crashed')
+    }
+
+    await pipelineWithFilter(broken, primary.provider).tick()
+
+    expect(primary.requests).toHaveLength(0)
+    const cards = store.cardsForDay('2026-11-17')
+    expect(cards).toMatchObject([{ title: 'Processing failed' }])
+    expect(cards[0]!.summary).toContain('Hiding secrets failed: OCR worker crashed')
+    expect(store.retryableBatches(0, 3)).toHaveLength(1)
   })
 })

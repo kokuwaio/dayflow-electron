@@ -9,6 +9,14 @@ files:
   - out/**
   - resources/**
   - package.json
+  # OCR for "Hide secrets in screenshots": in Node, tesseract.js always loads
+  # the full cores (tesseract-core{,-simd,-relaxedsimd}.wasm, picked by CPU
+  # features), so drop the -lstm builds, the inlined .wasm.js copies, the
+  # browser bundles and the large English model (the app uses 4.0.0_best_int).
+  - '!node_modules/tesseract.js/dist/**'
+  - '!node_modules/tesseract.js-core/*.wasm.js'
+  - '!node_modules/tesseract.js-core/*-lstm.{js,wasm}'
+  - '!node_modules/@tesseract.js-data/eng/4.0.0/**'
 asarUnpack:
   - resources/**
 linux:

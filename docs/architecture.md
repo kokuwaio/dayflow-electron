@@ -39,6 +39,7 @@ flowchart LR
     Files[("JPEG frames<br/>recordings/")]
     Pipeline["analysis/pipeline.ts<br/>batches, idle check,<br/>failover"]
     Providers["providers/<br/>Anthropic, Gemini,<br/>OpenAI-compatible,<br/>Claude Code, Codex"]
+    Privacy["privacy/<br/>OCR, hide secrets<br/>(opt-in)"]
     Insights["insights/daily.ts<br/>standup"]
     Notify["notifications.ts"]
     Retention["retention.ts<br/>storage limit"]
@@ -65,6 +66,7 @@ flowchart LR
   Recorder --> Store
   Store --> Pipeline
   Files --> Pipeline
+  Pipeline <--> Privacy
   Pipeline <--> Providers
   Providers <--> AI
   Pipeline -- "cards" --> Store
@@ -96,6 +98,8 @@ flowchart LR
    A batch where the idle check sees no activity becomes an Idle card. Neither
    needs a model call.
 5. **Analyze.**
+   - With **Hide secrets in screenshots** on, each sampled frame is masked
+     before any provider sees it (see [Secret masking](#secret-masking)).
    - Cloud providers get one request with a sample of the frames, the
      previous cards and the categories (upstream's prompt, verbatim). The
      reply is checked; on errors the model gets up to 3 tries with a
@@ -137,6 +141,34 @@ sequenceDiagram
     UI->>DB: day:get (through IPC)
   end
 ```
+
+## Secret masking
+
+Opt-in (`hideSecrets`), after upstream's Privacy Shield
+(`Core/PrivacyShield/`). Upstream masks frames at capture with a trained
+model plus rules; the model comes from upstream's paid backend, so the port
+runs the rules alone, on text read by Tesseract, and masks only what goes to
+a provider.
+
+1. The pipeline samples a batch's frames (up to 15) once, before the provider
+   failover, and passes each through `prepareFrame`
+   (`src/main/privacy/masker.ts`). A failure fails the batch, so no frame
+   leaves unmasked; it is retried later.
+2. `privacy/tesseract.ts` reads the text with `tesseract.js` (WebAssembly in a
+   worker thread, kept alive between batches and closed when the setting is
+   off or the app quits). The English model (`@tesseract.js-data/eng`,
+   `4.0.0_best_int`) is read from inside `app.asar` with caching off, so
+   nothing is downloaded or written.
+3. `privacy/regions.ts` orders the lines like upstream (1% bands, then left
+   to right) and joins each line's words. `privacy/rules.ts` ports upstream's
+   `PIIMaskRules` passes that mask without the model (setup keys, password
+   manager screens, labeled passwords, key blocks, seed phrases with the
+   BIP39 list, recovery codes, key prefixes) and the unmask passes their
+   masks can reach, in upstream's order. Recovery codes need one addition:
+   code-shaped tokens stand in for the model's one-time code labels.
+4. Masked character runs become rectangles from Tesseract's character boxes
+   (or the word box), padded by 3 px, and `privacy/redact.ts` blacks them out
+   with `jpeg-js` (upstream pixelates). Frames without secrets pass unchanged.
 
 ## Insights
 
@@ -217,6 +249,7 @@ flowchart LR
 | `src/main/platform/` | OS interface; `linux.ts` runs the Go helper |
 | `src/main/analysis/` | Batching, idle check, prompts, card checks, two-step path, pipeline |
 | `src/main/providers/` | One adapter per provider; `cli/` runs Claude Code and Codex on the host |
+| `src/main/privacy/` | Secret masking: OCR, upstream's mask rules, black boxes |
 | `src/main/insights/` | Daily standup generation |
 | `src/main/chat/` | Chat: tools, tool loop, system prompts, answering service |
 | `src/main/db/` | Schema migrations and all SQL |
