@@ -112,9 +112,11 @@ func StartScreenCast(ctx context.Context, conn *dbus.Conn, appID, tokenFile stri
 	}
 	if tok, ok := res["restore_token"]; ok {
 		if err := os.MkdirAll(filepath.Dir(tokenFile), 0o700); err != nil {
+			sc.Close()
 			return nil, info, err
 		}
 		if err := os.WriteFile(tokenFile, []byte(tok.Value().(string)), 0o600); err != nil {
+			sc.Close()
 			return nil, info, err
 		}
 	}

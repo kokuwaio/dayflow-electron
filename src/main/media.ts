@@ -11,7 +11,7 @@ import { pathToFileURL } from 'node:url'
 import { net, protocol } from 'electron'
 import { MEDIA_SCHEME } from '../shared/media'
 import { iconHost } from '../shared/favicon'
-import { isLocalUrl } from '../shared/providers'
+import { isPrivateAddress } from './private-address'
 
 /** Must run before the app is ready. */
 export function registerMediaScheme(): void {
@@ -31,12 +31,6 @@ async function resolvesPrivately(host: string): Promise<boolean> {
   } catch {
     return true
   }
-}
-
-function isPrivateAddress(address: string): boolean {
-  const v6 = address.toLowerCase()
-  if (v6.includes(':')) return v6 === '::1' || v6.startsWith('fc') || v6.startsWith('fd') || v6.startsWith('fe80') || v6.startsWith('::ffff:127.')
-  return isLocalUrl(`http://${address}/`) || address.startsWith('169.254.') || address.startsWith('0.')
 }
 
 /** Reads at most `max` bytes of a response body; null when it is larger. */
