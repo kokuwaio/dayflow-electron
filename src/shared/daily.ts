@@ -19,13 +19,16 @@ export interface FeatureAccess {
   unlocked: boolean
   /** "2h 15m / 5h" */
   label: string
+  /** 0 to 1, for the progress bar of the locked screen (4 decimals). */
+  progress: number
 }
 
 export function accessProgress(analyzedBatches: number): Record<Feature, FeatureAccess> {
   const minutes = analyzedBatches * BATCH_MINUTES
   const entry = (hours: number) => ({
     unlocked: minutes >= hours * 60,
-    label: `${minutes === 0 ? '0h' : formatMinutes(Math.min(minutes, hours * 60))} / ${hours}h`
+    label: `${minutes === 0 ? '0h' : formatMinutes(Math.min(minutes, hours * 60))} / ${hours}h`,
+    progress: Math.round(Math.min(1, minutes / (hours * 60)) * 10_000) / 10_000
   })
   return { daily: entry(UNLOCK_HOURS.daily), chat: entry(UNLOCK_HOURS.chat), weekly: entry(UNLOCK_HOURS.weekly) }
 }
