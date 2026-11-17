@@ -1,7 +1,17 @@
+import { darwinPlatform } from './darwin'
+import type { ElectronApis } from './electron-apis'
 import { type LinuxOptions, linuxPlatform } from './linux'
 import type { Platform } from './types'
+import { win32Platform } from './win32'
 
-/** A platform without capture: every start fails with `message` (Windows and macOS come later). */
+export type { ElectronApis } from './electron-apis'
+
+export interface PlatformOptions extends LinuxOptions {
+  /** Electron modules for the Windows and macOS platforms. */
+  electron: ElectronApis
+}
+
+/** A platform without capture: every start fails with `message`. */
 function unsupportedPlatform(name: string, message: string): Platform {
   return {
     name,
@@ -20,13 +30,20 @@ function unsupportedPlatform(name: string, message: string): Platform {
   }
 }
 
-export function createPlatform(opts: LinuxOptions): Platform {
-  if (process.platform !== 'linux') {
-    return unsupportedPlatform(process.platform, `Screen capture is not implemented for ${process.platform} yet.`)
-  }
-  try {
-    return linuxPlatform(opts)
-  } catch (err) {
-    return unsupportedPlatform('linux', err instanceof Error ? err.message : String(err))
+/** The platform for `os`: the Go helper on Linux, Electron APIs on Windows and macOS. */
+export function createPlatform(opts: PlatformOptions, os: string = process.platform): Platform {
+  switch (os) {
+    case 'win32':
+      return win32Platform({ electron: opts.electron, launchCommand: opts.launchCommand })
+    case 'darwin':
+      return darwinPlatform({ electron: opts.electron })
+    case 'linux':
+      try {
+        return linuxPlatform(opts)
+      } catch (err) {
+        return unsupportedPlatform('linux', err instanceof Error ? err.message : String(err))
+      }
+    default:
+      return unsupportedPlatform(os, `Screen capture is not supported on ${os}.`)
   }
 }
