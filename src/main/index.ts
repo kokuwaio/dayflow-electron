@@ -40,6 +40,8 @@ import { selectFramesToPurge } from './retention'
 import { secretFilter } from './privacy/masker'
 import { tesseractEngine } from './privacy/tesseract'
 import { SettingsStore } from './settings'
+import { type Updater, startUpdater } from './updater'
+import { type UpdateMode, parseCodesign, updateMode } from '../shared/updates'
 import { errorMessage } from '../shared/errors'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -82,6 +84,8 @@ if (!app.requestSingleInstanceLock()) {
 let window: BrowserWindow | null = null
 const changed = () => window?.webContents.send('cards:changed')
 let tray: Tray | null = null
+/** Set once the update check started (Windows and macOS packages). */
+let updater: Updater | null = null
 let quitting = false
 
 const log = (message: string) => console.log(`[dayflow] ${message}`)
@@ -469,6 +473,7 @@ async function main(): Promise<void> {
     recorder.refreshBlocking()
     if (saved.storageLimitGb < before.storageLimitGb) await purge()
     if (saved.allowEdits !== before.allowEdits) await syncBridge()
+    if (saved.autoInstallUpdates !== before.autoInstallUpdates) updater?.setAutoInstall(saved.autoInstallUpdates)
     return saved
   }
 
@@ -517,10 +522,12 @@ async function main(): Promise<void> {
     const r = recorder.status()
     const paused = r.state === 'paused'
     const description = describeRecorder(r.state, r.until)
+    const updateItem = updater?.menuItem()
     tray.setToolTip(`Dayflow: ${description}`)
     tray.setContextMenu(
       Menu.buildFromTemplate([
         { label: description, enabled: false },
+        ...(updateItem ? [{ ...updateItem, enabled: !!updateItem.click }] : []),
         { type: 'separator' },
         paused
           ? { label: 'Resume recording', click: () => (recorder.resume(), updateTray()) }
@@ -543,6 +550,32 @@ async function main(): Promise<void> {
   }
   tray = new Tray(nativeImage.createFromPath(join(app.getAppPath(), 'resources/tray.png')))
   tray.on('click', () => showWindow())
+
+  // ---- updates (src/main/updater.ts): Windows and macOS packages only
+  const updates: Promise<UpdateMode> = (async () => {
+    // Squirrel.Mac installs only into a Developer ID signed app; ad-hoc builds only notify.
+    const macSignature =
+      process.platform === 'darwin' && app.isPackaged
+        ? parseCodesign((await nodeRunner.run('codesign', ['-dv', '--verbose=2', join(dirname(process.execPath), '..', '..')], { timeoutMs: 10_000 })).stderr)
+        : undefined
+    return updateMode({ platform: process.platform, version: app.getVersion(), packaged: app.isPackaged, inFlatpak, ...(macSignature ? { macSignature } : {}) })
+  })()
+  ipcMain.handle('updates:support', () => updates)
+  void updates
+    .then(async (mode) => {
+      if (mode.mode === 'off') return log(`updates: off (${mode.reason})`)
+      updater = await startUpdater({
+        mode: mode.mode,
+        currentVersion: app.getVersion(),
+        autoInstall: settings.get().autoInstallUpdates,
+        log,
+        changed: () => updateTray(),
+        beforeRestart: () => {
+          quitting = true
+        }
+      })
+    })
+    .catch((err: unknown) => log(`updates: ${String(err)}`))
 
   let lastStatus = ''
   let lastProblem: string | null = null

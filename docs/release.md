@@ -15,7 +15,15 @@
      installers, unsigned
    - `dayflow-electron-<tag>-mac-<arch>.dmg` for `arm64` and `x64`: disk
      images, ad-hoc signed, not notarized
+   - for electron-updater in the installed apps: `latest.yml` (both Windows
+     installers), `latest-mac.yml` (both disk images and the zips),
+     `dayflow-electron-<tag>-mac-<arch>.zip` (Squirrel.Mac installs updates
+     from these) and a `.blockmap` per installer, dmg and zip (differential
+     downloads)
    - `SHA256SUMS` over all of them
+
+   The feeds are uploaded last, so an installed app never sees a version
+   whose files are still missing.
 
 ## Versions
 
@@ -25,6 +33,33 @@ Electron app (electron-builder's `extraMetadata.version`, so `package.json`
 stays as it is), to the Go helper (`dayflow-linux-helper version`) and to the
 metainfo, where `scripts/metainfo-release.sh` adds the release entry that
 software centers show. `make version` prints it.
+
+## Auto-update
+
+The Windows and macOS builds update themselves with
+[electron-updater](https://www.electron.build/auto-update) from the GitHub
+releases (`publish` in `electron-builder.yml`). The policy is in
+`src/shared/updates.ts`, the Electron side in `src/main/updater.ts`.
+
+- electron-builder writes the feeds and `app-update.yml` (inside the app)
+  because of the `publish` config; every build in CI passes `--publish never`
+  and the release workflow uploads the files instead.
+- Installer names carry the tag (`artifactName` in `electron-builder.yml`),
+  because the feeds point at them by name and electron-updater finds the
+  previous version's blockmap by swapping the version in the URL. The
+  release workflow fails when an installer's name doesn't match the tag.
+- The two Windows builds (x64, arm64) each write a `latest.yml` for their
+  own installer; `scripts/merge-update-feeds.ts` merges them, and
+  electron-updater picks the file whose name contains its architecture. The
+  macOS build writes both architectures into one `latest-mac.yml`.
+- Only stable releases count: a prerelease on GitHub is ignored, and builds
+  from a branch (`0.0.0-...`) and the Flatpak never check.
+- Squirrel.Mac installs an update only when the app is signed with a
+  Developer ID (it checks the new app's signature against the running one).
+  The ad-hoc signed builds therefore only notify and link the release page;
+  installing starts working with the signing below.
+- The updater downloads without a token, so it needs a public repository.
+  While the repository is private, the check fails and logs the error.
 
 ## Signing Windows and macOS
 
@@ -44,7 +79,12 @@ from forks, so those stay unsigned.
 | `APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER` | macOS notarization | App Store Connect API key (`.p8` path), its ID and issuer. Or `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`. |
 
 For macOS also change `electron-builder.yml`: remove `identity: "-"` and
-`hardenedRuntime: false` under `mac`, and add `notarize: true`.
+`hardenedRuntime: false` under `mac`, and add `notarize: true`. The app finds
+the Developer ID signature at start (`codesign -dv`) and then installs updates
+instead of only announcing them. The first signed version still has to be
+installed by hand. On Windows, electron-updater checks the installer's
+signature only once `win.publisherName` is set (unsigned builds skip the
+check); set it together with the certificate.
 electron-builder's default entitlements cover what Electron needs under the
 hardened runtime; the app loads no native modules and starts `osascript` as
 a separate program.

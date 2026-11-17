@@ -285,11 +285,13 @@ flowchart LR
 | `src/cli/` | The `dayflow` CLI and MCP server (`out/main/cli.js`) |
 | `src/main/media.ts` | Serves frames and site icons to the window |
 | `src/main/notifications.ts` | Desktop notifications |
+| `src/main/updater.ts` | Auto-update of the Windows and macOS builds (electron-updater; policy in `src/shared/updates.ts`) |
 | `src/preload/` | The `window.dayflow` API |
 | `src/renderer/src/` | React views: Timeline, Daily, Weekly, Chat, Settings, Onboarding |
 | `src/shared/` | Pure logic used by both sides: days, categories, day canvas geometry (`canvas.ts`), Daily and Weekly math, export, failure kinds |
 | `helper/linux/` | Go helper: `portal/`, `pipewire/`, `wayland/`, `frames/`, commands in `cmd/` |
 | `packaging/` | Flatpak manifest, desktop file and metainfo (`flatpak/`) |
+| `scripts/` | Build version, metainfo release entry, merging the Windows update feeds |
 
 Most logic sits in `src/shared/` and `src/main/analysis/` as pure functions,
 so the tests run without Electron. Run them with `npm test`; run the Go tests

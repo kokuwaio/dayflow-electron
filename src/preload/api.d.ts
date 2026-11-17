@@ -1,6 +1,7 @@
 import type { Feature, FeatureAccess, StandupDraft } from '../shared/daily'
 import type { GoalPlan } from '../shared/day-summary'
 import type { FrameRef } from '../shared/media'
+import type { UpdateMode } from '../shared/updates'
 import type { DayCards, Week } from '../shared/week'
 import type {
   AgentAccessInfo,
@@ -39,6 +40,8 @@ export interface DayflowApi {
   onDailyChanged(cb: () => void): () => void
   /** The app version (1.2.3, or 0.0.0-<branch>.<sha> for development builds). */
   getVersion(): Promise<string>
+  /** Whether this build updates itself: "install", "notify" (unsigned macOS) or "off" (Flatpak, development builds). */
+  getUpdateSupport(): Promise<UpdateMode>
   getConversations(): Promise<ChatConversation[]>
   getChatMessages(conversationId: string): Promise<ChatStoredMessage[]>
   deleteConversation(conversationId: string): Promise<void>

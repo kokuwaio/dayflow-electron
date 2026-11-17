@@ -2,7 +2,9 @@
 
 Every [GitHub release](https://github.com/kokuwaio/dayflow-electron/releases)
 carries the packages below. `<version>` is the release tag, e.g. `v1.2.0`;
-`SHA256SUMS` lists the checksum of every file. The app runs from the tray:
+`SHA256SUMS` lists the checksum of every file. The other files of a release
+(`latest.yml`, `latest-mac.yml`, the `.zip` and `.blockmap` files) are for
+[updates](#updates). The app runs from the tray:
 closing the window keeps it recording; quit from the tray.
 
 | System | Package | File |
@@ -62,7 +64,9 @@ your user; `make dev` starts it without packaging, with hot reload.
 
 Download `dayflow-electron-<version>-win-x64.exe` (or `-win-arm64.exe` on ARM
 devices) and run it. It installs for your user only, without administrator
-rights, and asks for the folder. Updates install over the old version.
+rights, and asks for the folder. Later versions install themselves (see
+[Updates](#updates)); an installer run by hand also installs over the old
+version.
 
 The installer isn't signed yet, so SmartScreen warns about an unknown
 publisher: click **More info**, then **Run anyway**.
@@ -95,6 +99,19 @@ Privacy & Security → Screen Recording**, and quit and reopen the app. Until it
 is signed, macOS may ask for this permission again after an update.
 
 Your data lives in `~/Library/Application Support/dayflow-electron`.
+
+## Updates
+
+| Package | How it updates |
+| --- | --- |
+| Flatpak | Through Flatpak: install the newer bundle over the old one (later from a Flatpak repository, with `flatpak update`). The app does not update itself. |
+| Windows | The app checks GitHub Releases at start and every 6 hours, downloads a newer version in the background and installs it the next time you quit. The tray menu then offers **Restart to update to …**, and a notification says the update is ready. |
+| macOS | Same as Windows once the app is signed with an Apple Developer ID. Until then macOS won't let it replace itself: it only tells you that a version is out (notification and **Get version …** in the tray), and you install the new disk image by hand. |
+
+**Settings → Other → Install updates automatically** (on by default) turns
+the background download off: the app then only tells you about a new version,
+and the tray menu offers **Download version …**. Builds from a branch
+(`0.0.0-...`) never update.
 
 ## The command-line tool
 

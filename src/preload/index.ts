@@ -20,6 +20,7 @@ const api: DayflowApi = {
     return () => ipcRenderer.off('daily:changed', listener)
   },
   getVersion: () => ipcRenderer.invoke('app:version'),
+  getUpdateSupport: () => ipcRenderer.invoke('updates:support'),
   getConversations: () => ipcRenderer.invoke('chat:conversations'),
   getChatMessages: (id) => ipcRenderer.invoke('chat:messages', id),
   deleteConversation: (id) => ipcRenderer.invoke('chat:delete', id),
