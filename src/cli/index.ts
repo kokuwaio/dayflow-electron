@@ -1,6 +1,6 @@
-// Entry point of the `dayflow` CLI and MCP server. Electron runs it in Node
+// Entry point of the `dayflow-electron` CLI and MCP server. Electron runs it in Node
 // mode (ELECTRON_RUN_AS_NODE=1), so it may use Node only, never the
-// `electron` module. In the Flatpak: `flatpak run --command=dayflow-cli
+// `electron` module. In the Flatpak: `flatpak run --command=dayflow-electron-cli
 // io.github.kokuwaio.DayflowElectron <args>`.
 
 import { homedir } from 'node:os'

@@ -14,10 +14,10 @@ const env = (platform: NodeJS.Platform) => ({
   invocation: { command: '/opt/Dayflow/dayflow', args: ['cli.js'], env: { ELECTRON_RUN_AS_NODE: '1' } }
 })
 
-describe('dayflow link', () => {
+describe('dayflow-electron link', () => {
   it('writes the POSIX wrapper on Linux', () => {
     expect(terminalCommand(false, env('linux')).at(-1)).toContain('not on your PATH')
-    expect(existsSync(join(home, '.local/bin/dayflow'))).toBe(true)
+    expect(existsSync(join(home, '.local/bin/dayflow-electron'))).toBe(true)
   })
 
   it('refuses on Windows, where a shell script is no command', () => {

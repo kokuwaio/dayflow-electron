@@ -115,8 +115,8 @@ and the tray menu offers **Download version …**. Builds from a branch
 
 ## The command-line tool
 
-Agent access (the `dayflow` CLI and its MCP server) ships inside every
-package. **Settings → MCP / CLI** shows the command that adds `dayflow` to
+Agent access (the `dayflow-electron` CLI and its MCP server) ships inside every
+package. **Settings → MCP / CLI** shows the command that adds `dayflow-electron` to
 `~/.local/bin` on Linux and macOS, and connects Claude Code, Codex, Claude
 Desktop, Cursor, VS Code or other MCP clients; [usage.md](usage.md) explains
 the commands.

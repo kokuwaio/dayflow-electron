@@ -34,7 +34,7 @@ export function createNotifier(opts: {
   return {
     standupReady: () => show('Your daily recap for yesterday is ready', 'Tap to open it in Daily view.', 'daily'),
     firstCards: () =>
-      show('Your first Dayflow cards are ready', 'Take a look at what Dayflow picked up from your last few minutes of work.', 'timeline'),
+      show('Your first Dayflow Electron cards are ready', 'Take a look at what Dayflow Electron picked up from your last few minutes of work.', 'timeline'),
     weeklyUnlocked: () => show('Weekly view is ready', 'Tap to open your weekly review.', 'weekly'),
     providerProblem(message, waitingMinutes) {
       const kind = failureKind(message)
@@ -42,7 +42,7 @@ export function createNotifier(opts: {
       const days = opts.problemDays()
       if (days[kind] === opts.today()) return
       opts.saveProblemDays({ ...days, [kind]: opts.today() })
-      show('Dayflow needs a hand', `${message.slice(0, 200)} ${waiting(waitingMinutes)} of recording is waiting.`, 'timeline')
+      show('Dayflow Electron needs a hand', `${message.slice(0, 200)} ${waiting(waitingMinutes)} of recording is waiting.`, 'timeline')
     }
   }
 }

@@ -14,7 +14,7 @@ export class BridgeError extends Error {
   }
 }
 
-const NOT_RUNNING = "Dayflow isn't running. Reads work offline; edits need the app open."
+const NOT_RUNNING = "Dayflow Electron isn't running. Reads work offline; edits need the app open."
 
 /** Sends one operation to the app and returns its `data` payload. */
 export function sendToApp(socketPath: string, operation: string, args: Record<string, unknown>, timeoutMs = 30_000): Promise<Record<string, unknown>> {
@@ -28,7 +28,7 @@ export function sendToApp(socketPath: string, operation: string, args: Record<st
       if (err) reject(err)
       else resolve(data ?? {})
     }
-    socket.setTimeout(timeoutMs, () => finish(new BridgeError('timeout', 'Dayflow did not answer in time.')))
+    socket.setTimeout(timeoutMs, () => finish(new BridgeError('timeout', 'Dayflow Electron did not answer in time.')))
     socket.on('error', (err: NodeJS.ErrnoException) =>
       finish(
         err.code === 'ENOENT' || err.code === 'ECONNREFUSED'
@@ -36,7 +36,7 @@ export function sendToApp(socketPath: string, operation: string, args: Record<st
           : // Unix socket paths are limited to about 107 bytes.
             err.code === 'EINVAL' || err.code === 'ENAMETOOLONG'
             ? new BridgeError('socket_error', `The data folder path is too long for a Unix socket: ${socketPath}`)
-            : new BridgeError('socket_error', `Could not reach Dayflow: ${err.message}`)
+            : new BridgeError('socket_error', `Could not reach Dayflow Electron: ${err.message}`)
       )
     )
     socket.on('connect', () => {
@@ -46,7 +46,7 @@ export function sendToApp(socketPath: string, operation: string, args: Record<st
           try {
             response = JSON.parse(line)
           } catch {
-            return finish(new BridgeError('protocol_error', 'Unreadable response from Dayflow.'))
+            return finish(new BridgeError('protocol_error', 'Unreadable response from Dayflow Electron.'))
           }
           const r = (response ?? {}) as { ok?: unknown; data?: unknown; error?: { code?: unknown; message?: unknown } }
           if (r.ok === true) {
@@ -56,7 +56,7 @@ export function sendToApp(socketPath: string, operation: string, args: Record<st
           finish(
             new BridgeError(
               typeof r.error?.code === 'string' ? r.error.code : 'unknown',
-              typeof r.error?.message === 'string' ? r.error.message : 'Dayflow reported an error.'
+              typeof r.error?.message === 'string' ? r.error.message : 'Dayflow Electron reported an error.'
             )
           )
         },

@@ -94,7 +94,7 @@ export async function startUpdater(o: {
     if (updater.autoDownload) return // the "ready" notification follows
     notify(
       `available ${info.version}`,
-      `Dayflow ${info.version} is available`,
+      `Dayflow Electron ${info.version} is available`,
       install ? 'Click to download it.' : "This copy can't install updates itself. Click to open the download page.",
       () => run(install ? 'download' : 'open-release')
     )
@@ -104,7 +104,7 @@ export async function startUpdater(o: {
   })
   updater.on('update-downloaded', (info) => {
     set({ kind: 'ready', version: info.version })
-    notify(`ready ${info.version}`, `Dayflow ${info.version} is ready`, 'Restart Dayflow to update, or it updates the next time you quit.', restart)
+    notify(`ready ${info.version}`, `Dayflow Electron ${info.version} is ready`, 'Restart Dayflow Electron to update, or it updates the next time you quit.', restart)
   })
   updater.on('error', () => {
     // Logged by the logger; a failed download can be tried again.

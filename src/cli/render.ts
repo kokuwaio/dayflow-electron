@@ -1,4 +1,4 @@
-// Human output of the `dayflow` CLI, after upstream Dayflow
+// Human output of the `dayflow-electron` CLI, after upstream Dayflow
 // (tools/dayflow-cli/Sources/dayflow/Render.swift, main.swift). ANSI styling
 // only when stdout is a terminal, so piped output stays clean.
 
@@ -62,7 +62,7 @@ export function renderTimeline(day: string, cards: TimelineCard[], detail: Timel
     const totals = new Map<string, number>()
     for (const c of cards) totals.set(c.category, (totals.get(c.category) ?? 0) + durationMinutes(c))
     const parts = [...totals].sort((a, b) => b[1] - a[1]).map(([name, minutes]) => `${name} ${formatMinutes(minutes)}`)
-    out.push('', `  ${parts.join(' · ')}`, '', `  ${s.dim}${cards.length} activities · dayflow timeline --summary for descriptions${s.reset}`)
+    out.push('', `  ${parts.join(' · ')}`, '', `  ${s.dim}${cards.length} activities · dayflow-electron timeline --summary for descriptions${s.reset}`)
   }
   return out
 }
@@ -169,11 +169,11 @@ export function renderStatus(v: StatusView, s: Style): string[] {
     const minutes = Math.floor((v.now - v.lastCaptureAt) / 60)
     capture = minutes < 2 ? 'last capture just now' : `last capture ${formatMinutes(minutes)} ago`
   }
-  const out = [`  Dayflow · ${capture}`, `  Today: ${v.today} (day starts 4:00 AM, ${timeZone()})`]
+  const out = [`  Dayflow Electron · ${capture}`, `  Today: ${v.today} (day starts 4:00 AM, ${timeZone()})`]
   if (v.pendingBatches > 0) out.push(`  Analysis backlog: ${v.pendingBatches} batch${v.pendingBatches === 1 ? '' : 'es'}`)
   out.push(
     v.editsEnabled
-      ? `  Edits: on ${s.dim}(${v.appRunning ? 'Dayflow is listening' : 'needs Dayflow running'})${s.reset}`
+      ? `  Edits: on ${s.dim}(${v.appRunning ? 'Dayflow Electron is listening' : 'needs Dayflow Electron running'})${s.reset}`
       : `  Edits: off ${s.dim}(turn on in Settings → MCP / CLI)${s.reset}`
   )
   return out

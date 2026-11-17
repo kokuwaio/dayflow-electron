@@ -2,7 +2,7 @@
 // (Core/AgentAccess/AgentClientRegistration.swift, CodexMCPRegistration.swift).
 // - Claude Code and Codex: their own `mcp add` command on the host. Upstream
 //   edits ~/.claude.json directly; the CLI keeps Claude Code's own writes safe.
-// - Claude Desktop: the "dayflow" entry merged into claude_desktop_config.json,
+// - Claude Desktop: the "dayflow-electron" entry merged into claude_desktop_config.json,
 //   like upstream. A config that does not parse is reported, never rewritten.
 // - Cursor and VS Code: install deep links; they write their own config after
 //   their own consent dialog, so whether they are connected is unknown.
@@ -144,12 +144,12 @@ async function cliConnect(client: CliName, env: ClientEnv): Promise<AgentClientS
   const reg = mcpRegistration(client, env.invocation)
   const run = await locate(client, env, reg.add)
   if (typeof run !== 'function') return run
-  // Replace only our own "dayflow" entry, so a stale path gets repaired.
+  // Replace only our own "dayflow-electron" entry, so a stale path gets repaired.
   await run(reg.remove)
   const added = await run(reg.add)
   if (added.code !== 0) return { state: 'failed', message: lastLine(added.stderr) || lastLine(added.stdout) || `${AGENT_CLIENT_NAMES[client]} could not add the connection.` }
   const after = await check(client, run, env.invocation)
-  return after === 'connected' ? { state: 'connected' } : { state: 'failed', message: `${AGENT_CLIENT_NAMES[client]} didn't keep the Dayflow connection.` }
+  return after === 'connected' ? { state: 'connected' } : { state: 'failed', message: `${AGENT_CLIENT_NAMES[client]} didn't keep the Dayflow Electron connection.` }
 }
 
 async function cliDisconnect(client: CliName, env: ClientEnv): Promise<AgentClientState> {
@@ -260,7 +260,7 @@ export function disconnectClient(client: AgentClient, env: ClientEnv): Promise<A
 /**
  * Upstream's repairStaleRegistrations(), run at launch: configs record the
  * path of the app, which goes stale when it moves or updates to another
- * folder. Rewrites only "dayflow" entries that exist and point elsewhere.
+ * folder. Rewrites only "dayflow-electron" entries that exist and point elsewhere.
  * The Flatpak's `flatpak run` command never goes stale, so it skips this.
  * Returns one line per repaired or failed client, for the log.
  */

@@ -138,13 +138,13 @@ export function Chat() {
           <h2>
             Unlock Beta<span className="beta">BETA</span>
           </h2>
-          <p>Chat lets you ask questions about your Dayflow activity and get summaries, comparisons, and insights.</p>
+          <p>Chat lets you ask questions about your Dayflow Electron activity and get summaries, comparisons, and insights.</p>
           <ul className="requirements">
             <li>
               <Zap size={18} color="var(--accent-icon)" />
               <div>
                 <strong>10 hours of timeline data required</strong>
-                <span className="note">Chat unlocks after Dayflow has analyzed enough activity. {access.label}</span>
+                <span className="note">Chat unlocks after Dayflow Electron has analyzed enough activity. {access.label}</span>
               </div>
             </li>
             <li>
@@ -227,7 +227,7 @@ export function Chat() {
           <textarea
             value={input}
             rows={2}
-            placeholder="Ask about your Dayflow data..."
+            placeholder="Ask about your Dayflow Electron data..."
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -284,7 +284,7 @@ function Welcome({ onPick }: { onPick: (prompt: string) => void }) {
           <MessagesSquare size={18} />
         </span>
         <div>
-          <h2>Ask about your Dayflow data</h2>
+          <h2>Ask about your Dayflow Electron data</h2>
           <p>Ask questions, analyze your timeline, and generate charts/graphs.</p>
           <p className="note">I remember your response preferences, so feel free to teach me your style.</p>
         </div>

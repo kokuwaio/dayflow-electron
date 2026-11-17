@@ -57,7 +57,7 @@ describe('CLI ↔ app bridge', () => {
     await server!.stop()
     expect(await failure(sendToApp(agentSocketPath(dir), 'category_add', { name: 'x' }))).toEqual({
       code: 'app_not_running',
-      message: "Dayflow isn't running. Reads work offline; edits need the app open."
+      message: "Dayflow Electron isn't running. Reads work offline; edits need the app open."
     })
   })
 })

@@ -51,7 +51,7 @@ describe('bridge messages', () => {
     edits = false
     expect(await handleBridgeLine(request({ operation: 'category_add', arguments: { name: 'x' } }), deps())).toEqual({
       ok: false,
-      error: { code: 'edits_disabled', message: 'Editing is off in Dayflow → Settings → MCP / CLI.' }
+      error: { code: 'edits_disabled', message: 'Editing is off in Dayflow Electron → Settings → MCP / CLI.' }
     })
     expect(handled).toEqual([])
     expect(logged).toEqual([])

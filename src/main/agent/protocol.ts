@@ -1,4 +1,4 @@
-// The write bridge between the `dayflow` CLI (and its MCP server) and the
+// The write bridge between the `dayflow-electron` CLI (and its MCP server) and the
 // running app, after upstream Dayflow (Core/AgentAccess/AgentBridgeServer.swift,
 // tools/dayflow-cli/Sources/dayflow/Bridge.swift).
 //

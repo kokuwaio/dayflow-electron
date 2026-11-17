@@ -120,7 +120,7 @@ export interface Settings {
 export type AgentClient = CliName | 'claude-desktop' | 'cursor' | 'vscode'
 
 /**
- * Whether a client has the "dayflow" MCP server; "manual" when the app cannot
+ * Whether a client has the "dayflow-electron" MCP server; "manual" when the app cannot
  * reach the client and shows what to run or paste instead; "openedInstaller"
  * after an install link opened (the client finishes in its own dialog).
  */
@@ -133,7 +133,7 @@ export type AgentClientState =
 export interface AgentAccessInfo {
   /** The command line that starts the CLI (append "mcp" for the MCP server). */
   command: string
-  /** Paste into a terminal to install `dayflow` into ~/.local/bin, or remove it; null on Windows. */
+  /** Paste into a terminal to install `dayflow-electron` into ~/.local/bin, or remove it; null on Windows. */
   terminal: { install: string; remove: string } | null
   /** JSON for MCP clients without a registration command. */
   configSnippet: string

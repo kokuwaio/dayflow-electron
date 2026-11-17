@@ -82,7 +82,7 @@ export interface DayflowApi {
   checkCli(cli: CliName): Promise<{ ok: boolean; message: string }>
   /** How AI tools and terminals start the bundled CLI. */
   getAgentAccess(): Promise<AgentAccessInfo>
-  /** Looks up, adds or removes the "dayflow" MCP server in an AI tool; for Cursor and VS Code "connect" opens their install link. */
+  /** Looks up, adds or removes the "dayflow-electron" MCP server in an AI tool; for Cursor and VS Code "connect" opens their install link. */
   agentClient(client: AgentClient, action: 'status' | 'connect' | 'disconnect'): Promise<AgentClientState>
   onCardsChanged(cb: () => void): () => void
   onStatus(cb: (status: AppStatus) => void): () => void

@@ -1,6 +1,6 @@
 // Client configs and install links for the MCP server, after upstream Dayflow
 // (Core/AgentAccess/AgentClientRegistration.swift): Claude Desktop gets the
-// "dayflow" entry merged into its JSON config; Cursor and VS Code get install
+// "dayflow-electron" entry merged into its JSON config; Cursor and VS Code get install
 // deep links and write their own config after their own consent dialog.
 // Pure functions: the caller reads and writes the files.
 
@@ -23,18 +23,18 @@ function parseConfig(text: string | null, file: string): ConfigResult<{ config: 
   try {
     parsed = JSON.parse(text)
   } catch {
-    return { ok: false, error: `${file} exists but isn't valid JSON, so Dayflow left it alone.` }
+    return { ok: false, error: `${file} exists but isn't valid JSON, so Dayflow Electron left it alone.` }
   }
-  if (!isObject(parsed)) return { ok: false, error: `${file} isn't a JSON object, so Dayflow left it alone.` }
+  if (!isObject(parsed)) return { ok: false, error: `${file} isn't a JSON object, so Dayflow Electron left it alone.` }
   if (parsed.mcpServers !== undefined && !isObject(parsed.mcpServers)) {
-    return { ok: false, error: `"mcpServers" in ${file} isn't an object, so Dayflow left it alone.` }
+    return { ok: false, error: `"mcpServers" in ${file} isn't an object, so Dayflow Electron left it alone.` }
   }
   return { ok: true, config: parsed }
 }
 
 const serialize = (config: Json) => `${JSON.stringify(config, null, 2)}\n`
 
-/** The "dayflow" entry under mcpServers, or null when there is none. */
+/** The "dayflow-electron" entry under mcpServers, or null when there is none. */
 export function readServerEntry(text: string | null, file = 'The config'): ConfigResult<{ entry: unknown }> {
   const parsed = parseConfig(text, file)
   if (!parsed.ok) return parsed
@@ -42,7 +42,7 @@ export function readServerEntry(text: string | null, file = 'The config'): Confi
   return { ok: true, entry: servers?.[MCP_SERVER_NAME] ?? null }
 }
 
-/** Adds or replaces only the "dayflow" entry under mcpServers; every other key stays as it was. */
+/** Adds or replaces only the "dayflow-electron" entry under mcpServers; every other key stays as it was. */
 export function mergeServerEntry(text: string | null, inv: Invocation, file = 'The config'): ConfigResult<{ text: string }> {
   const parsed = parseConfig(text, file)
   if (!parsed.ok) return parsed
@@ -51,7 +51,7 @@ export function mergeServerEntry(text: string | null, inv: Invocation, file = 'T
   return { ok: true, text: serialize({ ...parsed.config, mcpServers: servers }) }
 }
 
-/** Removes the "dayflow" entry; without one the text comes back unchanged. */
+/** Removes the "dayflow-electron" entry; without one the text comes back unchanged. */
 export function removeServerEntry(text: string | null, file = 'The config'): ConfigResult<{ text: string | null }> {
   const parsed = parseConfig(text, file)
   if (!parsed.ok) return parsed

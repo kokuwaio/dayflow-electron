@@ -133,8 +133,8 @@ function StatusCard({ box, recorder, onResume }: { box: { top: number; height: n
         <Icon size={11} fill="currentColor" strokeWidth={0} />
         <span>
           {recorder === 'paused'
-            ? "Dayflow is paused. Click 'Resume' to generate new activity cards."
-            : "Dayflow isn't recording. Click 'Resume' to generate new activity cards."}
+            ? "Dayflow Electron is paused. Click 'Resume' to generate new activity cards."
+            : "Dayflow Electron isn't recording. Click 'Resume' to generate new activity cards."}
         </span>
       </button>
     )

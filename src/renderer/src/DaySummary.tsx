@@ -89,9 +89,9 @@ export function DaySummary(props: {
   const statusLine = plan.skipped
     ? 'Set your goals for today to activate the progress bars below.'
     : isToday && props.recorder === 'paused'
-      ? 'Dayflow is paused. Resume to continue tracking your progress.'
+      ? 'Dayflow Electron is paused. Resume to continue tracking your progress.'
       : isToday && props.recorder === 'stopped'
-        ? 'Start Dayflow to continue tracking your progress.'
+        ? 'Start Dayflow Electron to continue tracking your progress.'
         : 'Tracking progress from your focus and distraction categories.'
 
   return (

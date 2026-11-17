@@ -33,9 +33,9 @@ export async function handleBridgeLine(line: string, deps: BridgeDeps): Promise<
   }
   if (!message || typeof message !== 'object' || Array.isArray(message)) return failure('protocol_error', 'Unreadable request.')
   const m = message as Record<string, unknown>
-  if (m.protocol_version !== BRIDGE_PROTOCOL_VERSION) return failure('protocol_mismatch', 'Update Dayflow. The CLI and app disagree on protocol.')
+  if (m.protocol_version !== BRIDGE_PROTOCOL_VERSION) return failure('protocol_mismatch', 'Update Dayflow Electron. The CLI and app disagree on protocol.')
   // Authoritative permission check, independent of whether the CLI checked.
-  if (!deps.editsEnabled()) return failure('edits_disabled', 'Editing is off in Dayflow → Settings → MCP / CLI.')
+  if (!deps.editsEnabled()) return failure('edits_disabled', 'Editing is off in Dayflow Electron → Settings → MCP / CLI.')
   const operation = m.operation
   if (typeof operation !== 'string' || !(WRITE_OPERATIONS as readonly string[]).includes(operation)) {
     return failure('unknown_operation', `Unknown operation: ${String(operation)}`)

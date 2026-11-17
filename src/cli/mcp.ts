@@ -1,6 +1,6 @@
 // The MCP server: JSON-RPC 2.0 over stdio, one message per line, after
 // upstream Dayflow (tools/dayflow-cli/Sources/dayflow/MCPServer.swift).
-// Clients spawn `dayflow mcp`; stdout carries protocol frames only.
+// Clients spawn `dayflow-electron mcp`; stdout carries protocol frames only.
 //
 // Read tools are always available. Write tools appear in tools/list only
 // while "Allow edits" is on, so a model can't see or attempt them otherwise.
@@ -19,7 +19,7 @@ const UNTRUSTED_NOTE =
 
 type Schema = Record<string, unknown>
 const schema = (properties: Record<string, Schema>, required: string[] = []) => ({ type: 'object', properties, required })
-const dateProperty = { type: 'string', description: 'Day as YYYY-MM-DD. Omit for the current Dayflow day (days start at 4 AM).' }
+const dateProperty = { type: 'string', description: 'Day as YYYY-MM-DD. Omit for the current Dayflow Electron day (days start at 4 AM).' }
 const READ = { readOnlyHint: true, idempotentHint: true }
 const WRITE = { readOnlyHint: false, destructiveHint: false }
 const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true }
@@ -40,7 +40,7 @@ const READ_TOOLS: Tool[] = [
   },
   {
     name: 'get_timeline',
-    description: `Activities for one Dayflow day: times, titles, one-line summaries, categories, and record IDs. Each activity has a longer detailed write-up NOT included here — call get_activity_detail for specific activities that need depth. ${UNTRUSTED_NOTE}`,
+    description: `Activities for one Dayflow Electron day: times, titles, one-line summaries, categories, and record IDs. Each activity has a longer detailed write-up NOT included here — call get_activity_detail for specific activities that need depth. ${UNTRUSTED_NOTE}`,
     inputSchema: schema({ date: dateProperty }),
     annotations: READ
   },
@@ -58,7 +58,7 @@ const READ_TOOLS: Tool[] = [
   },
   {
     name: 'get_daily',
-    description: 'The Daily standup document Dayflow generated: highlights, tasks, blockers. Use for standups and status updates.',
+    description: 'The Daily standup document Dayflow Electron generated: highlights, tasks, blockers. Use for standups and status updates.',
     inputSchema: schema({ date: dateProperty }),
     annotations: READ
   },
@@ -71,7 +71,7 @@ const READ_TOOLS: Tool[] = [
   { name: 'list_categories', description: "The user's timeline categories with colors.", inputSchema: schema({}), annotations: READ },
   {
     name: 'get_status',
-    description: "Dayflow's state: current day, capture freshness, analysis backlog, whether edits are enabled.",
+    description: "Dayflow Electron's state: current day, capture freshness, analysis backlog, whether edits are enabled.",
     inputSchema: schema({}),
     annotations: READ
   }
@@ -200,7 +200,7 @@ export function createMcpServer(deps: McpDeps) {
           const day = dayArg(args)
           if (!day) return toolError('Invalid date. Use YYYY-MM-DD.')
           const entry = store().standup(day)
-          return entry ? toolResult(P.daily(day, entry)) : toolError(`No Daily for ${day}. Dayflow generates one after a day with enough activity.`)
+          return entry ? toolResult(P.daily(day, entry)) : toolError(`No Daily for ${day}. Dayflow Electron generates one after a day with enough activity.`)
         }
         case 'get_weekly': {
           const day = dayArg(args)
@@ -226,13 +226,13 @@ export function createMcpServer(deps: McpDeps) {
         }
       }
     } catch (err) {
-      if (err instanceof NoDataError) return toolError('No Dayflow data found. The user needs to open Dayflow and record first.')
+      if (err instanceof NoDataError) return toolError('No Dayflow Electron data found. The user needs to open Dayflow Electron and record first.')
       return toolError(`Query failed: ${errorMessage(err)}`)
     }
   }
 
   async function write(name: string, operation: string, args: Record<string, unknown>) {
-    if (!deps.source.editsEnabled()) return toolError('Edits are turned off. The user can enable them in Dayflow → Settings → MCP / CLI.')
+    if (!deps.source.editsEnabled()) return toolError('Edits are turned off. The user can enable them in Dayflow Electron → Settings → MCP / CLI.')
     // Only the tool's own parameters travel on; the app validates their values again.
     const known = Object.keys(WRITE_TOOLS.find((t) => t.name === name)!.inputSchema.properties)
     const forwarded = Object.fromEntries(Object.entries(args).filter(([k]) => known.includes(k)))
@@ -258,7 +258,7 @@ export function createMcpServer(deps: McpDeps) {
         return reply({
           protocolVersion: MCP_PROTOCOL_VERSION,
           capabilities: { tools: { listChanged: false } },
-          serverInfo: { name: 'dayflow', version: SERVER_VERSION }
+          serverInfo: { name: 'dayflow-electron', version: SERVER_VERSION }
         })
       case 'ping':
         return reply({})

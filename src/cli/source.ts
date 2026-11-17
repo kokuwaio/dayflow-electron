@@ -53,7 +53,7 @@ export interface ReadSource {
 
 export class NoDataError extends Error {
   constructor() {
-    super('No Dayflow data found. Open Dayflow and let it record for a bit.')
+    super('No Dayflow Electron data found. Open Dayflow Electron and let it record for a bit.')
   }
 }
 

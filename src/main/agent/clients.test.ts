@@ -50,7 +50,7 @@ describe('MCP client registration', () => {
     const state = await connectClient('claude', env(runner))
     expect(state).toMatchObject({
       state: 'manual',
-      command: `claude mcp add --scope user dayflow -- flatpak run --command=dayflow-cli ${APP} mcp`
+      command: `claude mcp add --scope user dayflow-electron -- flatpak run --command=dayflow-electron-cli ${APP} mcp`
     })
     expect(calls).toEqual(['flatpak-spawn --host true'])
   })
@@ -60,14 +60,14 @@ describe('MCP client registration', () => {
     expect(await clientStatus('codex', env(runner))).toEqual({ state: 'notFound', message: 'Not found' })
   })
 
-  it('replaces the dayflow entry with codex mcp add and checks that it stuck', async () => {
-    const entry = JSON.stringify({ name: 'dayflow', transport: { type: 'stdio', command: 'flatpak', args: ['run', '--command=dayflow-cli', APP, 'mcp'] } })
-    const { runner, calls } = fakeRunner((line) => (line.endsWith('mcp get dayflow --json') ? { stdout: entry } : {}))
+  it('replaces the dayflow-electron entry with codex mcp add and checks that it stuck', async () => {
+    const entry = JSON.stringify({ name: 'dayflow-electron', transport: { type: 'stdio', command: 'flatpak', args: ['run', '--command=dayflow-electron-cli', APP, 'mcp'] } })
+    const { runner, calls } = fakeRunner((line) => (line.endsWith('mcp get dayflow-electron --json') ? { stdout: entry } : {}))
     expect(await connectClient('codex', env(runner))).toEqual({ state: 'connected' })
     expect(calls.filter((c) => c.startsWith(CLI)).map((c) => c.slice(CLI.length + 1))).toEqual([
-      'mcp remove dayflow',
-      `mcp add dayflow -- flatpak run --command=dayflow-cli ${APP} mcp`,
-      'mcp get dayflow --json'
+      'mcp remove dayflow-electron',
+      `mcp add dayflow-electron -- flatpak run --command=dayflow-electron-cli ${APP} mcp`,
+      'mcp get dayflow-electron --json'
     ])
   })
 
@@ -106,11 +106,11 @@ describe('Claude Desktop', () => {
     expect(await clientStatus('claude-desktop', outside(memoryFiles({}).host))).toEqual({ state: 'notFound', message: 'Not found' })
   })
 
-  it('merges the dayflow entry into its config and keeps the other servers', async () => {
+  it('merges the dayflow-electron entry into its config and keeps the other servers', async () => {
     const { host, files } = memoryFiles({ [DESKTOP]: JSON.stringify({ mcpServers: { other: { command: 'x' } } }) }, ['/home/me/.config/Claude'])
     expect(await clientStatus('claude-desktop', outside(host))).toEqual({ state: 'available' })
     expect(await connectClient('claude-desktop', outside(host))).toEqual({ state: 'connected' })
-    expect(JSON.parse(files[DESKTOP] ?? '')).toEqual({ mcpServers: { other: { command: 'x' }, dayflow: PLAIN_ENTRY } })
+    expect(JSON.parse(files[DESKTOP] ?? '')).toEqual({ mcpServers: { other: { command: 'x' }, 'dayflow-electron': PLAIN_ENTRY } })
     expect(await clientStatus('claude-desktop', outside(host))).toEqual({ state: 'connected' })
     expect(await disconnectClient('claude-desktop', outside(host))).toEqual({ state: 'available' })
     expect(JSON.parse(files[DESKTOP] ?? '')).toEqual({ mcpServers: { other: { command: 'x' } } })
@@ -127,7 +127,7 @@ describe('Claude Desktop', () => {
     const { runner } = fakeRunner((line) => (line === 'flatpak-spawn --host true' ? { code: 1 } : {}))
     const state = await connectClient('claude-desktop', env(runner))
     expect(state).toMatchObject({ state: 'manual', message: expect.stringContaining(DESKTOP) })
-    expect(state.state === 'manual' && JSON.parse(`{${state.command}}`).dayflow.command).toBe('flatpak')
+    expect(state.state === 'manual' && JSON.parse(`{${state.command}}`)['dayflow-electron'].command).toBe('flatpak')
   })
 
   it('reads and writes host files through flatpak-spawn inside the Flatpak', async () => {
@@ -152,7 +152,7 @@ describe('Cursor and VS Code', () => {
     expect(await clientStatus('cursor', e)).toEqual({ state: 'available' })
     expect(await clientStatus('vscode', e)).toEqual({ state: 'notFound', message: 'Not found' })
     expect(await connectClient('cursor', e)).toEqual({ state: 'openedInstaller' })
-    expect(opened[0]).toMatch(/^cursor:\/\/anysphere\.cursor-deeplink\/mcp\/install\?name=dayflow&config=/)
+    expect(opened[0]).toMatch(/^cursor:\/\/anysphere\.cursor-deeplink\/mcp\/install\?name=dayflow-electron&config=/)
     await connectClient('vscode', e)
     expect(opened[1]).toMatch(/^vscode:mcp\/install\?/)
   })
@@ -172,19 +172,19 @@ describe('stale registrations at launch', () => {
   it('rewrites Claude Desktop and re-adds Claude Code and Codex entries that point at an old copy', async () => {
     const old = { command: 'env', args: ['ELECTRON_RUN_AS_NODE=1', '/old/electron', '/old/cli.js', 'mcp'] }
     const { host, files } = memoryFiles({
-      [DESKTOP]: JSON.stringify({ mcpServers: { dayflow: old, other: { command: 'x' } } }),
-      '/home/me/.claude.json': JSON.stringify({ mcpServers: { dayflow: old } })
+      [DESKTOP]: JSON.stringify({ mcpServers: { 'dayflow-electron': old, other: { command: 'x' } } }),
+      '/home/me/.claude.json': JSON.stringify({ mcpServers: { 'dayflow-electron': old } })
     })
     let codexAdded = false
     const { runner, calls } = fakeRunner((line) => {
       if (line.includes('codex mcp add')) codexAdded = true
-      if (line.endsWith('codex mcp get dayflow --json')) return { stdout: JSON.stringify({ transport: codexAdded ? PLAIN_ENTRY : old }) }
+      if (line.endsWith('codex mcp get dayflow-electron --json')) return { stdout: JSON.stringify({ transport: codexAdded ? PLAIN_ENTRY : old }) }
       return {}
     })
     const report = await repairStaleRegistrations((client) => ({ ...outside(host, runner), configuredPath: `/usr/bin/${client === 'codex' ? 'codex' : 'claude'}` }))
-    expect(JSON.parse(files[DESKTOP] ?? '')).toEqual({ mcpServers: { dayflow: PLAIN_ENTRY, other: { command: 'x' } } })
-    expect(calls.some((c) => c.includes('claude mcp add --scope user dayflow -e ELECTRON_RUN_AS_NODE=1 -- /opt/app/dayflow-electron /opt/app/cli.js mcp'))).toBe(true)
-    expect(calls.some((c) => c.includes('codex mcp add dayflow --env ELECTRON_RUN_AS_NODE=1 -- /opt/app/dayflow-electron'))).toBe(true)
+    expect(JSON.parse(files[DESKTOP] ?? '')).toEqual({ mcpServers: { 'dayflow-electron': PLAIN_ENTRY, other: { command: 'x' } } })
+    expect(calls.some((c) => c.includes('claude mcp add --scope user dayflow-electron -e ELECTRON_RUN_AS_NODE=1 -- /opt/app/dayflow-electron /opt/app/cli.js mcp'))).toBe(true)
+    expect(calls.some((c) => c.includes('codex mcp add dayflow-electron --env ELECTRON_RUN_AS_NODE=1 -- /opt/app/dayflow-electron'))).toBe(true)
     expect(report).toEqual([
       'repaired the stale Claude Desktop registration',
       'repaired the stale Claude Code registration',
@@ -193,7 +193,7 @@ describe('stale registrations at launch', () => {
   })
 
   it('leaves current, missing and unparsable entries alone, and skips the Flatpak', async () => {
-    const { host, files } = memoryFiles({ [DESKTOP]: JSON.stringify({ mcpServers: { dayflow: PLAIN_ENTRY } }), '/home/me/.claude.json': '{ broken' })
+    const { host, files } = memoryFiles({ [DESKTOP]: JSON.stringify({ mcpServers: { 'dayflow-electron': PLAIN_ENTRY } }), '/home/me/.claude.json': '{ broken' })
     const { runner, calls } = fakeRunner((line) => (line.includes('mcp get') ? { code: 1 } : {}))
     expect(await repairStaleRegistrations(() => outside(host, runner))).toEqual([])
     expect(calls.some((c) => c.includes('mcp add'))).toBe(false)

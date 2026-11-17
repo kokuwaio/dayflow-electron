@@ -1,6 +1,6 @@
 // Settings → "MCP / CLI", after upstream Dayflow
 // (Views/UI/Settings/SettingsAgentAccessTabView.swift): connect AI tools to
-// the bundled `dayflow` CLI, the edits switch, and the terminal command.
+// the bundled `dayflow-electron` CLI, the edits switch, and the terminal command.
 // Claude Code and Codex are connected with their own CLI, Claude Desktop by
 // its config file, Cursor and VS Code through their install links.
 
@@ -29,7 +29,7 @@ export function AgentAccessSettings({ settings, save }: { settings: Settings; sa
     <>
       <Section
         title="Connect to AI tools"
-        sub="Let Codex, Claude, Cursor, and other AI tools read your Dayflow timeline. Connections are saved to each tool's user configuration, so Dayflow is available across projects on this computer. Nothing leaves your computer except what you send in your own conversations."
+        sub="Let Codex, Claude, Cursor, and other AI tools read your Dayflow Electron timeline. Connections are saved to each tool's user configuration, so Dayflow Electron is available across projects on this computer. Nothing leaves your computer except what you send in your own conversations."
       >
         {CLIENTS.map((c) => (
           <ClientRow key={c.client} {...c} />
@@ -47,7 +47,7 @@ export function AgentAccessSettings({ settings, save }: { settings: Settings; sa
       >
         <Row
           label={settings.allowEdits ? 'Edits are on' : 'Edits are off'}
-          sub={settings.allowEdits ? "AI tools can make changes through Dayflow while it's running." : undefined}
+          sub={settings.allowEdits ? "AI tools can make changes through Dayflow Electron while it's running." : undefined}
         >
           <input
             type="checkbox"
@@ -61,11 +61,11 @@ export function AgentAccessSettings({ settings, save }: { settings: Settings; sa
 
       <Section
         title="Terminal command"
-        sub="Adds a dayflow command to ~/.local/bin so you can see your timeline from any terminal. It starts the CLI already inside Dayflow, so it always matches the app. Nothing is downloaded and your shell configuration isn't touched."
+        sub="Adds a dayflow-electron command to ~/.local/bin so you can see your timeline from any terminal. It starts the CLI already inside Dayflow Electron, so it always matches the app. Nothing is downloaded and your shell configuration isn't touched."
       >
         {info?.terminal ? (
           <>
-            <Row label="Install" sub="Run this once in a terminal, then try dayflow timeline." stack>
+            <Row label="Install" sub="Run this once in a terminal, then try dayflow-electron timeline." stack>
               <CommandBlock text={info.terminal.install} />
             </Row>
             <Row label="Remove" sub="Run this to take the command away again." stack>

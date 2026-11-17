@@ -1,4 +1,4 @@
-// JSON payloads shared by `dayflow --json` and the MCP tools, after upstream
+// JSON payloads shared by `dayflow-electron --json` and the MCP tools, after upstream
 // Dayflow (tools/dayflow-cli/Sources/dayflow/JSONOut.swift, main.swift,
 // MCPServer.swift). Keys are snake_case like upstream; every top-level
 // object gets schema_version when it is printed.
@@ -61,7 +61,7 @@ export function timelineEnvelope(day: string, cards: TimelineCard[], detailed: b
     day_boundary_hour: BOUNDARY_HOUR,
     cards: cards.map((c) => activityJson(c, detailed)),
     detail_available: !detailed,
-    hint: detailed ? '' : 'Summaries are abbreviated. Use `dayflow card <record_id>` for the full write-up of a specific activity.'
+    hint: detailed ? '' : 'Summaries are abbreviated. Use `dayflow-electron card <record_id>` for the full write-up of a specific activity.'
   }
 }
 

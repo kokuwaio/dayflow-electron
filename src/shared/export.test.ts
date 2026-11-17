@@ -23,7 +23,7 @@ describe('copy and export formats (upstream TimelineClipboardFormatter)', () => 
   it('copies a day as numbered plain text, leaving out details equal to the summary', () => {
     expect(timelineText('2026-11-17', cards, opts)).toBe(
       [
-        'Dayflow timeline · Today, Nov 17',
+        'Dayflow Electron timeline · Today, Nov 17',
         '',
         '',
         '',
@@ -42,12 +42,12 @@ describe('copy and export formats (upstream TimelineClipboardFormatter)', () => 
   })
 
   it('says so when a day has no cards', () => {
-    expect(timelineText('2026-11-16', [], opts)).toBe('Dayflow timeline · Monday, Nov 16\n\nNo timeline activities were recorded for this day.')
+    expect(timelineText('2026-11-16', [], opts)).toBe('Dayflow Electron timeline · Monday, Nov 16\n\nNo timeline activities were recorded for this day.')
   })
 
   it('copies a week with a section per day and numbering per day', () => {
     const text = weekText('Nov 16 - Nov 22', [{ day: '2026-11-16', cards: [] }, { day: '2026-11-17', cards }], opts)
-    expect(text.startsWith('Dayflow timeline · Nov 16 - Nov 22\n\n\n\nToday, Nov 17\n\n\n\n1. 9:00 AM')).toBe(true)
+    expect(text.startsWith('Dayflow Electron timeline · Nov 16 - Nov 22\n\n\n\nToday, Nov 17\n\n\n\n1. 9:00 AM')).toBe(true)
     expect(text).toContain('\n\n2. 9:45 AM – 10:00 AM: Answered mail')
     expect(text).not.toContain('Monday')
   })
@@ -56,13 +56,13 @@ describe('copy and export formats (upstream TimelineClipboardFormatter)', () => 
     const md = rangeMarkdown([{ day: '2026-11-16', cards: [] }, { day: '2026-11-17', cards: cards.slice(1) }], opts)
     expect(md).toBe(
       [
-        '## Dayflow timeline · Monday, Nov 16',
+        '## Dayflow Electron timeline · Monday, Nov 16',
         '',
         '_No timeline activities were recorded for this day._',
         '',
         '---',
         '',
-        '## Dayflow timeline · Today, Nov 17',
+        '## Dayflow Electron timeline · Today, Nov 17',
         '',
         '',
         '',
@@ -71,6 +71,6 @@ describe('copy and export formats (upstream TimelineClipboardFormatter)', () => 
         '   - Summary: Cleared the inbox.'
       ].join('\n')
     )
-    expect(exportFileName('2026-11-16', '2026-11-17')).toBe('Dayflow timeline 2026-11-16 to 2026-11-17.md')
+    expect(exportFileName('2026-11-16', '2026-11-17')).toBe('Dayflow Electron timeline 2026-11-16 to 2026-11-17.md')
   })
 })

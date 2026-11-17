@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=Dayflow
+Name=Dayflow Electron
 Comment=A timeline of your day from periodic screenshots
 Exec=dayflow-electron %u
 Icon=io.github.kokuwaio.DayflowElectron

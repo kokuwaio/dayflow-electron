@@ -30,7 +30,7 @@ describe('chatSystemPrompt (upstream ChatPromptBuilder)', () => {
 
   it('tools mode is the upstream Gemini prompt with tool instructions', () => {
     const prompt = chatSystemPrompt({ ...base, mode: 'tools' })
-    expect(prompt.startsWith('You are the AI assistant inside Dayflow')).toBe(true)
+    expect(prompt.startsWith('You are the AI assistant inside Dayflow Electron')).toBe(true)
     expect(prompt).toContain('"Yesterday" means the previous 4 AM–4 AM window.')
     expect(prompt).toContain('1. **fetchTimeline**')
     expect(prompt).toContain('```suggestions\n["Question 1?", "Question 2?", "Question 3?"]\n```')
@@ -68,7 +68,7 @@ describe('chatSystemPrompt (upstream ChatPromptBuilder)', () => {
 
   it('context mode keeps upstream charts, chart colors, style, language and memory contract', () => {
     const prompt = chatSystemPrompt({ ...base, mode: 'context', language: 'German' })
-    expect(prompt.startsWith('You are a friendly assistant in Dayflow')).toBe(true)
+    expect(prompt.startsWith('You are a friendly assistant in Dayflow Electron')).toBe(true)
     const charts = prompt.indexOf('## INLINE CHARTS (OPTIONAL)')
     const colors = prompt.indexOf(
       '## CHART COLORS\n\nWhen creating charts based on activity categories, use these exact colors:\n- Work: #1F6FEB\n- Personal: #F96E00\n'

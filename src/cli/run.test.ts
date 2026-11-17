@@ -76,11 +76,11 @@ async function run(...argv: string[]) {
 
 const json = (text: string) => JSON.parse(text)
 
-describe('dayflow CLI: arguments and exit codes', () => {
+describe('dayflow-electron CLI: arguments and exit codes', () => {
   it('prints help without a command', async () => {
     const r = await run()
     expect(r.code).toBe(0)
-    expect(r.out).toContain('dayflow <command> [arguments] [--json]')
+    expect(r.out).toContain('dayflow-electron <command> [arguments] [--json]')
   })
 
   it('exits 2 on unknown commands, bad options and bad dates', async () => {
@@ -120,7 +120,7 @@ describe('dayflow CLI: arguments and exit codes', () => {
   })
 })
 
-describe('dayflow CLI: reads', () => {
+describe('dayflow-electron CLI: reads', () => {
   it('lists a day like upstream, with totals and record IDs', async () => {
     const r = await run('timeline', '2026-11-17')
     expect(r.code).toBe(0)
@@ -128,7 +128,7 @@ describe('dayflow CLI: reads', () => {
     expect(lines[0]).toBe('Tuesday, November 17  2h 15m tracked')
     expect(lines[2]).toMatch(/^ {2}1 {2}9:00 AM – 10:30 AM {4}Fixed the login bug {25} {2}Work$/)
     expect(r.out).toContain('Work 1h 30m · Distraction 30m · System 15m')
-    expect(r.out).toContain('3 activities · dayflow timeline --summary for descriptions')
+    expect(r.out).toContain('3 activities · dayflow-electron timeline --summary for descriptions')
   })
 
   it('filters by category, case-insensitively', async () => {
@@ -220,10 +220,10 @@ describe('dayflow CLI: reads', () => {
   })
 })
 
-describe('dayflow CLI: writes', () => {
+describe('dayflow-electron CLI: writes', () => {
   it('refuses with exit 4 while edits are off, without contacting the app', async () => {
     const r = await run('categories', 'add', 'Reading')
-    expect(r).toMatchObject({ code: 4, err: 'Editing is off. Turn on "Allow edits" in Dayflow → Settings → MCP / CLI.' })
+    expect(r).toMatchObject({ code: 4, err: 'Editing is off. Turn on "Allow edits" in Dayflow Electron → Settings → MCP / CLI.' })
     expect(sent).toEqual([])
   })
 
@@ -279,7 +279,7 @@ describe('dayflow CLI: writes', () => {
   it('maps bridge errors to exit codes: 6 when the app is not running', async () => {
     edits = true
     reply = () => {
-      throw new BridgeError('app_not_running', "Dayflow isn't running. Reads work offline; edits need the app open.")
+      throw new BridgeError('app_not_running', "Dayflow Electron isn't running. Reads work offline; edits need the app open.")
     }
     expect((await run('categories', 'add', 'Reading')).code).toBe(6)
     reply = () => {

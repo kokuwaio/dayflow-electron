@@ -1,4 +1,4 @@
-// Command dispatch of the `dayflow` CLI, after upstream Dayflow
+// Command dispatch of the `dayflow-electron` CLI, after upstream Dayflow
 // (tools/dayflow-cli/Sources/dayflow/main.swift, WriteCommands.swift). Reads
 // work with the app closed and go straight to the database; writes go to the
 // running app over the bridge and need "Allow edits".
@@ -27,7 +27,7 @@ export interface CliContext {
   source: ReadSource
   /** Sends one write to the running app; throws BridgeError. */
   send(operation: string, args: Record<string, unknown>): Promise<Record<string, unknown>>
-  /** `dayflow link` / `unlink`; returns the lines to print. */
+  /** `dayflow-electron link` / `unlink`; returns the lines to print. */
   terminalCommand(remove: boolean): Promise<string[]>
   /** Runs the MCP server until stdin closes. */
   mcp(): Promise<void>
@@ -46,12 +46,12 @@ class Failure extends Error {
 const usage = (message: string) => new Failure(message, EXIT.usage, 'invalid_arguments')
 const notFound = (message: string) => new Failure(message, EXIT.notFound, 'not_found')
 
-export const HELP_TEXT = `dayflow — your Dayflow timeline, in the terminal
+export const HELP_TEXT = `dayflow-electron — your Dayflow Electron timeline, in the terminal
 
 Usage
-  dayflow <command> [arguments] [--json]
+  dayflow-electron <command> [arguments] [--json]
 
-Reading (works even when Dayflow is closed)
+Reading (works even when Dayflow Electron is closed)
   status                     Recording state and today's date
   timeline [YYYY-MM-DD]      A day's activities (aliases: today, yesterday)
     --summary                Include one-line descriptions
@@ -64,7 +64,7 @@ Reading (works even when Dayflow is closed)
   categories                 Category names and colors
   search <text>              Find activities by title or summary
 
-Editing (needs Dayflow running, with edits enabled in Settings → MCP / CLI)
+Editing (needs Dayflow Electron running, with edits enabled in Settings → MCP / CLI)
   timeline update <id> --title <text> | --category <name>
   timeline delete <id>       Asks first
   categories add <name> [--color <hex>]
@@ -76,7 +76,7 @@ Editing (needs Dayflow running, with edits enabled in Settings → MCP / CLI)
            [--focus-category <name>]... [--distraction-category <name>]...
 
 Setup
-  link                       Add \`dayflow\` to ~/.local/bin
+  link                       Add \`dayflow-electron\` to ~/.local/bin
   unlink                     Remove it
   mcp                        Run the MCP server (stdio)
 
@@ -136,7 +136,7 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
 
   const card = (idText: string | undefined) => {
     const id = recordId(idText)
-    if (id === null) throw usage('Usage: dayflow card <record-id>   (IDs come from `dayflow timeline`)')
+    if (id === null) throw usage('Usage: dayflow-electron card <record-id>   (IDs come from `dayflow-electron timeline`)')
     const c = store().card(id)
     if (!c) throw notFound(`No activity with ID ${id}.`)
     if (json) printJSON(P.activityJson(c, true))
@@ -147,7 +147,7 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
     // Standups are keyed by the 4 AM day, like the app's Daily tab.
     const d = day(key)
     const entry = store().standup(d)
-    if (!entry) throw notFound(`No Daily for ${d}. Dayflow generates one after a day with enough activity.`)
+    if (!entry) throw notFound(`No Daily for ${d}. Dayflow Electron generates one after a day with enough activity.`)
     if (json) printJSON(P.daily(d, entry))
     else print(R.renderDaily(d, entry, todayKey(), s))
   }
@@ -168,7 +168,7 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
   }
 
   const search = (text: string) => {
-    if (!text) throw usage('Usage: dayflow search <text>')
+    if (!text) throw usage('Usage: dayflow-electron search <text>')
     const matches = store().searchCards(text, P.SEARCH_LIMIT)
     if (json) printJSON({ query: text, matches: matches.map((c) => P.activityJson(c, false)) })
     else print(R.renderSearch(text, matches, s))
@@ -187,7 +187,7 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
 
   const requireEdits = () => {
     if (!ctx.source.editsEnabled()) {
-      throw new Failure('Editing is off. Turn on "Allow edits" in Dayflow → Settings → MCP / CLI.', EXIT.editsDisabled, 'edits_disabled')
+      throw new Failure('Editing is off. Turn on "Allow edits" in Dayflow Electron → Settings → MCP / CLI.', EXIT.editsDisabled, 'edits_disabled')
     }
   }
 
@@ -223,24 +223,24 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
     switch (sub) {
       case 'add': {
         const name = rest[0]
-        if (!name) throw usage('Usage: dayflow categories add <name> [--color <hex>]')
+        if (!name) throw usage('Usage: dayflow-electron categories add <name> [--color <hex>]')
         const args: Record<string, unknown> = { name }
         const color = value('--color')
         if (color !== undefined) args.color = color
         return report(await send('category_add', args), `Created ${name}`)
       }
       case 'rename':
-        if (rest.length < 2) throw usage('Usage: dayflow categories rename <old-name> <new-name>')
+        if (rest.length < 2) throw usage('Usage: dayflow-electron categories rename <old-name> <new-name>')
         return report(await send('category_update', { name: rest[0], new_name: rest[1] }), `Renamed ${rest[0]} to ${rest[1]}`)
       case 'color':
-        if (rest.length < 2) throw usage('Usage: dayflow categories color <name> <hex>')
+        if (rest.length < 2) throw usage('Usage: dayflow-electron categories color <name> <hex>')
         return report(await send('category_update', { name: rest[0], color: rest[1] }), `${rest[0]} is now ${rest[1]}`)
       case 'describe':
-        if (rest.length < 2) throw usage('Usage: dayflow categories describe <name> <text>')
+        if (rest.length < 2) throw usage('Usage: dayflow-electron categories describe <name> <text>')
         return report(await send('category_update', { name: rest[0], description: rest.slice(1).join(' ') }), `Updated description for ${rest[0]}`)
       case 'remove': {
         const name = rest[0]
-        if (!name) throw usage('Usage: dayflow categories remove <name>')
+        if (!name) throw usage('Usage: dayflow-electron categories remove <name>')
         requireEdits()
         if (!(await confirm(`Delete the category "${name}"? Past activities keep the label but lose the color.`))) return
         return report(await send('category_remove', { name }), `Removed ${name}`)
@@ -252,7 +252,7 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
 
   const timelineWrite = async (sub: 'update' | 'delete', rest: string[]) => {
     const id = recordId(rest[0])
-    if (id === null) throw usage(`Usage: dayflow timeline ${sub} <record-id>`)
+    if (id === null) throw usage(`Usage: dayflow-electron timeline ${sub} <record-id>`)
     if (sub === 'update') {
       const args: Record<string, unknown> = { record_id: id }
       const title = value('--title')
@@ -277,7 +277,7 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
     const focus = minutes('--focus-minutes')
     if (focus === undefined) {
       throw usage(
-        'Usage: dayflow goal set [YYYY-MM-DD] --focus-minutes <n> [--distraction-limit-minutes <n>] [--focus-category <name>]... [--distraction-category <name>]...'
+        'Usage: dayflow-electron goal set [YYYY-MM-DD] --focus-minutes <n> [--distraction-limit-minutes <n>] [--focus-category <name>]... [--distraction-category <name>]...'
       )
     }
     const args: Record<string, unknown> = { date: day(key), focus_minutes: focus }
@@ -326,7 +326,7 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
         else categories()
         break
       case 'goal':
-        if (rest[0] !== 'set') throw usage('Usage: dayflow goal set [YYYY-MM-DD] --focus-minutes <n> ...')
+        if (rest[0] !== 'set') throw usage('Usage: dayflow-electron goal set [YYYY-MM-DD] --focus-minutes <n> ...')
         await goalSet(rest[1])
         break
       case 'search':
@@ -344,7 +344,7 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
         await ctx.mcp()
         break
       default:
-        throw usage(`Unknown command "${command}". Run \`dayflow help\`.`)
+        throw usage(`Unknown command "${command}". Run \`dayflow-electron help\`.`)
     }
     return EXIT.ok
   } catch (err) {

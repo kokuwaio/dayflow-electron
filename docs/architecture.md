@@ -208,11 +208,11 @@ worked.
 
 ## Agent access (CLI and MCP)
 
-The `dayflow` CLI and MCP server (`src/cli/`) are a second entry point of the
+The `dayflow-electron` CLI and MCP server (`src/cli/`) are a second entry point of the
 main build (`out/main/cli.js`). Electron runs it in Node mode
 (`ELECTRON_RUN_AS_NODE=1`), so it uses Node only, never the `electron`
-module. The Flatpak wraps that in `/app/bin/dayflow-cli`, started as
-`flatpak run --command=dayflow-cli io.github.kokuwaio.DayflowElectron`.
+module. The Flatpak wraps that in `/app/bin/dayflow-electron-cli`, started as
+`flatpak run --command=dayflow-electron-cli io.github.kokuwaio.DayflowElectron`.
 
 - **Reads** go straight to the data folder (`DAYFLOW_DATA_DIR`, else
   Electron's userData path; `DAYFLOW_DB` overrides the database): SQLite
@@ -242,7 +242,7 @@ module. The Flatpak wraps that in `/app/bin/dayflow-cli`, started as
 
 ```mermaid
 flowchart LR
-  Client(["Claude Code / Codex /<br/>terminal"]) -- "dayflow mcp · dayflow …" --> CLI["src/cli<br/>(Electron in Node mode)"]
+  Client(["Claude Code / Codex /<br/>terminal"]) -- "dayflow-electron mcp · …" --> CLI["src/cli<br/>(Electron in Node mode)"]
   CLI -- "read-only" --> DB[("dayflow.sqlite")]
   CLI -- "categories, allowEdits" --> Settings[("settings.json")]
   CLI -- "writes: agent.sock<br/>(only while edits are on)" --> Bridge["main: agent/bridge.ts"]
@@ -285,7 +285,7 @@ flowchart LR
 | `src/main/chat/` | Chat: tools, tool loop, system prompts, answering service |
 | `src/main/db/` | Schema migrations and all SQL |
 | `src/main/agent/` | Write bridge for the CLI, its write handlers, MCP client registration |
-| `src/cli/` | The `dayflow` CLI and MCP server (`out/main/cli.js`) |
+| `src/cli/` | The `dayflow-electron` CLI and MCP server (`out/main/cli.js`) |
 | `src/main/media.ts` | Serves frames and site icons to the window |
 | `src/main/notifications.ts` | Desktop notifications |
 | `src/main/updater.ts` | Auto-update of the Windows and macOS builds (electron-updater; policy in `src/shared/updates.ts`) |

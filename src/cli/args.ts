@@ -1,4 +1,4 @@
-// Argument parsing for the `dayflow` CLI, after upstream Dayflow
+// Argument parsing for the `dayflow-electron` CLI, after upstream Dayflow
 // (tools/dayflow-cli/Sources/dayflow/main.swift). Unlike upstream, unknown
 // options are errors instead of being ignored.
 
@@ -61,7 +61,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
       else value = argv[++i]!
       values.set(name, [...(values.get(name) ?? []), value])
     } else {
-      return { ok: false, message: `Unknown option "${name}". Run \`dayflow help\`.` }
+      return { ok: false, message: `Unknown option "${name}". Run \`dayflow-electron help\`.` }
     }
   }
   return { ok: true, positional, switches, values }

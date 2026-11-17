@@ -341,7 +341,7 @@ function idleCard(span: { start: number; end: number }, category: string): NewCa
     category,
     subcategory: '',
     summary: 'You were idle during this period.',
-    detailedSummary: 'Idle period. Dayflow skipped activity summarization for this block.',
+    detailedSummary: 'Idle period. Dayflow Electron skipped activity summarization for this block.',
     distractions: [],
     appSites: {}
   }

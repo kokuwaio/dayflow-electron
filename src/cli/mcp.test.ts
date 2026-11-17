@@ -55,7 +55,7 @@ describe('MCP server', () => {
     expect(await server().handle({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18' } })).toEqual({
       jsonrpc: '2.0',
       id: 1,
-      result: { protocolVersion: '2025-06-18', capabilities: { tools: { listChanged: false } }, serverInfo: { name: 'dayflow', version: '1.0.0' } }
+      result: { protocolVersion: '2025-06-18', capabilities: { tools: { listChanged: false } }, serverInfo: { name: 'dayflow-electron', version: '1.0.0' } }
     })
   })
 
@@ -141,10 +141,10 @@ describe('MCP server', () => {
     expect(await error('get_activity_detail', { record_id: 99 })).toBe('No activity with ID 99.')
     expect(await error('search_activities', {})).toBe('query is required.')
     expect(await error('get_time_breakdown', { from: '2026-11-18', to: '2026-11-17' })).toBe('from and to are required as YYYY-MM-DD, with from first.')
-    expect(await error('get_daily', { date: '2026-11-17' })).toBe('No Daily for 2026-11-17. Dayflow generates one after a day with enough activity.')
+    expect(await error('get_daily', { date: '2026-11-17' })).toBe('No Daily for 2026-11-17. Dayflow Electron generates one after a day with enough activity.')
     expect(await error('nope', {})).toBe('Unknown tool: nope')
     noData = true
-    expect(await error('get_timeline', {})).toBe('No Dayflow data found. The user needs to open Dayflow and record first.')
+    expect(await error('get_timeline', {})).toBe('No Dayflow Electron data found. The user needs to open Dayflow Electron and record first.')
   })
 
   it('rejects malformed tools/call params', async () => {
@@ -157,7 +157,7 @@ describe('MCP server', () => {
 
   it('refuses write tools while edits are off', async () => {
     const r = (await call('create_category', { name: 'Reading' })).result
-    expect(r).toMatchObject({ isError: true, structuredContent: { error: 'Edits are turned off. The user can enable them in Dayflow → Settings → MCP / CLI.' } })
+    expect(r).toMatchObject({ isError: true, structuredContent: { error: 'Edits are turned off. The user can enable them in Dayflow Electron → Settings → MCP / CLI.' } })
     expect(sent).toEqual([])
   })
 
@@ -177,11 +177,11 @@ describe('MCP server', () => {
   it('reports bridge failures as tool errors', async () => {
     edits = true
     bridgeReply = () => {
-      throw new BridgeError('app_not_running', "Dayflow isn't running. Reads work offline; edits need the app open.")
+      throw new BridgeError('app_not_running', "Dayflow Electron isn't running. Reads work offline; edits need the app open.")
     }
     expect((await call('delete_activity', { record_id: 1 })).result).toMatchObject({
       isError: true,
-      structuredContent: { error: "Dayflow isn't running. Reads work offline; edits need the app open." }
+      structuredContent: { error: "Dayflow Electron isn't running. Reads work offline; edits need the app open." }
     })
   })
 })

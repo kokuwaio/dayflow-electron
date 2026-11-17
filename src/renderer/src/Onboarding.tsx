@@ -68,7 +68,7 @@ export function Onboarding({ settings, platform, onDone }: { settings: Settings;
   const ring = RING[step]
 
   return (
-    <div className="onboarding" role="dialog" aria-modal="true" aria-label="Set up Dayflow">
+    <div className="onboarding" role="dialog" aria-modal="true" aria-label="Set up Dayflow Electron">
       <div className="onb-step" key={step}>
         {step === 'intro' && (
           <div className="onb-center">
@@ -88,10 +88,10 @@ export function Onboarding({ settings, platform, onDone }: { settings: Settings;
         )}
         {step === 'role' && (
           <div className="onb-center">
-            <h2 className="role-title">Help Dayflow understand your work patterns better.</h2>
+            <h2 className="role-title">Help Dayflow Electron understand your work patterns better.</h2>
             <div className="onb-text">
               <p className="lead">What do you do for work?</p>
-              <p className="lead">This will help Dayflow generate categories that are most helpful to you.</p>
+              <p className="lead">This will help Dayflow Electron generate categories that are most helpful to you.</p>
             </div>
             <div className="role-chips">
               {Object.keys(CATEGORY_PRESETS).map((r) => (
@@ -127,7 +127,7 @@ export function Onboarding({ settings, platform, onDone }: { settings: Settings;
             </span>
             <h2 className="done-title">You are ready to go!</h2>
             <p className="onb-done-text">
-              To get useful insights, let Dayflow run in the background for an hour or two to gather enough context, then check back in.
+              To get useful insights, let Dayflow Electron run in the background for an hour or two to gather enough context, then check back in.
             </p>
             <Pill
               onClick={async () => {
@@ -135,7 +135,7 @@ export function Onboarding({ settings, platform, onDone }: { settings: Settings;
                 onDone()
               }}
             >
-              Launch Dayflow
+              Launch Dayflow Electron
             </Pill>
             <BackLink onClick={() => setStep('permissions')} />
           </div>
@@ -181,7 +181,7 @@ function ProviderTable({ onSelect, onBack }: { onSelect: (c: Column) => void; on
   )
   return (
     <div className="onb-table-step">
-      <h2>Choose a way to run Dayflow</h2>
+      <h2>Choose a way to run Dayflow Electron</h2>
       <div className="onb-table-wrap">
         <div className="onb-table" style={{ gridTemplateColumns: `140px repeat(${COLUMNS.length}, minmax(120px, 1fr))` }}>
           <span />
@@ -319,7 +319,7 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
           {current === 'Get API key' && (
             <>
               <h4>Get your Gemini API key</h4>
-              <p>Google AI Studio allows you to run Dayflow for free. All you need is a Google account - no credit card required.</p>
+              <p>Google AI Studio allows you to run Dayflow Electron for free. All you need is a Google account - no credit card required.</p>
               <ol className="onb-numbered">
                 <li>Visit Google AI Studio (aistudio.google.com)</li>
                 <li>Click "Get API key"</li>
@@ -342,7 +342,7 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
           {current === 'Before you begin' && cli && (
             <>
               <p>
-                Dayflow uses {CLI_INSTALL[cli].product} through your existing {CLI_INSTALL[cli].subscription} subscription. Install it and sign in
+                Dayflow Electron uses {CLI_INSTALL[cli].product} through your existing {CLI_INSTALL[cli].subscription} subscription. Install it and sign in
                 on this computer, then we'll verify the connection.
               </p>
               <CommandBlock text={CLI_INSTALL[cli].install} />
@@ -407,7 +407,7 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
           {current === 'Complete' && (
             <>
               <h4>All set!</h4>
-              <p>{column.title} is now configured and ready to use with Dayflow.</p>
+              <p>{column.title} is now configured and ready to use with Dayflow Electron.</p>
             </>
           )}
         </div>
@@ -444,7 +444,7 @@ function Permissions({ platform, onBack, onNext }: { platform: string; onBack: (
             {
               title: 'Screen Recording',
               detail:
-                'Periodic screenshots let Dayflow write your timeline for you. macOS asks for the Screen Recording permission on the first capture: allow it in System Settings → Privacy & Security → Screen Recording, then quit and reopen the app.'
+                'Periodic screenshots let Dayflow Electron write your timeline for you. macOS asks for the Screen Recording permission on the first capture: allow it in System Settings → Privacy & Security → Screen Recording, then quit and reopen the app.'
             }
           ]
         : [{ title: 'Nothing to allow', detail: 'Windows needs no permission for screenshots. Recording starts as soon as you launch.' }]
@@ -453,13 +453,13 @@ function Permissions({ platform, onBack, onNext }: { platform: string; onBack: (
       <div className="onb-perms-left">
         <span className="last-step">Last step!</span>
         <h3>Permissions</h3>
-        <p className="muted">Dayflow can help understand your day.</p>
+        <p className="muted">Dayflow Electron can help understand your day.</p>
         <div className="privacy-box">
           <b>
-            <Shield size={14} /> Dayflow is built to be private and secure.
+            <Shield size={14} /> Dayflow Electron is built to be private and secure.
           </b>
-          <p>Dayflow stores all recordings locally on your computer and sends screenshots only to the AI provider you chose.</p>
-          <p>You are always in control. You can pause or turn off Dayflow whenever you like.</p>
+          <p>Dayflow Electron stores all recordings locally on your computer and sends screenshots only to the AI provider you chose.</p>
+          <p>You are always in control. You can pause or turn off Dayflow Electron whenever you like.</p>
         </div>
         {rows.map((r) => (
           <div key={r.title} className="perm-row">
@@ -477,7 +477,7 @@ function Permissions({ platform, onBack, onNext }: { platform: string; onBack: (
           </div>
           <div className="mock-row highlight">
             <span className="mock-icon" />
-            Dayflow
+            Dayflow Electron
             <span className="mock-toggle on" />
           </div>
           <div className="mock-row">

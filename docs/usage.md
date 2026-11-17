@@ -20,7 +20,7 @@ categories), a table comparing the ways to run the app (Claude or ChatGPT
 through their CLIs, the Anthropic API, Gemini, an OpenAI-compatible endpoint
 or a local model), a setup wizard for the one you pick with a connection
 test (**Skip for now** leaves it for Settings), and what recording needs on
-your system. **Launch Dayflow** starts recording.
+your system. **Launch Dayflow Electron** starts recording.
 
 ### Allow screen recording
 
@@ -269,7 +269,7 @@ the next section.
 
 ## Use your timeline from Claude, Codex, Cursor, VS Code and the terminal
 
-The app ships upstream Dayflow's `dayflow` command-line tool and MCP server.
+The app ships upstream Dayflow's command-line tool and MCP server as `dayflow-electron`.
 Both read the database directly and work while the app is closed. AI tools get
 the timeline only when you ask them something in your own conversations.
 
@@ -281,9 +281,9 @@ connecting it.
 
 | Tool | What **Connect** does |
 | --- | --- |
-| Codex | Runs `codex mcp add dayflow ...` on your computer. |
-| Claude Code | Runs `claude mcp add --scope user dayflow ...`, so the server is available in every project. |
-| Claude Desktop | Adds the "dayflow" entry under `mcpServers` in `claude_desktop_config.json` (`~/.config/Claude/` on Linux, `~/Library/Application Support/Claude/` on macOS, `%APPDATA%\Claude\` on Windows) and keeps everything else in it. A file that is not valid JSON is reported and left alone. |
+| Codex | Runs `codex mcp add dayflow-electron ...` on your computer. |
+| Claude Code | Runs `claude mcp add --scope user dayflow-electron ...`, so the server is available in every project. |
+| Claude Desktop | Adds the "dayflow-electron" entry under `mcpServers` in `claude_desktop_config.json` (`~/.config/Claude/` on Linux, `~/Library/Application Support/Claude/` on macOS, `%APPDATA%\Claude\` on Windows) and keeps everything else in it. A file that is not valid JSON is reported and left alone. |
 | Cursor, VS Code | Opens their install link. Approve the dialog in the editor; the row then says "Finish in Cursor". They keep the entry in their own settings, so remove it there. |
 
 The Flatpak can only run these commands and reach Claude Desktop's config
@@ -293,7 +293,7 @@ Without it, the Codex and Claude Code rows show the command to paste into a
 terminal, and the Claude Desktop row the entry to paste into its config:
 
 ```sh
-claude mcp add --scope user dayflow -- flatpak run --command=dayflow-cli io.github.kokuwaio.DayflowElectron mcp
+claude mcp add --scope user dayflow-electron -- flatpak run --command=dayflow-electron-cli io.github.kokuwaio.DayflowElectron mcp
 ```
 
 Cursor and VS Code need no permission: their links open through the desktop
@@ -326,23 +326,23 @@ want an agent to delete anything.
 ### The terminal command
 
 **Settings → MCP / CLI → Terminal command** shows a command that adds a small
-`dayflow` script to `~/.local/bin` on Linux and macOS (Windows has no
+`dayflow-electron` script to `~/.local/bin` on Linux and macOS (Windows has no
 terminal command yet; connect AI tools above). Paste it into a terminal once. Without
-it, run `flatpak run --command=dayflow-cli io.github.kokuwaio.DayflowElectron`
-instead of `dayflow`.
+it, run `flatpak run --command=dayflow-electron-cli io.github.kokuwaio.DayflowElectron`
+instead of `dayflow-electron`.
 
 ```sh
-dayflow today
-dayflow timeline 2026-11-17 --summary
-dayflow timeline --from 2026-11-10 --to 2026-11-16
-dayflow card 42
-dayflow weekly --json
-dayflow search "code review"
-dayflow categories rename Work "Deep work"
-dayflow goal set --focus-minutes 240 --focus-category Work
+dayflow-electron today
+dayflow-electron timeline 2026-11-17 --summary
+dayflow-electron timeline --from 2026-11-10 --to 2026-11-16
+dayflow-electron card 42
+dayflow-electron weekly --json
+dayflow-electron search "code review"
+dayflow-electron categories rename Work "Deep work"
+dayflow-electron goal set --focus-minutes 240 --focus-category Work
 ```
 
-`dayflow help` lists every command. `--json` prints stable JSON with
+`dayflow-electron help` lists every command. `--json` prints stable JSON with
 `schema_version: 1`; errors then go to stderr as JSON. Exit codes: 0 ok,
 1 unexpected error, 2 bad arguments, 3 not found, 4 edits are off, 5 no data
 yet, 6 the app is not running (for edits). `timeline delete` and
@@ -441,7 +441,7 @@ light, or to **System** to follow your desktop's light or dark setting.
 
 - **Modern** (the default): flat neutral greys, the Inter font, one indigo
   accent and crisp borders; calmer and a little denser.
-- **Dayflow**: upstream Dayflow's warm look, with gradients, translucent
+- **Original**: upstream Dayflow's warm look, with gradients, translucent
   panels and serif titles.
 
 Both themes come in light and dark, so Appearance works with either. Your
@@ -483,7 +483,7 @@ look.
 | "Processing failed" cards or very slow batches with a local model | Run `ollama ps` while a batch runs: `100% CPU` on a machine with an integrated GPU means `OLLAMA_IGPU_ENABLE=1` is missing. Check the context length setting above, try 720p. |
 | The share dialog comes back on every start | Allow restoring the permission in the dialog. |
 | "Window detection needs KWin access" | Run the `flatpak override` command above, then restart the app. |
-| `dayflow` edits fail with "Dayflow isn't running" | Start the app and check that **Settings → MCP / CLI → Allow edits** is on. |
+| `dayflow-electron` edits fail with "Dayflow Electron isn't running" | Start the app and check that **Settings → MCP / CLI → Allow edits** is on. |
 | macOS: "Screen Recording permission is missing" | Allow dayflow-electron in System Settings → Privacy & Security → Screen Recording, then quit and reopen the app. After an update, remove it from the list with **−** and allow it again. |
 | Windows: "Window detection is off" | The PowerShell window watcher could not start; the message shows why. Company policies that block PowerShell also block it. |
 | Capture failed, retrying | The screen-sharing session ended (for example after a monitor change); the app retries after 1, 2, 5 and then every 10 minutes. |

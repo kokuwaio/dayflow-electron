@@ -30,10 +30,10 @@ describe('parseArgs', () => {
   })
 
   it('rejects unknown flags, missing values and values on switches', () => {
-    expect(parseArgs(['timeline', '--verbose'])).toEqual({ ok: false, message: 'Unknown option "--verbose". Run `dayflow help`.' })
+    expect(parseArgs(['timeline', '--verbose'])).toEqual({ ok: false, message: 'Unknown option "--verbose". Run `dayflow-electron help`.' })
     expect(parseArgs(['timeline', '--category'])).toEqual({ ok: false, message: '--category needs a value.' })
     expect(parseArgs(['timeline', '--json=yes'])).toEqual({ ok: false, message: '--json takes no value.' })
-    expect(parseArgs(['timeline', '-x'])).toEqual({ ok: false, message: 'Unknown option "-x". Run `dayflow help`.' })
+    expect(parseArgs(['timeline', '-x'])).toEqual({ ok: false, message: 'Unknown option "-x". Run `dayflow-electron help`.' })
   })
 
   it('takes no option as a flag value; a value starting with a dash goes after =', () => {

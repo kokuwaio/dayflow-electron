@@ -3,7 +3,7 @@
   <id>io.github.kokuwaio.DayflowElectron</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
-  <name>dayflow-electron</name>
+  <name>Dayflow Electron</name>
   <summary>A timeline of your day from periodic screenshots</summary>
   <developer id="io.github.kokuwaio">
     <name>kokuwa.io</name>

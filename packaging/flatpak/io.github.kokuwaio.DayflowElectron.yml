@@ -32,7 +32,7 @@ modules:
       - cp -a linux-unpacked /app/dayflow-electron
       - install -Dm755 dayflow-linux-helper /app/bin/dayflow-linux-helper
       - install -Dm755 dayflow-electron.sh /app/bin/dayflow-electron
-      - install -Dm755 dayflow-cli.sh /app/bin/dayflow-cli
+      - install -Dm755 dayflow-electron-cli.sh /app/bin/dayflow-electron-cli
       - install -Dm644 icon.png /app/share/icons/hicolor/256x256/apps/io.github.kokuwaio.DayflowElectron.png
       - install -Dm644 io.github.kokuwaio.DayflowElectron.desktop /app/share/applications/io.github.kokuwaio.DayflowElectron.desktop
       - install -Dm644 io.github.kokuwaio.DayflowElectron.metainfo.xml /app/share/metainfo/io.github.kokuwaio.DayflowElectron.metainfo.xml
@@ -53,10 +53,10 @@ modules:
         commands:
           - export TMPDIR="$XDG_RUNTIME_DIR/app/$FLATPAK_ID"
           - exec zypak-wrapper /app/dayflow-electron/dayflow-electron "$@"
-      # The `dayflow` CLI and MCP server: Electron in Node mode, no window or zypak.
-      # Run as `flatpak run --command=dayflow-cli io.github.kokuwaio.DayflowElectron <args>`.
+      # The `dayflow-electron` CLI and MCP server: Electron in Node mode, no window or zypak.
+      # Run as `flatpak run --command=dayflow-electron-cli io.github.kokuwaio.DayflowElectron <args>`.
       - type: script
-        dest-filename: dayflow-cli.sh
+        dest-filename: dayflow-electron-cli.sh
         commands:
           - export ELECTRON_RUN_AS_NODE=1
           - exec /app/dayflow-electron/dayflow-electron /app/dayflow-electron/resources/app.asar/out/main/cli.js "$@"

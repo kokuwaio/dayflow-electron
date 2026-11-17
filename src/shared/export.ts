@@ -13,7 +13,7 @@ export interface FormatOptions {
 }
 
 /** The product name in exported text; one place to change when the app gets its own name. */
-export const PRODUCT_NAME = 'Dayflow'
+export const PRODUCT_NAME = 'Dayflow Electron'
 
 export function dayHeading(day: string, opts: FormatOptions): string {
   const date = parseKey(day)

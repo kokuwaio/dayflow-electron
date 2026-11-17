@@ -56,7 +56,7 @@ export function Daily() {
   if (!access) return null
   if (!access.unlocked) {
     return (
-      <LockedFeature title="Dayflow Daily" italic beta access={access}>
+      <LockedFeature title="Dayflow Electron Daily" italic beta access={access}>
         <p>Daily is a new way to visualize your day and turn it into a standup update fast.</p>
         <p>Daily unlocks after 5 hours of analyzed timeline data.</p>
       </LockedFeature>

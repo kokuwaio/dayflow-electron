@@ -65,7 +65,7 @@ export function SettingsView({ status, tab, onTab }: { status: AppStatus | null;
           </button>
         ))}
         <div className="settings-version">
-          {version && <span>Dayflow v{version}</span>}
+          {version && <span>Dayflow Electron v{version}</span>}
           <a href={RELEASE_NOTES_URL} target="_blank" rel="noreferrer">
             Release notes ↗
           </a>
@@ -437,7 +437,7 @@ function OtherTab({ settings, save }: { settings: Settings; save: Save }) {
             <option value="system">System</option>
           </select>
         </Row>
-        <Row label="Theme" sub="Modern: flat neutral greys with one accent, or Dayflow's warm look.">
+        <Row label="Theme" sub="Modern: flat neutral greys with one accent. Original: upstream Dayflow's warm look.">
           <select
             value={settings.uiStyle}
             onChange={(e) => {
@@ -448,10 +448,10 @@ function OtherTab({ settings, save }: { settings: Settings; save: Save }) {
             aria-label="Theme"
           >
             <option value="modern">Modern</option>
-            <option value="dayflow">Dayflow</option>
+            <option value="dayflow">Original</option>
           </select>
         </Row>
-        <Row label="Launch Dayflow at login">
+        <Row label="Launch Dayflow Electron at login">
           <input type="checkbox" className="switch" checked={settings.launchAtLogin} onChange={(e) => save({ launchAtLogin: e.target.checked })} aria-label="Launch at login" />
         </Row>
         <Row
@@ -460,7 +460,7 @@ function OtherTab({ settings, save }: { settings: Settings; save: Save }) {
         >
           <input type="checkbox" className="switch" checked={settings.showAppIcons} onChange={(e) => save({ showAppIcons: e.target.checked })} aria-label="Show icons" />
         </Row>
-        <Row label="Show daily goal popups" sub="When off, Dayflow won't automatically open goal setup or yesterday's review after 4am.">
+        <Row label="Show daily goal popups" sub="When off, Dayflow Electron won't automatically open goal setup or yesterday's review after 4am.">
           <input
             type="checkbox"
             className="switch"
@@ -496,8 +496,8 @@ function UpdatesRow({ settings, save }: { settings: Settings; save: Save }) {
       label="Install updates automatically"
       sub={
         support.mode === 'notify'
-          ? "This copy isn't signed with a Developer ID, so macOS won't let it install updates. Dayflow tells you when a new version is out."
-          : 'Downloads new versions from GitHub in the background and installs them when Dayflow restarts. Off: Dayflow only tells you about them.'
+          ? "This copy isn't signed with a Developer ID, so macOS won't let it install updates. Dayflow Electron tells you when a new version is out."
+          : 'Downloads new versions from GitHub in the background and installs them when Dayflow Electron restarts. Off: Dayflow Electron only tells you about them.'
       }
     >
       <input

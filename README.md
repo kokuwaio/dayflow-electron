@@ -1,6 +1,6 @@
-# dayflow-electron
+# Dayflow Electron
 
-A cross-platform reimplementation of [Dayflow](https://github.com/JerryZLiu/Dayflow)
+**Dayflow Electron**: a cross-platform reimplementation of [Dayflow](https://github.com/JerryZLiu/Dayflow)
 in Electron and TypeScript. It takes a screenshot of the screen under the mouse
 every few seconds, sends 15-minute batches to the AI provider you choose, and
 turns them into a timeline of what you did. Nothing leaves your computer except

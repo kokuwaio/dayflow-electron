@@ -1,6 +1,6 @@
 # AGENTS.md
 
-dayflow-electron ports [Dayflow](https://github.com/JerryZLiu/Dayflow) (Swift,
+Dayflow Electron (`dayflow-electron` in identifiers) ports [Dayflow](https://github.com/JerryZLiu/Dayflow) (Swift,
 macOS) to Electron and TypeScript, Linux first. How it fits together:
 [docs/architecture.md](docs/architecture.md). What is done and next:
 [docs/roadmap.md](docs/roadmap.md). Linux desktop findings and rejected
@@ -17,8 +17,9 @@ the upstream repo) and port its behaviour, thresholds and texts.
   comment at the top of each module.
 - Keep upstream's table and column names; schema changes are new numbered
   migrations in `src/main/db/schema.ts` (`PRAGMA user_version`).
-- Port the look too, but not upstream's artwork: the name "Dayflow", its logo,
-  icons, illustrations and videos are not MIT-licensed. Upstream's fonts are
+- Port the look too, but not upstream's artwork: its logo, icons,
+  illustrations and videos stay out. The app is "Dayflow Electron" in user
+  texts; prompts keep upstream's wording apart from that name. Upstream's fonts are
   OFL and may be bundled with their license files.
 - The roadmap's "Later or never" table lists what stays out (account, billing,
   hosted AI, telemetry, ...).

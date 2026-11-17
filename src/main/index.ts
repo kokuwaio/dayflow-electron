@@ -60,8 +60,9 @@ const startHidden =
 let openLink: ((link: string) => void) | null = null
 let pendingLink = linkIn(process.argv) ?? null
 registerMediaScheme()
-// Separate data for development and tests.
-if (process.env.DAYFLOW_DATA_DIR) app.setPath('userData', process.env.DAYFLOW_DATA_DIR)
+// Separate data for development and tests. Otherwise a fixed folder name:
+// Electron would derive it from productName ("Dayflow Electron", with a space).
+app.setPath('userData', process.env.DAYFLOW_DATA_DIR || join(app.getPath('appData'), 'dayflow-electron'))
 
 if (!app.requestSingleInstanceLock()) {
   app.quit()
@@ -93,7 +94,7 @@ let tray: Tray | null = null
 let updater: Updater | null = null
 let quitting = false
 
-const log = (message: string) => console.log(`[dayflow] ${message}`)
+const log = (message: string) => console.log(`[dayflow-electron] ${message}`)
 
 async function main(): Promise<void> {
   // Windows shows notifications only for an app ID that matches the installer's shortcut.
@@ -561,7 +562,7 @@ async function main(): Promise<void> {
     const paused = r.state === 'paused'
     const description = describeRecorder(r.state, r.until)
     const updateItem = updater?.menuItem()
-    tray.setToolTip(`Dayflow: ${description}`)
+    tray.setToolTip(`Dayflow Electron: ${description}`)
     tray.setContextMenu(
       Menu.buildFromTemplate([
         { label: description, enabled: false },
@@ -579,7 +580,7 @@ async function main(): Promise<void> {
                 }
               }))
             },
-        { label: 'Open Dayflow', click: () => showWindow() },
+        { label: 'Open Dayflow Electron', click: () => showWindow() },
         { label: 'Open recordings folder', click: () => void shell.openPath(recordingsDir) },
         { type: 'separator' },
         { label: 'Quit', click: () => app.quit() }
@@ -707,7 +708,7 @@ function showWindow(): void {
     height: 675,
     minWidth: 900,
     minHeight: 558,
-    title: 'Dayflow',
+    title: 'Dayflow Electron',
     // The theme's base colour, so the window does not flash before the page paints.
     backgroundColor: windowBackground(uiStyle, nativeTheme.shouldUseDarkColors),
     icon: join(app.getAppPath(), 'resources/icon.png'),

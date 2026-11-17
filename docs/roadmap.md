@@ -19,9 +19,10 @@ a small MIT-licensed Electron port whose analysis loop and providers we reuse
 - **Feature parity with upstream's local features**, not with its hosted
   business. No account, billing, hosted AI, Flow, surveys or PostHog.
 - **No telemetry by default.** Crash reporting, if added, is opt-in.
-- **Own name and artwork before the first public release.** The upstream code
-  is MIT, but the name "Dayflow", its logo, icons, videos and illustrations are
-  not covered by that license. "dayflow-electron" is a working name only.
+- **Named "Dayflow Electron", with artwork of its own.** The upstream code is
+  MIT; its logo, icons, videos and illustrations stay out. The app credits
+  upstream Dayflow and does not present itself as it. Identifiers use
+  `dayflow-electron` (CLI, MCP server, data folder, file names).
 - **Keep upstream's data model.** Use the same table and column names
   (`timeline_cards`, `analysis_batches`, `screenshots`, ...) so prompts, the
   CLI and the MCP tools port with few changes.
@@ -220,7 +221,7 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
 - [x] CLI: `status`, `timeline`, `today`, `yesterday`, `card`, `daily`, `weekly`,
   `categories`, `goal set`, `search`, `link`/`unlink`, all with `--json`,
   reading SQLite read-only. Electron runs it in Node mode (`out/main/cli.js`);
-  the Flatpak has `flatpak run --command=dayflow-cli`. Exit code 6 for "app
+  the Flatpak has `flatpak run --command=dayflow-electron-cli`. Exit code 6 for "app
   not running" (upstream reused 5).
 - [x] `mcp` subcommand: stdio MCP server with the same tool names as upstream
   (`get_timeline`, `get_time_breakdown`, `search_activities`, ...).
@@ -279,7 +280,7 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   goal step (analytics), particles and confetti on the ring, and per-chart
   PNG export.
 - [x] Modern theme (not upstream): Settings → Other → Theme switches between
-  upstream's look (Dayflow) and Modern (the default), flat neutral greys with
+  upstream's look (Original) and Modern (the default), flat neutral greys with
   Inter (bundled with its OFL text), one indigo accent and 1px borders, in
   light and dark. `data-ui-style` on the root element switches the CSS
   tokens; category colours and the onboarding stay as they are.
@@ -307,7 +308,8 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
 - [ ] Windows and macOS on real machines: capture, window detection, lock,
   idle, autostart and deep links are implemented and unit tested, not yet
   tried by hand.
-- [ ] Own name, icon and artwork. Bundled fonts only with their OFL license files.
+- [x] Name: "Dayflow Electron"; CLI and MCP server `dayflow-electron`.
+- [ ] Own icon and artwork. Bundled fonts only with their OFL license files.
 
 ### Later or never
 

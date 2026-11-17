@@ -21,14 +21,14 @@ const PLAIN_ENTRY = {
 }
 
 describe('JSON client configs (Claude Desktop, ~/.claude.json)', () => {
-  it('adds the dayflow entry and keeps everything else', () => {
+  it('adds the dayflow-electron entry and keeps everything else', () => {
     const before = JSON.stringify({ theme: 'dark', mcpServers: { other: { command: 'npx', args: ['other'] } } })
     const merged = mergeServerEntry(before, plain)
     expect(merged.ok).toBe(true)
     if (!merged.ok) return
     expect(JSON.parse(merged.text)).toEqual({
       theme: 'dark',
-      mcpServers: { other: { command: 'npx', args: ['other'] }, dayflow: PLAIN_ENTRY }
+      mcpServers: { other: { command: 'npx', args: ['other'] }, 'dayflow-electron': PLAIN_ENTRY }
     })
     expect(merged.text.endsWith('\n')).toBe(true)
   })
@@ -37,14 +37,14 @@ describe('JSON client configs (Claude Desktop, ~/.claude.json)', () => {
     for (const text of [null, '', '  \n']) {
       const merged = mergeServerEntry(text, flatpak)
       expect(merged.ok && JSON.parse(merged.text)).toEqual({
-        mcpServers: { dayflow: { type: 'stdio', command: 'flatpak', args: ['run', '--command=dayflow-cli', 'io.github.kokuwaio.DayflowElectron', 'mcp'] } }
+        mcpServers: { 'dayflow-electron': { type: 'stdio', command: 'flatpak', args: ['run', '--command=dayflow-electron-cli', 'io.github.kokuwaio.DayflowElectron', 'mcp'] } }
       })
     }
   })
 
-  it('replaces an old dayflow entry instead of adding a second one', () => {
-    const merged = mergeServerEntry(JSON.stringify({ mcpServers: { dayflow: { command: 'env', args: ['ELECTRON_RUN_AS_NODE=1', '/old/electron', '/old/cli.js', 'mcp'] } } }), plain)
-    expect(merged.ok && JSON.parse(merged.text)).toEqual({ mcpServers: { dayflow: PLAIN_ENTRY } })
+  it('replaces an old dayflow-electron entry instead of adding a second one', () => {
+    const merged = mergeServerEntry(JSON.stringify({ mcpServers: { 'dayflow-electron': { command: 'env', args: ['ELECTRON_RUN_AS_NODE=1', '/old/electron', '/old/cli.js', 'mcp'] } } }), plain)
+    expect(merged.ok && JSON.parse(merged.text)).toEqual({ mcpServers: { 'dayflow-electron': PLAIN_ENTRY } })
   })
 
   it('never touches a config it cannot parse', () => {
@@ -55,8 +55,8 @@ describe('JSON client configs (Claude Desktop, ~/.claude.json)', () => {
     expect(readServerEntry('nope')).toMatchObject({ ok: false })
   })
 
-  it('removes only the dayflow entry', () => {
-    const before = JSON.stringify({ mcpServers: { other: { command: 'x' }, dayflow: PLAIN_ENTRY }, keep: 1 })
+  it('removes only the dayflow-electron entry', () => {
+    const before = JSON.stringify({ mcpServers: { other: { command: 'x' }, 'dayflow-electron': PLAIN_ENTRY }, keep: 1 })
     const removed = removeServerEntry(before)
     expect(removed.ok && JSON.parse(removed.text ?? '')).toEqual({ mcpServers: { other: { command: 'x' } }, keep: 1 })
     // Nothing to remove: the text stays as it was.
@@ -64,8 +64,8 @@ describe('JSON client configs (Claude Desktop, ~/.claude.json)', () => {
     expect(removeServerEntry(null)).toEqual({ ok: true, text: null })
   })
 
-  it('reads the dayflow entry, if any', () => {
-    expect(readServerEntry(JSON.stringify({ mcpServers: { dayflow: PLAIN_ENTRY } }))).toEqual({ ok: true, entry: PLAIN_ENTRY })
+  it('reads the dayflow-electron entry, if any', () => {
+    expect(readServerEntry(JSON.stringify({ mcpServers: { 'dayflow-electron': PLAIN_ENTRY } }))).toEqual({ ok: true, entry: PLAIN_ENTRY })
     expect(readServerEntry(JSON.stringify({ mcpServers: {} }))).toEqual({ ok: true, entry: null })
     expect(readServerEntry(null)).toEqual({ ok: true, entry: null })
   })
@@ -76,7 +76,7 @@ describe('stale registrations', () => {
     expect(entryMatches(PLAIN_ENTRY, plain)).toBe(true)
     // Clients may add fields of their own, or more variables.
     expect(entryMatches({ ...PLAIN_ENTRY, env: { ELECTRON_RUN_AS_NODE: '1', DEBUG: '1' }, disabled: false }, plain)).toBe(true)
-    expect(entryMatches({ command: 'flatpak', args: ['run', '--command=dayflow-cli', 'io.github.kokuwaio.DayflowElectron', 'mcp'] }, flatpak)).toBe(true)
+    expect(entryMatches({ command: 'flatpak', args: ['run', '--command=dayflow-electron-cli', 'io.github.kokuwaio.DayflowElectron', 'mcp'] }, flatpak)).toBe(true)
   })
 
   it('flags an entry for a moved app, a missing variable or the old env form', () => {
@@ -94,7 +94,7 @@ describe('install deep links', () => {
     expect(url.protocol).toBe('cursor:')
     expect(url.host).toBe('anysphere.cursor-deeplink')
     expect(url.pathname).toBe('/mcp/install')
-    expect(url.searchParams.get('name')).toBe('dayflow')
+    expect(url.searchParams.get('name')).toBe('dayflow-electron')
     const config = JSON.parse(Buffer.from(url.searchParams.get('config') ?? '', 'base64').toString('utf8'))
     expect(config).toEqual({ command: plain.command, args: [plain.args[0], 'mcp'], env: { ELECTRON_RUN_AS_NODE: '1' } })
   })
@@ -111,9 +111,9 @@ describe('install deep links', () => {
     const url = vscodeInstallUrl(flatpak)
     expect(url.startsWith('vscode:mcp/install?')).toBe(true)
     expect(JSON.parse(decodeURIComponent(url.slice('vscode:mcp/install?'.length)))).toEqual({
-      name: 'dayflow',
+      name: 'dayflow-electron',
       command: 'flatpak',
-      args: ['run', '--command=dayflow-cli', 'io.github.kokuwaio.DayflowElectron', 'mcp']
+      args: ['run', '--command=dayflow-electron-cli', 'io.github.kokuwaio.DayflowElectron', 'mcp']
     })
     expect(url).not.toMatch(/[{}" ]/)
   })

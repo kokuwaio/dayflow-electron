@@ -9,11 +9,11 @@
 # electron-updater reads; CI builds with --publish never and the release
 # workflow uploads the files.
 appId: io.github.kokuwaio.DayflowElectron
-productName: dayflow-electron
+productName: Dayflow Electron
 executableName: dayflow-electron
-# The tag in the name: the release assets keep it, and electron-updater
+# Without spaces, unlike productName. The tag in the name: the release assets keep it, and electron-updater
 # finds the previous version's blockmap by swapping the version in the URL.
-artifactName: ${productName}-v${version}-${os}-${arch}.${ext}
+artifactName: dayflow-electron-v${version}-${os}-${arch}.${ext}
 directories:
   output: dist
 files:

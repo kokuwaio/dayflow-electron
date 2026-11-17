@@ -45,7 +45,7 @@ export function PausePill({ status, onChange }: { status: AppStatus; onChange: (
 
   const run = (p: Promise<unknown>) => void p.then(() => (setMenu(false), onChange()))
   const statusText = paused
-    ? { text: until ? `Dayflow paused for ${countdown(until - now)}` : 'Dayflow paused indefinitely', muted: false }
+    ? { text: until ? `Dayflow Electron paused for ${countdown(until - now)}` : 'Dayflow Electron paused indefinitely', muted: false }
     : blockedBy && state === 'recording'
       ? { text: 'Hidden: blocked app in front', muted: true }
       : state !== 'recording'
