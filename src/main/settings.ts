@@ -6,7 +6,7 @@ import { mkdir, rename, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { safeStorage } from 'electron'
 import { sanitizeCategories } from '../shared/categories'
-import { CAPTURE_INTERVALS, DEFAULT_SETTINGS, type ProviderKind, type Settings } from '../shared/types'
+import { CAPTURE_INTERVALS, DEFAULT_SETTINGS, type ProviderKind, type Settings, THEMES, type Theme } from '../shared/types'
 
 const KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'codex-cli']
 /** Providers that use an API key (the agent CLIs use the user's own login). */
@@ -88,6 +88,7 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
       detailedSummary: overrideText(r.promptOverrides?.detailedSummary)
     },
     showAppIcons: r.showAppIcons === true,
+    theme: (THEMES as readonly string[]).includes(r.theme as string) ? (r.theme as Theme) : DEFAULT_SETTINGS.theme,
     notified: sanitizeNotified(r),
     standupAttempts: {
       day: typeof r.standupAttempts?.day === 'string' ? r.standupAttempts.day : '',

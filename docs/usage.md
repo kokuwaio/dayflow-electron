@@ -421,6 +421,11 @@ a laptop CPU), for the up to 15 frames each 15-minute batch sends. It runs on
 your computer; nothing is downloaded. If it fails, the batch is not sent and
 is retried later.
 
+## Appearance
+
+The window is dark by default. **Settings → Other → Appearance** switches to
+light, or to **System** to follow your desktop's light or dark setting.
+
 ## Pause, privacy and storage
 
 - **Pause** from the tray or the Pause button in the timeline: 15, 30 or 60

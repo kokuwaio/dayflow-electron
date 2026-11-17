@@ -91,6 +91,8 @@ export interface Settings {
   categories: Category[]
   /** Replacements for the prompt's rules; empty means upstream's text. */
   promptOverrides: PromptOverrides
+  /** Window theme; dark unless changed. "system" follows the desktop. */
+  theme: Theme
   /** Show app and site icons on cards (fetched from the sites themselves). */
   showAppIcons: boolean
   /** The first-run setup is done. */
@@ -146,6 +148,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cliPaths: { claude: '', codex: '' },
   categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })),
   promptOverrides: { title: '', summary: '', detailedSummary: '' },
+  theme: 'dark',
   showAppIcons: false,
   onboarded: false,
   notified: { firstCards: false, weeklyUnlock: false, problemDays: {} },
@@ -153,6 +156,9 @@ export const DEFAULT_SETTINGS: Settings = {
   chatMemory: '',
   allowEdits: false
 }
+
+export const THEMES = ['dark', 'light', 'system'] as const
+export type Theme = (typeof THEMES)[number]
 
 export const CAPTURE_INTERVALS = [1, 5, 10, 20, 30, 60] as const
 

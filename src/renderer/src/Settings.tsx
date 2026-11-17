@@ -3,7 +3,7 @@ import { ArrowRight, Download, FolderOpen, RotateCw } from 'lucide-react'
 import { CATEGORY_PRESETS, type Category, presetCategories } from '@shared/categories'
 import { todayKey } from '@shared/day'
 import { cliOf, needsApiKey } from '@shared/providers'
-import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings } from '@shared/types'
+import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings, type Theme } from '@shared/types'
 import { AgentAccessSettings } from './AgentAccessSettings'
 import { PROVIDER_CHOICES } from './providers'
 
@@ -439,6 +439,13 @@ function OtherTab({ settings, save }: { settings: Settings; save: Save }) {
   return (
     <>
       <Section title="General">
+        <Row label="Appearance" sub="Dark, light, or follow your desktop's setting.">
+          <select value={settings.theme} onChange={(e) => save({ theme: e.target.value as Theme })} aria-label="Appearance">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="system">System</option>
+          </select>
+        </Row>
         <Row label="Launch Dayflow at login">
           <input type="checkbox" className="switch" checked={settings.launchAtLogin} onChange={(e) => save({ launchAtLogin: e.target.checked })} aria-label="Launch at login" />
         </Row>

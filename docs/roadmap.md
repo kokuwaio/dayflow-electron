@@ -257,7 +257,8 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   and Tesseract misreads cost more. OCR takes 2-6 s per 1080p frame.
 - [ ] Dark mode, app language, show/hide icons, pause presets (all but the
   app language done; dark mode follows the system, with upstream's dark
-  palette; no in-app Light/Dark switch yet).
+  palette; Settings → Other → Appearance picks dark (the default), light or
+  the system setting).
 - [x] Upstream's look: design tokens for light and dark, gradient window and
   translucent panel, icon sidebar, Figtree and Instrument Serif (bundled with
   their OFL texts), the 4 AM to 4 AM day canvas with hour axis and status

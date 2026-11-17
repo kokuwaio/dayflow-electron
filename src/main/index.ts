@@ -4,7 +4,7 @@ import { unlink } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { writeFile } from 'node:fs/promises'
-import { BrowserWindow, Menu, Tray, app, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, powerMonitor, screen, shell, systemPreferences } from 'electron'
+import { BrowserWindow, Menu, Tray, app, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, nativeTheme, powerMonitor, screen, shell, systemPreferences } from 'electron'
 import { dayKey, dayRange, shiftDay, todayKey } from '../shared/day'
 import { needsApiKey } from '../shared/providers'
 import { PAUSE_PRESETS, describeRecorder } from '../shared/status'
@@ -92,6 +92,8 @@ async function main(): Promise<void> {
   mkdirSync(recordingsDir, { recursive: true })
 
   const settings = await SettingsStore.open(join(dataDir, 'settings.json'), join(dataDir, 'keys.json'))
+  // The window follows this; CSS sees it as prefers-color-scheme.
+  nativeTheme.themeSource = settings.get().theme
   const backupDir = join(dataDir, 'backups')
   const { store, restoredFrom } = openWithRecovery(join(dataDir, 'dayflow.sqlite'), backupDir)
   log(`dayflow-electron ${app.getVersion()}`)
@@ -426,6 +428,7 @@ async function main(): Promise<void> {
       await platform.setAutostart(next.launchAtLogin)
     }
     const saved = await settings.save(next)
+    if (saved.theme !== before.theme) nativeTheme.themeSource = saved.theme
     // Cards follow renamed categories (matched by id after the names were cleaned up).
     const renames = renamedCategories(before.categories, saved.categories)
     for (const { from, to } of renames) store.renameCategory(from, to)
@@ -603,6 +606,8 @@ function showWindow(): void {
     minWidth: 900,
     minHeight: 558,
     title: 'Dayflow',
+    // The theme's base colour, so the window does not flash before the page paints.
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#303C5B' : '#FFE6E0',
     icon: join(app.getAppPath(), 'resources/icon.png'),
     autoHideMenuBar: true,
     webPreferences: {
