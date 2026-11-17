@@ -97,6 +97,24 @@ export interface Settings {
   standupAttempts: { day: string; count: number }
   /** What the chat model remembers about the user ("Profile: …\nStyle: …"), from its memory blocks. */
   chatMemory: string
+  /** AI tools (CLI, MCP) may change categories, activities and goals through the running app. Off by default. */
+  allowEdits: boolean
+}
+
+/** Whether an agent CLI has the "dayflow" MCP server; "manual" when the app cannot run the CLI and shows the command instead. */
+export type AgentClientState =
+  | { state: 'connected' | 'available' }
+  | { state: 'notFound' | 'failed'; message: string }
+  | { state: 'manual'; message: string; command: string }
+
+/** How AI tools and terminals reach the CLI, for the "MCP / CLI" settings. */
+export interface AgentAccessInfo {
+  /** The command line that starts the CLI (append "mcp" for the MCP server). */
+  command: string
+  /** Paste into a terminal to install `dayflow` into ~/.local/bin. */
+  terminalInstall: string
+  /** JSON for MCP clients without a registration command. */
+  configSnippet: string
 }
 
 /** The window's tabs; notifications and the tray open one of them. */
@@ -126,7 +144,8 @@ export const DEFAULT_SETTINGS: Settings = {
   onboarded: false,
   notified: { firstCards: false, weeklyUnlock: false, problemDays: {} },
   standupAttempts: { day: '', count: 0 },
-  chatMemory: ''
+  chatMemory: '',
+  allowEdits: false
 }
 
 export const CAPTURE_INTERVALS = [1, 5, 10, 20, 30, 60] as const

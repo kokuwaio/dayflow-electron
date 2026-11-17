@@ -15,8 +15,13 @@ import { type GoalPlan, defaultGoalPlan } from '../shared/day-summary'
 import { exportFileName, rangeMarkdown, timelineText, weekText } from '../shared/export'
 import { weekOf } from '../shared/week'
 import { WEEKLY_MIN_TRACKED_MINUTES, trackedMinutes } from '../shared/weekly'
-import type { AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings, StandupEntry, Tab } from '../shared/types'
+import type { AgentAccessInfo, AgentClientState, AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings, StandupEntry, Tab } from '../shared/types'
 import type { Span } from './db/store'
+import { BridgeServer } from './agent/bridge'
+import { type ClientEnv, clientStatus, connectClient, disconnectClient } from './agent/clients'
+import { cliInvocation, manualConfigSnippet, shellLine, terminalInstallCommand } from './agent/invocation'
+import { AGENT_SOCKET, WRITE_LOG } from './agent/protocol'
+import { createWriteHandlers } from './agent/writes'
 import { Pipeline } from './analysis/pipeline'
 import { Recorder } from './capture/recorder'
 import { Store } from './db/store'
@@ -331,17 +336,52 @@ async function main(): Promise<void> {
     return count
   })
 
-  ipcMain.handle('status:get', () => status())
-  ipcMain.handle('settings:get', () => settings.get())
-  ipcMain.handle('settings:save', async (_e, next: Partial<Settings>) => {
+  // ---- agent access: the write bridge for the CLI and MCP server (src/main/agent/)
+  const bridge = new BridgeServer({
+    socketPath: join(dataDir, AGENT_SOCKET),
+    logFile: join(dataDir, WRITE_LOG),
+    editsEnabled: () => settings.get().allowEdits,
+    handle: createWriteHandlers({
+      store,
+      categories: () => settings.get().categories,
+      saveCategories: async (categories) => (await savePreferences({ categories })).categories,
+      cardsChanged: () => changed(),
+      today: todayKey
+    })
+  })
+  const syncBridge = () =>
+    (settings.get().allowEdits ? bridge.start() : bridge.stop()).catch((err: unknown) => log(`agent bridge: ${String(err)}`))
+  void syncBridge()
+  const agentInvocation = () =>
+    cliInvocation({ flatpakId: process.env.FLATPAK_ID, execPath: process.execPath, script: join(app.getAppPath(), 'out/main/cli.js') })
+  const clientEnv = (cli: CliName): ClientEnv => ({
+    runner: nodeRunner,
+    inFlatpak,
+    appId: cliEnv.appId,
+    home: cliEnv.home,
+    configuredPath: settings.get().cliPaths[cli],
+    invocation: agentInvocation()
+  })
+  const isClient = (cli: unknown): cli is CliName => cli === 'claude' || cli === 'codex'
+  ipcMain.handle('agent:info', (): AgentAccessInfo => {
+    const inv = agentInvocation()
+    return { command: shellLine([inv.command, ...inv.args]), terminalInstall: terminalInstallCommand(inv), configSnippet: manualConfigSnippet(inv) }
+  })
+  ipcMain.handle('agent:client', (_e, cli: unknown, action: unknown): Promise<AgentClientState> => {
+    if (!isClient(cli)) return Promise.resolve({ state: 'failed', message: 'Unknown client.' })
+    if (action === 'connect') return connectClient(cli, clientEnv(cli))
+    if (action === 'disconnect') return disconnectClient(cli, clientEnv(cli))
+    return clientStatus(cli, clientEnv(cli))
+  })
+
+  /** Saves preferences like the Settings page does: autostart, card renames, recorder, storage, bridge. */
+  async function savePreferences(next: Partial<Settings>): Promise<Settings> {
     const before = settings.get()
     // Apply autostart first so a failure leaves the stored setting unchanged.
     if (next.launchAtLogin !== undefined && next.launchAtLogin !== before.launchAtLogin) {
       await platform.setAutostart(next.launchAtLogin)
     }
-    // The window only edits preferences; the app's own bookkeeping is not its to change.
-    const { notified: _n, standupAttempts: _a, onboarded: _o, chatMemory: _m, ...preferences } = next
-    const saved = await settings.save(preferences)
+    const saved = await settings.save(next)
     // Cards follow renamed categories (matched by id after the names were cleaned up).
     const renames = renamedCategories(before.categories, saved.categories)
     for (const { from, to } of renames) store.renameCategory(from, to)
@@ -351,7 +391,16 @@ async function main(): Promise<void> {
     }
     recorder.refreshBlocking()
     if (saved.storageLimitGb < before.storageLimitGb) await purge()
+    if (saved.allowEdits !== before.allowEdits) await syncBridge()
     return saved
+  }
+
+  ipcMain.handle('status:get', () => status())
+  ipcMain.handle('settings:get', () => settings.get())
+  ipcMain.handle('settings:save', async (_e, next: Partial<Settings>) => {
+    // The window only edits preferences; the app's own bookkeeping is not its to change.
+    const { notified: _n, standupAttempts: _a, onboarded: _o, chatMemory: _m, ...preferences } = next
+    return savePreferences(preferences)
   })
   ipcMain.handle('key:set', (_e, kind: ProviderKind, key: string) => settings.setApiKey(kind, key))
   ipcMain.handle('provider:test', async () => {
@@ -471,6 +520,7 @@ async function main(): Promise<void> {
 
   app.on('before-quit', () => {
     quitting = true
+    void bridge.stop()
     recorder.stop()
     pipeline.stop()
     store.close()

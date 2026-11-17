@@ -94,6 +94,7 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
       count: Number.isInteger(r.standupAttempts?.count) ? Number(r.standupAttempts?.count) : 0
     },
     chatMemory: typeof r.chatMemory === 'string' ? r.chatMemory.slice(0, CHAT_MEMORY_MAX) : '',
+    allowEdits: r.allowEdits === true,
     // Existing installs that never saw onboarding count as set up once a provider was chosen.
     onboarded: r.onboarded === true || (r.onboarded === undefined && typeof r.provider === 'string'),
     blockedApps: Array.isArray(r.blockedApps)
