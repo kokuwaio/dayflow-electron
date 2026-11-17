@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type ProcessRunner, type RunResult, findCli, hostAccess, hostCommand } from './host'
+import { type ProcessRunner, type RunResult, findCli, hostAccess, hostCommand, nodeRunner } from './host'
 
 /** A runner that answers by matching the command line, and records every call. */
 function fakeRunner(answer: (line: string) => Partial<RunResult>) {
@@ -69,5 +69,15 @@ describe('findCli', () => {
   it('returns null when the CLI is nowhere', async () => {
     const { runner } = fakeRunner(() => ({ code: 1 }))
     expect(await findCli(runner, 'codex', env)).toBeNull()
+  })
+})
+
+describe.skipIf(process.platform === 'win32')('nodeRunner', () => {
+  it('starts programs in a session of their own, so an interactive shell cannot take over the terminal', async () => {
+    // `make dev` runs the app in a terminal; `zsh -lic` there grabbed the foreground and the app got stopped.
+    const own = (await nodeRunner.run('ps', ['-o', 'sess=', '-p', String(process.pid)])).stdout.trim()
+    const child = await nodeRunner.run('sh', ['-c', 'ps -o sess= -p $$'])
+    expect(child.code).toBe(0)
+    expect(child.stdout.trim()).not.toBe(own)
   })
 })

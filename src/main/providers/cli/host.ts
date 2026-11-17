@@ -29,7 +29,20 @@ export interface ProcessRunner {
 export const nodeRunner: ProcessRunner = {
   run(command, args, options = {}) {
     return new Promise((resolve) => {
-      const child = spawn(command, args, { stdio: ['pipe', 'pipe', 'pipe'], env: options.env ?? process.env })
+      // A session of its own (setsid) on Linux and macOS: started from a terminal
+      // (`make dev`), an interactive `zsh -lic` would otherwise take the
+      // terminal's foreground and the app would be stopped (SIGTTOU/SIGTTIN).
+      const ownSession = process.platform !== 'win32'
+      const child = spawn(command, args, { stdio: ['pipe', 'pipe', 'pipe'], env: options.env ?? process.env, detached: ownSession })
+      // The whole group on timeout, so a CLI the shell started goes too.
+      const kill = (signal: NodeJS.Signals) => {
+        try {
+          if (ownSession && child.pid) process.kill(-child.pid, signal)
+          else child.kill(signal)
+        } catch {
+          // already gone
+        }
+      }
       let stdout = ''
       let stderr = ''
       let timedOut = false
@@ -44,8 +57,8 @@ export const nodeRunner: ProcessRunner = {
       const timer = options.timeoutMs
         ? setTimeout(() => {
             timedOut = true
-            child.kill('SIGTERM')
-            setTimeout(() => child.kill('SIGKILL'), 5_000).unref()
+            kill('SIGTERM')
+            setTimeout(() => kill('SIGKILL'), 5_000).unref()
           }, options.timeoutMs)
         : null
       child.stdout.on('data', (d) => (stdout += d))
