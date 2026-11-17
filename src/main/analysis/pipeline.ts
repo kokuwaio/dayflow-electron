@@ -30,6 +30,12 @@ export interface PipelineDeps {
   overrides(): PromptOverrides
   onCardsChanged(): void
   log(message: string): void
+  /**
+   * Runs on each frame sent to a provider, e.g. to hide secrets in it; the
+   * file on disk stays as recorded. A throw fails the batch, so no frame goes
+   * out unfiltered.
+   */
+  prepareFrame?(jpeg: Uint8Array): Promise<Uint8Array>
 }
 
 export interface PipelineStatus {
@@ -162,10 +168,11 @@ export class Pipeline {
 
   /** Tries each provider in turn; throws with every provider's error when all fail. */
   private async generateWithFailover(batch: Batch, providers: Provider[], shots: Screenshot[]): Promise<void> {
+    const frames = await this.readFrames(shots)
     const errors: string[] = []
     for (const provider of providers) {
       try {
-        await this.generateCards(batch, provider, shots)
+        await this.generateCards(batch, provider, frames)
         return
       } catch (err) {
         errors.push(`${provider.model}: ${err instanceof Error ? err.message : String(err)}`)
@@ -180,11 +187,7 @@ export class Pipeline {
    * back to two steps when their cards keep failing validation; provider
    * errors go up to the failover.
    */
-  private async generateCards(batch: Batch, provider: Provider, shots: Screenshot[]): Promise<void> {
-    const sampled = sampleEvenly(shots)
-    const frames = await Promise.all(
-      sampled.map(async (s) => ({ capturedAt: s.capturedAt, jpeg: await readFile(s.filePath) }))
-    )
+  private async generateCards(batch: Batch, provider: Provider, frames: PromptFrame[]): Promise<void> {
     const logged = this.loggedProvider(provider, batch.id)
     if (!provider.local) {
       try {
@@ -196,6 +199,24 @@ export class Pipeline {
       }
     }
     await this.twoStep(batch, logged, frames)
+  }
+
+  /** The sample of frames sent to providers, read and prepared once per batch. */
+  private async readFrames(shots: Screenshot[]): Promise<PromptFrame[]> {
+    const sampled = sampleEvenly(shots)
+    const frames = await Promise.all(
+      sampled.map(async (s) => ({ capturedAt: s.capturedAt, jpeg: await readFile(s.filePath) }))
+    )
+    const { prepareFrame } = this.deps
+    if (!prepareFrame) return frames
+    const prepared: PromptFrame[] = []
+    try {
+      // One at a time: OCR is CPU-heavy and runs on one worker.
+      for (const f of frames) prepared.push({ ...f, jpeg: await prepareFrame(f.jpeg) })
+    } catch (err) {
+      throw new Error(`Hiding secrets failed: ${err instanceof Error ? err.message : String(err)}`)
+    }
+    return prepared
   }
 
   private async twoStep(batch: Batch, provider: Provider, frames: PromptFrame[]): Promise<void> {
