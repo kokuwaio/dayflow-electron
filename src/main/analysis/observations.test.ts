@@ -45,4 +45,16 @@ describe('parseSegments', () => {
     expect(result.ok).toBe(false)
     expect(!result.ok && result.issue).toMatch(issue)
   })
+
+  it('counts overlapping segments once when checking coverage', () => {
+    const seg = (a: string, b: string, d: string) => ({ startTimestamp: a, endTimestamp: b, description: d })
+    const reply = JSON.stringify({ segments: [seg('00:00', '06:00', 'Coding'), seg('00:00', '06:00', 'Still coding')] })
+    expect(parseSegments(reply, recording)).toMatchObject({ ok: false, coverage: 0.4 })
+  })
+
+  it('returns segments in time order even when the reply lists them out of order', () => {
+    const seg = (a: string, b: string, d: string) => ({ startTimestamp: a, endTimestamp: b, description: d })
+    const reply = JSON.stringify({ segments: [seg('05:00', '15:00', 'Later'), seg('00:00', '05:00', 'First')] })
+    expect(parseSegments(reply, recording)).toMatchObject({ ok: true, observations: [{ text: 'First' }, { text: 'Later' }] })
+  })
 })

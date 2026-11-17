@@ -2,6 +2,33 @@
 // plausible JSON value in a reply, most likely first, so each caller can pick
 // the first one with the shape it expects.
 
+/**
+ * Top-level balanced [...] spans, string-aware so brackets inside JSON
+ * strings do not count. An unclosed stray '[' in prose is skipped, so it
+ * cannot hide a later array.
+ */
+function arraySpans(text: string): string[] {
+  const spans: string[] = []
+  for (let start = text.indexOf('['); start >= 0; start = text.indexOf('[', start + 1)) {
+    let depth = 0
+    let inString = false
+    for (let i = start; i < text.length; i++) {
+      const c = text[i]
+      if (inString) {
+        if (c === '\\') i++
+        else if (c === '"') inString = false
+      } else if (c === '"') inString = true
+      else if (c === '[') depth++
+      else if (c === ']' && --depth === 0) {
+        spans.push(text.slice(start, i + 1))
+        start = i // continue after this array: nested ones are not candidates of their own
+        break
+      }
+    }
+  }
+  return spans
+}
+
 export function jsonCandidates(text: string): unknown[] {
   const found: unknown[] = []
   const tryParse = (s: string) => {
@@ -13,16 +40,8 @@ export function jsonCandidates(text: string): unknown[] {
   }
   const cleaned = text.replace(/```(?:json)?/g, '').trim()
   tryParse(cleaned)
-  // The last array, walking back from its closing bracket to the matching one.
-  const end = cleaned.lastIndexOf(']')
-  let depth = 0
-  for (let i = end; i >= 0; i--) {
-    if (cleaned[i] === ']') depth++
-    else if (cleaned[i] === '[' && --depth === 0) {
-      tryParse(cleaned.slice(i, end + 1))
-      break
-    }
-  }
+  // Arrays, the last one first (models put the answer after their notes).
+  for (const span of arraySpans(cleaned).reverse()) tryParse(span)
   const a = cleaned.indexOf('{')
   const b = cleaned.lastIndexOf('}')
   if (a >= 0 && b > a) tryParse(cleaned.slice(a, b + 1))

@@ -1,6 +1,7 @@
 package portal
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -64,7 +65,7 @@ func (s *ScreenCast) OpenPipeWireRemote() (int, error) {
 // StartScreenCast opens a ScreenCast portal session for all monitors, reusing
 // and renewing the restore token in tokenFile. cursorMode: 1 hidden,
 // 2 embedded, 4 metadata. appID registers host (non-Flatpak) processes.
-func StartScreenCast(conn *dbus.Conn, appID, tokenFile string, cursorMode uint32) (*ScreenCast, Info, error) {
+func StartScreenCast(ctx context.Context, conn *dbus.Conn, appID, tokenFile string, cursorMode uint32) (*ScreenCast, Info, error) {
 	var info Info
 	if os.Getenv("FLATPAK_ID") == "" {
 		// Host apps have no app ID unless they register one.
@@ -76,7 +77,7 @@ func StartScreenCast(conn *dbus.Conn, appID, tokenFile string, cursorMode uint32
 
 	p := New(conn)
 	cursorModes, _ := p.obj.GetProperty("org.freedesktop.portal.ScreenCast.AvailableCursorModes")
-	res, err := p.Request("CreateSession", nil, map[string]dbus.Variant{
+	res, err := p.Request(ctx, "CreateSession", nil, map[string]dbus.Variant{
 		"session_handle_token": dbus.MakeVariant(fmt.Sprintf("dayflowsession%d", os.Getpid())),
 	})
 	if err != nil {
@@ -99,12 +100,12 @@ func StartScreenCast(conn *dbus.Conn, appID, tokenFile string, cursorMode uint32
 		selectOpts["restore_token"] = dbus.MakeVariant(strings.TrimSpace(string(b)))
 		restored = true
 	}
-	if _, err := p.Request("SelectSources", []any{sc.session}, selectOpts); err != nil {
+	if _, err := p.Request(ctx, "SelectSources", []any{sc.session}, selectOpts); err != nil {
 		sc.Close()
 		return nil, info, err
 	}
 	started := time.Now()
-	res, err = p.Request("Start", []any{sc.session, ""}, map[string]dbus.Variant{})
+	res, err = p.Request(ctx, "Start", []any{sc.session, ""}, map[string]dbus.Variant{})
 	if err != nil {
 		sc.Close()
 		return nil, info, err

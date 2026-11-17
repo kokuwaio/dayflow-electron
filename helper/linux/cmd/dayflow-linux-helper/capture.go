@@ -7,6 +7,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -154,9 +155,29 @@ func runCapture(args []string) error {
 // runPWSession runs one portal session until a stream fails or we are
 // interrupted (errInterrupted).
 func runPWSession(conn *dbus.Conn, opts pwOptions, locked *atomic.Bool, interrupted <-chan os.Signal, framesDue *int) error {
-	sc, info, err := portal.StartScreenCast(conn, appID, opts.tokenFile, 4) // cursor as metadata
+	// A stop while the share dialog is open closes the dialog and ends the helper.
+	ctx, cancel := context.WithCancel(context.Background())
+	started := make(chan struct{})
+	var stopped atomic.Bool
+	go func() {
+		select {
+		case <-interrupted:
+			stopped.Store(true)
+			cancel()
+		case <-started:
+		}
+	}()
+	sc, info, err := portal.StartScreenCast(ctx, conn, appID, opts.tokenFile, 4) // cursor as metadata
+	close(started)
+	cancel()
 	for _, w := range info.Warnings {
 		emit("warning", map[string]any{"message": w})
+	}
+	if stopped.Load() {
+		if err == nil {
+			sc.Close()
+		}
+		return errInterrupted
 	}
 	if err != nil {
 		return fmt.Errorf("%w: %w", errStart, err)

@@ -45,8 +45,13 @@ export function Onboarding({ settings, platform, onDone }: { settings: Settings;
               choose turns them into cards that say what you did.
             </p>
             <p className="note">
-              Screenshots stay on this computer. Only the provider you pick below sees them. There is no telemetry. Password
-              managers and other blocked apps are never recorded, and you can pause any time from the tray.
+              Screenshots stay on this computer. Only the provider you pick below sees them. There is no telemetry. You can
+              pause any time from the tray.
+            </p>
+            <p className="note">
+              Password managers and other blocked apps are left out of recordings only where the app can see which window
+              is active: on KDE Plasma, after you allow window detection (Settings shows the one-time command). On other
+              desktops, or before that, pause recording before you open a password manager.
             </p>
             <button onClick={() => setStep(1)}>Get started</button>
           </>

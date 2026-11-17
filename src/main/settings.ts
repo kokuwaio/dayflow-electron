@@ -12,11 +12,20 @@ const KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'c
 /** Providers that use an API key (the agent CLIs use the user's own login). */
 const KEY_KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai']
 
-async function writeAtomic(file: string, data: string): Promise<void> {
-  await mkdir(dirname(file), { recursive: true })
-  const tmp = `${file}.tmp`
-  await writeFile(tmp, data, { mode: 0o600 })
-  await rename(tmp, file)
+/** Writes per file, one after another: saves share the temporary file and must not interleave. */
+const writes = new Map<string, Promise<void>>()
+
+/** Replaces `file` atomically; overlapping calls for one file run in call order. */
+function writeAtomic(file: string, data: string): Promise<void> {
+  const write = async () => {
+    await mkdir(dirname(file), { recursive: true })
+    const tmp = `${file}.tmp`
+    await writeFile(tmp, data, { mode: 0o600 })
+    await rename(tmp, file)
+  }
+  const next = (writes.get(file) ?? Promise.resolve()).then(write, write)
+  writes.set(file, next)
+  return next
 }
 
 function readJson(file: string): Record<string, unknown> {
@@ -29,7 +38,6 @@ function readJson(file: string): Record<string, unknown> {
 
 const overrideText = (v: unknown) => (typeof v === 'string' ? v.slice(0, 4000) : '')
 
-/** Fills gaps with defaults and clamps values to what the app supports. */
 /** Installs from before these notifications existed already have cards, so they skip the one-time ones. */
 function sanitizeNotified(r: Partial<Settings>): Settings['notified'] {
   const existingInstall = r.notified === undefined && typeof r.provider === 'string'
@@ -41,6 +49,7 @@ function sanitizeNotified(r: Partial<Settings>): Settings['notified'] {
   }
 }
 
+/** Fills gaps with defaults and clamps values to what the app supports. */
 export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown>): Settings {
   const r = raw as Partial<Settings>
   const models = { ...DEFAULT_SETTINGS.models }

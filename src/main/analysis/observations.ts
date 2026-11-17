@@ -48,10 +48,23 @@ export function parseSegments(reply: string, recording: Recording): SegmentResul
   if (observations.length > MAX_SEGMENTS) {
     return { ok: false, issue: `The reply has ${observations.length} segments; use at most ${MAX_SEGMENTS}.` }
   }
-  const covered = observations.reduce((sum, o) => sum + (o.end - o.start), 0)
-  const coverage = duration > 0 ? covered / duration : 1
+  // Later steps take the first start and the last end, so keep time order.
+  observations.sort((a, b) => a.start - b.start || a.end - b.end)
+  const coverage = duration > 0 ? coveredSeconds(observations) / duration : 1
   if (coverage < MIN_COVERAGE) {
     return { ok: false, issue: `The segments cover only ${Math.round(coverage * 100)}% of the recording.`, coverage }
   }
   return { ok: true, observations }
+}
+
+/** Seconds covered by the union of sorted segments, so overlaps count once. */
+function coveredSeconds(sorted: Observation[]): number {
+  let total = 0
+  let reach = -Infinity
+  for (const o of sorted) {
+    const from = Math.max(o.start, reach)
+    if (o.end > from) total += o.end - from
+    reach = Math.max(reach, o.end)
+  }
+  return total
 }

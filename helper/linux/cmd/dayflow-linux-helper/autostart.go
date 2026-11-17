@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -28,7 +29,7 @@ func runAutostart(args []string) error {
 		}
 		defer conn.Close()
 		p := portal.New(conn)
-		res, err := p.Request("org.freedesktop.portal.Background.RequestBackground", []any{""}, map[string]dbus.Variant{
+		res, err := p.Request(context.Background(), "org.freedesktop.portal.Background.RequestBackground", []any{""}, map[string]dbus.Variant{
 			"reason":      dbus.MakeVariant("Record your screen in the background to build your timeline"),
 			"autostart":   dbus.MakeVariant(*enable),
 			"commandline": dbus.MakeVariant([]string{"dayflow-electron", "--hidden"}),
@@ -37,6 +38,10 @@ func runAutostart(args []string) error {
 			return err
 		}
 		emit("autostart", map[string]any{"enabled": res["autostart"].Value(), "background": res["background"].Value()})
+		// The portal answers successfully even when the user or desktop declined.
+		if granted, _ := res["autostart"].Value().(bool); granted != *enable {
+			return fmt.Errorf("autostart: the desktop did not allow launch at login (requested %t)", *enable)
+		}
 		return nil
 	}
 
