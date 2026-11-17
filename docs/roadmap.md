@@ -12,7 +12,7 @@ This file maps every upstream feature to a milestone. Upstream paths are
 relative to `Dayflow/Dayflow/` in the upstream repo. "dayflow-windows" means
 [shawkatdidar/dayflow-windows](https://github.com/shawkatdidar/dayflow-windows),
 a small MIT-licensed Electron port whose analysis loop and providers we reuse
-(see [NOTICE.md](NOTICE.md)).
+(see [NOTICE.md](../NOTICE.md)).
 
 ## Ground rules
 
@@ -47,7 +47,7 @@ a small MIT-licensed Electron port whose analysis loop and providers we reuse
 The parts that differ per OS. Everything else is plain Electron.
 
 On Linux all of this lives in one Go helper that talks D-Bus and Wayland and
-prints JSON lines (see [docs/platform-notes.md](docs/platform-notes.md)).
+prints JSON lines (see [docs/platform-notes.md](platform-notes.md)).
 
 | Piece | Linux Wayland | Linux X11 | Windows | macOS |
 | --- | --- | --- | --- | --- |
@@ -91,7 +91,7 @@ Prove the risky parts before building on them. Throwaway code is fine.
 
 **Done when:** 1 hour of unattended capture in the Flatpak on KDE Wayland
 without any dialog, and the findings are in
-[docs/platform-notes.md](docs/platform-notes.md) (written).
+[docs/platform-notes.md](platform-notes.md) (written).
 
 ### M1 Core loop (usable MVP)
 
@@ -189,12 +189,17 @@ each of the three providers.
 - [x] Weekly dashboard (focus heatmap still open): overview, donut, treemap, Sankey, focus heatmap,
   context switches, app interaction graph, highlights. No AI needed; built
   from `timeline_cards` (upstream `Core/Weekly/`).
-- Chat with your journal: streamed answers, tool calls for timeline and
+- [ ] Chat with your journal: streamed answers, tool calls for timeline and
   observations, inline charts from fenced `chart` blocks, history panel,
-  memory (upstream `Core/AI/Chat*`, `ChatPromptBuilder.swift`). CLI providers
-  run through `node-pty`.
-- [x] Desktop notifications: first cards ready, provider problem, weekly
-  unlocked. Clicks open the matching tab.
+  memory (upstream `Core/AI/Chat*`, `ChatPromptBuilder.swift`). API providers
+  get upstream's `fetchTimeline` and `fetchObservations` tools. CLI providers
+  get the relevant timeline data in the prompt with all tools switched off;
+  upstream instead lets the CLI query the database with
+  `--dangerously-skip-permissions`, which we do not copy.
+- [x] Desktop notifications: first cards ready, standup ready, weekly
+  unlocked, and provider problems the user has to fix (once a day per kind,
+  classified like upstream's `TimelineFailureClassifier`). Clicks open the
+  matching tab.
 - [x] Unlock thresholds like upstream: Daily after 5 h, Chat after 10 h, Weekly
   after 30 h of recorded data (upstream `Core/Access/`).
 - [x] Day goals (`day_goals`, `day_goal_categories`; built in M2 with the day summary).
@@ -203,14 +208,14 @@ each of the three providers.
 
 Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
 
-- CLI: `status`, `timeline`, `today`, `yesterday`, `card`, `daily`, `weekly`,
+- [ ] CLI: `status`, `timeline`, `today`, `yesterday`, `card`, `daily`, `weekly`,
   `categories`, `goal set`, `search`, all with `--json`, reading SQLite
   read-only.
-- `mcp` subcommand: stdio MCP server with the same tool names as upstream
+- [ ] `mcp` subcommand: stdio MCP server with the same tool names as upstream
   (`get_timeline`, `get_time_breakdown`, `search_activities`, ...).
-- Write tools go to the running app over a local socket that only listens
+- [ ] Write tools go to the running app over a local socket that only listens
   while "Allow edits" is on.
-- Settings page to register the MCP server with Claude Code, Claude Desktop,
+- [ ] Settings page to register the MCP server with Claude Code, Claude Desktop,
   Codex, Cursor and VS Code.
 
 ### M5 Privacy, polish and release
@@ -221,18 +226,19 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
       blocked frames. Defaults cover KeePassXC, KeePass, 1Password, Bitwarden
       and the Passbolt web app. Needs the opt-in KWin permission in the
       Flatpak; GNOME needs a Shell extension.
-- Private browser windows: only where the window title reveals it; upstream's
+- [ ] Private browser windows: only where the window title reveals it; upstream's
   URL-based rules need accessibility APIs (AT-SPI on Linux) and may stay
   macOS/Windows-only.
-- Secret masking: rules from upstream `PIIMaskRules` on Tesseract OCR output,
+- [ ] Secret masking: rules from upstream `PIIMaskRules` on Tesseract OCR output,
   opt-in. Upstream's ML model is served from its paid backend and is out of
   reach.
-- Dark mode, app language, show/hide icons, pause presets.
-- Deep links: `start-recording`, `stop-recording`.
-- Packages: Flatpak on Linux (own repository first, Flathub once the
+- [ ] Dark mode, app language, show/hide icons, pause presets (all but the
+  app language done; dark mode follows the system).
+- [ ] Deep links: `start-recording`, `stop-recording`.
+- [ ] Packages: Flatpak on Linux (own repository first, Flathub once the
   permissions are settled; updates come through Flatpak), NSIS and dmg with
   `electron-updater` from GitHub Releases; signing for Windows and macOS.
-- Own name, icon and artwork. Bundled fonts only with their OFL license files.
+- [ ] Own name, icon and artwork. Bundled fonts only with their OFL license files.
 
 ### Later or never
 

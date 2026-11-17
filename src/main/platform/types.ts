@@ -1,7 +1,7 @@
 import type { ActiveWindow } from '../../shared/blocklist'
 
 // The OS-specific pieces sit behind this interface, one implementation per
-// platform (see ROADMAP.md, "Platform matrix").
+// platform (see docs/roadmap.md, "Platform matrix").
 
 export interface CapturedFrame {
   filePath: string

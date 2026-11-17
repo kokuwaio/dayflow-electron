@@ -66,6 +66,32 @@ succeeds.
 - **Copy** puts the day or week on the clipboard as text; **Settings →
   Storage → Export timeline** saves a date range as Markdown.
 
+## Daily, Weekly and notifications
+
+The two insight tabs unlock as analyzed data builds up, like upstream: Daily
+after 5 hours, Weekly after 30 hours. Until then each tab shows the progress.
+
+- **Daily** shows your day as a grid of 15-minute cells per category, with a
+  row for distractions, and a standup update with highlights, tasks and
+  blockers.
+  - After 4 AM the app writes the standup from the most recent of the last
+    three days with at least 3 hours of cards. It tries at most 3 times a
+    day. **Regenerate** writes it now (2 hours of cards are enough).
+  - Edit any line; changes save as you type. Enter adds a line, Backspace on
+    an empty line removes it. You can also fill in the standup yourself
+    before one was written.
+  - **Copy standup update** puts it on the clipboard as plain text.
+- **Weekly** needs no AI. It opens the newest week with at least 15 hours
+  tracked and shows time per category, context shifts and distractions per
+  day, a heatmap of the week, your most used apps per category with the
+  change against the week before, and how categories flow into apps.
+- **Notifications** tell you when your first cards are ready, when the
+  standup is written, when Weekly unlocks, and when the AI provider has a
+  problem only you can fix (a wrong key, a usage limit, a stopped Ollama).
+  Provider problems are reported at most once a day per kind, and only while
+  the window is in the background. Click a notification to open the matching
+  tab.
+
 ## Run a local model with Ollama
 
 A local model keeps everything on your computer and needs no API key. Ollama
@@ -215,6 +241,8 @@ vault.
 | Symptom | What to check |
 | --- | --- |
 | No cards after 20 minutes | Settings → AI provider: a key or a reachable local server; **Test connection**. The banner at the top of the window shows the last analysis error. |
+| "Ollama/LM Studio at … unreachable" | The local server is not running. Start it (`sudo systemctl start ollama`, see above); the waiting batches are analyzed once it answers. |
+| Daily says "Not enough captured activity" | None of the last three days has enough cards (3 hours for the automatic standup, 2 for Regenerate). |
 | "Processing failed" cards or very slow batches with a local model | Run `ollama ps` while a batch runs: `100% CPU` on a machine with an integrated GPU means `OLLAMA_IGPU_ENABLE=1` is missing. Check the context length setting above, try 720p. |
 | The share dialog comes back on every start | Allow restoring the permission in the dialog. |
 | "Window detection needs KWin access" | Run the `flatpak override` command above, then restart the app. |

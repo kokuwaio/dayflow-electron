@@ -6,10 +6,18 @@ every few seconds, sends 15-minute batches to the AI provider you choose, and
 turns them into a timeline of what you did. Nothing leaves your computer except
 what goes to that provider.
 
-Status: milestone M1 (core loop) on Linux / Wayland, packaged as a Flatpak.
-See [ROADMAP.md](ROADMAP.md) for the plan and
-[docs/platform-notes.md](docs/platform-notes.md) for what was tested on which
-desktop. "dayflow-electron" is a working name.
+Status: Linux / Wayland, packaged as a Flatpak. The timeline (M1, M2), the
+Daily and Weekly tabs and notifications (M3) work; chat, agent access and
+release packaging are next. "dayflow-electron" is a working name.
+
+## Documentation
+
+| Document | What |
+| --- | --- |
+| [docs/usage.md](docs/usage.md) | Install, providers, local models with Ollama, Claude Code and Codex, the tabs, blocked apps, troubleshooting |
+| [docs/architecture.md](docs/architecture.md) | How the app works, with diagrams |
+| [docs/roadmap.md](docs/roadmap.md) | Every upstream feature mapped to a milestone, with what is done |
+| [docs/platform-notes.md](docs/platform-notes.md) | What was tested on which Linux desktop, and why |
 
 ## Requirements
 
@@ -33,7 +41,7 @@ Checks:
 
 ```sh
 npm run typecheck
-npm test            # Vitest: batching, idle, cards, store, recorder, providers, retention
+npm test            # Vitest: analysis, store, recorder, providers, Daily and Weekly math
 npm run test:helper # Go tests for helper/linux
 ```
 
@@ -48,21 +56,17 @@ On first start KDE (or GNOME) asks once which screens to share: choose all of
 them and allow restoring. The app records only the screen under the mouse and
 pauses while the screen is locked.
 
-## Using the app
-
-[docs/usage.md](docs/usage.md) covers the first start, choosing an AI provider,
-running a local model with Ollama or LM Studio, blocked apps for password
-managers, pausing, storage and troubleshooting.
-
 ## Layout
 
 | Path | What |
 | --- | --- |
-| `src/main/` | Electron main process: capture (`capture/`), analysis (`analysis/`), providers (`providers/`), SQLite store (`db/`), platform interface (`platform/`) |
-| `src/renderer/` | React UI: timeline and settings |
-| `src/shared/` | Types and the 4 AM day helpers used by both |
-| `helper/linux/` | Go helper for Linux desktop access: ScreenCast portal + PipeWire, lock/sleep/idle, autostart |
+| `src/main/` | Electron main process: capture, analysis, providers, SQLite store, Daily standup, notifications, platform interface |
+| `src/renderer/` | React UI: Timeline, Daily, Weekly, Settings, onboarding |
+| `src/shared/` | Pure logic used by both: 4 AM days, categories, Daily and Weekly math, export |
+| `helper/linux/` | Go helper for Linux desktop access: ScreenCast portal + PipeWire, lock/sleep/idle, focused window, autostart |
 | `flatpak/` | Flatpak manifest and desktop file |
+
+[docs/architecture.md](docs/architecture.md) shows how the parts work together.
 
 ## License
 
