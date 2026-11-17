@@ -9,6 +9,7 @@ export function geminiProvider(model: string, apiKey: string, options: ProviderO
   return {
     kind: 'gemini',
     model,
+    local: false,
     async generate({ system, turns, json }: GenerateRequest) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`
       const data = await postJson(fetchImpl, 'Gemini API', url, { 'x-goog-api-key': apiKey }, {

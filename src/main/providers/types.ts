@@ -33,6 +33,8 @@ export interface GenerateResult {
 export interface Provider {
   readonly kind: ProviderKind
   readonly model: string
+  /** A model on this computer (Ollama, LM Studio): small requests work better. */
+  readonly local: boolean
   generate(request: GenerateRequest): Promise<GenerateResult>
 }
 

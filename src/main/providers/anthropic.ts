@@ -20,6 +20,7 @@ export function anthropicProvider(model: string, apiKey: string, options: Provid
   return {
     kind: 'anthropic',
     model,
+    local: false,
     async generate({ system, turns }: GenerateRequest): Promise<GenerateResult> {
       const response = await client.beta.messages
         .create({

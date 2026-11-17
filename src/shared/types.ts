@@ -36,9 +36,13 @@ export type ProviderKind = 'anthropic' | 'gemini' | 'openai'
 
 export interface Settings {
   provider: ProviderKind
+  /** Used when the primary provider fails; null for none. */
+  fallbackProvider: ProviderKind | null
   models: Record<ProviderKind, string>
   /** OpenAI-compatible endpoint, e.g. http://localhost:11434/v1 for Ollama. */
   openaiBaseUrl: string
+  /** Language for card text, e.g. "German"; empty for English. */
+  outputLanguage: string
   captureIntervalSec: number
   captureHeight: 720 | 1080
   storageLimitGb: number
@@ -47,8 +51,10 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   provider: 'anthropic',
+  fallbackProvider: null,
   models: { anthropic: 'claude-opus-5-5', gemini: 'gemini-4-hydrogen', openai: 'gpt-5.1' },
   openaiBaseUrl: 'https://api.openai.com/v1',
+  outputLanguage: '',
   captureIntervalSec: 10,
   captureHeight: 1080,
   storageLimitGb: 10,

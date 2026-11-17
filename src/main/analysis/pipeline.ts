@@ -3,12 +3,13 @@
 // timeline cards. Card generation runs one batch at a time.
 
 import { readFile } from 'node:fs/promises'
-import type { Batch, NewCard, Store } from '../db/store'
+import type { Batch, NewCard, Screenshot, Store } from '../db/store'
 import { type Provider, ProviderError } from '../providers/types'
 import { BATCHING, planBatches } from './batching'
 import { parseCards } from './cards'
 import { assessIdleBatch } from './idle'
-import { type Category, buildCardRequest, sampleEvenly, withCorrection } from './prompt'
+import { type Category, type PromptFrame, buildCardRequest, sampleEvenly, withCorrection } from './prompt'
+import { cardFromObservations, transcribe } from './two-step'
 
 const TICK_MS = 60_000
 /** Screenshots older than this are never batched; failed batches older than this are not retried. */
@@ -18,9 +19,11 @@ const MAX_BATCH_RETRIES = 3
 
 export interface PipelineDeps {
   store: Store
-  /** The configured provider, or a message saying why there is none. */
-  provider(): Provider | string
+  /** Configured providers, primary first, or a message saying why there are none. */
+  providers(): Provider[] | string
   categories(): Category[]
+  /** Output language for card text; empty for English. */
+  language(): string
   onCardsChanged(): void
   log(message: string): void
 }
@@ -109,16 +112,16 @@ export class Pipeline {
       return 'analyzed'
     }
 
-    const provider = this.deps.provider()
-    if (typeof provider === 'string') {
+    const providers = this.deps.providers()
+    if (typeof providers === 'string' || providers.length === 0) {
       // Nothing to do until a provider is configured; keep the batch pending.
-      this.lastError = provider
+      this.lastError = typeof providers === 'string' ? providers : 'No AI provider configured.'
       return 'pending'
     }
 
     store.startAttempt(batch.id)
     try {
-      await this.generateCards(batch, provider, shots)
+      await this.generateWithFailover(batch, providers, shots)
       store.finishBatch(batch.id, 'completed')
       this.lastError = null
       return 'completed'
@@ -127,6 +130,7 @@ export class Pipeline {
       this.lastError = message
       this.deps.log(`batch ${batch.id} failed: ${message}`)
       store.finishBatch(batch.id, 'failed', message)
+      store.replaceObservations(batch.id, [], '')
       store.writeErrorCard(batch.id, span, message)
       return 'failed'
     } finally {
@@ -134,45 +138,112 @@ export class Pipeline {
     }
   }
 
-  private async generateCards(batch: Batch, provider: Provider, shots: ReturnType<Store['batchScreenshots']>) {
-    const { store } = this.deps
+  /** Tries each provider in turn; throws with every provider's error when all fail. */
+  private async generateWithFailover(batch: Batch, providers: Provider[], shots: Screenshot[]): Promise<void> {
+    const errors: string[] = []
+    for (const provider of providers) {
+      try {
+        await this.generateCards(batch, provider, shots)
+        return
+      } catch (err) {
+        errors.push(`${provider.model}: ${err instanceof Error ? err.message : String(err)}`)
+        this.deps.log(`batch ${batch.id}: ${errors[errors.length - 1]}`)
+      }
+    }
+    throw new Error(errors.join(' · '))
+  }
+
+  /**
+   * Local models go straight to two steps. Others try one step first and fall
+   * back to two steps when their cards keep failing validation; provider
+   * errors go up to the failover.
+   */
+  private async generateCards(batch: Batch, provider: Provider, shots: Screenshot[]): Promise<void> {
     const sampled = sampleEvenly(shots)
     const frames = await Promise.all(
       sampled.map(async (s) => ({ capturedAt: s.capturedAt, jpeg: await readFile(s.filePath) }))
     )
+    const logged = this.loggedProvider(provider, batch.id)
+    if (!provider.local) {
+      try {
+        await this.oneStep(batch, logged, frames)
+        return
+      } catch (err) {
+        if (!(err instanceof CardValidationError)) throw err
+        this.deps.log(`batch ${batch.id}: ${err.message}; trying two steps`)
+      }
+    }
+    await this.twoStep(batch, logged, frames)
+  }
+
+  private async twoStep(batch: Batch, provider: Provider, frames: PromptFrame[]): Promise<void> {
+    const { store } = this.deps
+    const observations = await transcribe(provider, frames)
+    store.replaceObservations(batch.id, observations, provider.model)
+    const firstStart = observations[0]!.start
+    // The last card that started before this batch's observations.
+    const previous =
+      store
+        .contextCards({ start: batch.end - BATCHING.cardLookbackSec, end: batch.end })
+        .filter((c) => c.start < firstStart)
+        .at(-1) ?? null
+    const { card, span } = await cardFromObservations(provider, observations, this.deps.categories(), this.deps.language(), previous)
+    // keepAfter: cards of newer batches survive when an old batch is analyzed late.
+    store.replaceCards(span, batch.id, [card], batch.start)
+  }
+
+  /** Wraps a provider so every call lands in llm_calls. */
+  private loggedProvider(provider: Provider, batchId: number): Provider {
+    const { store } = this.deps
+    let attempt = 0
+    return {
+      kind: provider.kind,
+      model: provider.model,
+      local: provider.local,
+      async generate(request) {
+        attempt++
+        const started = Date.now()
+        const base = { batchId, attempt, provider: provider.kind, model: provider.model, operation: 'generate' }
+        try {
+          const result = await provider.generate(request)
+          store.logLlmCall({ ...base, ok: true, latencyMs: Date.now() - started, responseBody: result.text })
+          return result
+        } catch (err) {
+          store.logLlmCall({
+            ...base, ok: false, latencyMs: Date.now() - started, error: String(err),
+            ...(err instanceof ProviderError && err.status ? { httpStatus: err.status } : {})
+          })
+          throw err
+        }
+      }
+    }
+  }
+
+  private async oneStep(batch: Batch, provider: Provider, frames: PromptFrame[]): Promise<void> {
+    const { store } = this.deps
     const window = {
-      start: Math.floor(sampled[0]!.capturedAt / 60) * 60,
-      end: Math.floor(sampled[sampled.length - 1]!.capturedAt / 60) * 60 + 60
+      start: Math.floor(frames[0]!.capturedAt / 60) * 60,
+      end: Math.floor(frames[frames.length - 1]!.capturedAt / 60) * 60 + 60
     }
     const lookbackStart = batch.end - BATCHING.cardLookbackSec
     const previousCards = store.contextCards({ start: lookbackStart, end: batch.end })
     const categories = this.deps.categories()
 
-    let request = buildCardRequest({ frames, previousCards, window, categories })
+    let request = buildCardRequest({ frames, previousCards, window, categories, language: this.deps.language() })
     let lastIssue = ''
     for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_CALL; attempt++) {
-      const started = Date.now()
-      let text: string
-      try {
-        text = (await provider.generate(request)).text
-      } catch (err) {
-        store.logLlmCall({
-          batchId: batch.id, attempt, provider: provider.kind, model: provider.model, operation: 'generate_cards',
-          ok: false, latencyMs: Date.now() - started, error: String(err),
-          ...(err instanceof ProviderError && err.status ? { httpStatus: err.status } : {})
-        })
-        throw err
-      }
+      const text = (await provider.generate(request)).text
       const parsed = parseCards(text, {
         window,
         previous: previousCards.map((c) => ({ start: c.start, end: c.end })),
         categories: categories.map((c) => c.name)
       })
-      store.logLlmCall({
-        batchId: batch.id, attempt, provider: provider.kind, model: provider.model, operation: 'generate_cards',
-        ok: parsed.ok, latencyMs: Date.now() - started, responseBody: text,
-        ...(parsed.ok ? {} : { error: parsed.issue })
-      })
+      if (!parsed.ok) {
+        store.logLlmCall({
+          batchId: batch.id, attempt, provider: provider.kind, model: provider.model, operation: 'validate_cards',
+          ok: false, latencyMs: 0, error: parsed.issue
+        })
+      }
       if (parsed.ok) {
         const range = { start: Math.min(lookbackStart, ...previousCards.map((c) => c.start)), end: Math.max(batch.end, window.end) }
         store.replaceCards(range, batch.id, parsed.cards)
@@ -181,9 +252,12 @@ export class Pipeline {
       lastIssue = parsed.issue
       request = withCorrection(request, text, parsed.issue, window)
     }
-    throw new Error(`The model's cards failed validation: ${lastIssue}`)
+    throw new CardValidationError(`The model's cards failed validation: ${lastIssue}`)
   }
 }
+
+/** The model answered, but its cards broke the timeline rules after every correction. */
+class CardValidationError extends Error {}
 
 function idleCard(span: { start: number; end: number }): NewCard {
   return {

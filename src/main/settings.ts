@@ -32,10 +32,14 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
     const m = r.models?.[k]
     if (typeof m === 'string' && m.trim()) models[k] = m.trim()
   }
+  const provider = KINDS.includes(r.provider as ProviderKind) ? (r.provider as ProviderKind) : DEFAULT_SETTINGS.provider
+  const secondary = KINDS.includes(r.fallbackProvider as ProviderKind) ? (r.fallbackProvider as ProviderKind) : null
   return {
-    provider: KINDS.includes(r.provider as ProviderKind) ? (r.provider as ProviderKind) : DEFAULT_SETTINGS.provider,
+    provider,
+    fallbackProvider: secondary === provider ? null : secondary,
     models,
     openaiBaseUrl: typeof r.openaiBaseUrl === 'string' && r.openaiBaseUrl.trim() ? r.openaiBaseUrl.trim() : DEFAULT_SETTINGS.openaiBaseUrl,
+    outputLanguage: typeof r.outputLanguage === 'string' ? r.outputLanguage.trim().slice(0, 40) : '',
     captureIntervalSec: (CAPTURE_INTERVALS as readonly number[]).includes(Number(r.captureIntervalSec))
       ? Number(r.captureIntervalSec)
       : DEFAULT_SETTINGS.captureIntervalSec,

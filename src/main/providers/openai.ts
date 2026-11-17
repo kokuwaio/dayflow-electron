@@ -1,3 +1,4 @@
+import { isLocalUrl } from '../../shared/providers'
 import { type GenerateRequest, type Part, type Provider, type ProviderOptions, ProviderError, postJson, toBase64 } from './types'
 
 export const OPENAI_DEFAULT_BASE_URL = 'https://api.openai.com/v1'
@@ -7,14 +8,6 @@ const toContent = (p: Part) =>
     ? { type: 'text', text: p.text }
     : { type: 'image_url', image_url: { url: `data:${p.mediaType};base64,${toBase64(p.data)}` } }
 
-const isLocal = (url: string) => {
-  try {
-    return ['localhost', '127.0.0.1', '[::1]'].includes(new URL(url).hostname)
-  } catch {
-    return false
-  }
-}
-
 /** OpenAI chat completions; also Ollama, LM Studio, OpenRouter and other compatible servers. */
 export function openaiProvider(model: string, apiKey: string | undefined, baseUrl: string | undefined, options: ProviderOptions): Provider {
   const fetchImpl = options.fetch ?? fetch
@@ -22,8 +15,9 @@ export function openaiProvider(model: string, apiKey: string | undefined, baseUr
   return {
     kind: 'openai',
     model,
+    local: isLocalUrl(base),
     async generate({ system, turns }: GenerateRequest) {
-      if (!apiKey && !isLocal(base)) {
+      if (!apiKey && !isLocalUrl(base)) {
         throw new ProviderError(`No API key set for ${base}. Add one in Settings.`, false)
       }
       const messages = [

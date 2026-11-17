@@ -82,5 +82,20 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX idx_llm_calls_created ON llm_calls(created_at DESC);
   CREATE INDEX idx_llm_calls_batch ON llm_calls(batch_id);
+  `,
+  // 2: observations from the two-step path
+  `
+  CREATE TABLE observations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    batch_id INTEGER NOT NULL REFERENCES analysis_batches(id) ON DELETE CASCADE,
+    start_ts INTEGER NOT NULL,
+    end_ts INTEGER NOT NULL,
+    observation TEXT NOT NULL,
+    metadata TEXT,
+    llm_model TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX idx_observations_batch_id ON observations(batch_id);
+  CREATE INDEX idx_observations_time_range ON observations(start_ts, end_ts);
   `
 ]

@@ -144,33 +144,37 @@ each of the three providers.
 
 ### M2 Timeline parity
 
-- Week view (7-column grid), category filter bar (mute, reorder).
-- Categories: editor with name, color and description sent to the model;
-  defaults Work, Personal, Distraction, Idle; role presets
-  (upstream `Models/TimelineCategory.swift`).
-- Card actions: edit title and category, delete, thumbs up/down with
-  feedback, retry a failed card, reprocess a day or batch.
-- Screenshot slideshow and timelapse player at 20x/40x/60x (`ffmpeg`).
-- App and site icons from the model's `appSites` (upstream
-  `Core/Net/FaviconService.swift`, fetched at runtime, nothing bundled).
-- Day summary panel: focus vs. distraction, category donut, daily goal.
-- Copy timeline as text; export a date range as Markdown.
-- Two-step fallback (transcribe to `observations`, then cards) for local
-  models; primary and secondary provider with automatic failover; retry
-  failed batches after the next success (up to 3 times).
-- Optional CLI providers: Claude CLI (`claude -p`) and Codex CLI
-  (`codex exec --json`), which use the user's subscription instead of an API
-  key. In the Flatpak they run on the host through `flatpak-spawn --host`.
-  The manifest does not request the needed `org.freedesktop.Flatpak`
-  permission; the settings page detects whether it is granted and otherwise
-  shows the one-time opt-in command
-  (`flatpak override --user --talk-name=org.freedesktop.Flatpak <app-id>`).
-- Gemini video upload via the Files API.
-- Prompt overrides per provider (title, summary, detailed blocks) and an
-  output-language setting.
-- Frames stored as video segments to cut disk use.
-- Onboarding: provider choice and setup with test, capture consent
-  (portal on Linux, Screen Recording on macOS), categories preset.
+- [ ] Week view (7-column grid), category filter bar (mute, reorder).
+- [ ] Categories: editor with name, color and description sent to the model;
+      defaults Work, Personal, Distraction, Idle; role presets
+      (upstream `Models/TimelineCategory.swift`).
+- [ ] Card actions: edit title and category, delete, thumbs up/down with
+      feedback, retry a failed card, reprocess a day or batch.
+- [ ] Screenshot slideshow and timelapse player at 20x/40x/60x (`ffmpeg`).
+- [ ] App and site icons from the model's `appSites` (upstream
+      `Core/Net/FaviconService.swift`, fetched at runtime, nothing bundled).
+- [ ] Day summary panel: focus vs. distraction, category donut, daily goal.
+- [ ] Copy timeline as text; export a date range as Markdown.
+- [x] Two-step fallback (transcribe to `observations`, then cards) like
+      upstream's local-model path: one small request per frame, segments,
+      then summary, title and an optional merge into the previous card.
+      Local servers (OpenAI-compatible on localhost) always use it; API
+      providers fall back to it when their one-step cards keep failing
+      validation. Primary and secondary provider with automatic failover;
+      failed batches are retried after the next success (up to 3 times).
+- [ ] Optional CLI providers: Claude CLI (`claude -p`) and Codex CLI
+      (`codex exec --json`), which use the user's subscription instead of an API
+      key. In the Flatpak they run on the host through `flatpak-spawn --host`.
+      The manifest does not request the needed `org.freedesktop.Flatpak`
+      permission; the settings page detects whether it is granted and otherwise
+      shows the one-time opt-in command
+      (`flatpak override --user --talk-name=org.freedesktop.Flatpak <app-id>`).
+- [ ] Gemini video upload via the Files API.
+- [ ] Prompt overrides per provider (title, summary, detailed blocks).
+- [x] Output-language setting for card text.
+- [ ] Frames stored as video segments to cut disk use.
+- [ ] Onboarding: provider choice and setup with test, capture consent
+      (portal on Linux, Screen Recording on macOS), categories preset.
 
 ### M3 Insights
 

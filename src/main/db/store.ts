@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite'
 import { dayKey, formatClock } from '../../shared/day'
 import type { AppSites, Distraction, TimelineCard } from '../../shared/types'
+import type { Observation } from '../analysis/observations'
 import type { StoredFrame } from '../retention'
 import { MIGRATIONS } from './schema'
 
@@ -191,6 +192,17 @@ export class Store {
         call.responseBody ?? null,
         call.error ?? null
       )
+  }
+
+  /** Replaces a batch's observations (two-step path). */
+  replaceObservations(batchId: number, observations: Observation[], model: string): void {
+    this.tx(() => {
+      this.db.prepare('DELETE FROM observations WHERE batch_id = ?').run(batchId)
+      const insert = this.db.prepare(
+        'INSERT INTO observations (batch_id, start_ts, end_ts, observation, llm_model) VALUES (?, ?, ?, ?, ?)'
+      )
+      for (const o of observations) insert.run(batchId, o.start, o.end, o.text, model)
+    })
   }
 
   storedFrames(): StoredFrame[] {

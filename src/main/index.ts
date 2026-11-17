@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { BrowserWindow, Menu, Tray, app, ipcMain, nativeImage, shell } from 'electron'
 import { dayKey } from '../shared/day'
+import { needsApiKey } from '../shared/providers'
 import { PAUSE_PRESETS, describeRecorder } from '../shared/status'
 import type { AppStatus, ProviderKind, Settings } from '../shared/types'
 import { Pipeline } from './analysis/pipeline'
@@ -55,19 +56,23 @@ async function main(): Promise<void> {
     store.insertScreenshot(f)
   })
 
-  /** The configured provider; throws a readable error when it cannot be built. */
-  const currentProvider = () => {
+  const providerFor = (kind: ProviderKind) => {
     const s = settings.get()
-    return createProvider({ kind: s.provider, model: s.models[s.provider], baseUrl: s.openaiBaseUrl }, settings.apiKey(s.provider))
+    return createProvider({ kind, model: s.models[kind], baseUrl: s.openaiBaseUrl }, settings.apiKey(kind))
   }
+  const currentProvider = () => providerFor(settings.get().provider)
+  const usable = (kind: ProviderKind) => !needsApiKey(kind, settings.get().openaiBaseUrl) || !!settings.apiKey(kind)
 
   const pipeline = new Pipeline({
     store,
-    provider: () => {
+    providers: () => {
       const s = settings.get()
-      if (!settings.apiKey(s.provider) && s.provider !== 'openai') return `No API key set for ${s.provider}. Add one in Settings.`
-      return currentProvider()
+      const kinds = [s.provider, ...(s.fallbackProvider ? [s.fallbackProvider] : [])]
+      for (const k of kinds.filter((k) => !usable(k))) log(`no API key for ${k}; skipping it`)
+      const ready = kinds.filter(usable)
+      return ready.length ? ready.map(providerFor) : `No API key set for ${s.provider}. Add one in Settings.`
     },
+    language: () => settings.get().outputLanguage,
     categories: () => DEFAULT_CATEGORIES,
     onCardsChanged: () => window?.webContents.send('cards:changed'),
     log

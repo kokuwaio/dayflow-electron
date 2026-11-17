@@ -1,5 +1,6 @@
 import { formatClock } from '../../shared/day'
 import type { AppSites, Distraction } from '../../shared/types'
+import { jsonArray } from './json'
 
 // Turns the model's reply into validated timeline cards. Follows upstream's
 // tolerant parser (AgentCLISupport+Parsing.swift) and output validator
@@ -55,32 +56,8 @@ export function resolveClock(label: string, anchor: number): number | null {
   return best
 }
 
-function extractCardArray(text: string): unknown[] | null {
-  const tryParse = (s: string): unknown[] | null => {
-    try {
-      const v = JSON.parse(s)
-      if (Array.isArray(v)) return v
-      if (v && typeof v === 'object' && Array.isArray((v as { cards?: unknown }).cards)) return (v as { cards: unknown[] }).cards
-    } catch {
-      // not JSON
-    }
-    return null
-  }
-  const direct = tryParse(text.trim())
-  if (direct) return direct
-  const cleaned = text.replace(/```(?:json)?/g, '')
-  const end = cleaned.lastIndexOf(']')
-  if (end < 0) return null
-  // Walk back from the last ']' to its matching '['.
-  let depth = 0
-  for (let i = end; i >= 0; i--) {
-    if (cleaned[i] === ']') depth++
-    else if (cleaned[i] === '[' && --depth === 0) return tryParse(cleaned.slice(i, end + 1))
-  }
-  return null
-}
-
-function normalizeCategory(raw: unknown, categories: string[]): string {
+/** Maps a model's category to an allowed one: exact (any case), idle aliases, else the first. */
+export function normalizeCategory(raw: unknown, categories: string[]): string {
   const name = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
   const exact = categories.find((c) => c.toLowerCase() === name)
   if (exact) return exact
@@ -92,7 +69,7 @@ function normalizeCategory(raw: unknown, categories: string[]): string {
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
 
 export function parseCards(text: string, ctx: ParseContext): ParseResult {
-  const raw = extractCardArray(text)
+  const raw = jsonArray(text, 'cards')
   if (!raw) return { ok: false, issue: 'The reply contains no JSON array of cards.' }
   const evidenceStart = Math.min(ctx.window.start, ...ctx.previous.map((p) => p.start))
   const anchor = (evidenceStart + ctx.window.end) / 2

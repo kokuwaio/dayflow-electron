@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
+import { needsApiKey } from '@shared/providers'
 import { type AppStatus, CAPTURE_INTERVALS, type ProviderKind, type Settings } from '@shared/types'
 
 const PROVIDERS: Array<{ kind: ProviderKind; label: string; hint: string }> = [
   { kind: 'anthropic', label: 'Anthropic', hint: 'Claude models through the Anthropic API.' },
   { kind: 'gemini', label: 'Gemini', hint: 'Google Gemini API; frames are sent inline.' },
-  { kind: 'openai', label: 'OpenAI-compatible', hint: 'OpenAI, OpenRouter, or a local Ollama or LM Studio server.' }
+  { kind: 'openai', label: 'OpenAI-compatible', hint: 'OpenAI, OpenRouter, or a local Ollama or LM Studio server (no key needed; analyzed in small steps).' }
 ]
 
 const gb = (bytes: number) => (bytes / 1024 ** 3).toFixed(2)
@@ -91,7 +92,32 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
           {test && test !== 'running' && <span className={test.ok ? 'ok' : 'error'}>{test.message}</span>}
           {test === 'running' && <span className="note">Asking the model…</span>}
         </div>
-        <p className="note">Screenshots go only to the provider chosen here. Nothing else leaves this computer.</p>
+        <label className="field">
+          Fallback provider
+          <select
+            value={settings.fallbackProvider ?? ''}
+            onChange={(e) => save({ fallbackProvider: (e.target.value || null) as ProviderKind | null })}
+          >
+            <option value="">None</option>
+            {PROVIDERS.filter((p) => p.kind !== provider).map((p) => (
+              <option key={p.kind} value={p.kind}>
+                {p.label} ({settings.models[p.kind]}){needsApiKey(p.kind, settings.openaiBaseUrl) && !keys?.[p.kind] ? ', no key yet' : ''}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="note">
+          Takes over a batch when the main provider fails. Select it above to set its model and key.
+        </p>
+        <label className="field">
+          Card language
+          <input
+            placeholder="English"
+            defaultValue={settings.outputLanguage}
+            onBlur={(e) => save({ outputLanguage: e.target.value })}
+          />
+        </label>
+        <p className="note">Screenshots go only to the providers chosen here. Nothing else leaves this computer.</p>
       </section>
 
       <section>

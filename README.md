@@ -48,6 +48,15 @@ On first start KDE (or GNOME) asks once which screens to share: choose all of
 them and allow restoring. The app records only the screen under the mouse and
 pauses while the screen is locked.
 
+## Local models (Ollama, LM Studio)
+
+Choose **OpenAI-compatible** in Settings, set the base URL to
+`http://localhost:11434/v1` (Ollama) and a vision model such as
+`qwen3-vl:8b`, and leave the API key empty. Servers on localhost always use
+the two-step path: one small request per screenshot, then short text-only
+requests for the card, which small models handle far better than one large
+request. Set the recording resolution to 720p to keep each request small.
+
 ## Layout
 
 | Path | What |
