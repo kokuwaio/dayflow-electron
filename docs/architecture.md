@@ -12,7 +12,12 @@ database and the network.
 - **Renderer**: the React UI in a sandboxed window. It has no Node access. It
   calls the main process through the `window.dayflow` API that the preload
   script exposes, and it loads screenshots and icons through the
-  `dayflow-media://` scheme.
+  `dayflow-media://` scheme. Its look comes from CSS tokens in
+  `styles.css`: `data-ui-style` on the root element picks Modern (default)
+  or Original, `prefers-color-scheme` light or dark (the main process sets
+  `nativeTheme.themeSource` from Settings → Appearance). Full-window overlays
+  (review, goal pop-up) render into `document.body`, outside the panels'
+  `backdrop-filter`.
 - **Main process** (Node, Electron): records, stores, analyzes and serves the
   data.
 - **Linux helper**: a Go program for what Electron cannot do on Wayland.

@@ -62,7 +62,7 @@ your user; `make dev` starts it without packaging, with hot reload.
 
 ## Windows
 
-Download `dayflow-electron-<version>-win-x64.exe` (or `-win-arm64.exe` on ARM
+Download `dayflow-electron-v<version>-win-x64.exe` (or `-win-arm64.exe` on ARM
 devices) and run it. It installs for your user only, without administrator
 rights, and asks for the folder. Later versions install themselves (see
 [Updates](#updates)); an installer run by hand also installs over the old
@@ -72,14 +72,14 @@ The installer isn't signed yet, so SmartScreen warns about an unknown
 publisher: click **More info**, then **Run anyway**.
 
 Your data lives in `%APPDATA%\dayflow-electron` and survives uninstalling
-(Settings → Apps → dayflow-electron → Uninstall); delete that folder to
+(Settings → Apps → Dayflow Electron → Uninstall); delete that folder to
 remove it too.
 
 ## macOS
 
 ### Disk image
 
-Download `dayflow-electron-<version>-mac-arm64.dmg` (Apple silicon) or
+Download `dayflow-electron-v<version>-mac-arm64.dmg` (Apple silicon) or
 `-mac-x64.dmg` (Intel), open it and drag the app into **Applications**.
 macOS 12 or later.
 
@@ -91,10 +91,10 @@ then click **Open Anyway** under **System Settings → Privacy & Security**, or
 run:
 
 ```sh
-xattr -dr com.apple.quarantine /Applications/dayflow-electron.app
+xattr -dr com.apple.quarantine '/Applications/Dayflow Electron.app'
 ```
 
-Then allow **Screen Recording** for dayflow-electron under **System Settings →
+Then allow **Screen Recording** for Dayflow Electron under **System Settings →
 Privacy & Security → Screen Recording**, and quit and reopen the app. Until it
 is signed, macOS may ask for this permission again after an update.
 

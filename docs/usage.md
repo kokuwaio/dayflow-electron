@@ -342,7 +342,8 @@ dayflow-electron categories rename Work "Deep work"
 dayflow-electron goal set --focus-minutes 240 --focus-category Work
 ```
 
-`dayflow-electron help` lists every command. `--json` prints stable JSON with
+`dayflow-electron help` lists every command. A value that starts with a dash
+goes after `=`, as in `--title=--draft`. `--json` prints stable JSON with
 `schema_version: 1`; errors then go to stderr as JSON. Exit codes: 0 ok,
 1 unexpected error, 2 bad arguments, 3 not found, 4 edits are off, 5 no data
 yet, 6 the app is not running (for edits). `timeline delete` and
