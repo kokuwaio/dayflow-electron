@@ -250,3 +250,13 @@ code { font-size: 12px; }
 .chat-history-row .delete { visibility: hidden; border: none; background: none; color: #b0655a; }
 .chat-history-row:hover .delete { visibility: visible; }
 .chat-locked .badge { font-size: 11px; color: #fff; background: #f98d3d; border-radius: 6px; padding: 2px 6px; vertical-align: middle; }
+.chat-composer-tools { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.chat-composer .pills { display: flex; gap: 4px; }
+.chat-composer .pills button { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--chat-input-border); background: none; }
+.chat-composer .pills button.on { background: var(--chat-soft); border-color: var(--chat-soft-border); }
+.chat-history-row .link { display: flex; flex-direction: column; align-items: flex-start; }
+.chat-history-row .link .title { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-history-row .link .note { font-size: 11px; }
+.chat-locked .requirements { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.chat-locked .requirements li { display: flex; flex-direction: column; border-radius: 20px; padding: 10px 14px; background: var(--chat-card); border: 1px solid var(--chat-card-border); }
+.chat-suggestions .note { width: 100%; }

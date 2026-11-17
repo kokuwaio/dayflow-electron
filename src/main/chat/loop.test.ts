@@ -24,7 +24,7 @@ function scripted(turns: Array<Partial<ChatTurnResult>>) {
 }
 
 describe('chat tool loop (upstream runDashboardChatLoop)', () => {
-  it('runs the requested tools, feeds their results back and returns the final answer', async () => {
+  it('runs the requested tools, feeds their results back and keeps the text of every round', async () => {
     const { provider, seen } = scripted([
       { text: 'Let me check.', toolCalls: [{ id: 'a', name: 'fetchTimeline', args: { date: '2026-11-17' } }] },
       { text: 'You had no cards today.' }
@@ -35,14 +35,18 @@ describe('chat tool loop (upstream runDashboardChatLoop)', () => {
       system: 'S',
       history: [{ role: 'user', text: 'Today?' }],
       data: noData,
-      onEvent: (e) => events.push(e.type === 'text' ? `text:${e.delta}` : e.type === 'tool-start' ? `start:${e.command}` : `end:${e.summary}:${e.failed}`)
+      onEvent: (e) => {
+        if (e.type === 'text') events.push(`text:${e.delta}`)
+        else if (e.type === 'tool-start') events.push(`start:${e.command}`)
+        else if (e.type === 'tool-end') events.push(`end:${e.summary}:${e.failed}`)
+      }
     })
-    expect(answer).toEqual({ text: 'You had no cards today.', model: 'm' })
+    expect(answer).toEqual({ text: 'Let me check. You had no cards today.', model: 'm' })
     expect(events).toEqual([
       'text:Let me check.',
       'start:fetchTimeline {"date":"2026-11-17"}',
       'end:Fetched 0 timeline cards for Tue, Nov 17.:false',
-      'text:You had no cards today.'
+      'text: You had no cards today.'
     ])
     expect(seen[1]!.messages.at(-1)).toMatchObject({ role: 'tool', results: [{ call: { id: 'a' }, result: { itemCount: 0 } }] })
   })

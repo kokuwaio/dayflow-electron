@@ -34,7 +34,9 @@ describe('chatSystemPrompt (upstream ChatPromptBuilder)', () => {
     expect(prompt).toContain('"Yesterday" means the previous 4 AM–4 AM window.')
     expect(prompt).toContain('1. **fetchTimeline**')
     expect(prompt).toContain('```suggestions\n["Question 1?", "Question 2?", "Question 3?"]\n```')
-    expect(prompt.endsWith('- Emit only the fenced `suggestions` block and fenced `memory` block after the main answer.')).toBe(true)
+    expect(prompt).toContain('- Emit only the fenced `suggestions` block and fenced `memory` block after the main answer.')
+    // Not in upstream's Gemini prompt: API providers get the chart instructions too.
+    expect(prompt).toContain('## INLINE CHARTS (OPTIONAL)')
     expect(prompt).not.toContain('## LANGUAGE')
   })
 

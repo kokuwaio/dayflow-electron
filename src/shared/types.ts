@@ -97,8 +97,6 @@ export interface Settings {
   standupAttempts: { day: string; count: number }
   /** What the chat model remembers about the user ("Profile: …\nStyle: …"), from its memory blocks. */
   chatMemory: string
-  /** The latest follow-up suggestions, so the model avoids repeating them (upstream keeps 9). */
-  chatSuggestions: string[]
 }
 
 /** The window's tabs; notifications and the tray open one of them. */
@@ -128,8 +126,7 @@ export const DEFAULT_SETTINGS: Settings = {
   onboarded: false,
   notified: { firstCards: false, weeklyUnlock: false, problemDays: {} },
   standupAttempts: { day: '', count: 0 },
-  chatMemory: '',
-  chatSuggestions: []
+  chatMemory: ''
 }
 
 export const CAPTURE_INTERVALS = [1, 5, 10, 20, 30, 60] as const
@@ -172,8 +169,17 @@ export interface ChatStoredMessage {
   createdAt: number
 }
 
-/** Progress of a chat answer, streamed to the window. */
+/** An answered chat message. */
+export interface ChatReply {
+  conversationId: string
+  text: string
+  suggestions: string[]
+  model: string
+}
+
+/** Progress of a chat answer, streamed to the window. "reset" drops what streamed so far (a fallback provider takes over). */
 export type ChatEvent =
+  | { type: 'reset' }
   | { type: 'text'; delta: string }
   | { type: 'tool-start'; command: string }
   | { type: 'tool-end'; summary: string; failed: boolean }

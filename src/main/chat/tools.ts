@@ -4,15 +4,14 @@
 
 import { dayKey, dayRange, formatClock, parseKey } from '../../shared/day'
 import type { TimelineCard } from '../../shared/types'
+import type { Observation } from '../analysis/observations'
+import type { ToolSpec } from '../providers/types'
 
 /** Above this, detailed summaries are left out (upstream dashboardChatTimelinePayloadSoftLimitBytes). */
 const TIMELINE_SOFT_LIMIT_BYTES = 800_000
 
-export const CHAT_TOOL_NAMES = ['fetchTimeline', 'fetchObservations'] as const
-export type ChatToolName = (typeof CHAT_TOOL_NAMES)[number]
-
 /** Upstream's declarations, as provider-neutral JSON Schema. */
-export const CHAT_TOOLS: Array<{ name: ChatToolName; description: string; parameters: Record<string, unknown> }> = [
+export const CHAT_TOOLS: ToolSpec[] = [
   {
     name: 'fetchTimeline',
     description:
@@ -47,7 +46,7 @@ export const CHAT_TOOLS: Array<{ name: ChatToolName; description: string; parame
 /** What the tools read; the store provides it, tests fake it. */
 export interface ChatData {
   cardsBetween(from: number, to: number): TimelineCard[]
-  observationsBetween(from: number, to: number): Array<{ start: number; end: number; text: string }>
+  observationsBetween(from: number, to: number): Observation[]
 }
 
 export type ToolResult = Record<string, unknown> & { summary: string }

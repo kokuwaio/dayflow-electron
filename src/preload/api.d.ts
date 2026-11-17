@@ -7,6 +7,7 @@ import type {
   CardEdit,
   ChatConversation,
   ChatEvent,
+  ChatReply,
   ChatStoredMessage,
   CliName,
   ProviderKind,
@@ -39,8 +40,11 @@ export interface DayflowApi {
   /** Answers in the given conversation, or a new one for null; progress arrives through onChatEvent. */
   sendChat(
     conversationId: string | null,
-    text: string
-  ): Promise<{ ok: true; reply: { conversationId: string; text: string; suggestions: string[]; model: string } } | { ok: false; message: string }>
+    text: string,
+    preferred?: ProviderKind
+  ): Promise<{ ok: true; reply: ChatReply } | { ok: false; message: string; conversationId?: string | null }>
+  /** The configured providers, main one first. */
+  getChatProviders(): Promise<ProviderKind[]>
   getChatMemory(): Promise<string>
   saveChatMemory(memory: string): Promise<void>
   onChatEvent(cb: (event: ChatEvent) => void): () => void

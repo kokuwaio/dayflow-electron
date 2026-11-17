@@ -105,43 +105,43 @@ const isNumbers = (v: unknown): v is number[] => Array.isArray(v) && v.every((x)
 
 /** A chart from its fenced JSON, or null when the shape does not hold (upstream ChatChartSpec.parse). */
 export function parseChart(type: string, json: string): ChatChart | null {
-  let p: Record<string, unknown>
+  let payload: Record<string, unknown>
   try {
-    p = JSON.parse(json) as Record<string, unknown>
+    payload = JSON.parse(json) as Record<string, unknown>
   } catch {
     return null
   }
-  if (!p || typeof p !== 'object' || typeof p.title !== 'string') return null
-  const title = p.title
+  if (!payload || typeof payload !== 'object' || typeof payload.title !== 'string') return null
+  const title = payload.title
   switch (type) {
     case 'bar':
     case 'line':
-      if (!isStrings(p.x) || !isNumbers(p.y) || p.x.length === 0 || p.x.length !== p.y.length) return null
-      return { type, title, labels: p.x, values: p.y, color: hex(p.color) }
+      if (!isStrings(payload.x) || !isNumbers(payload.y) || payload.x.length === 0 || payload.x.length !== payload.y.length) return null
+      return { type, title, labels: payload.x, values: payload.y, color: hex(payload.color) }
     case 'stacked_bar': {
-      if (!isStrings(p.x) || p.x.length === 0 || !Array.isArray(p.series)) return null
-      const x = p.x
-      const series = (p.series as Array<Record<string, unknown>>)
+      if (!isStrings(payload.x) || payload.x.length === 0 || !Array.isArray(payload.series)) return null
+      const x = payload.x
+      const series = (payload.series as Array<Record<string, unknown>>)
         .filter((s) => s && typeof s.name === 'string' && isNumbers(s.values) && s.values.length > 0 && s.values.length === x.length)
         .map((s) => ({ name: s.name as string, values: s.values as number[], color: hex(s.color) }))
       return series.length ? { type, title, categories: x, series } : null
     }
     case 'donut':
     case 'pie': {
-      if (!isStrings(p.labels) || !isNumbers(p.values) || p.labels.length === 0 || p.labels.length !== p.values.length) return null
-      const colors = Array.isArray(p.colors) && p.colors.length === p.labels.length ? p.colors.map(hex) : p.labels.map(() => null)
-      return { type: 'donut', title, labels: p.labels, values: p.values, colors }
+      if (!isStrings(payload.labels) || !isNumbers(payload.values) || payload.labels.length === 0 || payload.labels.length !== payload.values.length) return null
+      const colors = Array.isArray(payload.colors) && payload.colors.length === payload.labels.length ? payload.colors.map(hex) : payload.labels.map(() => null)
+      return { type: 'donut', title, labels: payload.labels, values: payload.values, colors }
     }
     case 'heatmap': {
-      if (!isStrings(p.x) || !isStrings(p.y) || p.x.length === 0 || p.y.length === 0 || !Array.isArray(p.values)) return null
-      const width = p.x.length
-      const rows = p.values as unknown[]
-      if (rows.length !== p.y.length || !rows.every((r) => isNumbers(r) && r.length === width)) return null
-      return { type, title, xLabels: p.x, yLabels: p.y, values: rows as number[][], color: hex(p.color) }
+      if (!isStrings(payload.x) || !isStrings(payload.y) || payload.x.length === 0 || payload.y.length === 0 || !Array.isArray(payload.values)) return null
+      const width = payload.x.length
+      const rows = payload.values as unknown[]
+      if (rows.length !== payload.y.length || !rows.every((r) => isNumbers(r) && r.length === width)) return null
+      return { type, title, xLabels: payload.x, yLabels: payload.y, values: rows as number[][], color: hex(payload.color) }
     }
     case 'gantt': {
-      if (!Array.isArray(p.items)) return null
-      const items = (p.items as Array<Record<string, unknown>>)
+      if (!Array.isArray(payload.items)) return null
+      const items = (payload.items as Array<Record<string, unknown>>)
         .filter((i) => i && typeof i.label === 'string' && typeof i.start === 'number' && typeof i.end === 'number' && i.end > i.start)
         .map((i) => ({ label: i.label as string, start: i.start as number, end: i.end as number, color: hex(i.color) }))
       return items.length ? { type, title, items } : null

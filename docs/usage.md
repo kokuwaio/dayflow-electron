@@ -104,6 +104,8 @@ answers can include charts.
   the last 7 days of cards and 2 days of observations in the prompt instead,
   with all their tools switched off, so they cannot run commands on your
   computer.
+- **Provider:** with more than one provider set up, the pills under the input
+  box choose which one answers; the others take over if it fails.
 - **Suggestions** under an answer fill the input box; edit them or press Enter.
 - **History** (clock icon) lists past conversations; the bin icon deletes one
   right away.

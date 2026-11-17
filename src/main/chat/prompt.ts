@@ -16,6 +16,7 @@
 import { languageForText } from '../analysis/two-step-prompts'
 import { dayKey, formatClock } from '../../shared/day'
 import type { TimelineCard } from '../../shared/types'
+import type { Observation } from '../analysis/observations'
 
 export interface ChatPromptOptions {
   mode: 'tools' | 'context'
@@ -247,21 +248,9 @@ The relevant timeline cards and observations are included below under the headin
 - Read the titles + summaries and use your own judgment in the response.
 - Titles/summaries may use different terms for the same thing (e.g., X vs Twitter).`
 
-/** claudeSystemPrompt(), with the data section swapped (see above). */
-function contextPrompt(
-  currentDate: string,
-  currentTime: string,
-  language: string,
-  categories: ChatPromptOptions['categories']
-): string {
-  const colors = categoryColorsSection(categories)
-  // changed from upstream: "a macOS app"; this port runs on Linux.
-  const intro = `You are a friendly assistant in Dayflow, a desktop app that tracks computer activity.
-
-Current date: ${currentDate}
-Current time: ${currentTime}
-Day boundary: Days start at 4:00 AM (not midnight)`
-  const chartsAndStyle = `## INLINE CHARTS (OPTIONAL)
+/** The CLI prompt's chart instructions and category colours (upstream cliSystemPrompt). */
+function chartsSection(categories: ChatPromptOptions['categories']): string {
+  const charts = `## INLINE CHARTS (OPTIONAL)
 
 You may include inline charts inside your markdown response. Use fenced chart blocks exactly like this:
 
@@ -301,11 +290,24 @@ RULES:
 - For heatmap: provide x labels, y labels, and values as a 2D array where each row matches y and each row length matches x; optional base color
 - For gantt: provide items with label, start, end (numbers, start < end); optional color per item
 - Place the chart block where you want it to appear in the response
-- If a chart isn't helpful, omit it
+- If a chart isn't helpful, omit it`
+  return [charts, categoryColorsSection(categories)].filter(Boolean).join('\n\n')
+}
 
-${colors}
+/** claudeSystemPrompt(), with the data section swapped (see above). */
+function contextPrompt(
+  currentDate: string,
+  currentTime: string,
+  language: string,
+  categories: ChatPromptOptions['categories']
+): string {
+  // changed from upstream: "a macOS app"; this port runs on Linux.
+  const intro = `You are a friendly assistant in Dayflow, a desktop app that tracks computer activity.
 
-## RESPONSE STYLE
+Current date: ${currentDate}
+Current time: ${currentTime}
+Day boundary: Days start at 4:00 AM (not midnight)`
+  const style = `## RESPONSE STYLE
 
 - **Brief and scannable** - A few key points, not a wall of text. Use bullets if they help organize.
 - **Avoid overly granular timestamps.**
@@ -323,7 +325,7 @@ BAD example:
 "Morning focus started with a 9:20–10:04 work block researching Dayflow/ChatCLI logging and UX notes, then shifted into about an hour of personal/break time watching League clips, YouTube Shorts..."
 
 NEVER mention: seconds, specific timestamps (9:20-10:04), epoch times, table names, SQL syntax, raw column values`
-  return [intro, CONTEXT_DATA_SECTION, chartsAndStyle, languageSection(language), METADATA_CONTRACT]
+  return [intro, CONTEXT_DATA_SECTION, chartsSection(categories), style, languageSection(language), METADATA_CONTRACT]
     .filter((s) => s !== '')
     .join('\n\n')
 }
@@ -334,7 +336,9 @@ export function chatSystemPrompt(opts: ChatPromptOptions): string {
 
   let prompt =
     opts.mode === 'tools'
-      ? toolsPrompt(currentDate, currentTime, opts.language)
+      ? // changed from upstream: its Gemini prompt has no chart instructions, so API
+        // providers never drew charts; they get the CLI prompt's chart section.
+        `${toolsPrompt(currentDate, currentTime, opts.language)}\n\n${chartsSection(opts.categories)}`
       : contextPrompt(currentDate, currentTime, opts.language, opts.categories)
 
   // Upstream (ChatService.swift lines 498-546) appends the memory blob after
@@ -372,7 +376,7 @@ function formatCards(cards: TimelineCard[], date: string): string {
 }
 
 /** formatObservationsForLLM(). */
-function formatObservations(observations: Array<{ start: number; end: number; text: string }>, date: string): string {
+function formatObservations(observations: Observation[], date: string): string {
   let output = `Detailed observations for ${date}:\n\n`
   for (const obs of observations) {
     output += `[${formatClock(obs.start)} - ${formatClock(obs.end)}]\n`
@@ -387,7 +391,7 @@ function formatObservations(observations: Array<{ start: number; end: number; te
  */
 export function chatContextBlock(
   cards: TimelineCard[],
-  observations: Array<{ start: number; end: number; text: string }>
+  observations: Observation[]
 ): string {
   const days = new Map<string, { cards: TimelineCard[]; observations: typeof observations }>()
   const dayOf = (key: string) => {

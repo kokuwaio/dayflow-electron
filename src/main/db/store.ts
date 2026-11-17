@@ -585,10 +585,10 @@ export class Store {
   }
 
   /** Observations starting in [from, to), oldest first. */
-  observationsBetween(from: number, to: number): Array<{ start: number; end: number; text: string }> {
+  observationsBetween(from: number, to: number): Observation[] {
     return this.db
       .prepare('SELECT start_ts AS start, end_ts AS end, observation AS text FROM observations WHERE start_ts >= ? AND start_ts < ? ORDER BY start_ts')
-      .all(from, to) as unknown as Array<{ start: number; end: number; text: string }>
+      .all(from, to) as unknown as Observation[]
   }
 
   cardsForDay(day: string): TimelineCard[] {

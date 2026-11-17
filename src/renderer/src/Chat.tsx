@@ -2,10 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { chatBlocks, visibleStreamingText } from '@shared/chat-content'
+import { historyGroups } from '@shared/chat-history'
 import type { FeatureAccess } from '@shared/daily'
-import { dayKey, shiftDay, todayKey } from '@shared/day'
-import type { ChatConversation, ChatStoredMessage } from '@shared/types'
+import { formatClock, todayKey } from '@shared/day'
+import type { ChatConversation, ChatStoredMessage, ProviderKind } from '@shared/types'
 import { ChatChart } from './ChatChart'
+import { PROVIDER_CHOICES } from './providers'
 
 /** Upstream's welcome prompts (Views/UI/ChatWelcomeComponents.swift). */
 const WELCOME_PROMPTS = [
@@ -18,6 +20,8 @@ const WELCOME_PROMPTS = [
 type Status = 'thinking' | 'tools' | 'answering'
 const STATUS_TEXT: Record<Status, string> = { thinking: 'Thinking', tools: 'Running tools', answering: 'Answering' }
 type Panel = 'history' | 'memory' | null
+const MEMORY_MAX = 10_000
+const providerLabel = (kind: string) => PROVIDER_CHOICES.find((p) => p.kind === kind)?.label ?? kind
 
 /** The Chat tab (upstream ChatView): questions about your timeline, answered with the timeline tools. */
 export function Chat() {
@@ -31,29 +35,43 @@ export function Chat() {
   const [input, setInput] = useState('')
   const [panel, setPanel] = useState<Panel>(null)
   const [history, setHistory] = useState<ChatConversation[]>([])
+  const [toolNote, setToolNote] = useState<string | null>(null)
+  const [providers, setProviders] = useState<ProviderKind[]>([])
+  const [provider, setProvider] = useState<ProviderKind | null>(null)
   const bottom = useRef<HTMLDivElement>(null)
 
   useEffect(() => void window.dayflow.getAccess().then((a) => setAccess(a.chat)), [])
+  useEffect(
+    () =>
+      void window.dayflow.getChatProviders().then((kinds) => {
+        setProviders(kinds)
+        setProvider((p) => p ?? kinds[0] ?? null)
+      }),
+    []
+  )
   const loadHistory = useCallback(() => void window.dayflow.getConversations().then(setHistory), [])
   useEffect(loadHistory, [loadHistory])
   useEffect(
     () =>
       window.dayflow.onChatEvent((event) => {
-        if (event.type === 'text') {
+        if (event.type === 'reset') {
+          // A fallback provider starts over.
+          setStreaming('')
+          setToolNote(null)
+          setStatus('thinking')
+        } else if (event.type === 'text') {
           setStatus('answering')
           setStreaming((s) => s + event.delta)
         } else if (event.type === 'tool-start') {
           setStatus('tools')
         } else {
-          setMessages((m) => [...m, { id: `tool-${m.length}`, role: 'toolCall', content: event.summary, createdAt: Date.now() / 1000 }])
-          // Text streamed before a tool call was the model thinking aloud; the answer starts after.
-          setStreaming('')
+          setToolNote(event.summary)
           setStatus('thinking')
         }
       }),
     []
   )
-  useEffect(() => bottom.current?.scrollIntoView({ block: 'end' }), [messages, streaming, status])
+  useEffect(() => bottom.current?.scrollIntoView({ block: 'end' }), [messages, streaming, status, toolNote])
 
   const open = async (id: string | null) => {
     setConversationId(id)
@@ -69,13 +87,20 @@ export function Chat() {
     setError(null)
     setSuggestions([])
     setStreaming('')
+    setToolNote(null)
     setStatus('thinking')
     setMessages((m) => [...m, { id: `pending-${m.length}`, role: 'user', content: question, createdAt: Date.now() / 1000 }])
-    const result = await window.dayflow.sendChat(conversationId, question)
+    const result = await window.dayflow.sendChat(conversationId, question, provider ?? undefined)
     setStatus(null)
     setStreaming('')
+    setToolNote(null)
     if (!result.ok) {
-      setError(result.message)
+      // A failed answer is kept in the conversation like upstream ("I encountered an error: …").
+      if (result.conversationId) {
+        setConversationId(result.conversationId)
+        setMessages(await window.dayflow.getChatMessages(result.conversationId))
+        loadHistory()
+      } else setError(result.message)
       return
     }
     setConversationId(result.reply.conversationId)
@@ -89,10 +114,23 @@ export function Chat() {
     return (
       <div className="locked chat-locked">
         <h2>
-          Chat <span className="badge">BETA</span>
+          Unlock Beta <span className="badge">BETA</span>
         </h2>
-        <p>Ask questions about your day, get standup notes and charts of where your time went.</p>
-        <p className="note">10 hours of timeline data required. {access.label}</p>
+        <p>Chat lets you ask questions about your Dayflow activity and get summaries, comparisons, and insights.</p>
+        <ul className="requirements">
+          <li>
+            <strong>10 hours of timeline data required</strong>
+            <span className="note">Chat unlocks after Dayflow has analyzed enough activity. {access.label}</span>
+          </li>
+          <li>
+            <strong>{providers.length ? 'AI provider configured' : 'AI provider required'}</strong>
+            {!providers.length && <span className="note">Unlock chat by adding an AI provider in Settings.</span>}
+          </li>
+        </ul>
+        <p className="note">
+          <strong>Privacy note:</strong> your questions and the answers stay on this computer; only the provider you chose
+          sees them.
+        </p>
       </div>
     )
   }
@@ -124,11 +162,13 @@ export function Chat() {
                 <div className="chat-status">
                   {STATUS_TEXT[status]}
                   <span className="dots" />
+                  {toolNote && <div className="note">{toolNote}</div>}
                 </div>
               )}
               {error && <p className="error">{error}</p>}
               {suggestions.length > 0 && (
                 <div className="chat-suggestions">
+                  <span className="note">Follow up</span>
                   {suggestions.map((s) => (
                     // Upstream fills the composer instead of sending, so the question can be edited.
                     <button key={s} className="chip" onClick={() => setInput(s)}>
@@ -160,9 +200,27 @@ export function Chat() {
               }
             }}
           />
-          <button type="submit" className="send" aria-label="Send" disabled={!input.trim() || !!status}>
-            ↑
-          </button>
+          <div className="chat-composer-tools">
+            {providers.length > 1 && (
+              <div className="pills" role="radiogroup" aria-label="Provider">
+                {providers.map((kind) => (
+                  <button
+                    key={kind}
+                    type="button"
+                    role="radio"
+                    aria-checked={provider === kind}
+                    className={provider === kind ? 'on' : ''}
+                    onClick={() => setProvider(kind)}
+                  >
+                    {providerLabel(kind)}
+                  </button>
+                ))}
+              </div>
+            )}
+            <button type="submit" className="send" aria-label="Send" disabled={!input.trim() || !!status}>
+              ↑
+            </button>
+          </div>
         </form>
       </div>
       {panel === 'history' && (
@@ -249,35 +307,29 @@ function AssistantText({ text, copyable }: { text: string; copyable?: boolean })
 
 /** Conversations grouped like upstream: today, yesterday, this week, earlier. */
 function History(props: { conversations: ChatConversation[]; current: string | null; onOpen: (id: string) => void; onDelete: (id: string) => void }) {
-  const today = todayKey()
-  const group = (c: ChatConversation) => {
-    const day = dayKey(c.updatedAt)
-    if (day === today) return 'TODAY'
-    if (day === shiftDay(today, -1)) return 'YESTERDAY'
-    return day > shiftDay(today, -7) ? 'THIS WEEK' : 'EARLIER'
-  }
-  const groups = ['TODAY', 'YESTERDAY', 'THIS WEEK', 'EARLIER'].map((name) => ({ name, items: props.conversations.filter((c) => group(c) === name) }))
+  const groups = historyGroups(props.conversations, todayKey())
   return (
     <aside className="chat-side">
       <h3>History</h3>
-      {props.conversations.length === 0 && <p className="note">No conversations yet.</p>}
-      {groups
-        .filter((g) => g.items.length)
-        .map((g) => (
-          <section key={g.name}>
-            <h4>{g.name}</h4>
-            {g.items.map((c) => (
-              <div key={c.id} className={`chat-history-row ${c.id === props.current ? 'current' : ''}`}>
-                <button className="link" onClick={() => props.onOpen(c.id)} title={c.title}>
-                  {c.title}
-                </button>
-                <button className="icon delete" aria-label={`Delete ${c.title}`} onClick={() => props.onDelete(c.id)}>
-                  🗑
-                </button>
-              </div>
-            ))}
-          </section>
-        ))}
+      {groups.length === 0 && <p className="note">No saved chats yet</p>}
+      {groups.map((g) => (
+        <section key={g.name}>
+          <h4>{g.name}</h4>
+          {g.items.map((c) => (
+            <div key={c.id} className={`chat-history-row ${c.id === props.current ? 'current' : ''}`}>
+              <button className="link" onClick={() => props.onOpen(c.id)} title={c.title}>
+                <span className="title">{c.title}</span>
+                <span className="note">
+                  {formatClock(c.updatedAt)} · {providerLabel(c.provider)}
+                </span>
+              </button>
+              <button className="icon delete" aria-label={`Delete ${c.title}`} onClick={() => props.onDelete(c.id)}>
+                🗑
+              </button>
+            </div>
+          ))}
+        </section>
+      ))}
     </aside>
   )
 }
@@ -297,8 +349,11 @@ function Memory() {
   return (
     <aside className="chat-side memory">
       <h3>Memory</h3>
-      <p className="note">The assistant keeps a short profile and your preferred answer style here, and updates it as you chat.</p>
-      <textarea rows={8} value={memory} placeholder="Profile: …&#10;Style: …" onChange={(e) => setMemory(e.target.value)} />
+      <p className="note">Auto-updated from assistant replies. You can edit this manually.</p>
+      <textarea rows={8} maxLength={MEMORY_MAX} value={memory} placeholder="Profile: …&#10;Style: …" onChange={(e) => setMemory(e.target.value)} />
+      <p className="note">
+        {memory.length}/{MEMORY_MAX}
+      </p>
       <div className="row">
         <button onClick={() => void save(memory)}>{saved ? 'Saved' : 'Save'}</button>
         <button className="link" onClick={() => void save('')}>
