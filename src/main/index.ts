@@ -60,6 +60,10 @@ async function main(): Promise<void> {
 
   const settings = await SettingsStore.open(join(dataDir, 'settings.json'), join(dataDir, 'keys.json'))
   const store = Store.open(join(dataDir, 'dayflow.sqlite'))
+  // After the data folder moved, stored paths point at the old place: follow the files
+  // and give the batches that failed on missing frames another go.
+  const relocated = store.relocateScreenshots(recordingsDir)
+  if (relocated > 0) log(`moved ${relocated} screenshot paths to ${recordingsDir}; retrying ${store.retryFailedBatches()} failed batches`)
   const platform = createPlatform({
     appPath: app.getAppPath(),
     resourcesPath: process.resourcesPath,

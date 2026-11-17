@@ -1,3 +1,4 @@
+import { basename } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from '../../shared/categories'
 import { dayKey, dayRange, formatClock } from '../../shared/day'
@@ -87,6 +88,24 @@ export class Store {
       this.db.exec('ROLLBACK')
       throw err
     }
+  }
+
+  /**
+   * Points screenshots stored under another folder at `recordingsDir`, keeping
+   * the file name: paths are absolute, so moving the data folder (for example
+   * to a new app ID) would leave them pointing at the old place. Returns how
+   * many rows changed.
+   */
+  relocateScreenshots(recordingsDir: string): number {
+    const prefix = recordingsDir.replace(/\/+$/, '') + '/'
+    const rows = this.db
+      .prepare("SELECT id, file_path AS filePath FROM screenshots WHERE file_path != '' AND substr(file_path, 1, ?) != ?")
+      .all(prefix.length, prefix) as Array<{ id: number; filePath: string }>
+    const update = this.db.prepare('UPDATE screenshots SET file_path = ? WHERE id = ?')
+    this.tx(() => {
+      for (const r of rows) update.run(prefix + basename(r.filePath), r.id)
+    })
+    return rows.length
   }
 
   insertScreenshot(s: Omit<Screenshot, 'id' | 'blocked'> & { blocked?: boolean }): number {
@@ -280,6 +299,11 @@ export class Store {
   /** Analyzes one batch again (also retries a failed one). False when it cannot be reset now. */
   reprocessBatch(id: number): boolean {
     return this.resetBatches('id = ?', id).length > 0
+  }
+
+  /** Queues every failed batch again with fresh attempts; returns how many. */
+  retryFailedBatches(): number {
+    return this.resetBatches("status = 'failed'").length
   }
 
   /** Analyzes a day again; returns how many batches were reset. */

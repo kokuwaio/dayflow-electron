@@ -23,6 +23,31 @@ describe('Store: screenshots and batches', () => {
       { id: ids[1], capturedAt: 110, idleSeconds: 75 }
     ])
   })
+
+  it('points screenshots at the recordings folder after the data folder moved', () => {
+    const moved = store.insertScreenshot({ capturedAt: 100, filePath: '/old/app/recordings/a.jpg', fileSize: 1, idleSeconds: null })
+    const current = store.insertScreenshot({ capturedAt: 110, filePath: '/new/app/recordings/b.jpg', fileSize: 1, idleSeconds: null })
+    const blocked = store.insertScreenshot({ capturedAt: 120, filePath: '', fileSize: 0, idleSeconds: null, blocked: true })
+
+    expect(store.relocateScreenshots('/new/app/recordings')).toBe(1)
+
+    const batchId = store.createBatch({ start: 100, end: 120, shotIds: [moved, current, blocked] })
+    expect(store.batchScreenshots(batchId).map((s) => s.filePath)).toEqual(['/new/app/recordings/a.jpg', '/new/app/recordings/b.jpg', ''])
+    expect(store.relocateScreenshots('/new/app/recordings')).toBe(0)
+  })
+
+  it('queues failed batches again with fresh attempts', () => {
+    const failed = store.createBatch({ start: 100, end: 110, shotIds: [shot(100)] })
+    store.startAttempt(failed)
+    store.finishBatch(failed, 'failed', 'ENOENT')
+    const done = store.createBatch({ start: 200, end: 210, shotIds: [shot(200)] })
+    store.startAttempt(done)
+    store.finishBatch(done, 'completed')
+
+    expect(store.retryFailedBatches()).toBe(1)
+    expect(store.batch(failed)).toMatchObject({ status: 'pending', attempts: 0 })
+    expect(store.batch(done)).toMatchObject({ status: 'completed' })
+  })
 })
 
 describe('Store: timeline cards', () => {
