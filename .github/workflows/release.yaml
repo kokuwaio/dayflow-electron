@@ -2,7 +2,8 @@ name: Release
 
 # Publishing the release that Release Drafter prepared builds the app and
 # attaches, for x86_64 and aarch64, the Flatpak bundle and the tarball that
-# the Flathub manifest (flatpak/flathub/) builds from.
+# the Flathub manifest (flatpak/flathub/) builds from, plus the Windows
+# installers (x64, arm64) and macOS disk images (arm64, x64).
 
 permissions: read-all
 
@@ -35,7 +36,8 @@ jobs:
           path: artifacts
 
       - name: Create tarballs and bundles
-        # Per architecture: everything the Flathub manifest installs, at the top level, and the Flatpak bundle.
+        # Per architecture: everything the Flathub manifest installs, at the top level, and the Flatpak bundle;
+        # then the installers, renamed to carry the tag.
         run: |
           for arch in x86_64 aarch64; do
             dir="release/$arch/dayflow-electron"
@@ -45,6 +47,11 @@ jobs:
             cp resources/icon.png flatpak/io.github.kokuwaio.DayflowElectron.desktop flatpak/io.github.kokuwaio.DayflowElectron.metainfo.xml "$dir/"
             tar -C "release/$arch" -czf "dayflow-electron-$TAG-linux-$arch.tar.gz" dayflow-electron
             cp "artifacts/dayflow-electron-flatpak-$arch/dayflow-electron.flatpak" "dayflow-electron-$TAG-$arch.flatpak"
+          done
+          # dayflow-electron-win-x64.exe -> dayflow-electron-<tag>-win-x64.exe, likewise for the dmg images.
+          for file in artifacts/installers-windows/*.exe artifacts/installers-macos/*.dmg; do
+            name="${file##*/}"
+            cp "$file" "dayflow-electron-$TAG-${name#dayflow-electron-}"
           done
           sha256sum dayflow-electron-"$TAG"-* > SHA256SUMS
 
