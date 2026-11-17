@@ -277,10 +277,12 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   permissions are settled; updates come through Flatpak), NSIS and dmg with
   `electron-updater` from GitHub Releases; signing for Windows and macOS.
   Done: Flatpak for x86_64 and aarch64, NSIS installers (x64, arm64) and dmg
-  images (arm64, x64), all built in CI and attached to releases. Open:
-  Windows and macOS signing and notarization (certificates needed, see
-  [release.md](release.md#signing-windows-and-macos)), `electron-updater`,
-  a macOS icon (needs 512 px artwork).
+  images (arm64, x64), all built in CI and attached to releases, and a
+  Homebrew cask for our own tap (`packaging/homebrew/`). Open: Windows and
+  macOS signing and notarization (certificates needed, see
+  [release.md](release.md#signing-windows-and-macos)), the one-time Homebrew
+  tap and Flathub setup ([release.md](release.md#homebrew-one-time-setup)),
+  `electron-updater`, a macOS icon (needs 512 px artwork).
 - [ ] Windows and macOS on real machines: capture, window detection, lock,
   idle, autostart and deep links are implemented and unit tested, not yet
   tried by hand. Onboarding still says recording is not built there.
