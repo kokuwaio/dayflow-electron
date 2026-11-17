@@ -31,6 +31,8 @@ import { createPlatform } from './platform'
 import { createProvider } from './providers'
 import { findCli, hostAccess, nodeRunner } from './providers/cli/host'
 import { selectFramesToPurge } from './retention'
+import { secretFilter } from './privacy/masker'
+import { tesseractEngine } from './privacy/tesseract'
 import { SettingsStore } from './settings'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -141,8 +143,11 @@ async function main(): Promise<void> {
     return ready.length ? ready.map(providerFor) : `No API key set for ${s.provider}. Add one in Settings.`
   }
 
+  // One OCR worker, started on the first masked frame and kept between batches.
+  const ocr = tesseractEngine()
   const pipeline = new Pipeline({
     store,
+    prepareFrame: secretFilter(ocr, () => settings.get().hideSecrets),
     providers: () => pipelineProviders(),
     language: () => settings.get().outputLanguage,
     overrides: () => settings.get().promptOverrides,
@@ -511,6 +516,7 @@ async function main(): Promise<void> {
     quitting = true
     recorder.stop()
     pipeline.stop()
+    void ocr.close()
     store.close()
   })
   // Closing the window keeps recording; quit from the tray.

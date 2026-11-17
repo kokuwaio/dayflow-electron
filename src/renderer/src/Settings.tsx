@@ -165,6 +165,14 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
           Chrome incognito and Firefox private windows get a redaction card instead of a screenshot. Detected from the
           window title, so it needs window detection too.
         </p>
+        <label className="check">
+          <input type="checkbox" checked={settings.hideSecrets} onChange={(e) => save({ hideSecrets: e.target.checked })} />
+          Hide secrets in screenshots
+        </label>
+        <p className="note">
+          Reads the text on each frame sent to the AI provider and blacks out API keys, passwords, private keys, seed
+          phrases and recovery codes it recognizes. Catches less than upstream's model, and adds a few seconds per frame.
+        </p>
         {status?.recorder.windowDetection === 'unavailable' && (
           <p className="error">
             Window detection is off, so blocked apps are recorded like any other window.{' '}

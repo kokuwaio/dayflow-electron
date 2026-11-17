@@ -97,6 +97,7 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
     // Existing installs that never saw onboarding count as set up once a provider was chosen.
     onboarded: r.onboarded === true || (r.onboarded === undefined && typeof r.provider === 'string'),
     hidePrivateWindows: r.hidePrivateWindows !== false,
+    hideSecrets: r.hideSecrets === true,
     blockedApps: Array.isArray(r.blockedApps)
       ? r.blockedApps.filter((x): x is string => typeof x === 'string' && x.trim() !== '').map((x) => x.trim()).slice(0, 100)
       : [...DEFAULT_SETTINGS.blockedApps]
