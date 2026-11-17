@@ -28,10 +28,10 @@ interface Column {
   notes: string
 }
 
-/** Upstream's comparison table, with columns for the providers this app has. */
+/** Upstream's comparison table and column order, with columns for the providers this app has. */
 const COLUMNS: Column[] = [
-  { id: 'claude-cli', title: 'Claude', kind: 'claude-cli', flavor: 'cli', accuracy: ['best', 'Best'], subscription: 'Claude paid subscription', ease: ['medium', 'Install Claude CLI'], notes: 'Uses your Claude subscription and less than 1% of your daily limit.' },
   { id: 'codex-cli', title: 'ChatGPT', kind: 'codex-cli', flavor: 'cli', accuracy: ['best', 'Best'], subscription: 'ChatGPT paid subscription', ease: ['medium', 'Install Codex CLI'], notes: 'Uses your ChatGPT subscription and less than 1% of your daily limit.' },
+  { id: 'claude-cli', title: 'Claude', kind: 'claude-cli', flavor: 'cli', accuracy: ['best', 'Best'], subscription: 'Claude paid subscription', ease: ['medium', 'Install Claude CLI'], notes: 'Uses your Claude subscription and less than 1% of your daily limit.' },
   { id: 'anthropic', title: 'Anthropic API', kind: 'anthropic', flavor: 'api', accuracy: ['best', 'Best'], subscription: 'API credits', ease: ['medium', 'API key'], notes: 'Claude models through the Anthropic API.' },
   { id: 'gemini', title: 'Gemini', kind: 'gemini', flavor: 'gemini', accuracy: ['medium', 'Medium'], subscription: 'Free', ease: ['medium', 'API key'], notes: 'Uses Gemini free tier.' },
   { id: 'openai', title: 'OpenRouter / Custom', kind: 'openai', flavor: 'endpoint', accuracy: ['medium', 'Varies'], subscription: 'API credits', ease: ['medium', 'API key and model'], notes: 'Uses OpenRouter or any OpenAI-compatible endpoint.' },

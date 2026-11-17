@@ -30,6 +30,8 @@ export async function startUpdater(o: {
   mode: 'install' | 'notify'
   currentVersion: string
   autoInstall: boolean
+  /** The "Check for updates" setting; nothing is fetched from GitHub while it is off. */
+  enabled: () => boolean
   log: (message: string) => void
   /** The tray needs redrawing. */
   changed: () => void
@@ -70,6 +72,8 @@ export async function startUpdater(o: {
   const download = () => {
     if (state.kind !== 'available') return
     set({ kind: 'downloading', version: state.version, percent: 0 })
+    // Asked for by hand: install on quit too, as the "ready" notification says.
+    updater.autoInstallOnAppQuit = install
     updater.downloadUpdate().catch(() => {}) // reported through the "error" event
   }
   const restart = () => {
@@ -108,7 +112,7 @@ export async function startUpdater(o: {
   })
 
   const check = () => {
-    if (!checkDue(lastCheck, Date.now()) || state.kind === 'ready' || state.kind === 'downloading') return
+    if (!o.enabled() || !checkDue(lastCheck, Date.now()) || state.kind === 'ready' || state.kind === 'downloading') return
     lastCheck = Date.now()
     updater.checkForUpdates().catch(() => {})
   }

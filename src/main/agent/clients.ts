@@ -10,24 +10,14 @@
 // `flatpak-spawn --host`, and without that permission the window shows the
 // command or snippet to copy instead. Install links go through the portal.
 
-import { access, mkdir, readFile, rename, writeFile } from 'node:fs/promises'
-import { dirname, posix, win32 } from 'node:path'
+import { access, chmod, mkdir, readFile, realpath, rename, stat, writeFile } from 'node:fs/promises'
+import { dirname } from 'node:path'
 import type { AgentClient, AgentClientState, CliName } from '../../shared/types'
 import { type ProcessRunner, findCli, hostAccess, hostCommand } from '../providers/cli/host'
 import { AGENT_CLIENT_NAMES } from '../../shared/agent-clients'
-import {
-  type ClientPlaces,
-  type DeepLinkClient,
-  claudeDesktopConfigPath,
-  cursorInstallUrl,
-  deepLinkMarkers,
-  entryMatches,
-  mergeServerEntry,
-  readServerEntry,
-  removeServerEntry,
-  vscodeInstallUrl
-} from './client-config'
+import { type ClientPlaces, type DeepLinkClient, claudeDesktopConfigPath, cursorInstallUrl, deepLinkMarkers, entryMatches, mergeServerEntry, readServerEntry, removeServerEntry, vscodeInstallUrl, pathFor } from './client-config'
 import { type Invocation, manualConfigSnippet, mcpRegistration, shellLine } from './invocation'
+import { errorMessage } from '../../shared/errors'
 
 /** Files on the host: directly outside the Flatpak, through `flatpak-spawn --host` inside it. */
 export interface HostFiles {
@@ -65,9 +55,13 @@ export function hostFiles(runner: ProcessRunner, inFlatpak: boolean): HostFiles 
         }),
       async write(path, text) {
         await mkdir(dirname(path), { recursive: true })
-        const tmp = `${path}.dayflow-tmp`
-        await writeFile(tmp, text)
-        await rename(tmp, path)
+        // Through a symlinked config to its file, keeping the file's permissions (it may hold tokens).
+        const target = await realpath(path).catch(() => path)
+        const mode = await stat(target).then((s) => s.mode & 0o777, () => 0o600)
+        const tmp = `${target}.dayflow-tmp`
+        await writeFile(tmp, text, { mode })
+        await chmod(tmp, mode)
+        await rename(tmp, target)
       }
     }
   }
@@ -84,15 +78,19 @@ export function hostFiles(runner: ProcessRunner, inFlatpak: boolean): HostFiles 
       return r.stdout
     },
     async write(path, text) {
-      const r = await sh('mkdir -p "$(dirname "$1")" && cat > "$1.dayflow-tmp" && mv "$1.dayflow-tmp" "$1"', path, text)
+      // A symlinked config is written through in place; otherwise a copy keeps the
+      // file's permissions (cp -p) before it replaces the original.
+      const r = await sh(
+        'mkdir -p "$(dirname "$1")" && if [ -L "$1" ]; then cat > "$1"; else { [ ! -e "$1" ] || cp -p "$1" "$1.dayflow-tmp"; } && cat > "$1.dayflow-tmp" && mv "$1.dayflow-tmp" "$1"; fi',
+        path,
+        text
+      )
       if (r.code !== 0) throw new Error(r.stderr.trim() || `Could not write ${path}.`)
     }
   }
 }
 
 const filesOf = (env: ClientEnv) => env.files ?? hostFiles(env.runner, env.inFlatpak)
-const pathFor = (env: ClientEnv) => (env.places.platform === 'win32' ? win32 : posix)
-const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err))
 
 // ---- Claude Code and Codex: their own CLI
 
@@ -189,13 +187,13 @@ async function desktopStatus(env: ClientEnv): Promise<AgentClientState> {
   if (typeof path !== 'string') return path
   const files = filesOf(env)
   try {
-    if (!(await files.exists(pathFor(env).dirname(path)))) return { state: 'notFound', message: 'Not found' }
+    if (!(await files.exists(pathFor(env.places.platform).dirname(path)))) return { state: 'notFound', message: 'Not found' }
     const read = readServerEntry(await files.read(path), DESKTOP_FILE)
     if (!read.ok) return { state: 'failed', message: read.error }
     // An entry for another copy of the app counts as not connected; connecting replaces it.
     return entryMatches(read.entry, env.invocation) ? { state: 'connected' } : { state: 'available' }
   } catch (err) {
-    return { state: 'failed', message: errorText(err) }
+    return { state: 'failed', message: errorMessage(err) }
   }
 }
 
@@ -210,7 +208,7 @@ async function desktopWrite(env: ClientEnv, change: (text: string | null) => Ret
     if (next.text !== null && next.text !== before) await files.write(path, next.text)
     return done
   } catch (err) {
-    return { state: 'failed', message: `Could not update ${DESKTOP_FILE}: ${errorText(err)}` }
+    return { state: 'failed', message: `Could not update ${DESKTOP_FILE}: ${errorMessage(err)}` }
   }
 }
 
@@ -232,7 +230,7 @@ async function linkConnect(client: DeepLinkClient, env: ClientEnv): Promise<Agen
     await env.openExternal(url)
     return { state: 'openedInstaller' }
   } catch (err) {
-    return { state: 'failed', message: `Could not open ${AGENT_CLIENT_NAMES[client]}: ${errorText(err)}` }
+    return { state: 'failed', message: `Could not open ${AGENT_CLIENT_NAMES[client]}: ${errorMessage(err)}` }
   }
 }
 
@@ -280,7 +278,7 @@ export async function repairStaleRegistrations(envFor: (client: AgentClient) => 
 
   if (await staleIn(claudeDesktopConfigPath(base.places))) note('claude-desktop', await connectClient('claude-desktop', base))
   // Claude Code keeps user-scope servers in ~/.claude.json; its CLI rewrites the entry.
-  if (await staleIn(pathFor(base).join(base.home, '.claude.json'))) note('claude', await connectClient('claude', envFor('claude')))
+  if (await staleIn(pathFor(base.places.platform).join(base.home, '.claude.json'))) note('claude', await connectClient('claude', envFor('claude')))
   const codex = envFor('codex')
   const run = await locate('codex', codex, [])
   if (typeof run === 'function' && (await check('codex', run, codex.invocation)) === 'stale') note('codex', await connectClient('codex', codex))

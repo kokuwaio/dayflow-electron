@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Calendar, Check, ChevronLeft, ChevronRight, Copy, Pencil } from 'lucide-react'
 import { dayChanged, weekTrackedMinutes } from '@shared/canvas'
-import { type Category, PRIVATE_CATEGORY, SYSTEM_CATEGORY } from '@shared/categories'
+import { type Category, PRIVATE_CATEGORY, SYSTEM_CATEGORY, categoryKey } from '@shared/categories'
 import { parseKey, shiftDay, todayKey } from '@shared/day'
 import type { ReviewSegment } from '@shared/review'
 import type { AppStatus, Rating, TimelineCard } from '@shared/types'
@@ -101,7 +101,7 @@ export function Timeline(props: { status: AppStatus | null; onStatusChange: (s: 
   }, [])
 
   const colorOf = (category: string) =>
-    categories.find((c) => c.name.trim().toLowerCase() === category.trim().toLowerCase())?.color ?? BUILT_IN_COLORS[category] ?? FALLBACK
+    categories.find((c) => categoryKey(c.name) === categoryKey(category))?.color ?? BUILT_IN_COLORS[category] ?? FALLBACK
   const weekCards = week?.columns.flatMap((c) => c.cards) ?? []
   const allCards = mode === 'week' ? weekCards : cards
   const visibleRatings = mode === 'week' ? (week?.ratings ?? []) : ratings

@@ -4,7 +4,7 @@
 // and TimelineReviewSummaryCard.swift). Ratings live in upstream's
 // timeline_review_ratings table as time ranges, not per card.
 
-import { SYSTEM_CATEGORY } from './categories'
+import { SYSTEM_CATEGORY, categoryKey } from './categories'
 import { dayRange } from './day'
 import type { TimelineCard } from './types'
 
@@ -40,7 +40,7 @@ export function unreviewedCards(cards: TimelineCard[], segments: ReviewSegment[]
   const { start, end } = dayRange(day)
   const covered = merged(segments, start, end)
   return cards
-    .filter((c) => c.category.trim().toLowerCase() !== SYSTEM_CATEGORY.toLowerCase())
+    .filter((c) => categoryKey(c.category) !== categoryKey(SYSTEM_CATEGORY))
     .sort((a, b) => a.start - b.start || a.id - b.id)
     .filter((c) => {
       const rated = covered.reduce((sum, s) => sum + Math.max(0, Math.min(c.end, s.end) - Math.max(c.start, s.start)), 0)

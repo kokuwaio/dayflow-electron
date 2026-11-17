@@ -98,6 +98,7 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
     chatMemory: typeof r.chatMemory === 'string' ? r.chatMemory.slice(0, CHAT_MEMORY_MAX) : '',
     allowEdits: r.allowEdits === true,
     autoInstallUpdates: r.autoInstallUpdates !== false,
+    checkForUpdates: r.checkForUpdates !== false,
     // Existing installs that never saw onboarding count as set up once a provider was chosen.
     onboarded: r.onboarded === true || (r.onboarded === undefined && typeof r.provider === 'string'),
     hidePrivateWindows: r.hidePrivateWindows !== false,

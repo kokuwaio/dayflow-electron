@@ -9,6 +9,7 @@ import { formatMinutes } from '@shared/day-summary'
 import type { FrameRef } from '@shared/media'
 import { type ReviewRating, type ReviewSegment, type ReviewSummary, reviewSummary, unreviewedCards } from '@shared/review'
 import type { TimelineCard } from '@shared/types'
+import { SYSTEM_CATEGORY, categoryKey } from '@shared/categories'
 
 export const RATING_LOOK: Record<ReviewRating, { label: string; color: string; soft: string; icon: typeof Zap }> = {
   distracted: { label: 'Distracted', color: '#FF8772', soft: '#FFBDB1', icon: Zap },
@@ -106,7 +107,7 @@ export function ReviewOverlay({ day, cards, colorOf, onClose }: { day: string; c
         <X size={14} strokeWidth={2.5} />
       </button>
       {done ? (
-        <ReviewDone empty={!cards.some((c) => c.category.trim().toLowerCase() !== 'system')} summary={reviewSummary(segments, day)} onClose={onClose} />
+        <ReviewDone empty={!cards.some((c) => categoryKey(c.category) !== categoryKey(SYSTEM_CATEGORY))} summary={reviewSummary(segments, day)} onClose={onClose} />
       ) : (
         <>
           <div className="review-stack">

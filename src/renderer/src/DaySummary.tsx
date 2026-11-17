@@ -8,6 +8,7 @@ import { REVIEW_RATINGS, type ReviewSegment, reviewSummary } from '@shared/revie
 import type { RecorderState, TimelineCard } from '@shared/types'
 import { GoalFlow } from './GoalFlow'
 import { RATING_LOOK, RatingBars } from './ReviewOverlay'
+import { categoryKey } from '@shared/categories'
 
 /** Days the pop-up was handled and yesterday's review shown, kept per device like upstream's UserDefaults. */
 const HANDLED_KEY = 'dayGoalPromptHandledTimelineDay'
@@ -31,7 +32,6 @@ const hours = (minutes: number) => {
   const h = minutes / 60
   return Math.abs(h - Math.round(h)) < 0.01 ? String(Math.round(h)) : h.toFixed(1)
 }
-const key = (name: string) => name.trim().toLowerCase()
 
 /**
  * The inspector in day mode with no card selected (upstream
@@ -85,7 +85,7 @@ export function DaySummary(props: {
     void window.dayflow.setGoals(day, next)
   }
   const isToday = day === todayKey()
-  const focusTotals = s.totals.filter((t) => plan.focusCategories.some((n) => key(n) === key(t.category)))
+  const focusTotals = s.totals.filter((t) => plan.focusCategories.some((n) => categoryKey(n) === categoryKey(t.category)))
   const statusLine = plan.skipped
     ? 'Set your goals for today to activate the progress bars below.'
     : isToday && props.recorder === 'paused'

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Category } from '@shared/categories'
+import { type Category, categoryKey } from '@shared/categories'
 
 /** How muted categories are remembered: by name, any case (like upstream). */
-export const muteKey = (category: string) => category.trim().toLowerCase()
+export const muteKey = (category: string) => categoryKey(category)
 
 /**
  * Category chips above the timeline (upstream TabFilterBar): click mutes a

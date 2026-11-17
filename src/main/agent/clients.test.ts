@@ -1,3 +1,6 @@
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
+import { lstatSync, mkdtempSync, readFileSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import type { ProcessRunner, RunResult } from '../providers/cli/host'
 import { type ClientEnv, type HostFiles, clientStatus, connectClient, disconnectClient, hostFiles, repairStaleRegistrations } from './clients'
@@ -133,7 +136,10 @@ describe('Claude Desktop', () => {
     expect(await files.read(DESKTOP)).toBe('{}')
     await files.write(DESKTOP, '{"a":1}\n')
     expect(calls[0]).toBe(`flatpak-spawn --host sh -c [ -e "$1" ] || exit 3; cat "$1" sh ${DESKTOP}`)
-    expect(calls[1]).toContain(`mv "$1.dayflow-tmp" "$1" sh ${DESKTOP}`)
+    expect(calls[1]).toContain(`mv "$1.dayflow-tmp" "$1"; fi sh ${DESKTOP}`)
+    // The copy keeps the config's permissions; a symlinked config is written through.
+    expect(calls[1]).toContain('cp -p "$1" "$1.dayflow-tmp"')
+    expect(calls[1]).toContain('if [ -L "$1" ]; then cat > "$1"')
     const missing = fakeRunner(() => ({ code: 3 }))
     expect(await hostFiles(missing.runner, true).read(DESKTOP)).toBeNull()
   })
@@ -195,5 +201,20 @@ describe('stale registrations at launch', () => {
     const inside = fakeRunner(() => ({}))
     expect(await repairStaleRegistrations(() => env(inside.runner))).toEqual([])
     expect(inside.calls).toEqual([])
+  })
+})
+
+describe('hostFiles outside the Flatpak', () => {
+  it.skipIf(process.platform === 'win32')('keeps a private config private and writes through a symlink', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'dayflow-config-'))
+    const real = join(dir, 'real.json')
+    const link = join(dir, 'claude_desktop_config.json')
+    writeFileSync(real, '{}', { mode: 0o600 })
+    symlinkSync(real, link)
+    const files = hostFiles({ run: async () => ({ code: 0, stdout: '', stderr: '', timedOut: false }) }, false)
+    await files.write(link, '{"mcpServers":{}}')
+    expect(lstatSync(link).isSymbolicLink()).toBe(true)
+    expect(readFileSync(real, 'utf8')).toBe('{"mcpServers":{}}')
+    expect(statSync(real).mode & 0o777).toBe(0o600)
   })
 })

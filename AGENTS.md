@@ -27,6 +27,8 @@ the upstream repo) and port its behaviour, thresholds and texts.
 
 - The app sends data only to the AI provider the user chose. Add no telemetry,
   analytics or third-party lookups; site icons come from the site itself.
+  The one exception: installer builds ask GitHub Releases for updates, behind
+  the "Check for updates" setting (Settings → Other).
 - CLI providers (Claude Code, Codex) run with all their tools off. Upstream
   starts them with `--dangerously-skip-permissions`; keep that out, and give
   them the data they need in the prompt instead.

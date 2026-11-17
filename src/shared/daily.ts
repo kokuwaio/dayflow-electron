@@ -2,7 +2,7 @@
 // (Core/Access), the workflow grid (Views/UI/DailyWorkflowComputation.swift)
 // and the standup (Core/AI/DailyRecap*.swift).
 
-import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from './categories'
+import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY, categoryKey, isDistractionName } from './categories'
 import { clockMinutes, parseKey, shiftDay, slotOverlap } from './day'
 import { formatMinutes } from './day-summary'
 import { jsonObject } from './json'
@@ -159,8 +159,6 @@ export function distractionRange(startLabel: string, endLabel: string, cardStart
   return collapsedEnd > collapsedStart ? { start: collapsedStart, end: collapsedEnd } : null
 }
 
-const isDistractionCategory = (name: string) => ['distraction', 'distractions'].includes(name.trim().toLowerCase())
-const categoryKey = (name: string) => name.trim().toLowerCase()
 
 export interface WorkflowGrid {
   /** Clock minutes of the first slot. */
@@ -212,7 +210,7 @@ export function workflowGrid(cards: TimelineCard[], categories: Category[]): Wor
 
   const marks: Array<{ start: number; end: number; title: string }> = []
   for (const c of list) {
-    if (isDistractionCategory(c.card.category)) marks.push({ start: c.start, end: c.end, title: c.card.title })
+    if (isDistractionName(c.card.category)) marks.push({ start: c.start, end: c.end, title: c.card.title })
     for (const d of c.card.distractions) {
       const range = distractionRange(d.startTime, d.endTime, c.start, c.end)
       if (range) marks.push({ ...range, title: d.title })
@@ -233,7 +231,7 @@ export function workflowGrid(cards: TimelineCard[], categories: Category[]): Wor
     rows,
     totals,
     distractions: distractions.map((d) => ({ start: d.start, end: d.end, title: d.titles.join(', ') })),
-    hasDistractionRow: categories.some((c) => isDistractionCategory(c.name))
+    hasDistractionRow: categories.some((c) => isDistractionName(c.name))
   }
 }
 

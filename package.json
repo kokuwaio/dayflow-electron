@@ -16,7 +16,7 @@
     "helper": "make helper",
     "test:helper": "make -C helper/linux test",
     "pack": "make pack",
-    "dist:win": "electron-vite build && electron-builder --win nsis --x64 --publish never && electron-builder --win nsis --arm64 --publish never",
+    "dist:win": "electron-vite build && electron-builder --win nsis --x64 --publish never && node -e \"require('fs').renameSync('dist/latest.yml','dist/latest-x64.yml')\" && electron-builder --win nsis --arm64 --publish never && node scripts/merge-update-feeds.ts dist/latest.yml dist/latest-x64.yml dist/latest.yml && node -e \"require('fs').rmSync('dist/latest-x64.yml')\"",
     "dist:mac": "electron-vite build && electron-builder --mac dmg zip --arm64 --x64 --publish never",
     "flatpak": "make flatpak"
   },

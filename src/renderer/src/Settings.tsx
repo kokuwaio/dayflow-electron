@@ -465,6 +465,16 @@ function UpdatesRow({ settings, save }: { settings: Settings; save: Save }) {
   useEffect(() => void window.dayflow.getUpdateSupport().then(setSupport), [])
   if (!support || support.mode === 'off') return null
   return (
+    <>
+    <Row label="Check for updates" sub="Asks GitHub for new versions every few hours. It is the only request besides your AI provider; off means no update requests at all.">
+      <input
+        type="checkbox"
+        className="switch"
+        checked={settings.checkForUpdates}
+        onChange={(e) => save({ checkForUpdates: e.target.checked })}
+        aria-label="Check for updates"
+      />
+    </Row>
     <Row
       label="Install updates automatically"
       sub={
@@ -476,12 +486,13 @@ function UpdatesRow({ settings, save }: { settings: Settings; save: Save }) {
       <input
         type="checkbox"
         className="switch"
-        checked={support.mode === 'install' && settings.autoInstallUpdates}
-        disabled={support.mode !== 'install'}
+        checked={support.mode === 'install' && settings.checkForUpdates && settings.autoInstallUpdates}
+        disabled={support.mode !== 'install' || !settings.checkForUpdates}
         onChange={(e) => save({ autoInstallUpdates: e.target.checked })}
         aria-label="Install updates automatically"
       />
     </Row>
+    </>
   )
 }
 

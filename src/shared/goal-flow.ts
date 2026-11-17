@@ -2,6 +2,7 @@
 // (Views/UI/MainView/Lifecycle.swift, Views/Components/DayGoalFlowView.swift,
 // DayGoalDurationPicker.swift, DaySummaryStats.swift).
 
+import { categoryKey } from './categories'
 import type { CategoryTotal, GoalPlan } from './day-summary'
 
 /** Days with cards (before today) needed before the pop-up opens by itself (upstream FeatureAccessRequirements). */
@@ -38,13 +39,12 @@ export function goalFlowStart(yesterday: GoalPlan | null, reviewShownDay: string
   return yesterday && !yesterday.skipped && reviewShownDay !== today ? 'review' : 'setup'
 }
 
-const key = (name: string) => name.trim().toLowerCase()
 
 /** Clicking a category chip: untracked → focus → distraction → untracked. */
 export function cycleCategory(plan: GoalPlan, name: string): GoalPlan {
-  const inFocus = plan.focusCategories.some((n) => key(n) === key(name))
-  const inDistraction = plan.distractionCategories.some((n) => key(n) === key(name))
-  const without = (list: string[]) => list.filter((n) => key(n) !== key(name))
+  const inFocus = plan.focusCategories.some((n) => categoryKey(n) === categoryKey(name))
+  const inDistraction = plan.distractionCategories.some((n) => categoryKey(n) === categoryKey(name))
+  const without = (list: string[]) => list.filter((n) => categoryKey(n) !== categoryKey(name))
   if (inFocus) return { ...plan, focusCategories: without(plan.focusCategories), distractionCategories: [...without(plan.distractionCategories), name] }
   if (inDistraction) return { ...plan, distractionCategories: without(plan.distractionCategories) }
   return { ...plan, focusCategories: [...plan.focusCategories, name] }
@@ -52,7 +52,7 @@ export function cycleCategory(plan: GoalPlan, name: string): GoalPlan {
 
 /** Moves a category into one panel (a drop), out of the other. */
 export function assignCategory(plan: GoalPlan, name: string, kind: 'focus' | 'distraction' | null): GoalPlan {
-  const without = (list: string[]) => list.filter((n) => key(n) !== key(name))
+  const without = (list: string[]) => list.filter((n) => categoryKey(n) !== categoryKey(name))
   return {
     ...plan,
     focusCategories: kind === 'focus' ? [...without(plan.focusCategories), name] : without(plan.focusCategories),
@@ -62,8 +62,8 @@ export function assignCategory(plan: GoalPlan, name: string, kind: 'focus' | 'di
 
 /** Minutes per category name → the minutes of the given categories ("Yesterday's focus"). */
 export function referenceMinutes(minutes: Record<string, number>, names: string[]): number {
-  const wanted = new Set(names.map(key))
-  return Object.entries(minutes).reduce((sum, [name, m]) => sum + (wanted.has(key(name)) ? m : 0), 0)
+  const wanted = new Set(names.map(categoryKey))
+  return Object.entries(minutes).reduce((sum, [name, m]) => sum + (wanted.has(categoryKey(name)) ? m : 0), 0)
 }
 
 /** What the pop-up needs from the main process (IPC goals:context). */

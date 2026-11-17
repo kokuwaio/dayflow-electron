@@ -102,6 +102,12 @@ export function presetCategories(role: string): Category[] {
 
 /** Color for categories that are not (or no longer) in the list. */
 export const FALLBACK_COLOR = '#E5E7EB'
+
+/** How category names compare: "Work " and "work" are the same category. */
+export const categoryKey = (name: string): string => name.trim().toLowerCase()
+
+/** Upstream treats "Distraction" and "Distractions" as the distraction category. */
+export const isDistractionName = (name: string): boolean => ['distraction', 'distractions'].includes(categoryKey(name))
 const MAX_CATEGORIES = 20
 
 /** Trims, drops empty and duplicate names, fixes colors, keeps exactly one Idle category last. */

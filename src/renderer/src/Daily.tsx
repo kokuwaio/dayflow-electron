@@ -6,11 +6,11 @@ import { hourLabel, parseKey, shiftDay, todayKey } from '@shared/day'
 import { formatMinutes } from '@shared/day-summary'
 import type { StandupEntry, TimelineCard } from '@shared/types'
 import { LockedFeature } from './LockedFeature'
+import { isDistractionName } from '@shared/categories'
 
 const DISTRACTION_COLOR = '#FF5950'
 /** Minutes per grid cell. */
 const SLOT = 15
-const isDistraction = (name: string) => ['distraction', 'distractions'].includes(name.trim().toLowerCase())
 
 /** "Today, November 17" or "Monday, November 10", like upstream's Daily title. */
 function longDate(day: string, today: string): string {
@@ -69,7 +69,7 @@ export function Daily() {
   const heading = day === today ? 'Today so far. Come back tomorrow for the full day view.' : day === yesterday ? 'Your workflow yesterday' : `Your workflow on ${short}`
   const totalTitle = day === today ? "Today's total so far" : day === yesterday ? "Yesterday's total" : `Total for ${short}`
   const span = grid.slots * SLOT
-  const rows = grid.rows.filter((r) => !(grid.hasDistractionRow && isDistraction(r.category)))
+  const rows = grid.rows.filter((r) => !(grid.hasDistractionRow && isDistractionName(r.category)))
   const colorOf = (name: string) => grid.rows.find((r) => r.category === name)?.color ?? DISTRACTION_COLOR
 
   return (

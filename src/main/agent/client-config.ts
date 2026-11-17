@@ -96,7 +96,8 @@ export interface ClientPlaces {
   localAppData?: string
 }
 
-const pathFor = (platform: NodeJS.Platform) => (platform === 'win32' ? win32 : posix)
+/** Path functions for the platform the config lives on (Windows paths differ). */
+export const pathFor = (platform: NodeJS.Platform) => (platform === 'win32' ? win32 : posix)
 
 /** Claude Desktop's config: ~/Library/Application Support/Claude on macOS, %APPDATA%\Claude on Windows, ~/.config/Claude on Linux. */
 export function claudeDesktopConfigPath(p: ClientPlaces): string {

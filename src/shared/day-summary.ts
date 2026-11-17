@@ -1,7 +1,7 @@
 // The day summary panel's numbers, after upstream Dayflow
 // (Views/Components/DaySummaryStats.swift, Models/DayGoalPlan.swift).
 
-import { type Category, FALLBACK_COLOR, PRIVATE_CATEGORY, SYSTEM_CATEGORY } from './categories'
+import { type Category, FALLBACK_COLOR, PRIVATE_CATEGORY, SYSTEM_CATEGORY, categoryKey, isDistractionName } from './categories'
 import { dayRange } from './day'
 import type { TimelineCard } from './types'
 
@@ -16,7 +16,6 @@ export interface GoalPlan {
   skipped: boolean
 }
 
-const isDistractionName = (name: string) => ['distraction', 'distractions'].includes(name.trim().toLowerCase())
 
 /** Upstream's default plan: 4.5 h focus, 2 h distraction budget. */
 export function defaultGoalPlan(categories: Category[]): GoalPlan {
@@ -67,7 +66,6 @@ function deOverlap(cards: TimelineCard[]): Interval[] {
 const FOCUS_GAP_SEC = 5 * 60
 
 /** Category names compared like upstream: trimmed, any case. */
-const key = (name: string) => name.trim().toLowerCase()
 
 /**
  * The day's numbers. Idle, System (failed) and Private (blocked app) time is
@@ -75,11 +73,11 @@ const key = (name: string) => name.trim().toLowerCase()
  * clipped to its 4 AM to 4 AM window.
  */
 export function summarizeDay(cards: TimelineCard[], categories: Category[], plan: GoalPlan, day?: string): DaySummary {
-  const left = new Set([...categories.filter((c) => c.isIdle).map((c) => key(c.name)), key(SYSTEM_CATEGORY), key(PRIVATE_CATEGORY)])
+  const left = new Set([...categories.filter((c) => c.isIdle).map((c) => categoryKey(c.name)), categoryKey(SYSTEM_CATEGORY), categoryKey(PRIVATE_CATEGORY)])
   const window = day ? dayRange(day) : { start: -Infinity, end: Infinity }
   const counted = cards
-    .filter((c) => !left.has(key(c.category)))
-    .map((c) => ({ ...c, category: categories.find((x) => key(x.name) === key(c.category))?.name ?? c.category.trim(), start: Math.max(c.start, window.start), end: Math.min(c.end, window.end) }))
+    .filter((c) => !left.has(categoryKey(c.category)))
+    .map((c) => ({ ...c, category: categories.find((x) => categoryKey(x.name) === categoryKey(c.category))?.name ?? c.category.trim(), start: Math.max(c.start, window.start), end: Math.min(c.end, window.end) }))
     .filter((c) => c.end > c.start)
   const intervals = deOverlap(counted)
   const minutes = (list: Interval[]) => Math.floor(list.reduce((sum, i) => sum + (i.end - i.start), 0) / 60)
@@ -95,7 +93,7 @@ export function summarizeDay(cards: TimelineCard[], categories: Category[], plan
     .filter((t) => t.minutes > 0)
     .sort((a, b) => b.minutes - a.minutes || order(a.category) - order(b.category) || a.category.localeCompare(b.category))
 
-  const inList = (list: string[]) => (i: Interval) => list.some((n) => key(n) === key(i.category))
+  const inList = (list: string[]) => (i: Interval) => list.some((n) => categoryKey(n) === categoryKey(i.category))
   const focus = intervals.filter(inList(plan.focusCategories))
   let longest: { start: number; end: number } | null = null
   let block: { start: number; end: number } | null = null

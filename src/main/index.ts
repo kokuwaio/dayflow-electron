@@ -43,7 +43,7 @@ import { secretFilter } from './privacy/masker'
 import { tesseractEngine } from './privacy/tesseract'
 import { SettingsStore } from './settings'
 import { type Updater, startUpdater } from './updater'
-import { type UpdateMode, parseCodesign, updateMode } from '../shared/updates'
+import { type UpdateMode, parseCodesign, updateMode, isDevVersion } from '../shared/updates'
 import { errorMessage } from '../shared/errors'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -361,7 +361,7 @@ async function main(): Promise<void> {
   ipcMain.handle('review:get', (_e, day: string) => {
     const segments = store.reviewRatings(dayRange(day))
     const count = unreviewedCards(store.cardsForDay(day), segments, day).length
-    const recent = store.hasReviewRatingSince(Math.floor(Date.now() / 1000) - 7 * 86400)
+    const recent = store.hasReviewRatingSince(dayRange(shiftDay(todayKey(), -7)).start)
     return { segments, toReview: cardsToReviewPrompt(count, { hasAny: store.hasAnyReviewRating(), hasRecent: recent }) }
   })
   ipcMain.handle('review:rate', (_e, span: Span, rating: ReviewRating) => {
@@ -462,10 +462,10 @@ async function main(): Promise<void> {
   })
   // Upstream repairs registrations at launch that point at a moved app. Not in
   // development: that would point the user's tools at the dev build.
-  if (app.isPackaged) {
+  if (app.isPackaged && !isDevVersion(app.getVersion())) {
     void repairStaleRegistrations(clientEnv).then(
       (lines) => lines.forEach((line) => log(`agent access: ${line}`)),
-      (err: unknown) => log(`agent access: repairing registrations failed: ${String(err)}`)
+      (err: unknown) => log(`agent access: repairing registrations failed: ${errorMessage(err)}`)
     )
   }
   ipcMain.handle('app:version', () => app.getVersion())
@@ -599,6 +599,7 @@ async function main(): Promise<void> {
         mode: mode.mode,
         currentVersion: app.getVersion(),
         autoInstall: settings.get().autoInstallUpdates,
+        enabled: () => settings.get().checkForUpdates,
         log,
         changed: () => updateTray(),
         beforeRestart: () => {
@@ -606,7 +607,7 @@ async function main(): Promise<void> {
         }
       })
     })
-    .catch((err: unknown) => log(`updates: ${String(err)}`))
+    .catch((err: unknown) => log(`updates: ${errorMessage(err)}`))
 
   let lastStatus = ''
   let lastProblem: string | null = null

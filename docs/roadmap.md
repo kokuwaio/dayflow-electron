@@ -194,9 +194,10 @@ each of the three providers.
 
 - [x] Daily standup tab: activity grid, yesterday's highlights, today's
   priorities, blockers (upstream `Views/UI/DailyView*.swift`).
-- [x] Weekly dashboard: overview, donut, treemap, Sankey, focus heatmap,
-  context switches, app interaction graph, highlights. No AI needed; built
-  from `timeline_cards` (upstream `Core/Weekly/`).
+- [x] Weekly dashboard: donut, treemap, Sankey, focus and distraction heat
+  map, context switches, workflow heat map. No AI needed; built from
+  `timeline_cards` (upstream `Core/Weekly/`). Upstream's overview card, app
+  interaction graph and highlights are not built yet.
 - [x] Chat with your journal: streamed answers, tool calls for timeline and
   observations, inline charts from fenced `chart` blocks, history panel,
   memory (upstream `Core/AI/Chat*`, `ChatPromptBuilder.swift`). API providers
@@ -277,6 +278,9 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   popover. Left out: upstream's intro video, referral survey and personal
   goal step (analytics), particles and confetti on the ring, and per-chart
   PNG export.
+- [ ] Goal pop-up trigger: upstream checks at app level and switches to the
+  timeline itself; here the check runs when today's day summary is shown
+  (the app opens there, so it differs only when another tab is open at 4 AM).
 - [x] Deep links: `dayflow-electron://start-recording` and `stop-recording`
   (aliases `start`, `resume`, `stop`, `pause`).
 - [x] Database backups: a daily copy, the newest three kept, a damaged

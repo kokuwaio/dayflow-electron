@@ -109,6 +109,8 @@ export interface Settings {
   allowEdits: boolean
   /** Windows and macOS: download updates in the background and install them on the next quit. On by default. */
   autoInstallUpdates: boolean
+  /** Ask GitHub Releases for new versions (installer builds only); the one request besides the AI provider. */
+  checkForUpdates: boolean
 }
 
 /** The AI tools Settings → MCP / CLI connects: the agent CLIs, Claude Desktop (config file) and the editors (install links). */
@@ -169,7 +171,8 @@ export const DEFAULT_SETTINGS: Settings = {
   standupAttempts: { day: '', count: 0 },
   chatMemory: '',
   allowEdits: false,
-  autoInstallUpdates: true
+  autoInstallUpdates: true,
+  checkForUpdates: true
 }
 
 export const THEMES = ['dark', 'light', 'system'] as const

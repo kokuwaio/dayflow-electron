@@ -8,10 +8,10 @@ import { Brain, Shapes, X } from 'lucide-react'
 import type { Category } from '@shared/categories'
 import { formatMinutes, type GoalPlan } from '@shared/day-summary'
 import { type GoalContext, assignCategory, cycleCategory, referenceMinutes, spelledDuration, wheelMinutes } from '@shared/goal-flow'
+import { categoryKey } from '@shared/categories'
 
 const FOCUS = '#628CFF'
 const DISTRACTION = '#FA8282'
-const key = (n: string) => n.trim().toLowerCase()
 
 export function GoalFlow(props: {
   plan: GoalPlan
@@ -122,9 +122,9 @@ function GoalSetup(props: {
   onConfirm: () => void
 }) {
   const { draft, categories, context, onChange } = props
-  const assigned = new Set([...draft.focusCategories, ...draft.distractionCategories].map(key))
-  const pool = categories.filter((c) => !c.isIdle && !assigned.has(key(c.name)))
-  const colorOf = (name: string) => categories.find((c) => key(c.name) === key(name))?.color ?? '#4F80EB'
+  const assigned = new Set([...draft.focusCategories, ...draft.distractionCategories].map(categoryKey))
+  const pool = categories.filter((c) => !c.isIdle && !assigned.has(categoryKey(c.name)))
+  const colorOf = (name: string) => categories.find((c) => categoryKey(c.name) === categoryKey(name))?.color ?? '#4F80EB'
   const onDrop = (kind: 'focus' | 'distraction' | null) => (e: DragEvent) => {
     e.preventDefault()
     const name = e.dataTransfer.getData('text/plain')
