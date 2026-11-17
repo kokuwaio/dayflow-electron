@@ -208,15 +208,22 @@ each of the three providers.
 
 Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
 
-- [ ] CLI: `status`, `timeline`, `today`, `yesterday`, `card`, `daily`, `weekly`,
-  `categories`, `goal set`, `search`, all with `--json`, reading SQLite
-  read-only.
-- [ ] `mcp` subcommand: stdio MCP server with the same tool names as upstream
+- [x] CLI: `status`, `timeline`, `today`, `yesterday`, `card`, `daily`, `weekly`,
+  `categories`, `goal set`, `search`, `link`/`unlink`, all with `--json`,
+  reading SQLite read-only. Electron runs it in Node mode (`out/main/cli.js`);
+  the Flatpak has `flatpak run --command=dayflow-cli`. Exit code 6 for "app
+  not running" (upstream reused 5).
+- [x] `mcp` subcommand: stdio MCP server with the same tool names as upstream
   (`get_timeline`, `get_time_breakdown`, `search_activities`, ...).
-- [ ] Write tools go to the running app over a local socket that only listens
-  while "Allow edits" is on.
-- [ ] Settings page to register the MCP server with Claude Code, Claude Desktop,
-  Codex, Cursor and VS Code.
+- [x] Write tools go to the running app over a local socket that only listens
+  while "Allow edits" is on; every write is logged to `agent-writes.log`.
+- [x] Settings → MCP / CLI: connect Claude Code and Codex with their own
+  `mcp add` command (or show it to copy without host access), a config
+  snippet for other clients, the edits switch, and a `~/.local/bin` install
+  command for the terminal.
+- [ ] One-click setup for Claude Desktop, Cursor and VS Code (upstream writes
+  their configs or opens install links; the snippet covers them for now), and
+  repairing stale registrations at launch (only matters outside the Flatpak).
 
 ### M5 Privacy, polish and release
 

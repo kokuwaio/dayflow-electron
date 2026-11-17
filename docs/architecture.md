@@ -154,6 +154,43 @@ sequenceDiagram
 - **Unlocks** follow upstream: Daily after 5 hours of analyzed data, Chat
   after 10, Weekly after 30.
 
+## Agent access (CLI and MCP)
+
+The `dayflow` CLI and MCP server (`src/cli/`) are a second entry point of the
+main build (`out/main/cli.js`). Electron runs it in Node mode
+(`ELECTRON_RUN_AS_NODE=1`), so it uses Node only, never the `electron`
+module. The Flatpak wraps that in `/app/bin/dayflow-cli`, started as
+`flatpak run --command=dayflow-cli io.github.kokuwaio.DayflowElectron`.
+
+- **Reads** go straight to the data folder (`DAYFLOW_DATA_DIR`, else
+  Electron's userData path; `DAYFLOW_DB` overrides the database): SQLite
+  opened read-only, categories and the "Allow edits" switch from
+  `settings.json`. They work while the app is closed. `--json` and the MCP
+  tools share the payloads in `src/cli/payloads.ts`.
+- **MCP** (`src/cli/mcp.ts`): JSON-RPC over stdio, protocol `2025-06-18`,
+  upstream's tool names and descriptions. Write tools are listed only while
+  edits are on.
+- **Writes** go to the running app over `agent.sock` in the data folder
+  (`src/main/agent/`). The app listens only while "Allow edits" is on, with
+  mode 0600. One JSON line each way, `protocol_version` 1, at most 1 MB. The
+  app checks the switch again, validates every argument, runs the write
+  through the same settings save and store calls as the window, appends it to
+  `agent-writes.log` and tells the window to reload.
+- **Settings → MCP / CLI** registers the server with `claude mcp add` or
+  `codex mcp add` on the host (through `flatpak-spawn --host`, which needs the
+  same opt-in as the CLI providers), or shows the command to copy.
+
+```mermaid
+flowchart LR
+  Client(["Claude Code / Codex /<br/>terminal"]) -- "dayflow mcp · dayflow …" --> CLI["src/cli<br/>(Electron in Node mode)"]
+  CLI -- "read-only" --> DB[("dayflow.sqlite")]
+  CLI -- "categories, allowEdits" --> Settings[("settings.json")]
+  CLI -- "writes: agent.sock<br/>(only while edits are on)" --> Bridge["main: agent/bridge.ts"]
+  Bridge --> DB
+  Bridge --> Settings
+  Bridge --> Log[("agent-writes.log")]
+```
+
 ## Data
 
 - **SQLite** (`dayflow.sqlite` in the data folder) keeps upstream's table
@@ -180,6 +217,8 @@ sequenceDiagram
 | `src/main/insights/` | Daily standup generation |
 | `src/main/chat/` | Chat: tools, tool loop, system prompts, answering service |
 | `src/main/db/` | Schema migrations and all SQL |
+| `src/main/agent/` | Write bridge for the CLI, its write handlers, MCP client registration |
+| `src/cli/` | The `dayflow` CLI and MCP server (`out/main/cli.js`) |
 | `src/main/media.ts` | Serves frames and site icons to the window |
 | `src/main/notifications.ts` | Desktop notifications |
 | `src/preload/` | The `window.dayflow` API |
