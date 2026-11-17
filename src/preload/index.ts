@@ -3,6 +3,8 @@ import type { DayflowApi } from './api'
 
 const api: DayflowApi = {
   getDay: (day) => ipcRenderer.invoke('day:get', day),
+  getWeekly: (day) => ipcRenderer.invoke('weekly:get', day),
+  getWeeklyDefaultDay: () => ipcRenderer.invoke('weekly:defaultDay'),
   getAccess: () => ipcRenderer.invoke('access:get'),
   getStandup: (day) => ipcRenderer.invoke('daily:get', day),
   generateStandup: (day) => ipcRenderer.invoke('daily:generate', day),
@@ -23,6 +25,7 @@ const api: DayflowApi = {
   getGoals: (day) => ipcRenderer.invoke('goals:get', day),
   setGoals: (day, plan) => ipcRenderer.invoke('goals:set', day, plan),
   copyTimeline: (mode, day) => ipcRenderer.invoke('timeline:copy', mode, day),
+  copyText: (text) => ipcRenderer.invoke('clipboard:write', text),
   exportMarkdown: (from, to) => ipcRenderer.invoke('timeline:export', from, to),
   updateCard: (id, change) => ipcRenderer.invoke('card:update', id, change),
   deleteCard: (id) => ipcRenderer.invoke('card:delete', id),

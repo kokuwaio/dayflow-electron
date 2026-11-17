@@ -3,7 +3,7 @@
 
 import { SYSTEM_CATEGORY } from '../../shared/categories'
 import { type StandupDraft, parseRecap, pickSourceDay } from '../../shared/daily'
-import { formatClock, parseKey, shiftDay } from '../../shared/day'
+import { formatClock } from '../../shared/day'
 import type { StandupEntry, TimelineCard } from '../../shared/types'
 import type { Store } from '../db/store'
 import { languageForJson } from '../analysis/two-step-prompts'
@@ -14,32 +14,23 @@ import { EVIDENCE_RECAP_PROMPT, LOCAL_RECAP_PROMPT, SOL_EVIDENCE_RULES, recapPro
 export const AUTO_MIN_MINUTES = 180
 export const MANUAL_MIN_MINUTES = 120
 
-/** "Today", "Yesterday", a weekday within the last week, else the date (upstream's labels). */
-export function dayLabel(day: string, today: string): string {
-  if (day === today) return 'Today'
-  if (day === shiftDay(today, -1)) return 'Yesterday'
-  const date = parseKey(day)
-  for (let back = 2; back <= 6; back++) {
-    if (day === shiftDay(today, -back)) return date.toLocaleDateString([], { weekday: 'long' })
-  }
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
-}
-
-/** "Timeline activities for {day}:" plus one numbered line per card (upstream's cardsText). */
+/** "Timeline activities for {day}:", a blank line, then one numbered line per card (upstream's cardsText). */
 function cardsText(day: string, cards: TimelineCard[]): string {
-  const clock = (ts: number) => formatClock(ts).replace(' ', '')
+  const clock = (ts: number) => formatClock(ts).replace(' ', '').toLowerCase()
   const lines = cards.map((c, i) => {
-    const head = `${i + 1}. ${clock(c.start)} - ${clock(c.end)}: ${c.title || c.summary}`
-    return c.summary && c.summary !== c.title ? `${head}\n   ${c.summary}` : head
+    const title = c.title.trim() || 'Untitled activity'
+    const summary = c.summary.trim()
+    const head = `${i + 1}. ${clock(c.start)} - ${clock(c.end)}: ${title}`
+    return summary && summary !== title ? `${head}\n   ${summary}` : head
   })
-  return [`Timeline activities for ${day}:`, ...lines].join('\n')
+  return [`Timeline activities for ${day}:`, '', ...lines].join('\n')
 }
 
-/** Upstream gives local models and Gemini the "local" instructions, the others the "evidence" rules. */
+/** Upstream gives the Claude CLI the "evidence" rules, Codex those plus extra checks, and everything else the "local" ones. */
 function instructionsFor(provider: Provider): string {
-  if (provider.local || provider.kind === 'gemini') return LOCAL_RECAP_PROMPT
+  if (provider.kind === 'claude-cli') return EVIDENCE_RECAP_PROMPT
   if (provider.kind === 'codex-cli') return `${EVIDENCE_RECAP_PROMPT}\n\nAdditional evidence checks:\n${SOL_EVIDENCE_RULES}`
-  return EVIDENCE_RECAP_PROMPT
+  return LOCAL_RECAP_PROMPT
 }
 
 export class NoSourceDayError extends Error {
@@ -48,19 +39,23 @@ export class NoSourceDayError extends Error {
   }
 }
 
+/** The day a standup for `target` would summarize, or null when no recent day has enough activity. */
+export const standupSourceDay = (store: Store, target: string, minMinutes: number): string | null =>
+  pickSourceDay(target, (d) => store.cardMinutesOn(d), store.usedSourceDays(target), minMinutes)
+
 /** Writes the standup for `target` from the best recent day; tries each provider in turn. */
 export async function generateStandup(opts: {
   store: Store
   providers: Provider[]
   target: string
-  today: string
   language: string
   minMinutes: number
 }): Promise<StandupEntry> {
   const { store, target } = opts
-  const source = pickSourceDay(target, (d) => store.cardMinutesOn(d), store.usedSourceDays(target), opts.minMinutes)
+  const source = standupSourceDay(store, target, opts.minMinutes)
   if (!source) throw new NoSourceDayError()
   const cards = store.cardsForDay(source).filter((c) => c.category !== SYSTEM_CATEGORY)
+  if (cards.length === 0) throw new NoSourceDayError()
 
   const errors: string[] = []
   for (const provider of opts.providers) {
@@ -68,10 +63,11 @@ export async function generateStandup(opts: {
       const prompt = recapPrompt(instructionsFor(provider), cardsText(source, cards), languageForJson(opts.language))
       const reply = await provider.generate({ turns: [{ role: 'user', parts: [{ type: 'text', text: prompt }] }], json: true })
       const recap = parseRecap(reply.text)
+      // The view and the copy text show titles for the current date (standupTitles); these are upstream's stored defaults.
       const draft: StandupDraft = {
-        highlightsTitle: `Highlights from ${dayLabel(source, opts.today)}`,
+        highlightsTitle: "Yesterday's highlights",
         highlights: recap.highlights,
-        tasksTitle: `Tasks for ${dayLabel(target, opts.today)}`,
+        tasksTitle: "Today's tasks",
         tasks: recap.next ? [recap.next] : [],
         blockersTitle: 'Blockers',
         blockersBody: ''

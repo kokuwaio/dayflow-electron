@@ -40,3 +40,20 @@ export function formatClock(ts: number): string {
   const h = d.getHours()
   return `${h % 12 === 0 ? 12 : h % 12}:${String(d.getMinutes()).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`
 }
+
+/** Minutes since local midnight; times before 4 AM count as the evening before (24:00–28:00). */
+export function clockMinutes(ts: number): number {
+  const d = new Date(ts * 1000)
+  const m = d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60
+  return m < BOUNDARY_HOUR * 60 ? m + 1440 : m
+}
+
+/** Minutes of [start, end) inside the slot [from, from + length), all in clock minutes. */
+export const slotOverlap = (start: number, end: number, from: number, length: number): number =>
+  Math.max(0, Math.min(end, from + length) - Math.max(start, from))
+
+/** "9am", "12pm" for a clock minute, like upstream's chart axes. */
+export function hourLabel(minute: number): string {
+  const h = Math.floor(minute / 60) % 24
+  return `${h % 12 === 0 ? 12 : h % 12}${h < 12 ? 'am' : 'pm'}`
+}

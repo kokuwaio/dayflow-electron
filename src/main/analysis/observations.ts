@@ -3,7 +3,7 @@
 // Segment times are offsets ("MM:SS" or "HH:MM:SS") from the first sampled
 // frame. Times are Unix seconds.
 
-import { jsonArray } from './json'
+import { jsonArray } from '../../shared/json'
 
 export interface Observation {
   start: number

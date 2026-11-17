@@ -2,8 +2,10 @@
 // (Core/Access), the workflow grid (Views/UI/DailyWorkflowComputation.swift)
 // and the standup (Core/AI/DailyRecap*.swift).
 
-import { type Category, SYSTEM_CATEGORY } from './categories'
-import { shiftDay } from './day'
+import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from './categories'
+import { clockMinutes, parseKey, shiftDay, slotOverlap } from './day'
+import { formatMinutes } from './day-summary'
+import { jsonObject } from './json'
 import type { TimelineCard } from './types'
 
 // ---------------------------------------------------------------- access
@@ -13,17 +15,17 @@ const BATCH_MINUTES = 15
 export const UNLOCK_HOURS = { daily: 5, chat: 10, weekly: 30 } as const
 export type Feature = keyof typeof UNLOCK_HOURS
 
-const hm = (minutes: number) => {
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
-  return h && m ? `${h}h ${m}m` : h ? `${h}h` : `${m}m`
+export interface FeatureAccess {
+  unlocked: boolean
+  /** "2h 15m / 5h" */
+  label: string
 }
 
-export function accessProgress(analyzedBatches: number): Record<Feature, { unlocked: boolean; label: string }> {
+export function accessProgress(analyzedBatches: number): Record<Feature, FeatureAccess> {
   const minutes = analyzedBatches * BATCH_MINUTES
   const entry = (hours: number) => ({
     unlocked: minutes >= hours * 60,
-    label: `${minutes === 0 ? '0h' : hm(Math.min(minutes, hours * 60))} / ${hours}h`
+    label: `${minutes === 0 ? '0h' : formatMinutes(Math.min(minutes, hours * 60))} / ${hours}h`
   })
   return { daily: entry(UNLOCK_HOURS.daily), chat: entry(UNLOCK_HOURS.chat), weekly: entry(UNLOCK_HOURS.weekly) }
 }
@@ -56,21 +58,13 @@ export function pickSourceDay(
   return null
 }
 
+const END_THINKING = '---END_THINKING---'
+
 /** Reads the model's {"done": [...], "next": ...} answer like upstream. */
 export function parseRecap(reply: string): { highlights: string[]; next: string | null } {
-  const text = (reply.includes('---END_THINKING---') ? reply.slice(reply.lastIndexOf('---END_THINKING---') + 18) : reply).replace(/```(?:json)?/g, '')
-  const start = text.indexOf('{')
-  if (start < 0) throw new Error('The recap answer contains no JSON object.')
-  let depth = 0
-  let end = -1
-  for (let i = start; i < text.length; i++) {
-    if (text[i] === '{') depth++
-    else if (text[i] === '}' && --depth === 0) {
-      end = i
-      break
-    }
-  }
-  const obj = JSON.parse(text.slice(start, end + 1)) as { done?: unknown; next?: unknown }
+  const cut = reply.indexOf(END_THINKING)
+  const obj = jsonObject(cut < 0 ? reply : reply.slice(cut + END_THINKING.length))
+  if (!obj) throw new Error('The recap answer contains no JSON object.')
   const seen = new Set<string>()
   const highlights = (Array.isArray(obj.done) ? obj.done : [])
     .map((d) => (typeof d === 'string' ? d.trim() : ''))
@@ -81,15 +75,51 @@ export function parseRecap(reply: string): { highlights: string[]; next: string 
   return { highlights, next }
 }
 
-/** Copy format (upstream DailyView+Standup.swift): titles, "- item" lines, a blank line between sections. */
-export function standupText(d: StandupDraft): string {
-  const section = (title: string, items: string[]) =>
-    [title, ...(items.length ? items.map((i) => `- ${i}`) : ['- None right now'])].join('\n')
-  const blockers = d.blockersBody
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean)
-  return [section(d.highlightsTitle, d.highlights), section(d.tasksTitle, d.tasks), section(d.blockersTitle, blockers)].join('\n\n')
+/** "Today", "Yesterday", a weekday within the last week, else "Nov 12" (upstream standupDayLabelText). */
+export function dayLabel(day: string, today: string): string {
+  if (day === today) return 'Today'
+  if (day === shiftDay(today, -1)) return 'Yesterday'
+  const date = parseKey(day)
+  for (let back = 2; back <= 6; back++) {
+    if (day === shiftDay(today, -back)) return date.toLocaleDateString('en-US', { weekday: 'long' })
+  }
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+export interface StandupTitles {
+  highlights: string
+  tasks: string
+  blockers: string
+}
+
+/** Section titles for the current date, so "Yesterday" never goes stale (upstream standupSectionTitles). */
+export function standupTitles(target: string, sourceDay: string | null, today: string): StandupTitles {
+  return {
+    highlights: sourceDay ? `Highlights from ${dayLabel(sourceDay, today)}` : 'Recent highlights',
+    tasks: `Tasks for ${dayLabel(target, today)}`,
+    blockers: 'Blockers'
+  }
+}
+
+/** An empty draft the user can fill in before anything was generated. */
+export const emptyStandup = (): StandupDraft => ({
+  highlightsTitle: "Yesterday's highlights",
+  highlights: [],
+  tasksTitle: "Today's tasks",
+  tasks: [],
+  blockersTitle: 'Blockers',
+  blockersBody: ''
+})
+
+/** Copy format (upstream standupClipboardText): titles, "- item" lines, a blank line between sections. */
+export function standupText(d: StandupDraft, titles: StandupTitles): string {
+  const items = (list: string[]) => list.map((i) => i.trim()).filter(Boolean)
+  const section = (title: string, list: string[]) => [title, ...(list.length ? list.map((i) => `- ${i}`) : ['- None right now'])].join('\n')
+  return [
+    section(titles.highlights, items(d.highlights)),
+    section(titles.tasks, items(d.tasks)),
+    section(titles.blockers, items(d.blockersBody.split('\n')))
+  ].join('\n\n')
 }
 
 // ---------------------------------------------------------------- workflow grid
@@ -97,21 +127,37 @@ export function standupText(d: StandupDraft): string {
 const SLOT = 15
 const DISTRACTION_MERGE_MIN = 2
 
-/** Minutes since local midnight; times before 4 AM belong to the evening before. */
-function clockMinutes(ts: number): number {
-  const d = new Date(ts * 1000)
-  const m = d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60
-  return m < 240 ? m + 1440 : m
-}
-
-/** "11:10 AM" relative to a card, in clock minutes. */
-function labelMinutes(label: string, near: number): number | null {
+/** Minutes since midnight of an "11:10 AM" label; null when it is not one. */
+export function parseClockLabel(label: string): number | null {
   const m = /^(\d{1,2}):(\d{2}) ?([AaPp][Mm])$/.exec(label.trim())
   if (!m) return null
-  let minutes = ((Number(m[1]) % 12) + (m[3]!.toLowerCase() === 'pm' ? 12 : 0)) * 60 + Number(m[2])
-  if (minutes < 240 && near >= 240 * 2) minutes += 1440
-  return minutes
+  return ((Number(m[1]) % 12) + (m[3]!.toLowerCase() === 'pm' ? 12 : 0)) * 60 + Number(m[2])
 }
+
+const distanceTo = (v: number, start: number, end: number) => (v < start ? start - v : v > end ? v - end : 0)
+
+/** The candidate of `raw`, `raw ± 1 day` nearest the parent card (upstream anchoredMinute). */
+const anchored = (raw: number, start: number, end: number) =>
+  [raw, raw + 1440, raw - 1440].reduce((best, v) => (distanceTo(v, start, end) < distanceTo(best, start, end) ? v : best))
+
+/**
+ * A distraction's range inside its card. Labels outside the card collapse to
+ * one minute at the nearest edge (upstream normalizedMiniDistractionRange).
+ */
+export function distractionRange(startLabel: string, endLabel: string, cardStart: number, cardEnd: number): { start: number; end: number } | null {
+  const rawStart = parseClockLabel(startLabel)
+  const rawEnd = parseClockLabel(endLabel)
+  if (rawStart === null || rawEnd === null || cardEnd <= cardStart) return null
+  const start = anchored(rawStart, cardStart, cardEnd)
+  const end = anchored(rawEnd, cardStart, cardEnd)
+  if (end > start && start >= cardStart && end <= cardEnd) return { start, end }
+  const collapsedStart = Math.min(Math.max(start, cardStart), Math.max(cardStart, cardEnd - 1))
+  const collapsedEnd = Math.min(cardEnd, collapsedStart + 1)
+  return collapsedEnd > collapsedStart ? { start: collapsedStart, end: collapsedEnd } : null
+}
+
+const isDistractionCategory = (name: string) => ['distraction', 'distractions'].includes(name.trim().toLowerCase())
+const categoryKey = (name: string) => name.trim().toLowerCase()
 
 export interface WorkflowGrid {
   /** Clock minutes of the first slot. */
@@ -120,12 +166,15 @@ export interface WorkflowGrid {
   rows: Array<{ category: string; color: string; cells: number[] }>
   totals: Array<{ category: string; minutes: number }>
   distractions: Array<{ start: number; end: number; title: string }>
+  /** Whether the user has a Distraction category, so the grid shows its row. */
+  hasDistractionRow: boolean
 }
 
+/** A row per category but System (upstream DailyWorkflowComputation), in the configured order. */
 export function workflowGrid(cards: TimelineCard[], categories: Category[]): WorkflowGrid {
   const list = cards
-    .filter((c) => c.category !== SYSTEM_CATEGORY)
-    .map((c) => ({ card: c, start: clockMinutes(c.start), end: clockMinutes(c.start) + (c.end - c.start) / 60 }))
+    .filter((c) => categoryKey(c.category) !== categoryKey(SYSTEM_CATEGORY))
+    .map((c) => ({ card: c, key: categoryKey(c.category), start: clockMinutes(c.start), end: clockMinutes(c.start) + (c.end - c.start) / 60 }))
     .sort((a, b) => a.start - b.start)
   const first = list[0]
   const startMinute = first ? Math.floor(first.start / 60) * 60 : 9 * 60
@@ -133,49 +182,60 @@ export function workflowGrid(cards: TimelineCard[], categories: Category[]): Wor
   const endMinute = first ? Math.max(startMinute + 720, Math.ceil(lastEnd / 60) * 60) : 21 * 60
   const slots = Math.round((endMinute - startMinute) / SLOT)
 
-  const known = categories.map((c) => c.name)
-  const unknown = [...new Set(list.map((c) => c.card.category).filter((n) => !known.includes(n)))].sort()
-  const used = new Set(list.map((c) => c.card.category))
-  const rowNames = [...known.filter((n) => used.has(n)), ...unknown]
-  const rows = rowNames.map((category) => {
-    const cells = Array.from({ length: slots }, (_, i) => {
+  const configured = categories.filter((c) => categoryKey(c.name) !== categoryKey(SYSTEM_CATEGORY))
+  const knownKeys = new Set(configured.map((c) => categoryKey(c.name)))
+  const unknown = new Map<string, string>()
+  for (const c of list) if (!knownKeys.has(c.key) && !unknown.has(c.key)) unknown.set(c.key, c.card.category.trim())
+  const rowDefs = [
+    ...configured.map((c) => ({ key: categoryKey(c.name), name: c.name, color: c.color })),
+    ...[...unknown].sort((a, b) => a[1].localeCompare(b[1])).map(([key, name]) => ({ key, name, color: FALLBACK_COLOR }))
+  ]
+  const ofKey = (key: string) => list.filter((c) => c.key === key)
+  const rows = rowDefs.map((row) => ({
+    category: row.name,
+    color: row.color,
+    cells: Array.from({ length: slots }, (_, i) => {
       const from = startMinute + i * SLOT
-      const overlap = list
-        .filter((c) => c.card.category === category)
-        .reduce((sum, c) => sum + Math.max(0, Math.min(c.end, from + SLOT) - Math.max(c.start, from)), 0)
-      return Math.min(1, overlap / SLOT)
+      return Math.min(1, ofKey(row.key).reduce((sum, c) => sum + slotOverlap(c.start, c.end, from, SLOT), 0) / SLOT)
     })
-    return { category, color: categories.find((c) => c.name === category)?.color ?? '#E5E7EB', cells }
-  })
-  const totals = rowNames
-    .map((category) => ({
-      category,
-      minutes: Math.floor(
-        list
-          .filter((c) => c.card.category === category)
-          .reduce((sum, c) => sum + Math.max(0, Math.min(c.end, endMinute) - Math.max(c.start, startMinute)), 0)
-      )
+  }))
+  const totals = rowDefs
+    .map((row) => ({
+      category: row.name,
+      minutes: Math.floor(ofKey(row.key).reduce((sum, c) => sum + slotOverlap(c.start, c.end, startMinute, endMinute - startMinute), 0))
     }))
     .filter((t) => t.minutes > 0)
     .sort((a, b) => b.minutes - a.minutes)
 
   const marks: Array<{ start: number; end: number; title: string }> = []
   for (const c of list) {
-    if (c.card.category.trim().toLowerCase() === 'distraction') marks.push({ start: c.start, end: c.end, title: c.card.title })
+    if (isDistractionCategory(c.card.category)) marks.push({ start: c.start, end: c.end, title: c.card.title })
     for (const d of c.card.distractions) {
-      const s = labelMinutes(d.startTime, c.start)
-      const e = labelMinutes(d.endTime, c.start)
-      if (s !== null && e !== null && e > s) marks.push({ start: s, end: e, title: d.title })
+      const range = distractionRange(d.startTime, d.endTime, c.start, c.end)
+      if (range) marks.push({ ...range, title: d.title })
     }
   }
   marks.sort((a, b) => a.start - b.start)
-  const distractions: typeof marks = []
+  const distractions: Array<{ start: number; end: number; titles: string[] }> = []
   for (const m of marks) {
     const prev = distractions[distractions.length - 1]
     if (prev && m.start <= prev.end + DISTRACTION_MERGE_MIN) {
       prev.end = Math.max(prev.end, m.end)
-      prev.title = `${prev.title}, ${m.title}`
-    } else distractions.push({ ...m })
+      if (!prev.titles.includes(m.title)) prev.titles.push(m.title)
+    } else distractions.push({ start: m.start, end: m.end, titles: [m.title] })
   }
-  return { startMinute, slots, rows, totals, distractions }
+  return {
+    startMinute,
+    slots,
+    rows,
+    totals,
+    distractions: distractions.map((d) => ({ start: d.start, end: d.end, title: d.titles.join(', ') })),
+    hasDistractionRow: categories.some((c) => isDistractionCategory(c.name))
+  }
+}
+
+/** The distraction overlapping a grid slot, if any. */
+export const distractionInSlot = (grid: WorkflowGrid, slot: number) => {
+  const from = grid.startMinute + slot * SLOT
+  return grid.distractions.find((d) => slotOverlap(d.start, d.end, from, SLOT) > 0)
 }

@@ -14,15 +14,16 @@ import type { FrameRef } from '../shared/media'
 import { type GoalPlan, defaultGoalPlan } from '../shared/day-summary'
 import { exportFileName, rangeMarkdown, timelineText, weekText } from '../shared/export'
 import { weekOf } from '../shared/week'
-import type { AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings } from '../shared/types'
+import { WEEKLY_MIN_TRACKED_MINUTES, trackedMinutes } from '../shared/weekly'
+import type { AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings, StandupEntry, Tab } from '../shared/types'
 import type { Span } from './db/store'
 import { Pipeline } from './analysis/pipeline'
 import { Recorder } from './capture/recorder'
 import { Store } from './db/store'
 import { frameUrl } from '../shared/media'
-import { AUTO_MIN_MINUTES, MANUAL_MIN_MINUTES, NoSourceDayError, generateStandup } from './insights/daily'
+import { AUTO_MIN_MINUTES, MANUAL_MIN_MINUTES, generateStandup, standupSourceDay } from './insights/daily'
 import { handleMedia, registerMediaScheme } from './media'
-import { type Tab, createNotifier } from './notifications'
+import { createNotifier } from './notifications'
 import { createPlatform } from './platform'
 import { createProvider } from './providers'
 import { findCli, hostAccess, nodeRunner } from './providers/cli/host'
@@ -152,41 +153,49 @@ async function main(): Promise<void> {
       window?.webContents.send('navigate', tab)
     },
     windowFocused: () => !!window?.isFocused(),
-    today: todayKey
+    today: todayKey,
+    problemDays: () => settings.get().notified.problemDays,
+    saveProblemDays: (problemDays) => void settings.save({ notified: { ...settings.get().notified, problemDays } })
   })
   const access = () => accessProgress(store.analyzedBatchCount())
   const configuredProviders = () => {
     const p = pipelineProviders()
     return typeof p === 'string' ? [] : p
   }
-  const standupAttempts = new Map<string, number>()
-  const writeStandup = async (day: string, minMinutes: number) => {
-    const entry = await generateStandup({
-      store,
-      providers: configuredProviders(),
-      target: day,
-      today: todayKey(),
-      language: settings.get().outputLanguage,
-      minMinutes
-    })
-    store.saveStandup(day, entry)
-    notifier.standupReady(day)
-    window?.webContents.send('daily:changed')
-    return entry
+  /** One standup run per day at a time, shared by the scheduler and the Regenerate button (upstream isRunningCheck). */
+  const standupRuns = new Map<string, Promise<StandupEntry>>()
+  const writeStandup = (day: string, minMinutes: number): Promise<StandupEntry> => {
+    const running = standupRuns.get(day)
+    if (running) return running
+    const run = generateStandup({ store, providers: configuredProviders(), target: day, language: settings.get().outputLanguage, minMinutes })
+      .then((entry) => {
+        store.saveStandup(day, entry)
+        window?.webContents.send('daily:changed')
+        return entry
+      })
+      .finally(() => standupRuns.delete(day))
+    standupRuns.set(day, run)
+    return run
   }
-  // Upstream's scheduler: once Daily is unlocked, after 4 AM, at most 3 tries a day.
+  // Upstream's scheduler: once Daily is unlocked, after 4 AM and with a day worth
+  // summarizing, at most 3 tries a day, counted across restarts.
   const scheduleStandup = async () => {
     const day = todayKey()
-    if (!access().daily.unlocked || new Date().getHours() < 4 || store.standup(day)) return
-    const tries = standupAttempts.get(day) ?? 0
-    if (tries >= 3 || configuredProviders().length === 0) return
-    standupAttempts.set(day, tries + 1)
-    await writeStandup(day, AUTO_MIN_MINUTES).catch((err) => {
-      if (!(err instanceof NoSourceDayError)) log(`standup failed: ${String(err)}`)
-    })
+    if (!access().daily.unlocked || new Date().getHours() < 4 || store.standup(day) || standupRuns.has(day)) return
+    if (configuredProviders().length === 0 || !standupSourceDay(store, day, AUTO_MIN_MINUTES)) return
+    const attempts = settings.get().standupAttempts
+    const tries = attempts.day === day ? attempts.count : 0
+    if (tries >= 3) return
+    await settings.save({ standupAttempts: { day, count: tries + 1 } })
+    try {
+      await writeStandup(day, AUTO_MIN_MINUTES)
+      notifier.standupReady(day)
+    } catch (err) {
+      log(`standup failed: ${String(err)}`)
+    }
   }
   setInterval(() => void scheduleStandup(), 5 * 60_000)
-  setTimeout(() => void scheduleStandup(), 30_000)
+  void scheduleStandup()
 
   ipcMain.handle('access:get', () => access())
   ipcMain.handle('daily:get', (_e, day: string) => store.standup(day))
@@ -198,10 +207,28 @@ async function main(): Promise<void> {
     }
   })
   ipcMain.handle('daily:save', (_e, day: string, draft: StandupDraft) => {
+    // Edits to an unsaved draft create the entry, like upstream's editable placeholder.
     const current = store.standup(day)
     store.saveStandup(day, { draft, sourceDay: current?.sourceDay ?? null, provider: current?.provider ?? 'user', model: current?.model ?? '', generatedAt: current?.generatedAt ?? 0 })
   })
 
+  const weekCards = (days: string[]) => days.flatMap((d) => store.cardsForDay(d))
+  ipcMain.handle('weekly:get', (_e, day: string) => {
+    const week = weekOf(day)
+    return { week, cards: weekCards(week.days), previous: weekCards(weekOf(shiftDay(day, -7)).days) }
+  })
+  // Upstream opens the newest week with at least 15 h tracked (within a year), else the newest with data.
+  ipcMain.handle('weekly:defaultDay', () => {
+    const categories = settings.get().categories
+    let newestWithData: string | null = null
+    for (let back = 0; back < 52; back++) {
+      const day = shiftDay(todayKey(), -7 * back)
+      const minutes = trackedMinutes(weekCards(weekOf(day).days), categories)
+      if (minutes >= WEEKLY_MIN_TRACKED_MINUTES) return day
+      if (minutes > 0) newestWithData ??= day
+    }
+    return newestWithData ?? todayKey()
+  })
   ipcMain.handle('week:get', (_e, day: string) => {
     const week = weekOf(day)
     const last = week.days[week.days.length - 1]!
@@ -213,6 +240,9 @@ async function main(): Promise<void> {
   })
   ipcMain.handle('goals:set', (_e, day: string, plan: GoalPlan) => {
     store.setGoalPlan(day, plan, settings.get().categories)
+  })
+  ipcMain.handle('clipboard:write', (_e, text: string) => {
+    if (typeof text === 'string') clipboard.writeText(text.slice(0, 100_000))
   })
   ipcMain.handle('timeline:copy', (_e, mode: 'day' | 'week', day: string) => {
     const opts = { today: todayKey() }
@@ -271,7 +301,9 @@ async function main(): Promise<void> {
     if (next.launchAtLogin !== undefined && next.launchAtLogin !== before.launchAtLogin) {
       await platform.setAutostart(next.launchAtLogin)
     }
-    const saved = await settings.save(next)
+    // The window only edits preferences; the app's own bookkeeping is not its to change.
+    const { notified: _n, standupAttempts: _a, onboarded: _o, ...preferences } = next
+    const saved = await settings.save(preferences)
     // Cards follow renamed categories (matched by id after the names were cleaned up).
     const renames = renamedCategories(before.categories, saved.categories)
     for (const { from, to } of renames) store.renameCategory(from, to)
@@ -352,12 +384,11 @@ async function main(): Promise<void> {
   let lastProblem: string | null = null
   const checkNotifications = () => {
     const shown = settings.get().notified
-    const analyzed = store.analyzedBatchCount()
-    if (!shown.firstCards && analyzed > 0) {
+    if (!shown.firstCards && store.hasTimelineCards()) {
       notifier.firstCards()
       void settings.save({ notified: { ...settings.get().notified, firstCards: true } })
     }
-    if (!shown.weeklyUnlock && accessProgress(analyzed).weekly.unlocked) {
+    if (!shown.weeklyUnlock && access().weekly.unlocked) {
       notifier.weeklyUnlocked()
       void settings.save({ notified: { ...settings.get().notified, weeklyUnlock: true } })
     }

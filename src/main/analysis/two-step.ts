@@ -16,7 +16,7 @@ import { normalizeCategory } from './cards'
 import { type Observation, parseSegments } from './observations'
 import { type Category, idleCategory } from '../../shared/categories'
 import type { PromptFrame } from './prompt'
-import { jsonObject } from './json'
+import { jsonObject } from '../../shared/json'
 import * as prompts from './two-step-prompts'
 
 const JSON_ATTEMPTS = 3

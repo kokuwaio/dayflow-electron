@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_CATEGORIES } from './categories'
-import { accessProgress, parseRecap, pickSourceDay, standupText, workflowGrid } from './daily'
+import { accessProgress, distractionRange, parseRecap, pickSourceDay, standupText, standupTitles, workflowGrid } from './daily'
 import type { TimelineCard } from './types'
 
 const at = (h: number, m = 0, s = 0) => new Date(2026, 10, 17, h, m, s).getTime() / 1000
@@ -42,12 +42,28 @@ describe('parseRecap', () => {
     expect(() => parseRecap('{"done":[],"next":null}')).toThrow(/empty/i)
     expect(() => parseRecap('I cannot help')).toThrow()
   })
+
+  it('reads braces inside strings and cuts at the first END_THINKING marker', () => {
+    const reply = 'plan ---END_THINKING--- {"done":["Fixed the {config} parser."],"next":"Mention ---END_THINKING--- in the docs."}'
+    expect(parseRecap(reply)).toEqual({ highlights: ['Fixed the {config} parser.'], next: 'Mention ---END_THINKING--- in the docs.' })
+  })
+})
+
+describe('standupTitles (upstream standupSectionTitles)', () => {
+  it('names the days relative to today, so a stored standup never says a stale "Yesterday"', () => {
+    expect(standupTitles('2026-11-17', '2026-11-16', '2026-11-17')).toEqual({ highlights: 'Highlights from Yesterday', tasks: 'Tasks for Today', blockers: 'Blockers' })
+    expect(standupTitles('2026-11-17', '2026-11-16', '2026-11-19').highlights).toBe('Highlights from Monday')
+    expect(standupTitles('2026-11-17', null, '2026-11-17').highlights).toBe('Recent highlights')
+  })
 })
 
 describe('standupText (upstream copy format)', () => {
   it('lists each section with its items, or "None right now"', () => {
     expect(
-      standupText({ highlightsTitle: 'Yesterday', highlights: ['Shipped the export.'], tasksTitle: 'Today', tasks: [], blockersTitle: 'Blockers', blockersBody: 'Waiting on review' })
+      standupText(
+        { highlightsTitle: 'stored', highlights: ['Shipped the export.', ' '], tasksTitle: 'stored', tasks: [], blockersTitle: 'stored', blockersBody: 'Waiting on review\n' },
+        { highlights: 'Yesterday', tasks: 'Today', blockers: 'Blockers' }
+      )
     ).toBe('Yesterday\n- Shipped the export.\n\nToday\n- None right now\n\nBlockers\n- Waiting on review')
   })
 })
@@ -63,6 +79,12 @@ describe('workflowGrid (upstream DailyWorkflowComputation)', () => {
     expect(grid.totals).toEqual([{ category: 'Work', minutes: 30 }, { category: 'Personal', minutes: 7 }])
   })
 
+  it('shows a row for every category but System, matching names case-insensitively', () => {
+    const grid = workflowGrid([card(at(10, 0), at(10, 30), 'work')], DEFAULT_CATEGORIES)
+    expect(grid.rows.map((r) => r.category)).toEqual(DEFAULT_CATEGORIES.map((c) => c.name))
+    expect(grid.rows.find((r) => r.category === 'Work')!.cells[0]).toBe(1)
+  })
+
   it('shows 9 AM to 9 PM when there are no cards', () => {
     expect(workflowGrid([], DEFAULT_CATEGORIES)).toMatchObject({ startMinute: 9 * 60, slots: 48, totals: [] })
   })
@@ -76,5 +98,12 @@ describe('workflowGrid (upstream DailyWorkflowComputation)', () => {
       DEFAULT_CATEGORIES
     )
     expect(grid.distractions).toEqual([{ start: 11 * 60 + 10, end: 11 * 60 + 20, title: 'X feed, YouTube' }])
+  })
+
+  it('anchors distraction times to their card across midnight and collapses ones outside it (upstream)', () => {
+    // A card from 11:50 PM to 12:30 AM, in clock minutes 1430-1470.
+    expect(distractionRange('12:05 AM', '12:10 AM', 1430, 1470)).toEqual({ start: 1445, end: 1450 })
+    expect(distractionRange('11:55 PM', '12:02 AM', 1430, 1470)).toEqual({ start: 1435, end: 1442 })
+    expect(distractionRange('3:00 PM', '3:05 PM', 1430, 1470)).toEqual({ start: 1430, end: 1431 })
   })
 })

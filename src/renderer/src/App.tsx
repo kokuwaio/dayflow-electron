@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
-import type { AppStatus, Settings } from '@shared/types'
+import type { AppStatus, Settings, Tab } from '@shared/types'
 import { Daily } from './Daily'
 import { Onboarding } from './Onboarding'
 import { SettingsView } from './Settings'
 import { StatusPill } from './StatusPill'
 import { Timeline } from './Timeline'
+import { Weekly } from './Weekly'
 
 const TABS = [
   { id: 'timeline', label: 'Timeline' },
   { id: 'daily', label: 'Daily' },
+  { id: 'weekly', label: 'Weekly' },
   { id: 'settings', label: 'Settings' }
-] as const
+] as const satisfies ReadonlyArray<{ id: Tab; label: string }>
 type View = (typeof TABS)[number]['id']
 
 export function App() {
@@ -64,6 +66,7 @@ export function App() {
       <main>
         {view === 'timeline' && <Timeline />}
         {view === 'daily' && <Daily />}
+        {view === 'weekly' && <Weekly />}
         {view === 'settings' && <SettingsView status={status} />}
       </main>
     </div>

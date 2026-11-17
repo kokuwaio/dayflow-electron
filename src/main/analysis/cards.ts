@@ -1,6 +1,6 @@
 import { formatClock } from '../../shared/day'
 import type { AppSites, Distraction } from '../../shared/types'
-import { jsonArray } from './json'
+import { jsonArray } from '../../shared/json'
 
 // Turns the model's reply into validated timeline cards. Follows upstream's
 // tolerant parser (AgentCLISupport+Parsing.swift) and output validator

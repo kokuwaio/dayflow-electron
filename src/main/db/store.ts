@@ -1,9 +1,8 @@
 import { DatabaseSync } from 'node:sqlite'
 import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from '../../shared/categories'
-import type { GoalPlan } from '../../shared/day-summary'
-import type { StandupEntry } from '../../shared/types'
 import { dayKey, dayRange, formatClock } from '../../shared/day'
-import type { AppSites, CardEdit, Distraction, Rating, TimelineCard } from '../../shared/types'
+import type { GoalPlan } from '../../shared/day-summary'
+import type { AppSites, CardEdit, Distraction, Rating, StandupEntry, TimelineCard } from '../../shared/types'
 import type { Observation } from '../analysis/observations'
 import type { StoredFrame } from '../retention'
 import { MIGRATIONS } from './schema'
@@ -365,12 +364,7 @@ export class Store {
     const row = this.db.prepare('SELECT payload_json AS json FROM daily_standup_entries WHERE standup_day = ?').get(day) as
       | { json: string }
       | undefined
-    if (!row) return null
-    try {
-      return JSON.parse(row.json) as StandupEntry
-    } catch {
-      return null
-    }
+    return row ? parseStandup(row.json) : null
   }
 
   saveStandup(day: string, entry: StandupEntry): void {
@@ -389,12 +383,8 @@ export class Store {
     }>
     const days = new Set<string>()
     for (const r of rows) {
-      try {
-        const day = (JSON.parse(r.json) as StandupEntry).sourceDay
-        if (day) days.add(day)
-      } catch {
-        // skip unreadable rows
-      }
+      const day = parseStandup(r.json)?.sourceDay
+      if (day) days.add(day)
     }
     return days
   }
@@ -402,6 +392,11 @@ export class Store {
   /** Batches that produced cards; each stands for 15 minutes (feature unlocks). */
   analyzedBatchCount(): number {
     return (this.db.prepare("SELECT COUNT(*) AS n FROM analysis_batches WHERE status IN ('completed', 'analyzed')").get() as { n: number }).n
+  }
+
+  /** True once analysis produced a real card (not an error card); upstream's first-cards check. */
+  hasTimelineCards(): boolean {
+    return !!this.db.prepare('SELECT 1 FROM timeline_cards WHERE is_deleted = 0 AND category != ? LIMIT 1').get(SYSTEM_CATEGORY)
   }
 
   /** Minutes covered by the cards that start on a day (upstream's minimum-activity measure). */
@@ -535,6 +530,15 @@ interface CardRow {
   subcategory: string | null
   detailedSummary: string | null
   metadata: string | null
+}
+
+/** A stored standup, or null when the row is unreadable. */
+function parseStandup(json: string): StandupEntry | null {
+  try {
+    return JSON.parse(json) as StandupEntry
+  } catch {
+    return null
+  }
 }
 
 function toCard(r: CardRow): TimelineCard {

@@ -186,7 +186,7 @@ each of the three providers.
 
 - [x] Daily standup tab: activity grid, yesterday's highlights, today's
   priorities, blockers (upstream `Views/UI/DailyView*.swift`).
-- Weekly dashboard: overview, donut, treemap, Sankey, focus heatmap,
+- [x] Weekly dashboard (focus heatmap still open): overview, donut, treemap, Sankey, focus heatmap,
   context switches, app interaction graph, highlights. No AI needed; built
   from `timeline_cards` (upstream `Core/Weekly/`).
 - Chat with your journal: streamed answers, tool calls for timeline and

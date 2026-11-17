@@ -1,8 +1,8 @@
-import type { StandupDraft } from '../shared/daily'
+import type { Feature, FeatureAccess, StandupDraft } from '../shared/daily'
 import type { GoalPlan } from '../shared/day-summary'
 import type { FrameRef } from '../shared/media'
 import type { DayCards, Week } from '../shared/week'
-import type { AppStatus, CardEdit, StandupEntry, CliName, ProviderKind, Rating, Settings, TimelineCard } from '../shared/types'
+import type { AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings, StandupEntry, Tab, TimelineCard } from '../shared/types'
 
 /** The API the preload script exposes to the renderer as window.dayflow. */
 export interface DayflowApi {
@@ -10,15 +10,18 @@ export interface DayflowApi {
   getGoals(day: string): Promise<GoalPlan>
   setGoals(day: string, plan: GoalPlan): Promise<void>
   copyTimeline(mode: 'day' | 'week', day: string): Promise<void>
+  copyText(text: string): Promise<void>
   exportMarkdown(from: string, to: string): Promise<{ ok: boolean; message: string }>
   getFrames(span: { start: number; end: number }): Promise<FrameRef[]>
   completeOnboarding(): Promise<void>
-  getAccess(): Promise<Record<'daily' | 'chat' | 'weekly', { unlocked: boolean; label: string }>>
+  getAccess(): Promise<Record<Feature, FeatureAccess>>
   getStandup(day: string): Promise<StandupEntry | null>
   generateStandup(day: string): Promise<{ ok: true; entry: StandupEntry } | { ok: false; message: string }>
   saveStandup(day: string, draft: StandupDraft): Promise<void>
-  onNavigate(cb: (tab: 'timeline' | 'daily' | 'weekly' | 'chat' | 'settings') => void): () => void
+  onNavigate(cb: (tab: Tab) => void): () => void
   onDailyChanged(cb: () => void): () => void
+  getWeekly(day: string): Promise<{ week: Week; cards: TimelineCard[]; previous: TimelineCard[] }>
+  getWeeklyDefaultDay(): Promise<string>
   getDay(day?: string): Promise<{ day: string; cards: TimelineCard[]; ratings: Rating[] }>
   updateCard(id: number, change: CardEdit): Promise<TimelineCard | undefined>
   deleteCard(id: number): Promise<void>

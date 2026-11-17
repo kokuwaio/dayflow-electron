@@ -30,6 +30,17 @@ function readJson(file: string): Record<string, unknown> {
 const overrideText = (v: unknown) => (typeof v === 'string' ? v.slice(0, 4000) : '')
 
 /** Fills gaps with defaults and clamps values to what the app supports. */
+/** Installs from before these notifications existed already have cards, so they skip the one-time ones. */
+function sanitizeNotified(r: Partial<Settings>): Settings['notified'] {
+  const existingInstall = r.notified === undefined && typeof r.provider === 'string'
+  const days = r.notified?.problemDays && typeof r.notified.problemDays === 'object' ? r.notified.problemDays : {}
+  return {
+    firstCards: existingInstall || r.notified?.firstCards === true,
+    weeklyUnlock: existingInstall || r.notified?.weeklyUnlock === true,
+    problemDays: Object.fromEntries(Object.entries(days).filter((e): e is [string, string] => typeof e[1] === 'string'))
+  }
+}
+
 export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown>): Settings {
   const r = raw as Partial<Settings>
   const models = { ...DEFAULT_SETTINGS.models }
@@ -65,7 +76,11 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
       detailedSummary: overrideText(r.promptOverrides?.detailedSummary)
     },
     showAppIcons: r.showAppIcons === true,
-    notified: { firstCards: r.notified?.firstCards === true, weeklyUnlock: r.notified?.weeklyUnlock === true },
+    notified: sanitizeNotified(r),
+    standupAttempts: {
+      day: typeof r.standupAttempts?.day === 'string' ? r.standupAttempts.day : '',
+      count: Number.isInteger(r.standupAttempts?.count) ? Number(r.standupAttempts?.count) : 0
+    },
     // Existing installs that never saw onboarding count as set up once a provider was chosen.
     onboarded: r.onboarded === true || (r.onboarded === undefined && typeof r.provider === 'string'),
     blockedApps: Array.isArray(r.blockedApps)

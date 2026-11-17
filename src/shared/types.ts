@@ -1,5 +1,6 @@
 import { DEFAULT_BLOCKLIST } from './blocklist'
 import { type Category, DEFAULT_CATEGORIES } from './categories'
+import type { StandupDraft } from './daily'
 
 // Types shared by the main process and the renderer.
 
@@ -17,7 +18,7 @@ export interface AppSites {
 
 /** A saved standup (upstream DailyStandupDraft plus how it was made). */
 export interface StandupEntry {
-  draft: import('./daily').StandupDraft
+  draft: StandupDraft
   /** The day it summarizes. */
   sourceDay: string | null
   provider: string
@@ -90,9 +91,14 @@ export interface Settings {
   showAppIcons: boolean
   /** The first-run setup is done. */
   onboarded: boolean
-  /** One-time notifications already shown. */
-  notified: { firstCards: boolean; weeklyUnlock: boolean }
+  /** One-time notifications already shown, and the day each kind of provider problem was last reported. */
+  notified: { firstCards: boolean; weeklyUnlock: boolean; problemDays: Record<string, string> }
+  /** Automatic standup tries on one day (upstream allows 3 a day, across restarts). */
+  standupAttempts: { day: string; count: number }
 }
+
+/** The window's tabs; notifications and the tray open one of them. */
+export type Tab = 'timeline' | 'daily' | 'weekly' | 'chat' | 'settings'
 
 export interface PromptOverrides {
   title: string
@@ -116,7 +122,8 @@ export const DEFAULT_SETTINGS: Settings = {
   promptOverrides: { title: '', summary: '', detailedSummary: '' },
   showAppIcons: false,
   onboarded: false,
-  notified: { firstCards: false, weeklyUnlock: false }
+  notified: { firstCards: false, weeklyUnlock: false, problemDays: {} },
+  standupAttempts: { day: '', count: 0 }
 }
 
 export const CAPTURE_INTERVALS = [1, 5, 10, 20, 30, 60] as const

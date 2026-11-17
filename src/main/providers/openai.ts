@@ -30,7 +30,8 @@ export function openaiProvider(model: string, apiKey: string | undefined, baseUr
       ]
       const data = await postJson(
         fetchImpl,
-        'OpenAI-compatible API',
+        // A local server's errors name it, so a stopped Ollama reads as such (upstream "local_engine_offline").
+        isLocalUrl(base) ? `Ollama/LM Studio at ${base}` : 'OpenAI-compatible API',
         `${base}/chat/completions`,
         apiKey ? { authorization: `Bearer ${apiKey}` } : {},
         { model, messages, max_completion_tokens: 16000 }
