@@ -120,6 +120,8 @@ export async function sendChatMessage(
     try {
       const answer = await answerWith(provider, deps, conversationId, onEvent)
       const meta = chatMetadata(answer.text)
+      // A finished turn may hold no visible text (e.g. Gemini's thought parts only); try the next provider.
+      if (!meta.text.trim()) throw new Error('The model returned an empty answer.')
       deps.store.addChatMessage(conversationId, { role: 'assistant', content: meta.text, now: nowSeconds() })
       if (meta.memory) await deps.settings.save({ chatMemory: meta.memory })
       deps.suggestions.set(conversationId, remember(deps.suggestions.get(conversationId) ?? [], meta.suggestions))

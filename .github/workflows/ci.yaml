@@ -24,6 +24,7 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: write
       pull-requests: write
     steps:
@@ -32,4 +33,10 @@ jobs:
         run: gh pr merge --squash --delete-branch "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update the release draft
+        # A merge with GITHUB_TOKEN starts no push workflows on main, but a
+        # workflow_dispatch does, so the update appears in the release notes.
+        run: gh workflow run release-drafter.yaml --ref main --repo "$GITHUB_REPOSITORY"
+        env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

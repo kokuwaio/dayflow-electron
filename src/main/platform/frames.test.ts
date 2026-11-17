@@ -9,23 +9,28 @@ const display = (id: number, x: number, y: number, width: number, height: number
 })
 
 describe('frameFileName', () => {
-  it('names frames like the Linux helper: local wall-clock time, UTC offset and the screen index', () => {
-    expect(frameFileName(new Date(2026, 10, 17, 9, 5, 7), 0)).toBe('20261117-090507+0100_s0.jpg')
-    expect(frameFileName(new Date(2026, 6, 2, 23, 59, 59), 2)).toBe('20260702-235959+0200_s2.jpg')
+  it('names frames like the Linux helper: local wall-clock time to the millisecond, UTC offset and the screen index', () => {
+    expect(frameFileName(new Date(2026, 10, 17, 9, 5, 7), 0)).toBe('20261117-090507.000+0100_s0.jpg')
+    expect(frameFileName(new Date(2026, 6, 2, 23, 59, 59), 2)).toBe('20260702-235959.000+0200_s2.jpg')
+  })
+
+  it('keeps frames within the same second apart, as after a capture restart', () => {
+    expect(frameFileName(new Date(2026, 10, 17, 9, 5, 7, 42), 0)).toBe('20261117-090507.042+0100_s0.jpg')
+    expect(frameFileName(new Date(2026, 10, 17, 9, 5, 7, 980), 0)).toBe('20261117-090507.980+0100_s0.jpg')
   })
 
   it('keeps the two 2:30 AM frames of the autumn clock change apart', () => {
     const first = new Date('2026-10-25T00:30:00Z') // 02:30 CEST
     const second = new Date('2026-10-25T01:30:00Z') // 02:30 CET
-    expect(frameFileName(first, 0)).toBe('20261025-023000+0200_s0.jpg')
-    expect(frameFileName(second, 0)).toBe('20261025-023000+0100_s0.jpg')
+    expect(frameFileName(first, 0)).toBe('20261025-023000.000+0200_s0.jpg')
+    expect(frameFileName(second, 0)).toBe('20261025-023000.000+0100_s0.jpg')
   })
 
   it('runs in the test time zone on every OS (vitest.config.ts sets TZ=Europe/Berlin)', () => {
     // Winter is UTC+1, summer UTC+2; a TZ the OS ignored would show the runner's zone instead.
     expect(new Date(2026, 0, 15).getTimezoneOffset()).toBe(-60)
     expect(new Date(2026, 6, 15).getTimezoneOffset()).toBe(-120)
-    expect(frameFileName(new Date(Date.UTC(2026, 6, 15, 7, 0, 0)), 1)).toBe('20260715-090000+0200_s1.jpg')
+    expect(frameFileName(new Date(Date.UTC(2026, 6, 15, 7, 0, 0)), 1)).toBe('20260715-090000.000+0200_s1.jpg')
   })
 })
 

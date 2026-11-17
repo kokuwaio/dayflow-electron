@@ -46,6 +46,13 @@ describe('parseSegments', () => {
     expect(!result.ok && result.issue).toMatch(issue)
   })
 
+  it('drops segments with a missing or unreadable timestamp instead of reading it as 00:00', () => {
+    const missingStart = JSON.stringify({ segments: [{ endTimestamp: '15:00', description: 'Whole recording?' }] })
+    expect(parseSegments(missingStart, recording)).toMatchObject({ ok: false })
+    const garbled = JSON.stringify({ segments: [seg('about ten', '15:00', 'Edited'), seg('00:00', '15:00', 'Edited pipeline.ts')] })
+    expect(parseSegments(garbled, recording)).toEqual({ ok: true, observations: [{ start, end: start + 900, text: 'Edited pipeline.ts' }] })
+  })
+
   it('counts overlapping segments once when checking coverage', () => {
     const seg = (a: string, b: string, d: string) => ({ startTimestamp: a, endTimestamp: b, description: d })
     const reply = JSON.stringify({ segments: [seg('00:00', '06:00', 'Coding'), seg('00:00', '06:00', 'Still coding')] })

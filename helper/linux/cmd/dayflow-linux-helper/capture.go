@@ -43,6 +43,9 @@ const (
 	maxMissedFrames = 6
 	// maxSessionFailures ends the helper after that many unproductive sessions.
 	maxSessionFailures = 3
+	// frameTimeLayout names frames like the Windows and macOS capture
+	// (src/main/platform/frames.ts): local time to the millisecond and the UTC offset.
+	frameTimeLayout = "20060102-150405.000-0700"
 )
 
 // blocked is set while the app reports a blocked window (password manager)
@@ -298,8 +301,9 @@ func runPWSession(conn *dbus.Conn, opts pwOptions, locked *atomic.Bool, interrup
 			}
 			out := frames.ScaleToHeight(rgba, opts.height)
 			now := time.Now()
-			// The UTC offset keeps the two frames of the repeated autumn hour apart.
-			name := filepath.Join(opts.dir, fmt.Sprintf("%s_s%d.jpg", now.Format("20060102-150405-0700"), idx))
+			// Milliseconds keep a restarted capture's first frame apart from the one
+			// before it in the same second, the UTC offset the repeated autumn hour.
+			name := filepath.Join(opts.dir, fmt.Sprintf("%s_s%d.jpg", now.Format(frameTimeLayout), idx))
 			f, err := os.Create(name)
 			if err != nil {
 				return err

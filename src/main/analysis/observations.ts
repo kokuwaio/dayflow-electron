@@ -24,10 +24,14 @@ const MIN_COVERAGE = 0.8
 /** Segments may run this far outside the recording before they are dropped. */
 const SLACK_SEC = 30
 
-function offsetSeconds(value: unknown): number {
-  const parts = String(value ?? '').trim().split(':').map(Number)
-  if (parts.length < 2 || parts.length > 3 || parts.some((n) => !Number.isFinite(n))) return 0
-  return parts.reduce((total, n) => total * 60 + n, 0)
+/**
+ * "MM:SS" or "HH:MM:SS" in seconds; null when missing or unreadable. Upstream
+ * reads those as 0, which made up a start at the beginning of the recording.
+ */
+function offsetSeconds(value: unknown): number | null {
+  const parts = String(value ?? '').trim().split(':')
+  if (parts.length < 2 || parts.length > 3 || parts.some((p) => !/^\d+$/.test(p.trim()))) return null
+  return parts.map(Number).reduce((total, n) => total * 60 + n, 0)
 }
 
 export function parseSegments(reply: string, recording: Recording): SegmentResult {
@@ -39,7 +43,7 @@ export function parseSegments(reply: string, recording: Recording): SegmentResul
     const from = offsetSeconds(s.startTimestamp ?? s.start)
     const to = offsetSeconds(s.endTimestamp ?? s.end)
     const text = typeof s.description === 'string' ? s.description.trim() : ''
-    if (!text || from < -SLACK_SEC || to > duration + SLACK_SEC) continue
+    if (!text || from === null || to === null || from < -SLACK_SEC || to > duration + SLACK_SEC) continue
     const start = Math.min(Math.max(from, 0), duration)
     const end = Math.min(Math.max(to, 0), duration)
     observations.push({ start: recording.start + start, end: recording.start + Math.max(end, start + 1), text })
