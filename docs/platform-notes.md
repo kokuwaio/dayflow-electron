@@ -52,6 +52,7 @@ opt-in (`flatpak override --user --talk-name=org.kde.KWin <app-id>`).
 | --- | --- | --- | --- | --- |
 | GStreamer, 10 s interval | Stopped after 30 min: on lock a stream vanished and `pipewiresrc` failed with "target not found" | `gst-launch` ~19 CPU-minutes in 20 minutes, about one core | 96 MB | 154 frames, 420–500 KB each |
 | Native PipeWire, 10 s interval | 15 min including lock, 2 min locked, unlock | Helper 4 CPU-seconds in 10 min (< 1%); KWin and PipeWire CPU unchanged | Helper 145–160 MB while capturing, 42 MB while paused; KWin +85 MB while streams are open | 73 frames, 144 KB average |
+| Native PipeWire, 10 s interval | 60 min unattended, normal work, no dialog and no session restart | Helper 25 CPU-seconds per hour (0.7%); KWin and PipeWire unchanged | Helper flat at 157 MB from minute 10 to 60 (no leak) | 366 frames, 145 KB average, 53 MB per hour; 56 screen switches, all followed |
 
 What happens on lock, as seen twice: capture pauses right away; about 70 s
 later Plasma switches the monitors off, the streams fail ("no more input
@@ -119,8 +120,6 @@ every call and has no restore token, so it cannot capture periodically.
 
 ## Still open
 
-- 1 hour of unattended capture with the native PipeWire client (the longest
-  run so far is 15 minutes). Watch the helper's memory over time.
 - Frame size: ~144 KB per JPEG from the native client, about 52 MB per hour at
   10 s. Store video segments like upstream, or keep JPEGs.
 - Electron itself inside Flatpak (`org.electronjs.Electron2.BaseApp`),

@@ -85,7 +85,8 @@ Prove the risky parts before building on them. Throwaway code is fine.
 - [x] Rejected: KWin `ScreenShot2` (refused inside Flatpak), Screenshot portal
       (writes every grab to `~/Pictures`), `desktopCapturer` (picker on every
       call).
-- [ ] 1 hour of unattended capture in the Flatpak: CPU, memory, no leaks.
+- [x] 1 hour of unattended capture in the Flatpak: 0.7% CPU, memory flat at
+      157 MB, 53 MB of frames per hour.
 - [ ] Sleep and resume.
 
 **Done when:** 1 hour of unattended capture in the Flatpak on KDE Wayland
