@@ -6,9 +6,10 @@ every few seconds, sends 15-minute batches to the AI provider you choose, and
 turns them into a timeline of what you did. Nothing leaves your computer except
 what goes to that provider.
 
-Status: Linux / Wayland, packaged as a Flatpak. The timeline (M1, M2), the
-Daily and Weekly tabs and notifications (M3) work; chat, agent access and
-release packaging are next. "dayflow-electron" is a working name.
+Status: Linux / Wayland, packaged as a Flatpak, in daily use. The timeline,
+Daily, Weekly, chat, review and day goals, the `dayflow-electron` CLI and MCP
+server for AI tools, and releases with auto-updates work; the roadmap lists
+what is open. It is not affiliated with upstream Dayflow.
 
 Windows (NSIS installer) and macOS (dmg) builds come from CI with capture,
 window detection and autostart implemented, but are not yet tested on real
@@ -76,9 +77,10 @@ pauses while the screen is locked.
 
 | Path | What |
 | --- | --- |
-| `src/main/` | Electron main process: capture, analysis, providers, SQLite store, Daily standup, notifications, platform interface (Linux helper, Windows and macOS through Electron) |
-| `src/renderer/` | React UI: Timeline, Daily, Weekly, Settings, onboarding |
-| `src/shared/` | Pure logic used by both: 4 AM days, categories, Daily and Weekly math, export |
+| `src/main/` | Electron main process: capture, analysis, providers, SQLite store, Daily standup, chat, agent access, updates, notifications, platform interface (Linux helper, Windows and macOS through Electron) |
+| `src/renderer/` | React UI: Timeline, Daily, Weekly, Chat, Settings, onboarding; Modern and Original themes |
+| `src/shared/` | Pure logic used by both: 4 AM days, categories, Daily and Weekly math, review, goals, export |
+| `src/cli/` | The `dayflow-electron` CLI and MCP server |
 | `helper/linux/` | Go helper for Linux desktop access: ScreenCast portal + PipeWire, lock/sleep/idle, focused window, autostart |
 | `packaging/` | Flatpak manifest, desktop file and metainfo (`flatpak/`) |
 
