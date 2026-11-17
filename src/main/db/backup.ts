@@ -54,12 +54,16 @@ function closeQuietly(store: Store | null): void {
   }
 }
 
-/** Opens the database; if it is damaged, keeps it aside as .corrupt-<timestamp> and restores the newest backup. */
-export function openWithRecovery(path: string, backupDir: string): { store: Store; restoredFrom: string | null } {
+/**
+ * Opens the database; if it is damaged, keeps it aside as .corrupt-<timestamp>
+ * and restores the newest backup. `damaged` reports a damaged database that
+ * stays in use because there is no backup.
+ */
+export function openWithRecovery(path: string, backupDir: string): { store: Store; restoredFrom: string | null; damaged: boolean } {
   let opened: Store | null = null
   try {
     opened = Store.open(path)
-    if (opened.isHealthy()) return { store: opened, restoredFrom: null }
+    if (opened.isHealthy()) return { store: opened, restoredFrom: null, damaged: false }
   } catch (err) {
     // Only a damaged file is replaced; a busy database or any other startup
     // error must not cost the live database and its recent changes.
@@ -71,10 +75,10 @@ export function openWithRecovery(path: string, backupDir: string): { store: Stor
   // Closed before the file is moved: Windows can't rename an open database.
   closeQuietly(opened)
   const newest = listBackups(backupDir)[0]
-  if (!newest) return { store: Store.open(path), restoredFrom: null }
+  if (!newest) return { store: Store.open(path), restoredFrom: null, damaged: true }
   const aside = `${path}.corrupt-${stamp(new Date())}`
   if (existsSync(path)) renameSync(path, aside)
   for (const suffix of ['-wal', '-shm']) rmSync(`${path}${suffix}`, { force: true })
   copyFileSync(newest, path)
-  return { store: Store.open(path), restoredFrom: newest }
+  return { store: Store.open(path), restoredFrom: newest, damaged: false }
 }

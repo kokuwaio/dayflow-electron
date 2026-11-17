@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -40,10 +40,26 @@ describe('database backups (upstream StorageManager+Maintenance)', () => {
     expect(readdirSync(dir).some((f) => f.startsWith('dayflow.sqlite.corrupt-'))).toBe(true)
   })
 
+  it('says so when a damaged database has no backup to restore', () => {
+    const path = join(dir, 'dayflow.sqlite')
+    const store = Store.open(path)
+    for (let i = 0; i < 2000; i++) store.insertScreenshot({ capturedAt: i, filePath: `/frames/${i}.jpg`, fileSize: 1, idleSeconds: null })
+    store.close()
+    // Scribble over pages in the middle: the header still opens, the integrity check fails.
+    const bytes = readFileSync(path)
+    bytes.fill(0xab, 8192, 8192 + 4096 * 4)
+    writeFileSync(path, bytes)
+
+    const result = openWithRecovery(path, backups)
+    keep(result.store)
+    expect(result).toMatchObject({ restoredFrom: null, damaged: true })
+  })
+
   it('opens a healthy database as it is', () => {
-    const { store, restoredFrom } = openWithRecovery(join(dir, 'dayflow.sqlite'), backups)
+    const { store, restoredFrom, damaged } = openWithRecovery(join(dir, 'dayflow.sqlite'), backups)
     keep(store)
     expect(restoredFrom).toBeNull()
+    expect(damaged).toBe(false)
   })
 
   it('passes other open errors on without touching the files or the backups', async () => {

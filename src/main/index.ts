@@ -108,9 +108,10 @@ async function main(): Promise<void> {
   nativeTheme.themeSource = settings.get().theme
   uiStyle = settings.get().uiStyle
   const backupDir = join(dataDir, 'backups')
-  const { store, restoredFrom } = openWithRecovery(join(dataDir, 'dayflow.sqlite'), backupDir)
+  const { store, restoredFrom, damaged } = openWithRecovery(join(dataDir, 'dayflow.sqlite'), backupDir)
   log(`dayflow-electron ${app.getVersion()}`)
   if (restoredFrom) log(`the database was damaged; restored ${restoredFrom}`)
+  if (damaged) log('warning: the database is damaged and there is no backup to restore; some data may be missing')
   // Upstream's maintenance: a backup a day (the first after an hour, or now when there is none) and a WAL checkpoint every 5 minutes.
   const backup = () => void backupDatabase(store, backupDir).catch((err) => log(`backup failed: ${String(err)}`))
   setTimeout(() => {

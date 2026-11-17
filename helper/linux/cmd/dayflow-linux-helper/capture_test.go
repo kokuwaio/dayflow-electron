@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -23,5 +25,25 @@ func TestFrameTimeLayout(t *testing.T) {
 		if got := c.at.Format(frameTimeLayout); got != c.want {
 			t.Errorf("Format(%v) = %q, want %q", c.at, got, c.want)
 		}
+	}
+}
+
+func TestCreateFrameNeverReplacesAFile(t *testing.T) {
+	dir := t.TempDir()
+	at := time.Date(2026, 11, 17, 9, 5, 7, 42_000_000, time.UTC)
+	taken := filepath.Join(dir, "20261117-090507.042+0000_s0.jpg")
+	if err := os.WriteFile(taken, []byte("earlier frame"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	f, name, err := createFrame(dir, at, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = f.Close()
+	if want := filepath.Join(dir, "20261117-090507.043+0000_s0.jpg"); name != want {
+		t.Errorf("name = %q, want %q", name, want)
+	}
+	if b, _ := os.ReadFile(taken); string(b) != "earlier frame" {
+		t.Errorf("the earlier frame was replaced: %q", b)
 	}
 }

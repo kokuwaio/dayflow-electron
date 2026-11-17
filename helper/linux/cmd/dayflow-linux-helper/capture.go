@@ -14,6 +14,7 @@ import (
 	"image"
 	"image/jpeg"
 	"io"
+	"io/fs"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -301,10 +302,7 @@ func runPWSession(conn *dbus.Conn, opts pwOptions, locked *atomic.Bool, interrup
 			}
 			out := frames.ScaleToHeight(rgba, opts.height)
 			now := time.Now()
-			// Milliseconds keep a restarted capture's first frame apart from the one
-			// before it in the same second, the UTC offset the repeated autumn hour.
-			name := filepath.Join(opts.dir, fmt.Sprintf("%s_s%d.jpg", now.Format(frameTimeLayout), idx))
-			f, err := os.Create(name)
+			f, name, err := createFrame(opts.dir, now, idx)
 			if err != nil {
 				return err
 			}
@@ -335,4 +333,25 @@ func defaultDataPath(name string) string {
 		return filepath.Join(d, name)
 	}
 	return name
+}
+
+// createFrame creates a new frame file named after its capture time. It never
+// replaces a file: a taken name (two frames in one millisecond) moves on to
+// the next millisecond. Milliseconds keep a restarted capture's first frame
+// apart from the one before it, the UTC offset the repeated autumn hour.
+func createFrame(dir string, at time.Time, screen int) (*os.File, string, error) {
+	const attempts = 5
+	var err error
+	for i := range attempts {
+		name := filepath.Join(dir, fmt.Sprintf("%s_s%d.jpg", at.Add(time.Duration(i)*time.Millisecond).Format(frameTimeLayout), screen))
+		var f *os.File
+		f, err = os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+		if err == nil {
+			return f, name, nil
+		}
+		if !errors.Is(err, fs.ErrExist) {
+			return nil, "", err
+		}
+	}
+	return nil, "", err
 }

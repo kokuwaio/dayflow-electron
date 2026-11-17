@@ -14,7 +14,8 @@ function fakeDeps() {
     fail: null as string | null,
     empty: false,
     requests: [] as Array<{ width: number; height: number }>,
-    written: [] as Array<{ path: string; bytes: number }>
+    written: [] as Array<{ path: string; bytes: number }>,
+    taken: new Set<string>()
   }
   const displays = [
     { id: 1, bounds: { x: 0, y: 0, width: 1440, height: 900 }, size: { width: 1440, height: 900 }, scaleFactor: 2 },
@@ -33,6 +34,7 @@ function fakeDeps() {
       }
     },
     async writeFile(path, data) {
+      if (state.taken.has(path)) throw Object.assign(new Error('EEXIST: file already exists'), { code: 'EEXIST' })
       state.written.push({ path, bytes: data.length })
     },
     checkAccess: () => state.access
@@ -68,6 +70,17 @@ describe('startElectronCapture', () => {
     await vi.advanceTimersByTimeAsync(10_000)
     expect(events.frames[1]).toEqual({ filePath: join(DIR, '20261117-090010.000+0100_s0.jpg'), capturedAt: T0 / 1000 + 10, bytes: 175 })
     expect(state.requests[1]).toEqual({ width: 1152, height: 720 })
+    handle.stop()
+  })
+
+  it('never overwrites a frame: a taken name moves on to the next millisecond', async () => {
+    const { deps, state } = fakeDeps()
+    const { events, handlers } = recorder()
+    state.taken.add(join(DIR, '20261117-090000.000+0100_s1.jpg'))
+    const handle = startElectronCapture({ dir: DIR, intervalSec: 10, height: 720 }, handlers, deps)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(events.frames.map((f) => f.filePath)).toEqual([join(DIR, '20261117-090000.001+0100_s1.jpg')])
+    expect(events.failed).toEqual([])
     handle.stop()
   })
 

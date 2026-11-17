@@ -23,7 +23,7 @@ export interface CaptureDeps {
       Array<{ display_id: string; thumbnail: { isEmpty(): boolean; toJPEG(quality: number): Buffer } }>
     >
   }
-  /** Writes a frame; defaults to the file system. */
+  /** Writes a new frame, failing with code EEXIST when the file exists; defaults to the file system. */
   writeFile?(path: string, data: Buffer): Promise<void>
   /** Why capture may not run (e.g. a missing macOS permission), or null. Checked before each frame. */
   checkAccess?(): string | null
@@ -31,8 +31,13 @@ export interface CaptureDeps {
 
 async function writeFrame(path: string, data: Buffer): Promise<void> {
   await mkdir(dirname(path), { recursive: true })
-  await writeFile(path, data)
+  // 'wx': never replace an existing frame.
+  await writeFile(path, data, { flag: 'wx' })
 }
+
+/** A frame whose name is taken (two captures in one millisecond) moves on to the next millisecond. */
+const NAME_ATTEMPTS = 5
+const isTaken = (err: unknown) => (err as { code?: unknown } | null)?.code === 'EEXIST'
 
 const seconds = (d: Date) => Math.floor(d.getTime() / 1000)
 
@@ -70,8 +75,16 @@ export function startElectronCapture(options: CaptureOptions, handlers: CaptureH
       if (!source) throw new Error(`no capture source for display ${display.id}`)
       if (source.thumbnail.isEmpty()) throw new Error('the screenshot was empty')
       const jpeg = source.thumbnail.toJPEG(JPEG_QUALITY)
-      const filePath = join(options.dir, frameFileName(at, displays.indexOf(display)))
-      await write(filePath, jpeg)
+      let filePath = ''
+      for (let attempt = 0; ; attempt++) {
+        filePath = join(options.dir, frameFileName(new Date(at.getTime() + attempt), displays.indexOf(display)))
+        try {
+          await write(filePath, jpeg)
+          break
+        } catch (err) {
+          if (!isTaken(err) || attempt + 1 >= NAME_ATTEMPTS) throw err
+        }
+      }
       failures = 0
       handlers.frame({ filePath, capturedAt: seconds(at), bytes: jpeg.length })
     } catch (err) {
