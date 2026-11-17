@@ -1,3 +1,4 @@
+import { join, sep } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Store } from './store'
 
@@ -25,15 +26,19 @@ describe('Store: screenshots and batches', () => {
   })
 
   it('points screenshots at the recordings folder after the data folder moved', () => {
-    const moved = store.insertScreenshot({ capturedAt: 100, filePath: '/old/app/recordings/a.jpg', fileSize: 1, idleSeconds: null })
-    const current = store.insertScreenshot({ capturedAt: 110, filePath: '/new/app/recordings/b.jpg', fileSize: 1, idleSeconds: null })
+    // Paths as the OS writes them: /new/app/recordings on Linux and macOS, \new\app\recordings on Windows.
+    const oldDir = join(sep, 'old', 'app', 'recordings')
+    const newDir = join(sep, 'new', 'app', 'recordings')
+    const moved = store.insertScreenshot({ capturedAt: 100, filePath: join(oldDir, 'a.jpg'), fileSize: 1, idleSeconds: null })
+    const current = store.insertScreenshot({ capturedAt: 110, filePath: join(newDir, 'b.jpg'), fileSize: 1, idleSeconds: null })
     const blocked = store.insertScreenshot({ capturedAt: 120, filePath: '', fileSize: 0, idleSeconds: null, blocked: true })
 
-    expect(store.relocateScreenshots('/new/app/recordings')).toBe(1)
+    expect(store.relocateScreenshots(newDir)).toBe(1)
 
     const batchId = store.createBatch({ start: 100, end: 120, shotIds: [moved, current, blocked] })
-    expect(store.batchScreenshots(batchId).map((s) => s.filePath)).toEqual(['/new/app/recordings/a.jpg', '/new/app/recordings/b.jpg', ''])
-    expect(store.relocateScreenshots('/new/app/recordings')).toBe(0)
+    expect(store.batchScreenshots(batchId).map((s) => s.filePath)).toEqual([join(newDir, 'a.jpg'), join(newDir, 'b.jpg'), ''])
+    expect(store.relocateScreenshots(newDir)).toBe(0)
+    expect(store.relocateScreenshots(newDir + sep)).toBe(0)
   })
 
   it('queues failed batches again with fresh attempts', () => {

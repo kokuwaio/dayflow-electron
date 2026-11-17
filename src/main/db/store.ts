@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { basename } from 'node:path'
+import { basename, join, sep } from 'node:path'
 import { DatabaseSync, backup } from 'node:sqlite'
 import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from '../../shared/categories'
 import { dayKey, dayRange, formatClock } from '../../shared/day'
@@ -59,18 +59,24 @@ export class Store {
 
   static open(path: string): Store {
     const db = new DatabaseSync(path)
-    db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;')
-    const version = Number((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version)
-    for (let v = version; v < MIGRATIONS.length; v++) {
-      db.exec('BEGIN')
-      try {
-        db.exec(MIGRATIONS[v]!)
-        db.exec(`PRAGMA user_version = ${v + 1}`)
-        db.exec('COMMIT')
-      } catch (err) {
-        db.exec('ROLLBACK')
-        throw err
+    try {
+      db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;')
+      const version = Number((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version)
+      for (let v = version; v < MIGRATIONS.length; v++) {
+        db.exec('BEGIN')
+        try {
+          db.exec(MIGRATIONS[v]!)
+          db.exec(`PRAGMA user_version = ${v + 1}`)
+          db.exec('COMMIT')
+        } catch (err) {
+          db.exec('ROLLBACK')
+          throw err
+        }
       }
+    } catch (err) {
+      // Release the file: Windows cannot move a damaged database aside while it is open.
+      db.close()
+      throw err
     }
     return new Store(db)
   }
@@ -114,7 +120,8 @@ export class Store {
    * many rows changed.
    */
   relocateScreenshots(recordingsDir: string): number {
-    const prefix = recordingsDir.replace(/\/+$/, '') + '/'
+    // With the OS separator, so Windows paths (C:\...\recordings\x.jpg) match too.
+    const prefix = join(recordingsDir, sep)
     const rows = this.db
       .prepare("SELECT id, file_path AS filePath FROM screenshots WHERE file_path != '' AND substr(file_path, 1, ?) != ?")
       .all(prefix.length, prefix) as Array<{ id: number; filePath: string }>
