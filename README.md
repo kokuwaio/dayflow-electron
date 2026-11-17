@@ -48,34 +48,11 @@ On first start KDE (or GNOME) asks once which screens to share: choose all of
 them and allow restoring. The app records only the screen under the mouse and
 pauses while the screen is locked.
 
-## Local models (Ollama, LM Studio)
+## Using the app
 
-Choose **OpenAI-compatible** in Settings, set the base URL to
-`http://localhost:11434/v1` (Ollama) and a vision model such as
-`qwen3-vl:8b`, and leave the API key empty. Servers on localhost always use
-the two-step path: one small request per screenshot, then short text-only
-requests for the card, which small models handle far better than one large
-request. Set the recording resolution to 720p to keep each request small.
-
-## Blocked apps
-
-While a password manager (KeePassXC, KeePass, 1Password, Bitwarden, the
-Passbolt web app) or any app you add in Settings is the focused window,
-nothing is saved and the time shows as "Private". This needs to know the
-focused window, which on KDE comes from KWin. The Flatpak does not ask for
-that permission by default; grant it once, then restart the app:
-
-```sh
-flatpak override --user --talk-name=org.kde.KWin io.github.monotek.DayflowElectron
-```
-
-Until the first window report arrives at startup, nothing is saved. Only the
-focused window is known: a password manager open in the background on the
-recorded screen is still captured. Browser extension popups do not change the
-window title and cannot be detected. Blocked stretches at the start or end of
-a 15-minute batch show as "Private"; shorter blocked moments in the middle are
-folded into the surrounding card, whose text comes only from unblocked
-frames.
+[docs/usage.md](docs/usage.md) covers the first start, choosing an AI provider,
+running a local model with Ollama or LM Studio, blocked apps for password
+managers, pausing, storage and troubleshooting.
 
 ## Layout
 

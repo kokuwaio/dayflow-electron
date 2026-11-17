@@ -1,0 +1,179 @@
+# Using dayflow-electron
+
+dayflow-electron takes a screenshot of the screen under your mouse every few
+seconds, sends 15-minute batches to an AI model you choose, and turns them
+into a timeline of what you did. This page covers setup and daily use on
+Linux. See [platform-notes.md](platform-notes.md) for what was tested on which
+desktop.
+
+## Install
+
+The app ships as a Flatpak. Until it is published, build and install it from
+the repository (see the [README](../README.md#flatpak)):
+
+```sh
+npm install
+npm run flatpak
+flatpak run io.github.monotek.DayflowElectron
+```
+
+The app starts with a window and a tray icon. Closing the window keeps it
+recording; quit from the tray.
+
+## First start: share your screens
+
+On the first start your desktop asks which screens the app may record. Pick
+**all screens** and allow **restoring the permission**, so the question does
+not come back. The app keeps only the screen under the mouse and pauses while
+the screen is locked or the computer sleeps. While it records, KDE shows its
+"screen is being shared" icon in the tray.
+
+## Choose an AI model
+
+Open **Settings → AI provider**. Your screenshots go only to the provider you
+choose here. Each one needs a model, and the cloud providers need an API key,
+which is stored in your keyring (KWallet or Secret Service).
+
+| Provider | What to enter | Notes |
+| --- | --- | --- |
+| Anthropic | API key from console.anthropic.com; model, e.g. `claude-opus-5-5` | One request per 15 minutes with up to 15 screenshots |
+| Gemini | API key from aistudio.google.com; model, e.g. `gemini-4-hydrogen` | Same request shape as Anthropic |
+| OpenAI-compatible | Base URL, model, API key if the server needs one | OpenAI, OpenRouter, or a local server such as Ollama or LM Studio |
+
+Click **Test connection** after saving. **Fallback provider** takes over a
+batch when the main provider fails (offline, rate limit, bad key).
+**Card language** sets the language of titles and summaries (empty means
+English).
+
+The first cards appear about 15 minutes after recording starts. A batch that
+fails shows a "Processing failed" card; it is retried after the next batch
+succeeds.
+
+## Run a local model with Ollama
+
+A local model keeps everything on your computer and needs no API key. Ollama
+serves an OpenAI-compatible API, so the app talks to it like any other
+OpenAI-compatible server. Servers on `localhost` or your local network are
+analyzed in small steps: one short request per screenshot, then a few
+text-only requests for the card. Small models handle that far better than one
+large request.
+
+You need a **vision model**. `qwen3-vl:8b` (about 6 GB) is a good start;
+`qwen3-vl:30b-a3b` (about 20 GB, but only 3B active parameters) gives better
+cards if your machine has the memory.
+
+### 1. Install and start Ollama
+
+On Arch or Manjaro, pick the backend for your GPU: `ollama-vulkan` works on
+most AMD and Intel GPUs, `ollama-rocm` on AMD GPUs that ROCm supports,
+`ollama-cuda` on NVIDIA. Other distributions: see ollama.com.
+
+Raise Ollama's context length before starting it. Its OpenAI-compatible API
+cannot change the context per request, and a default context that is too
+small silently cuts off the start of the prompt.
+
+```sh
+sudo pacman -S ollama-vulkan
+sudo mkdir -p /etc/systemd/system/ollama.service.d
+printf '[Service]\nEnvironment="OLLAMA_CONTEXT_LENGTH=32768"\n' | sudo tee /etc/systemd/system/ollama.service.d/context.conf
+sudo systemctl daemon-reload
+sudo systemctl enable --now ollama
+ollama pull qwen3-vl:8b
+```
+
+Check that the model runs on the GPU: `ollama ps` should show `GPU` under
+PROCESSOR after the first request.
+
+```sh
+ollama run qwen3-vl:8b "Say OK"
+ollama ps
+```
+
+### 2. Point the app at Ollama
+
+In **Settings**:
+
+1. AI provider: **OpenAI-compatible**.
+2. Model: `qwen3-vl:8b`.
+3. Base URL: `http://localhost:11434/v1`.
+4. Leave the API key empty and click **Test connection**.
+5. Recording → Resolution: **720p**. Smaller screenshots make every request
+   faster on a local model.
+
+Each 15-minute batch then takes the local model a few minutes. To compare
+backends or models, `ollama run <model> --verbose "<prompt>" <image.jpg>`
+prints the prompt and generation speed.
+
+### LM Studio
+
+Start LM Studio's local server (default `http://localhost:1234/v1`), load a
+vision model, and enter that URL and the model name the same way. No API key
+is needed.
+
+## Claude Code, Codex and other agent CLIs (planned)
+
+Not available yet. The plan (ROADMAP.md, M2) is to let the app use the
+`claude` and `codex` command-line tools you already have, so analysis runs on
+your subscription instead of an API key. Because the app runs in the Flatpak
+sandbox and those tools live on the host, the app would start them through
+`flatpak-spawn --host`, which needs a one-time opt-in:
+
+```sh
+flatpak override --user --talk-name=org.freedesktop.Flatpak io.github.monotek.DayflowElectron
+```
+
+That permission lets the app run any program on the host, which is why the
+app does not request it by default. Agent access in the other direction, so
+that Claude Code or another agent can read your timeline through a CLI or an
+MCP server, is planned for M4.
+
+## Keep password managers out
+
+While one of the apps under **Settings → Blocked apps** is the focused window,
+nothing is saved and the time shows as "Private" in the timeline. The list
+starts with KeePassXC, KeePass, 1Password, Bitwarden and the Passbolt web app.
+Add more, one rule per line: an app ID such as `org.keepassxc.KeePassXC`, or
+`title:` followed by text from the window title (for example
+`title:Online Banking`).
+
+This needs to know the focused window, which on KDE Plasma comes from KWin.
+The Flatpak does not have that permission by default. Grant it once, then
+restart the app:
+
+```sh
+flatpak override --user --talk-name=org.kde.KWin io.github.monotek.DayflowElectron
+```
+
+Settings then shows "Window detection works". Limits:
+
+- Only the focused window is known. A password manager open in the
+  background on the recorded screen is still captured.
+- Popups of browser extensions do not change the window title and cannot be
+  detected.
+- Window detection works on KDE Plasma only so far.
+
+For the strongest guarantee, pause recording from the tray before opening a
+vault.
+
+## Pause, privacy and storage
+
+- **Pause** from the tray or the status pill in the window: 15, 30 or 60
+  minutes, or until you resume.
+- Recording also pauses while the screen is locked or the computer sleeps.
+- Screenshots, the database and settings live in
+  `~/.var/app/io.github.monotek.DayflowElectron/config/dayflow-electron/`.
+  **Open recordings folder** in the tray shows the screenshots.
+- **Settings → Storage** caps the space used by screenshots (default 10 GB);
+  the oldest are deleted first.
+- No telemetry. Nothing leaves your computer except the screenshots and text
+  sent to the AI provider you chose.
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| No cards after 20 minutes | Settings → AI provider: a key or a reachable local server; **Test connection**. The banner at the top of the window shows the last analysis error. |
+| "Processing failed" cards with a local model | Run `ollama ps` while a batch runs (GPU or CPU?), check the context length setting above, try 720p. |
+| The share dialog comes back on every start | Allow restoring the permission in the dialog. |
+| "Window detection needs KWin access" | Run the `flatpak override` command above, then restart the app. |
+| Capture failed, retrying | The screen-sharing session ended (for example after a monitor change); the app retries after 1, 2, 5 and then every 10 minutes. |
