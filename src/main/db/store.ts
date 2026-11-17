@@ -1,5 +1,6 @@
 import { DatabaseSync } from 'node:sqlite'
-import { SYSTEM_CATEGORY } from '../../shared/categories'
+import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from '../../shared/categories'
+import type { GoalPlan } from '../../shared/day-summary'
 import { dayKey, dayRange, formatClock } from '../../shared/day'
 import type { AppSites, CardEdit, Distraction, Rating, TimelineCard } from '../../shared/types'
 import type { Observation } from '../analysis/observations'
@@ -285,6 +286,60 @@ export class Store {
   reprocessDay(day: string): number {
     const { start, end } = dayRange(day)
     return this.resetBatches('batch_start_ts >= ? AND batch_start_ts < ?', start, end).length
+  }
+
+  /**
+   * The goal plan for a day: its own, or the newest earlier one carried
+   * forward (then never "skipped"). Categories are matched by id first, so
+   * renames carry over. Null when no plan was ever set.
+   */
+  goalPlan(day: string, categories: Category[]): GoalPlan | null {
+    const row = this.db
+      .prepare(
+        `SELECT day, focus_target_minutes AS focus, distraction_limit_minutes AS distraction, is_skipped AS skipped
+         FROM day_goals WHERE day <= ? ORDER BY day DESC LIMIT 1`
+      )
+      .get(day) as { day: string; focus: number; distraction: number; skipped: number } | undefined
+    if (!row) return null
+    const names = (kind: 'focus' | 'distraction') =>
+      (
+        this.db
+          .prepare('SELECT category_id AS id, category_name AS name FROM day_goal_categories WHERE day = ? AND kind = ? ORDER BY sort_order')
+          .all(row.day, kind) as Array<{ id: string; name: string }>
+      ).map((c) => categories.find((x) => x.id === c.id)?.name ?? c.name)
+    return {
+      focusTargetMinutes: row.focus,
+      distractionLimitMinutes: row.distraction,
+      focusCategories: names('focus'),
+      distractionCategories: names('distraction'),
+      skipped: row.day === day && row.skipped === 1
+    }
+  }
+
+  setGoalPlan(day: string, plan: GoalPlan, categories: Category[]): void {
+    const now = Math.floor(Date.now() / 1000)
+    this.tx(() => {
+      this.db
+        .prepare(
+          `INSERT INTO day_goals (day, focus_target_minutes, distraction_limit_minutes, is_skipped, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(day) DO UPDATE SET focus_target_minutes = excluded.focus_target_minutes,
+             distraction_limit_minutes = excluded.distraction_limit_minutes, is_skipped = excluded.is_skipped,
+             updated_at = excluded.updated_at`
+        )
+        .run(day, plan.focusTargetMinutes, plan.distractionLimitMinutes, plan.skipped ? 1 : 0, now, now)
+      this.db.prepare('DELETE FROM day_goal_categories WHERE day = ?').run(day)
+      const insert = this.db.prepare(
+        'INSERT OR IGNORE INTO day_goal_categories (day, kind, category_id, category_name, category_color_hex, sort_order) VALUES (?, ?, ?, ?, ?, ?)'
+      )
+      for (const kind of ['focus', 'distraction'] as const) {
+        const list = kind === 'focus' ? plan.focusCategories : plan.distractionCategories
+        list.forEach((name, i) => {
+          const c = categories.find((x) => x.name === name)
+          insert.run(day, kind, c?.id ?? name, name, c?.color ?? FALLBACK_COLOR, i)
+        })
+      }
+    })
   }
 
   storedFrames(): StoredFrame[] {

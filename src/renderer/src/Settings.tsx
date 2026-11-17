@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CATEGORY_PRESETS, type Category, presetCategories } from '@shared/categories'
+import { todayKey } from '@shared/day'
 import { cliOf, needsApiKey } from '@shared/providers'
 import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings } from '@shared/types'
 
@@ -184,6 +185,7 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
         </label>
         {status && <p className="note">Screenshots use {gb(status.framesBytes)} GB. The oldest are deleted first.</p>}
         <button onClick={() => void window.dayflow.openRecordings()}>Open recordings folder</button>
+        <ExportRange />
       </section>
 
       <section>
@@ -312,5 +314,36 @@ function CategoryEditor({ categories, save }: { categories: Category[]; save: (n
         </select>
       </div>
     </section>
+  )
+}
+
+/** Export a date range as Markdown (upstream Settings > Data). */
+function ExportRange() {
+  const today = todayKey()
+  const [from, setFrom] = useState(today)
+  const [to, setTo] = useState(today)
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
+  const invalid = from > to
+  return (
+    <div className="field">
+      Export timeline as Markdown
+      <div className="row">
+        <input type="date" value={from} max={today} onChange={(e) => setFrom(e.target.value)} aria-label="From" />
+        <span>to</span>
+        <input type="date" value={to} max={today} onChange={(e) => setTo(e.target.value)} aria-label="To" />
+        <button
+          disabled={invalid}
+          onClick={() =>
+            void window.dayflow
+              .exportMarkdown(from, to)
+              .then(setResult, (err: unknown) => setResult({ ok: false, message: `Couldn't save file: ${String(err)}` }))
+          }
+        >
+          Export…
+        </button>
+      </div>
+      {invalid && <p className="error">Start must be on or before end.</p>}
+      {result && <p className={result.ok ? 'ok' : 'note'}>{result.message}</p>}
+    </div>
   )
 }

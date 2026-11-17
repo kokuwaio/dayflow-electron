@@ -144,7 +144,7 @@ each of the three providers.
 
 ### M2 Timeline parity
 
-- [ ] Week view (7-column grid), category filter bar (mute, reorder).
+- [x] Week view (7-column grid), category filter bar (mute, reorder).
 - [x] Categories: editor with name, color and description sent to the model;
       defaults Work, Personal, Distraction, Idle; role presets
       (upstream `Models/TimelineCategory.swift`).
@@ -153,8 +153,8 @@ each of the three providers.
 - [ ] Screenshot slideshow and timelapse player at 20x/40x/60x (`ffmpeg`).
 - [ ] App and site icons from the model's `appSites` (upstream
       `Core/Net/FaviconService.swift`, fetched at runtime, nothing bundled).
-- [ ] Day summary panel: focus vs. distraction, category donut, daily goal.
-- [ ] Copy timeline as text; export a date range as Markdown.
+- [x] Day summary panel: focus vs. distraction, category donut, daily goal.
+- [x] Copy timeline as text; export a date range as Markdown.
 - [x] Two-step fallback (transcribe to `observations`, then cards) like
       upstream's local-model path: one small request per frame, segments,
       then summary, title and an optional merge into the previous card.

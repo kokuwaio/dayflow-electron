@@ -107,3 +107,39 @@ code { font-size: 12px; }
 .categories input[type="color"] { width: 36px; height: 30px; padding: 2px; }
 .categories .name { width: 160px; flex: none; }
 .categories .description { flex: 1; }
+.segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.segmented button { border: none; border-radius: 0; }
+.segmented button.active { background: var(--accent); color: #fff; }
+.filterbar { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px; white-space: nowrap; }
+.chip.muted { opacity: 0.4; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.card.muted, .week-card.muted { opacity: 0.25; }
+.week { display: flex; flex-direction: column; height: calc(100% - 90px); }
+.week-head { display: grid; grid-template-columns: 48px repeat(7, 1fr); font-size: 12px; color: var(--muted); padding-bottom: 4px; }
+.week-head .today b { background: var(--accent); color: #fff; border-radius: 50%; padding: 1px 5px; }
+.week-body { overflow-y: auto; flex: 1; border-top: 1px solid var(--line); }
+.week-grid { position: relative; display: grid; grid-template-columns: 48px repeat(7, 1fr);
+  background-image: linear-gradient(var(--line) 1px, transparent 1px); background-size: 100% 111px; }
+.hours { position: relative; }
+.hours span { position: absolute; left: 4px; font-size: 9px; color: var(--muted); transform: translateY(-7px); }
+.week-col { position: relative; border-left: 1px solid var(--line); }
+.week-card { position: absolute; left: 3px; right: 5px; overflow: hidden; text-align: left; font-size: 10px; font-weight: 600;
+  padding: 2px 6px 2px 9px; border-radius: 2px; border: 0.5px solid var(--cat);
+  background: color-mix(in srgb, var(--cat) 25%, var(--panel)); box-shadow: inset 5px 0 0 var(--cat); line-height: 12px; }
+.week-card.failed { background: #FFE3D6; border: 1px dashed #D84A2B; box-shadow: none; color: #6B2414; }
+.week-card.selected { outline: 1px solid var(--accent); }
+.summary { display: grid; gap: 16px; }
+.summary h3 { margin: 0 0 8px; }
+.spread { justify-content: space-between; }
+.bar { margin-bottom: 10px; }
+.track { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 4px; }
+.fill { height: 100%; border-radius: 4px; }
+.donut { width: 180px; display: block; margin: 0 auto; }
+.donut-label { font-size: 10px; fill: var(--muted); letter-spacing: 0.08em; }
+.donut-value { font-size: 15px; font-weight: 600; fill: var(--text); }
+.legend { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 4px; }
+.legend li { display: flex; align-items: center; gap: 8px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stats div { display: grid; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+.goal-editor { display: grid; gap: 8px; }

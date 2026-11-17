@@ -3,11 +3,15 @@ import { homedir } from 'node:os'
 import { unlink } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { BrowserWindow, Menu, Tray, app, ipcMain, nativeImage, shell } from 'electron'
-import { dayKey, dayRange } from '../shared/day'
+import { writeFile } from 'node:fs/promises'
+import { BrowserWindow, Menu, Tray, app, clipboard, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { dayKey, dayRange, shiftDay, todayKey } from '../shared/day'
 import { needsApiKey } from '../shared/providers'
 import { PAUSE_PRESETS, describeRecorder } from '../shared/status'
 import { renamedCategories } from '../shared/categories'
+import { type GoalPlan, defaultGoalPlan } from '../shared/day-summary'
+import { exportFileName, rangeMarkdown, timelineText, weekText } from '../shared/export'
+import { weekOf } from '../shared/week'
 import type { AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings } from '../shared/types'
 import type { Span } from './db/store'
 import { Pipeline } from './analysis/pipeline'
@@ -125,6 +129,47 @@ async function main(): Promise<void> {
   ipcMain.handle('day:get', (_e, day?: string) => {
     const key = day ?? dayKey(Math.floor(Date.now() / 1000))
     return { day: key, cards: store.cardsForDay(key), ratings: store.ratings(dayRange(key)) }
+  })
+  const daysWithCards = (days: string[]) => days.map((day) => ({ day, cards: store.cardsForDay(day) }))
+  const daysBetween = (from: string, to: string) => {
+    const days: string[] = []
+    for (let d = from; d <= to; d = shiftDay(d, 1)) days.push(d)
+    return days
+  }
+  ipcMain.handle('week:get', (_e, day: string) => {
+    const week = weekOf(day)
+    const last = week.days[week.days.length - 1]!
+    return { ...week, columns: daysWithCards(week.days), ratings: store.ratings({ start: dayRange(week.days[0]!).start, end: dayRange(last).end }) }
+  })
+  ipcMain.handle('goals:get', (_e, day: string) => {
+    const categories = settings.get().categories
+    return store.goalPlan(day, categories) ?? defaultGoalPlan(categories)
+  })
+  ipcMain.handle('goals:set', (_e, day: string, plan: GoalPlan) => {
+    store.setGoalPlan(day, plan, settings.get().categories)
+  })
+  ipcMain.handle('timeline:copy', (_e, mode: 'day' | 'week', day: string) => {
+    const opts = { today: todayKey() }
+    const week = weekOf(day)
+    const text = mode === 'day' ? timelineText(day, store.cardsForDay(day), opts) : weekText(week.title, daysWithCards(week.days), opts)
+    clipboard.writeText(text)
+  })
+  ipcMain.handle('timeline:export', async (_e, from: string, to: string) => {
+    if (from > to) return { ok: false, message: 'Start must be on or before end.' }
+    if (daysBetween(from, to).length > 3660) return { ok: false, message: 'Choose at most ten years.' }
+    const target = await dialog.showSaveDialog({
+      defaultPath: join(app.getPath('documents'), exportFileName(from, to)),
+      filters: [{ name: 'Markdown', extensions: ['md'] }]
+    })
+    if (target.canceled || !target.filePath) return { ok: false, message: 'Export canceled' }
+    const days = daysWithCards(daysBetween(from, to))
+    try {
+      await writeFile(target.filePath, rangeMarkdown(days, { today: todayKey() }), 'utf8')
+    } catch (err) {
+      return { ok: false, message: `Couldn't save file: ${err instanceof Error ? err.message : String(err)}` }
+    }
+    const activities = days.reduce((n, d) => n + d.cards.length, 0)
+    return { ok: true, message: `Saved to ${target.filePath}. Activities: ${activities}; days: ${days.length}.` }
   })
   ipcMain.handle('card:update', (_e, id: number, change: CardEdit) => {
     const card = store.updateCard(id, change)

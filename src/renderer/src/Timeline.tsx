@@ -1,16 +1,19 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { type Category, PRIVATE_CATEGORY, SYSTEM_CATEGORY } from '@shared/categories'
-import { dayKey, shiftDay } from '@shared/day'
+import { parseKey, shiftDay, todayKey } from '@shared/day'
 import type { Rating, TimelineCard } from '@shared/types'
+import type { DayCards, Week } from '@shared/week'
+import { DaySummary } from './DaySummary'
+import { FilterBar, muteKey } from './FilterBar'
+import { WeekGrid } from './WeekGrid'
 
 /** Colors for cards the app writes itself, outside the user's categories. */
 const BUILT_IN_COLORS: Record<string, string> = { [SYSTEM_CATEGORY]: '#E0A100', [PRIVATE_CATEGORY]: '#5C6B7A' }
 
-const today = () => dayKey(Math.floor(Date.now() / 1000))
+const today = todayKey
 
 function formatDay(key: string): string {
-  const [y, m, d] = key.split('-').map(Number)
-  return new Date(y!, m! - 1, d!).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
+  return parseKey(key).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
 const minutes = (c: TimelineCard) => Math.max(1, Math.round((c.end - c.start) / 60))
@@ -25,18 +28,27 @@ function ratingFor(card: TimelineCard, ratings: Rating[]): Rating | undefined {
 
 export function Timeline() {
   const [day, setDay] = useState(today)
+  const [mode, setMode] = useState<'day' | 'week'>('day')
   const [cards, setCards] = useState<TimelineCard[]>([])
+  const [week, setWeek] = useState<(Week & { columns: DayCards[]; ratings: Rating[] }) | null>(null)
+  const loadId = useRef(0)
   const [ratings, setRatings] = useState<Rating[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [selected, setSelected] = useState<number | null>(null)
+  const [muted, setMuted] = useState<Set<string>>(new Set())
+  const [copied, setCopied] = useState(false)
 
   const load = useCallback(() => {
+    // Only the newest request may update the view, so fast paging cannot show an older week.
+    const id = ++loadId.current
     void window.dayflow.getDay(day).then((r) => {
+      if (id !== loadId.current) return
       setCards(r.cards)
       setRatings(r.ratings)
     })
+    if (mode === 'week') void window.dayflow.getWeek(day).then((w) => id === loadId.current && setWeek(w))
     void window.dayflow.getSettings().then((s) => setCategories(s.categories))
-  }, [day])
+  }, [day, mode])
 
   useEffect(() => {
     load()
@@ -45,28 +57,51 @@ export function Timeline() {
 
   const colorOf = (category: string) =>
     categories.find((c) => c.name === category)?.color ?? BUILT_IN_COLORS[category] ?? '#888888'
-  const card = cards.find((c) => c.id === selected) ?? null
+  const allCards = mode === 'week' ? (week?.columns.flatMap((c) => c.cards) ?? []) : cards
+  const visibleRatings = mode === 'week' ? (week?.ratings ?? []) : ratings
+  const card = allCards.find((c) => c.id === selected) ?? null
   const isToday = day === today()
+  const step = mode === 'week' ? 7 : 1
+  const inCurrentPeriod = mode === 'week' ? (week?.columns.some((c) => c.day === today()) ?? true) : isToday
 
   return (
     <div className="timeline">
       <section className="day">
         <div className="daynav">
-          <button aria-label="Previous day" onClick={() => setDay(shiftDay(day, -1))}>
+          <div className="segmented" role="group" aria-label="View">
+            {(['day', 'week'] as const).map((m) => (
+              <button key={m} className={mode === m ? 'active' : ''} onClick={() => (setMode(m), setSelected(null))}>
+                {m === 'day' ? 'Day' : 'Week'}
+              </button>
+            ))}
+          </div>
+          <button aria-label={`Previous ${mode}`} onClick={() => setDay(shiftDay(day, -step))}>
             ‹
           </button>
-          <h1>{isToday ? 'Today' : formatDay(day)}</h1>
-          <button aria-label="Next day" disabled={isToday} onClick={() => setDay(shiftDay(day, 1))}>
+          <h1>{mode === 'week' ? (week?.title ?? '') : isToday ? 'Today' : formatDay(day)}</h1>
+          <button aria-label={`Next ${mode}`} disabled={inCurrentPeriod} onClick={() => setDay(shiftDay(day, step))}>
             ›
           </button>
-          {!isToday && (
+          {!inCurrentPeriod && (
             <button className="link" onClick={() => setDay(today())}>
-              Back to today
+              Today
             </button>
           )}
-          {cards.length > 0 && (
+          <span className="push-right" />
+          <button
+            className="link"
+            onClick={() =>
+              void window.dayflow.copyTimeline(mode, day).then(() => {
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              })
+            }
+          >
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+          {mode === 'day' && cards.length > 0 && (
             <button
-              className="link push-right"
+              className="link"
               onClick={() => {
                 if (confirm('Analyze this day again? Its cards are replaced; your recordings stay.')) {
                   void window.dayflow.reprocessDay(day)
@@ -77,7 +112,23 @@ export function Timeline() {
             </button>
           )}
         </div>
-        {cards.length === 0 ? (
+        <FilterBar
+          categories={categories}
+          muted={muted}
+          onToggle={(name) => {
+            const next = new Set(muted)
+            if (next.has(name)) next.delete(name)
+            else next.add(name)
+            setMuted(next)
+          }}
+          onReorder={(next) => {
+            setCategories(next)
+            void window.dayflow.saveSettings({ categories: next })
+          }}
+        />
+        {mode === 'week' && week ? (
+          <WeekGrid columns={week.columns} today={today()} selected={selected} muted={muted} colorOf={colorOf} onSelect={setSelected} />
+        ) : cards.length === 0 ? (
           <p className="empty">
             {isToday
               ? 'No cards yet. The first ones appear about 15 minutes after recording starts.'
@@ -90,9 +141,9 @@ export function Timeline() {
               return (
                 <li key={c.id}>
                   <button
-                    className={`card ${c.id === selected ? 'selected' : ''}`}
+                    className={`card ${c.id === selected ? 'selected' : ''} ${muted.has(muteKey(c.category)) ? 'muted' : ''}`}
                     style={{ '--cat': colorOf(c.category) } as React.CSSProperties}
-                    onClick={() => setSelected(c.id)}
+                    onClick={() => setSelected(c.id === selected ? null : c.id)}
                   >
                     <span className="time">
                       {c.startTime} – {c.endTime}
@@ -111,14 +162,21 @@ export function Timeline() {
       </section>
       <aside className="detail">
         {card ? (
-          <CardDetail
-            key={card.id}
-            card={card}
-            color={colorOf(card.category)}
-            categories={categories}
-            rating={ratingFor(card, ratings)}
-            onDeleted={() => setSelected(null)}
-          />
+          <>
+            <button className="link" onClick={() => setSelected(null)}>
+              ← {mode === 'day' ? 'Day summary' : 'Close'}
+            </button>
+            <CardDetail
+              key={card.id}
+              card={card}
+              color={colorOf(card.category)}
+              categories={categories}
+              rating={ratingFor(card, visibleRatings)}
+              onDeleted={() => setSelected(null)}
+            />
+          </>
+        ) : mode === 'day' ? (
+          <DaySummary day={day} cards={cards} categories={categories} />
         ) : (
           <p className="empty">Select a card to see what happened.</p>
         )}

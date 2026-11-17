@@ -100,7 +100,8 @@ export function presetCategories(role: string): Category[] {
   return [...preset.map(([name, color, description]) => ({ id: slug(name), name, color, description })), { ...IDLE }]
 }
 
-const FALLBACK_COLOR = '#E5E7EB'
+/** Color for categories that are not (or no longer) in the list. */
+export const FALLBACK_COLOR = '#E5E7EB'
 const MAX_CATEGORIES = 20
 
 /** Trims, drops empty and duplicate names, fixes colors, keeps exactly one Idle category last. */

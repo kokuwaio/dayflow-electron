@@ -49,6 +49,23 @@ The first cards appear about 15 minutes after recording starts. A batch that
 fails shows a "Processing failed" card; it is retried after the next batch
 succeeds.
 
+## The timeline
+
+- **Day and Week**: switch in the timeline header. The week runs Monday to
+  Sunday; each column covers 4 AM to 4 AM, so late nights stay on the day
+  they started.
+- **Category chips** above the timeline: click one to dim its cards, drag to
+  reorder. **Settings → Categories** edits names, colors and the description
+  the model sees, or applies a preset for your role.
+- **Card actions** in the detail panel: edit the title or category, delete,
+  rate 👍/👎 with an optional note, reanalyze the card's 15 minutes, or retry a
+  "Processing failed" card. **Reprocess day** analyzes a whole day again.
+- **Day summary** (right panel when no card is selected): focus and
+  distraction against your daily goals, time per category, and your longest
+  focus block. Idle, failed and private time is not counted.
+- **Copy** puts the day or week on the clipboard as text; **Settings →
+  Storage → Export timeline** saves a date range as Markdown.
+
 ## Run a local model with Ollama
 
 A local model keeps everything on your computer and needs no API key. Ollama

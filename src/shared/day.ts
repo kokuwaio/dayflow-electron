@@ -6,10 +6,14 @@ const BOUNDARY_HOUR = 4
 const pad = (n: number) => String(n).padStart(2, '0')
 const keyOf = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
-function parseKey(key: string): Date {
+/** The local midnight Date of a day key. */
+export function parseKey(key: string): Date {
   const [y, m, d] = key.split('-').map(Number)
   return new Date(y!, m! - 1, d!)
 }
+
+/** Today's key, by the 4 AM boundary. */
+export const todayKey = (): string => dayKey(Math.floor(Date.now() / 1000))
 
 export function dayKey(ts: number): string {
   const d = new Date(ts * 1000)

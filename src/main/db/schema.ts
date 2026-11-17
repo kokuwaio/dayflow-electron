@@ -112,5 +112,26 @@ export const MIGRATIONS: string[] = [
     feedback TEXT
   );
   CREATE INDEX idx_review_ratings_time ON timeline_review_ratings(start_ts, end_ts);
+  `,
+  // 5: daily focus and distraction goals (upstream day_goals, day_goal_categories)
+  `
+  CREATE TABLE day_goals (
+    day TEXT NOT NULL PRIMARY KEY,
+    focus_target_minutes INTEGER NOT NULL,
+    distraction_limit_minutes INTEGER NOT NULL,
+    is_skipped INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+  CREATE TABLE day_goal_categories (
+    day TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK(kind IN ('focus', 'distraction')),
+    category_id TEXT NOT NULL,
+    category_name TEXT NOT NULL,
+    category_color_hex TEXT NOT NULL,
+    sort_order INTEGER NOT NULL,
+    PRIMARY KEY (day, kind, category_id)
+  );
+  CREATE INDEX idx_day_goal_categories_day_kind ON day_goal_categories(day, kind, sort_order);
   `
 ]
