@@ -1,0 +1,44 @@
+# Release notes from merged pull requests. Categories and the next version
+# come from the conventional-commit PR titles (feat:, fix:, ...), so no labels
+# are needed; Dependabot's "dependencies" label groups updates.
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+categories:
+  - title: '💥 Breaking changes'
+    semver-increment: major
+    exclusive: true
+    when:
+      conventional:
+        breaking: true
+  - title: '⬆️ Dependencies'
+    collapse-after: 5
+    exclusive: true
+    when:
+      label: 'dependencies'
+  - title: '🚀 Features'
+    semver-increment: minor
+    exclusive: true
+    when:
+      conventional:
+        type: 'feat'
+  - title: '🐛 Fixes'
+    exclusive: true
+    when:
+      conventional:
+        types: ['fix', 'perf']
+  - title: '📚 Documentation'
+    exclusive: true
+    when:
+      conventional:
+        type: 'docs'
+  - title: '🧰 Maintenance'
+  - type: 'pre-exclude'
+    when:
+      label: 'skip-changelog'
+  - type: 'version-resolver'
+    semver-increment: patch
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+template: |
+  ## What's changed
+
+  $CHANGES

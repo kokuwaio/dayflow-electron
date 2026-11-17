@@ -1,0 +1,152 @@
+name: CI
+
+permissions: read-all
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typescript:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    env:
+      # Tests run without Electron; skip its binary download.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          # node:sqlite needs Node 24, the version Electron ships.
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  go:
+    name: Go helper
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: helper/linux
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install libpipewire
+        # The pipewire package links libpipewire-0.3 through cgo.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpipewire-0.3-dev
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: helper/linux/go.mod
+          cache-dependency-path: helper/linux/go.sum
+
+      - name: Check formatting
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build
+        run: go build -trimpath -o bin/dayflow-linux-helper ./cmd/dayflow-linux-helper
+
+  flatpak:
+    name: Flatpak
+    runs-on: ubuntu-latest
+    env:
+      FLATPAK_ID: io.github.kokuwaio.DayflowElectron
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install flatpak-builder
+        # Ubuntu blocks the unprivileged user namespaces bubblewrap needs.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends flatpak flatpak-builder
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Cache runtimes
+        uses: actions/cache@v6
+        with:
+          path: ~/.local/share/flatpak
+          key: flatpak-runtimes-25.08
+
+      - name: Install runtimes
+        run: |
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y --noninteractive flathub \
+            org.freedesktop.Sdk//25.08 org.freedesktop.Platform//25.08 org.electronjs.Electron2.BaseApp//25.08
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: helper/linux/go.mod
+          cache-dependency-path: helper/linux/go.sum
+
+      - name: Build app and helper
+        run: |
+          npm ci
+          npm run pack
+          npm run helper
+
+      - name: Build Flatpak
+        run: |
+          flatpak-builder --user --force-clean --disable-rofiles-fuse --repo=flatpak/repo flatpak/build "flatpak/$FLATPAK_ID.yml"
+          flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo flatpak/repo dayflow-electron.flatpak "$FLATPAK_ID"
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: dayflow-electron-flatpak
+          path: dayflow-electron.flatpak
+          retention-days: 14
+
+  dependabot:
+    name: Merge Dependabot update
+    needs:
+      - typescript
+      - go
+      - flatpak
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Merge
+        # Runs only after the test and Flatpak jobs passed.
+        run: gh pr merge --squash --delete-branch "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
