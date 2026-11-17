@@ -2,15 +2,9 @@ import { useEffect, useState } from 'react'
 import { CATEGORY_PRESETS, type Category, presetCategories } from '@shared/categories'
 import { todayKey } from '@shared/day'
 import { cliOf, needsApiKey } from '@shared/providers'
+import { PROVIDER_CHOICES } from './providers'
 import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings } from '@shared/types'
 
-const PROVIDERS: Array<{ kind: ProviderKind; label: string; hint: string }> = [
-  { kind: 'anthropic', label: 'Anthropic', hint: 'Claude models through the Anthropic API.' },
-  { kind: 'gemini', label: 'Gemini', hint: 'Google Gemini API; frames are sent inline.' },
-  { kind: 'openai', label: 'OpenAI-compatible', hint: 'OpenAI, OpenRouter, or a local Ollama or LM Studio server (no key needed; analyzed in small steps).' },
-  { kind: 'claude-cli', label: 'Claude Code', hint: 'Your claude CLI and its subscription; no API key.' },
-  { kind: 'codex-cli', label: 'Codex', hint: 'Your codex CLI and its ChatGPT subscription; no API key.' }
-]
 
 const gb = (bytes: number) => (bytes / 1024 ** 3).toFixed(2)
 
@@ -47,7 +41,7 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
       <section>
         <h2>AI provider</h2>
         <div className="choices">
-          {PROVIDERS.map((p) => (
+          {PROVIDER_CHOICES.map((p) => (
             <label key={p.kind} className={`choice ${provider === p.kind ? 'active' : ''}`}>
               <input type="radio" name="provider" checked={provider === p.kind} onChange={() => (save({ provider: p.kind }), setTest(null))} />
               <strong>{p.label}</strong>
@@ -106,7 +100,7 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
             onChange={(e) => save({ fallbackProvider: (e.target.value || null) as ProviderKind | null })}
           >
             <option value="">None</option>
-            {PROVIDERS.filter((p) => p.kind !== provider).map((p) => (
+            {PROVIDER_CHOICES.filter((p) => p.kind !== provider).map((p) => (
               <option key={p.kind} value={p.kind}>
                 {p.label} ({settings.models[p.kind]}){needsApiKey(p.kind, settings.openaiBaseUrl) && !keys?.[p.kind] ? ', no key yet' : ''}
               </option>
@@ -189,7 +183,37 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
       </section>
 
       <section>
+        <h2>Prompt</h2>
+        <p className="note">
+          Replace the rules the model follows for titles, summaries and the detailed log. Leave a field empty to use upstream
+          Dayflow's text.
+        </p>
+        {(
+          [
+            ['title', 'Title rules'],
+            ['summary', 'Summary rules'],
+            ['detailedSummary', 'Detailed log rules']
+          ] as const
+        ).map(([key, label]) => (
+          <label key={key} className="field">
+            {label}
+            <textarea
+              rows={4}
+              placeholder="Upstream default"
+              defaultValue={settings.promptOverrides[key]}
+              onBlur={(e) => save({ promptOverrides: { ...settings.promptOverrides, [key]: e.target.value } })}
+            />
+          </label>
+        ))}
+      </section>
+
+      <section>
         <h2>General</h2>
+        <label className="check">
+          <input type="checkbox" checked={settings.showAppIcons} onChange={(e) => save({ showAppIcons: e.target.checked })} />
+          Show app and site icons on cards
+        </label>
+        <p className="note">Icons are loaded from the websites themselves (e.g. github.com/favicon.ico), which tells those sites your IP address.</p>
         <label className="check">
           <input type="checkbox" checked={settings.launchAtLogin} onChange={(e) => save({ launchAtLogin: e.target.checked })} />
           Launch at login

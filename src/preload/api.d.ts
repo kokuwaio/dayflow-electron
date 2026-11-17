@@ -1,4 +1,5 @@
 import type { GoalPlan } from '../shared/day-summary'
+import type { FrameRef } from '../shared/media'
 import type { DayCards, Week } from '../shared/week'
 import type { AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings, TimelineCard } from '../shared/types'
 
@@ -9,6 +10,8 @@ export interface DayflowApi {
   setGoals(day: string, plan: GoalPlan): Promise<void>
   copyTimeline(mode: 'day' | 'week', day: string): Promise<void>
   exportMarkdown(from: string, to: string): Promise<{ ok: boolean; message: string }>
+  getFrames(span: { start: number; end: number }): Promise<FrameRef[]>
+  completeOnboarding(): Promise<void>
   getDay(day?: string): Promise<{ day: string; cards: TimelineCard[]; ratings: Rating[] }>
   updateCard(id: number, change: CardEdit): Promise<TimelineCard | undefined>
   deleteCard(id: number): Promise<void>

@@ -97,7 +97,7 @@ Rules:
 - Avoid long lists; no more than one conjunction
 - Return only the title text (no quotes, no JSON)`
 
-export const summaryPrompt = (observations: string, categories: string, allowed: string, languageBlock: string): string =>
+export const summaryPrompt = (observations: string, categories: string, allowed: string, languageBlock: string, summaryBlock = ''): string =>
   `You are analyzing someone's computer activity from the last 15 minutes.
 
 Activity periods:
@@ -105,7 +105,7 @@ ${observations}
 
   Create a summary that captures what happened during this time period.
 
-${SUMMARY_BLOCK}
+${summaryBlock.trim() || SUMMARY_BLOCK}
 
 CATEGORIES:
 Choose exactly one:
@@ -140,8 +140,8 @@ Return JSON:
 export const SUMMARY_RETRY =
   'Respond with ONLY the JSON object described above. Ensure it contains "reasoning", "summary", "category", and "app_sites" fields.'
 
-export const titlePrompt = (observations: string, languageBlock: string): string =>
-  `${TITLE_BLOCK}
+export const titlePrompt = (observations: string, languageBlock: string, titleBlock = ''): string =>
+  `${titleBlock.trim() ? `${titleBlock.trim()}\n- Return only the title text (no quotes, no JSON)` : TITLE_BLOCK}
 ${languageBlock}
 
 OBSERVATIONS:

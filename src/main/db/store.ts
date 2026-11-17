@@ -342,6 +342,24 @@ export class Store {
     })
   }
 
+  screenshotPath(id: number): string | undefined {
+    const row = this.db.prepare('SELECT file_path AS filePath FROM screenshots WHERE id = ? AND is_deleted = 0 AND is_blocked = 0').get(id) as
+      | { filePath: string }
+      | undefined
+    return row?.filePath || undefined
+  }
+
+  /** Saved frames of a time range, oldest first (for the slideshow and timelapse). */
+  framesInRange(span: Span): Array<{ id: number; capturedAt: number; filePath: string }> {
+    return this.db
+      .prepare(
+        `SELECT id, captured_at AS capturedAt, file_path AS filePath FROM screenshots
+         WHERE captured_at >= ? AND captured_at < ? AND is_deleted = 0 AND is_blocked = 0 AND file_path != ''
+         ORDER BY captured_at`
+      )
+      .all(span.start, span.end) as unknown as Array<{ id: number; capturedAt: number; filePath: string }>
+  }
+
   storedFrames(): StoredFrame[] {
     return this.db
       .prepare('SELECT id, captured_at AS capturedAt, COALESCE(file_size, 0) AS bytes FROM screenshots WHERE is_deleted = 0 ORDER BY captured_at')

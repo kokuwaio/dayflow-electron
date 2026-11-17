@@ -56,6 +56,7 @@ function pipelineWith(...providers: Provider[]) {
     providers: () => providers,
     categories: () => DEFAULT_CATEGORIES,
     language: () => '',
+    overrides: () => ({ title: '', summary: '', detailedSummary: '' }),
     onCardsChanged: () => {},
     log: () => {}
   })

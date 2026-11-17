@@ -150,9 +150,12 @@ each of the three providers.
       (upstream `Models/TimelineCategory.swift`).
 - [x] Card actions: edit title and category, delete, thumbs up/down with
       feedback, retry a failed card, reprocess a day or batch.
-- [ ] Screenshot slideshow and timelapse player at 20x/40x/60x (`ffmpeg`).
-- [ ] App and site icons from the model's `appSites` (upstream
+- [x] Screenshot slideshow and timelapse player at 20x/40x/60x (plays the
+      saved JPEGs; no `ffmpeg` needed).
+- [x] App and site icons from the model's `appSites` (upstream
       `Core/Net/FaviconService.swift`, fetched at runtime, nothing bundled).
+      Off by default and fetched from the sites themselves, not through
+      Google's favicon service like upstream.
 - [x] Day summary panel: focus vs. distraction, category donut, daily goal.
 - [x] Copy timeline as text; export a date range as Markdown.
 - [x] Two-step fallback (transcribe to `observations`, then cards) like
@@ -169,11 +172,14 @@ each of the three providers.
       permission; the settings page detects whether it is granted and otherwise
       shows the one-time opt-in command
       (`flatpak override --user --talk-name=org.freedesktop.Flatpak <app-id>`).
-- [ ] Gemini video upload via the Files API.
-- [ ] Prompt overrides per provider (title, summary, detailed blocks).
+- [ ] Gemini video upload via the Files API. Deferred: needs `ffmpeg` in the
+      Flatpak to encode the video; inline frames work meanwhile.
+- [x] Prompt overrides (title, summary, detailed blocks; one set for all
+      providers).
 - [x] Output-language setting for card text.
-- [ ] Frames stored as video segments to cut disk use.
-- [ ] Onboarding: provider choice and setup with test, capture consent
+- [ ] Frames stored as video segments to cut disk use. Deferred with the
+      Gemini video upload (needs `ffmpeg`); 720p JPEGs use about 25 MB per hour.
+- [x] Onboarding: provider choice and setup with test, capture consent
       (portal on Linux, Screen Recording on macOS), categories preset.
 
 ### M3 Insights

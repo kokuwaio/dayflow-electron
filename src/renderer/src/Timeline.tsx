@@ -3,7 +3,9 @@ import { type Category, PRIVATE_CATEGORY, SYSTEM_CATEGORY } from '@shared/catego
 import { parseKey, shiftDay, todayKey } from '@shared/day'
 import type { Rating, TimelineCard } from '@shared/types'
 import type { DayCards, Week } from '@shared/week'
+import { AppIcon } from './AppIcon'
 import { DaySummary } from './DaySummary'
+import { FramePlayer } from './FramePlayer'
 import { FilterBar, muteKey } from './FilterBar'
 import { WeekGrid } from './WeekGrid'
 
@@ -37,6 +39,7 @@ export function Timeline() {
   const [selected, setSelected] = useState<number | null>(null)
   const [muted, setMuted] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState(false)
+  const [showIcons, setShowIcons] = useState(false)
 
   const load = useCallback(() => {
     // Only the newest request may update the view, so fast paging cannot show an older week.
@@ -47,7 +50,10 @@ export function Timeline() {
       setRatings(r.ratings)
     })
     if (mode === 'week') void window.dayflow.getWeek(day).then((w) => id === loadId.current && setWeek(w))
-    void window.dayflow.getSettings().then((s) => setCategories(s.categories))
+    void window.dayflow.getSettings().then((s) => {
+      setCategories(s.categories)
+      setShowIcons(s.showAppIcons)
+    })
   }, [day, mode])
 
   useEffect(() => {
@@ -149,7 +155,10 @@ export function Timeline() {
                       {c.startTime} – {c.endTime}
                       {rating && <span className="rated">{rating.rating === 'up' ? ' · 👍' : ' · 👎'}</span>}
                     </span>
-                    <span className="title">{c.title}</span>
+                    <span className="title">
+                      {showIcons && <AppIcon site={c.appSites.primary} />}
+                      {c.title}
+                    </span>
                     <span className="meta">
                       {c.category} · {minutes(c)} min
                     </span>
@@ -197,6 +206,7 @@ function CardDetail(props: {
   const [title, setTitle] = useState(card.title)
   const [category, setCategory] = useState(card.category)
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [showFrames, setShowFrames] = useState(false)
   const span = { start: card.start, end: card.end }
   const isFailed = card.category === SYSTEM_CATEGORY
   const [busy, setBusy] = useState<string | null>(null)
@@ -298,6 +308,14 @@ function CardDetail(props: {
       {busy && <p className="note">{busy}</p>}
       {rating?.feedback && feedback === null && <p className="note">Your note: {rating.feedback}</p>}
 
+      {card.category !== PRIVATE_CATEGORY && (
+        <>
+          <button className="link" onClick={() => setShowFrames(!showFrames)}>
+            {showFrames ? 'Hide screenshots' : 'Screenshots and timelapse'}
+          </button>
+          {showFrames && <FramePlayer start={card.start} end={card.end} />}
+        </>
+      )}
       {card.detailedSummary && (
         <>
           <h3>Details</h3>

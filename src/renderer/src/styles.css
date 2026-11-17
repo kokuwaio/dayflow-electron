@@ -143,3 +143,11 @@ code { font-size: 12px; }
 .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .stats div { display: grid; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
 .goal-editor { display: grid; gap: 8px; }
+.player { display: grid; gap: 6px; margin: 8px 0; }
+.player img { width: 100%; border-radius: 8px; border: 1px solid var(--line); background: #000; }
+.player input[type="range"] { width: 100%; }
+.app-icon { width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; border-radius: 3px; }
+.onboarding { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); overflow-y: auto; padding: 24px; }
+.onboarding-card { width: min(640px, 100%); display: grid; gap: 14px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 14px; padding: 24px; }
+.onboarding-card h2 { margin: 0; }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { AppStatus } from '@shared/types'
+import type { AppStatus, Settings } from '@shared/types'
+import { Onboarding } from './Onboarding'
 import { SettingsView } from './Settings'
 import { StatusPill } from './StatusPill'
 import { Timeline } from './Timeline'
@@ -8,10 +9,23 @@ export function App() {
   const [view, setView] = useState<'timeline' | 'settings'>('timeline')
   const [status, setStatus] = useState<AppStatus | null>(null)
 
+  const [settings, setSettings] = useState<Settings | null>(null)
+
   useEffect(() => {
     void window.dayflow.getStatus().then(setStatus)
+    void window.dayflow.getSettings().then(setSettings)
     return window.dayflow.onStatus(setStatus)
   }, [])
+
+  if (settings && !settings.onboarded) {
+    return (
+      <Onboarding
+        settings={settings}
+        platform={status?.platform ?? 'linux'}
+        onDone={() => void window.dayflow.getSettings().then(setSettings)}
+      />
+    )
+  }
 
   return (
     <div className="app">

@@ -73,6 +73,18 @@ export interface Settings {
   cliPaths: Record<CliName, string>
   /** Timeline categories; the last one is Idle. */
   categories: Category[]
+  /** Replacements for the prompt's rules; empty means upstream's text. */
+  promptOverrides: PromptOverrides
+  /** Show app and site icons on cards (fetched from the sites themselves). */
+  showAppIcons: boolean
+  /** The first-run setup is done. */
+  onboarded: boolean
+}
+
+export interface PromptOverrides {
+  title: string
+  summary: string
+  detailedSummary: string
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -87,7 +99,10 @@ export const DEFAULT_SETTINGS: Settings = {
   launchAtLogin: false,
   blockedApps: [...DEFAULT_BLOCKLIST],
   cliPaths: { claude: '', codex: '' },
-  categories: DEFAULT_CATEGORIES.map((c) => ({ ...c }))
+  categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })),
+  promptOverrides: { title: '', summary: '', detailedSummary: '' },
+  showAppIcons: false,
+  onboarded: false
 }
 
 export const CAPTURE_INTERVALS = [1, 5, 10, 20, 30, 60] as const

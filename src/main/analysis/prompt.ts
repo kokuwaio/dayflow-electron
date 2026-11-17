@@ -2,7 +2,7 @@
 
 import type { Category } from '../../shared/categories'
 import { formatClock } from '../../shared/day'
-import type { TimelineCard } from '../../shared/types'
+import type { PromptOverrides, TimelineCard } from '../../shared/types'
 import type { GenerateRequest, Part } from '../providers/types'
 import {
   CARD_TEMPLATE,
@@ -65,6 +65,29 @@ function frameLabel(ts: number, withSeconds: boolean): string {
   return `${hm}:${String(d.getSeconds()).padStart(2, '0')} ${ampm}`
 }
 
+/** Section headings of upstream's template that overrides replace, in order. */
+const SECTIONS = ['TITLE GUIDELINES\n', 'SUMMARIES\n', 'DETAILED SUMMARY\n', '{{LANGUAGE}}'] as const
+
+/**
+ * Fills the template's placeholders and inserts the user's overrides. The
+ * sections are cut from upstream's template first and overrides are inserted
+ * as written, so text inside an override is never taken for a heading or a
+ * placeholder.
+ */
+function fillTemplate(fill: (part: string) => string, overrides?: PromptOverrides): string {
+  const at = SECTIONS.map((h) => CARD_TEMPLATE.indexOf(h))
+  const [title, summary, detailed, language] = at as [number, number, number, number]
+  const pick = (from: number, to: number, override: string | undefined) =>
+    override?.trim() ? `${override.trim()}\n\n` : fill(CARD_TEMPLATE.slice(from, to))
+  return (
+    fill(CARD_TEMPLATE.slice(0, title)) +
+    pick(title, summary, overrides?.title) +
+    pick(summary, detailed, overrides?.summary) +
+    pick(detailed, language, overrides?.detailedSummary) +
+    fill(CARD_TEMPLATE.slice(language))
+  )
+}
+
 export interface CardPromptInput {
   frames: PromptFrame[]
   previousCards: TimelineCard[]
@@ -72,18 +95,20 @@ export interface CardPromptInput {
   categories: Category[]
   userName?: string
   language?: string
+  overrides?: PromptOverrides
 }
 
 export function buildCardRequest(input: CardPromptInput): GenerateRequest {
   const perMinute = isOneFramePerMinute(input.frames)
-  let template = CARD_TEMPLATE.replace('{{CATEGORIES}}', categoriesSection(input.categories)).replace(
-    '{{LANGUAGE}}',
-    input.language
-      ? `The user only speaks ${input.language}. Respond in ${input.language}, but keep JSON keys in English exactly as specified. If any rule requires an exact English phrase (e.g., "Scattered apps and sites"), keep it verbatim.`
-      : ''
-  )
-  if (!input.userName) template = template.replace(NAME_GIVEN, NAME_MISSING)
-  if (!perMinute) template = template.replace(FRAMES_PER_MINUTE, FRAMES_IRREGULAR)
+  const languageLine = input.language
+    ? `The user only speaks ${input.language}. Respond in ${input.language}, but keep JSON keys in English exactly as specified. If any rule requires an exact English phrase (e.g., "Scattered apps and sites"), keep it verbatim.`
+    : ''
+  const template = fillTemplate((part) => {
+    let p = part.replace('{{CATEGORIES}}', categoriesSection(input.categories)).replace('{{LANGUAGE}}', languageLine)
+    if (!input.userName) p = p.replace(NAME_GIVEN, NAME_MISSING)
+    if (!perMinute) p = p.replace(FRAMES_PER_MINUTE, FRAMES_IRREGULAR)
+    return p
+  }, input.overrides)
 
   const previous = input.previousCards.map((c) => ({
     startTime: c.startTime,

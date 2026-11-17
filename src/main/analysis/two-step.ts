@@ -9,7 +9,7 @@
 // one-step prompt with 15 images.
 
 import { formatClock } from '../../shared/day'
-import type { TimelineCard } from '../../shared/types'
+import type { PromptOverrides, TimelineCard } from '../../shared/types'
 import type { NewCard, Span } from '../db/store'
 import { type GenerateRequest, type Provider, ProviderError } from '../providers/types'
 import { normalizeCategory } from './cards'
@@ -137,7 +137,8 @@ export async function cardFromObservations(
   observations: Observation[],
   categories: Category[],
   language: string,
-  previous: TimelineCard | null
+  previous: TimelineCard | null,
+  overrides?: PromptOverrides
 ): Promise<TwoStepCard> {
   const names = categories.map((c) => c.name)
   const timed = observations.map((o) => `[${formatClock(o.start)} - ${formatClock(o.end)}]: ${withoutUser(o.text)}`).join('\n\n')
@@ -151,7 +152,7 @@ export async function cardFromObservations(
 
   const summary = await askUntilValid<{ summary: string; category: string; appSites: TimelineCard['appSites'] }>(
     provider,
-    prompts.summaryPrompt(timed, categoryLines, names.map((n) => `"${n}"`).join(', '), jsonLanguage),
+    prompts.summaryPrompt(timed, categoryLines, names.map((n) => `"${n}"`).join(', '), jsonLanguage, overrides?.summary),
     true,
     prompts.SUMMARY_RETRY,
     (reply) => {
@@ -174,7 +175,8 @@ export async function cardFromObservations(
     provider,
     prompts.titlePrompt(
       observations.map((o) => `- ${o.text.trim()}`).join('\n'),
-      language ? `\n\n${prompts.languageForText(language)}` : ''
+      language ? `\n\n${prompts.languageForText(language)}` : '',
+      overrides?.title
     ),
     false,
     prompts.TITLE_RETRY,

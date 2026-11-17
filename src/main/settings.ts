@@ -27,6 +27,8 @@ function readJson(file: string): Record<string, unknown> {
   }
 }
 
+const overrideText = (v: unknown) => (typeof v === 'string' ? v.slice(0, 4000) : '')
+
 /** Fills gaps with defaults and clamps values to what the app supports. */
 export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown>): Settings {
   const r = raw as Partial<Settings>
@@ -57,6 +59,14 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
       codex: typeof r.cliPaths?.codex === 'string' ? r.cliPaths.codex.trim() : ''
     },
     categories: sanitizeCategories(r.categories ?? DEFAULT_SETTINGS.categories),
+    promptOverrides: {
+      title: overrideText(r.promptOverrides?.title),
+      summary: overrideText(r.promptOverrides?.summary),
+      detailedSummary: overrideText(r.promptOverrides?.detailedSummary)
+    },
+    showAppIcons: r.showAppIcons === true,
+    // Existing installs that never saw onboarding count as set up once a provider was chosen.
+    onboarded: r.onboarded === true || (r.onboarded === undefined && typeof r.provider === 'string'),
     blockedApps: Array.isArray(r.blockedApps)
       ? r.blockedApps.filter((x): x is string => typeof x === 'string' && x.trim() !== '').map((x) => x.trim()).slice(0, 100)
       : [...DEFAULT_SETTINGS.blockedApps]

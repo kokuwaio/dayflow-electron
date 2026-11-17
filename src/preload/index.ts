@@ -3,6 +3,8 @@ import type { DayflowApi } from './api'
 
 const api: DayflowApi = {
   getDay: (day) => ipcRenderer.invoke('day:get', day),
+  getFrames: (span) => ipcRenderer.invoke('frames:get', span),
+  completeOnboarding: () => ipcRenderer.invoke('onboarding:complete'),
   getWeek: (day) => ipcRenderer.invoke('week:get', day),
   getGoals: (day) => ipcRenderer.invoke('goals:get', day),
   setGoals: (day, plan) => ipcRenderer.invoke('goals:set', day, plan),

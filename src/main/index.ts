@@ -9,6 +9,7 @@ import { dayKey, dayRange, shiftDay, todayKey } from '../shared/day'
 import { needsApiKey } from '../shared/providers'
 import { PAUSE_PRESETS, describeRecorder } from '../shared/status'
 import { renamedCategories } from '../shared/categories'
+import type { FrameRef } from '../shared/media'
 import { type GoalPlan, defaultGoalPlan } from '../shared/day-summary'
 import { exportFileName, rangeMarkdown, timelineText, weekText } from '../shared/export'
 import { weekOf } from '../shared/week'
@@ -17,6 +18,8 @@ import type { Span } from './db/store'
 import { Pipeline } from './analysis/pipeline'
 import { Recorder } from './capture/recorder'
 import { Store } from './db/store'
+import { frameUrl } from '../shared/media'
+import { handleMedia, registerMediaScheme } from './media'
 import { createPlatform } from './platform'
 import { createProvider } from './providers'
 import { findCli, hostAccess, nodeRunner } from './providers/cli/host'
@@ -25,6 +28,7 @@ import { SettingsStore } from './settings'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const startHidden = process.argv.includes('--hidden')
+registerMediaScheme()
 // Separate data for development and tests.
 if (process.env.DAYFLOW_DATA_DIR) app.setPath('userData', process.env.DAYFLOW_DATA_DIR)
 
@@ -105,6 +109,7 @@ async function main(): Promise<void> {
       return ready.length ? ready.map(providerFor) : `No API key set for ${s.provider}. Add one in Settings.`
     },
     language: () => settings.get().outputLanguage,
+    overrides: () => settings.get().promptOverrides,
     categories: () => settings.get().categories,
     onCardsChanged: () => changed(),
     log
@@ -292,7 +297,23 @@ async function main(): Promise<void> {
     window?.webContents.send('status:changed', s)
   }, 2_000)
 
-  recorder.start()
+  handleMedia({
+    recordingsDir,
+    iconDir: join(dataDir, 'icons'),
+    framePath: (id) => store.screenshotPath(id),
+    iconsEnabled: () => settings.get().showAppIcons
+  })
+  ipcMain.handle('frames:get', (_e, span: Span) =>
+    store.framesInRange(span).map((f): FrameRef => ({ capturedAt: f.capturedAt, url: frameUrl(f.id) }))
+  )
+  // Recording starts once the first-run setup is done (upstream records only after onboarding).
+  ipcMain.handle('onboarding:complete', async () => {
+    if (settings.get().onboarded) return // a second click must not start a second recorder
+    await settings.save({ onboarded: true })
+    recorder.start()
+    updateTray()
+  })
+  if (settings.get().onboarded) recorder.start()
   pipeline.start()
   updateTray()
   void purge()

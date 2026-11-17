@@ -3,6 +3,7 @@
 // timeline cards. Card generation runs one batch at a time.
 
 import { readFile } from 'node:fs/promises'
+import type { PromptOverrides } from '../../shared/types'
 import type { Batch, NewCard, Screenshot, Store } from '../db/store'
 import { type Provider, ProviderError } from '../providers/types'
 import { BATCHING, planBatches } from './batching'
@@ -25,6 +26,8 @@ export interface PipelineDeps {
   categories(): Category[]
   /** Output language for card text; empty for English. */
   language(): string
+  /** The user's replacements for the prompt's title, summary and detail rules. */
+  overrides(): PromptOverrides
   onCardsChanged(): void
   log(message: string): void
 }
@@ -206,7 +209,7 @@ export class Pipeline {
         .contextCards({ start: batch.end - BATCHING.cardLookbackSec, end: batch.end })
         .filter((c) => c.start < firstStart)
         .at(-1) ?? null
-    const { card, span } = await cardFromObservations(provider, observations, this.deps.categories(), this.deps.language(), previous)
+    const { card, span } = await cardFromObservations(provider, observations, this.deps.categories(), this.deps.language(), previous, this.deps.overrides())
     // keepAfter: cards of newer batches survive when an old batch is analyzed late.
     store.replaceCards(span, batch.id, [card], batch.start)
   }
@@ -248,7 +251,7 @@ export class Pipeline {
     const previousCards = store.contextCards({ start: lookbackStart, end: batch.end })
     const categories = this.deps.categories()
 
-    let request = buildCardRequest({ frames, previousCards, window, categories, language: this.deps.language() })
+    let request = buildCardRequest({ frames, previousCards, window, categories, language: this.deps.language(), overrides: this.deps.overrides() })
     let lastIssue = ''
     for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_CALL; attempt++) {
       const text = (await provider.generate(request)).text
