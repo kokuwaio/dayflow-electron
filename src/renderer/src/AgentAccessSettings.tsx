@@ -1,10 +1,11 @@
-import { AGENT_CLIENT_NAMES } from '@shared/agent-clients'
 // Settings → "MCP / CLI", after upstream Dayflow
 // (Views/UI/Settings/SettingsAgentAccessTabView.swift): connect AI tools to
 // the bundled `dayflow` CLI, the edits switch, and the terminal command.
 
 import { useEffect, useState } from 'react'
+import { AGENT_CLIENT_NAMES } from '@shared/agent-clients'
 import type { AgentAccessInfo, AgentClientState, CliName, Settings } from '@shared/types'
+import { CommandBlock, Row, Section, StatusDot } from './SettingsLayout'
 
 const CLIENTS: Array<{ cli: CliName; name: string; restart: string }> = [
   { cli: 'codex', name: AGENT_CLIENT_NAMES.codex, restart: 'Restart Codex to pick up the connection.' },
@@ -18,45 +19,55 @@ export function AgentAccessSettings({ settings, save }: { settings: Settings; sa
   useEffect(() => void window.dayflow.getAgentAccess().then(setInfo), [])
 
   return (
-    <section>
-      <h2>MCP / CLI</h2>
-      <h3>Connect to AI tools</h3>
-      <p className="note">
-        Let Codex, Claude, and other AI tools read your Dayflow timeline. Connections are saved to each tool's user configuration, so
-        Dayflow is available across projects on this computer. Nothing leaves your computer except what you send in your own
-        conversations.
-      </p>
-      {CLIENTS.map((c) => (
-        <ClientRow key={c.cli} {...c} />
-      ))}
-      {info && (
-        <div className="field">
-          <span>Other apps</span>
-          <p className="note">Paste this into any MCP client's configuration.</p>
-          <CommandBlock text={info.configSnippet} label="Copy config" />
-        </div>
-      )}
+    <>
+      <Section
+        title="Connect to AI tools"
+        sub="Let Codex, Claude, and other AI tools read your Dayflow timeline. Connections are saved to each tool's user configuration, so Dayflow is available across projects on this computer. Nothing leaves your computer except what you send in your own conversations."
+      >
+        {CLIENTS.map((c) => (
+          <ClientRow key={c.cli} {...c} />
+        ))}
+        {info && (
+          <Row label="Other apps" sub="Paste this into any MCP client's configuration." stack>
+            <CommandBlock text={info.configSnippet} label="Copy config" />
+          </Row>
+        )}
+      </Section>
 
-      <h3>Allow edits</h3>
-      <p className="note">
-        Off means AI tools can read your timeline but never change it. On lets them rename activities, manage categories, and set day
-        goals. The terminal command asks before deleting anything, and AI tools are told to confirm deletes with you. Every edit is
-        logged to agent-writes.log in the data folder.
-      </p>
-      <label className="check">
-        <input type="checkbox" checked={settings.allowEdits} onChange={(e) => save({ allowEdits: e.target.checked })} />
-        {settings.allowEdits ? 'Edits are on' : 'Edits are off'}
-      </label>
-      {settings.allowEdits && <p className="note">AI tools can make changes through Dayflow while it's running.</p>}
+      <Section
+        title="Allow edits"
+        sub="Off means AI tools can read your timeline but never change it. On lets them rename activities, manage categories, and set day goals. The terminal command asks before deleting anything, and AI tools are told to confirm deletes with you. Every edit is logged to agent-writes.log in the data folder."
+      >
+        <Row
+          label={settings.allowEdits ? 'Edits are on' : 'Edits are off'}
+          sub={settings.allowEdits ? "AI tools can make changes through Dayflow while it's running." : undefined}
+        >
+          <input
+            type="checkbox"
+            className="switch"
+            checked={settings.allowEdits}
+            onChange={(e) => save({ allowEdits: e.target.checked })}
+            aria-label="Allow edits"
+          />
+        </Row>
+      </Section>
 
-      <h3>Terminal command</h3>
-      <p className="note">
-        Adds a <code>dayflow</code> command to <code>~/.local/bin</code> so you can see your timeline from any terminal. It starts the
-        CLI already inside Dayflow, so it always matches the app. Nothing is downloaded and your shell configuration isn't touched. Run
-        this once in a terminal, then try <code>dayflow timeline</code>:
-      </p>
-      {info && <CommandBlock text={info.terminalInstall} label="Copy" />}
-    </section>
+      <Section
+        title="Terminal command"
+        sub="Adds a dayflow command to ~/.local/bin so you can see your timeline from any terminal. It starts the CLI already inside Dayflow, so it always matches the app. Nothing is downloaded and your shell configuration isn't touched."
+      >
+        {info && (
+          <>
+            <Row label="Install" sub="Run this once in a terminal, then try dayflow timeline." stack>
+              <CommandBlock text={info.terminalInstall} />
+            </Row>
+            <Row label="Remove" sub="Run this to take the command away again." stack>
+              <CommandBlock text={info.terminalRemove} />
+            </Row>
+          </>
+        )}
+      </Section>
+    </>
   )
 }
 
@@ -68,50 +79,41 @@ function ClientRow({ cli, name, restart }: { cli: CliName; name: string; restart
     void window.dayflow.agentClient(cli, action).then(setRow, (err: unknown) => setRow({ state: 'failed', message: String(err) }))
   }
 
-  return (
-    <div className="field">
-      <div className="row">
-        <strong>{name}</strong>
-        {row.state === 'notFound' && <span className="note">Not found</span>}
-        {row.state === 'checking' && <span className="note">Checking…</span>}
-        {row.state === 'connecting' && <span className="note">Connecting…</span>}
-        {row.state === 'disconnecting' && <span className="note">Disconnecting…</span>}
-        {row.state === 'available' && <button onClick={() => act('connect')}>Connect</button>}
-        {row.state === 'connected' && (
-          <>
-            <span className="ok">● Connected</span>
-            <button onClick={() => act('disconnect')}>Disconnect</button>
-          </>
-        )}
-        {row.state === 'failed' && <button onClick={() => act('connect')}>Retry</button>}
-      </div>
-      {row.state === 'connected' && <p className="note">{restart}</p>}
-      {row.state === 'failed' && <p className="error">{row.message}</p>}
-      {row.state === 'manual' && (
-        <>
-          <p className="note">{row.message} Or run this in a terminal to connect {name}:</p>
-          <CommandBlock text={row.command} label="Copy" />
-        </>
-      )}
-    </div>
-  )
-}
+  const status =
+    row.state === 'connected' ? (
+      <StatusDot kind="good">Connected. {restart}</StatusDot>
+    ) : row.state === 'failed' ? (
+      <StatusDot kind="bad">{row.message}</StatusDot>
+    ) : row.state === 'notFound' ? (
+      <StatusDot kind="neutral">Not found</StatusDot>
+    ) : row.state === 'checking' ? (
+      'Checking…'
+    ) : row.state === 'connecting' ? (
+      'Connecting…'
+    ) : row.state === 'disconnecting' ? (
+      'Disconnecting…'
+    ) : row.state === 'manual' ? (
+      `${row.message} Or run this in a terminal to connect ${name}:`
+    ) : undefined
 
-/** A command or config to copy, shown as is. */
-function CommandBlock({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = useState(false)
   return (
-    <div className="row">
-      <code style={{ flex: 1, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', userSelect: 'all' }}>{text}</code>
-      <button
-        onClick={() => {
-          void window.dayflow.copyText(text)
-          setCopied(true)
-          setTimeout(() => setCopied(false), 2000)
-        }}
-      >
-        {copied ? 'Copied' : label}
-      </button>
-    </div>
+    <Row label={name} sub={status} stack={row.state === 'manual'}>
+      {row.state === 'available' && (
+        <button className="btn-ink" onClick={() => act('connect')}>
+          Connect
+        </button>
+      )}
+      {row.state === 'connected' && (
+        <button className="btn-subtle" onClick={() => act('disconnect')}>
+          Disconnect
+        </button>
+      )}
+      {row.state === 'failed' && (
+        <button className="btn-subtle" onClick={() => act('connect')}>
+          Retry
+        </button>
+      )}
+      {row.state === 'manual' && <CommandBlock text={row.command} />}
+    </Row>
   )
 }

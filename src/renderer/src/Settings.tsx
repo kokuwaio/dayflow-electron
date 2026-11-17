@@ -5,6 +5,7 @@ import { todayKey } from '@shared/day'
 import { cliOf, needsApiKey } from '@shared/providers'
 import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings, type Theme } from '@shared/types'
 import { AgentAccessSettings } from './AgentAccessSettings'
+import { Row, Section, StatusDot } from './SettingsLayout'
 import { PROVIDER_CHOICES } from './providers'
 
 /** Upstream's Settings tabs that the port has (Settings/SettingsView.swift); "categories" opens Other at the category list. */
@@ -18,45 +19,25 @@ const TABS: Array<{ id: Exclude<SettingsTab, 'categories'>; label: string }> = [
   { id: 'other', label: 'Other' }
 ]
 
+/** Upstream's sidebar footer links its release notes; ours are the GitHub releases. */
+const RELEASE_NOTES_URL = 'https://github.com/kokuwaio/dayflow-electron/releases'
 const gb = (bytes: number) => (bytes / 1024 ** 3).toFixed(2)
 type Save = (next: Partial<Settings>) => void
-
-/** A section without a card: 17/600 title, 12 px subtitle, then rows. */
-function Section({ title, sub, children, id }: { title: string; sub?: ReactNode; children?: ReactNode; id?: string }) {
-  return (
-    <section className="s-section" id={id}>
-      <h2>{title}</h2>
-      {sub && <p className="sub">{sub}</p>}
-      {children && <div className="rows">{children}</div>}
-    </section>
-  )
-}
-
-/** Label (and subtitle) on the left, control on the right, hairline below. */
-function Row({ label, sub, children, stack, grow }: { label: ReactNode; sub?: ReactNode; children?: ReactNode; stack?: boolean; grow?: boolean }) {
-  return (
-    <div className={`s-row ${stack ? 'stack' : ''}`}>
-      <div className="label">
-        <b>{label}</b>
-        {sub && <span>{sub}</span>}
-      </div>
-      {children && <div className={`control ${grow ? 'grow' : ''}`}>{children}</div>}
-    </div>
-  )
-}
-
-function StatusDot({ kind, children }: { kind: 'good' | 'warn' | 'bad' | 'neutral'; children: ReactNode }) {
-  return <span className={`status-dot ${kind}`}>{children}</span>
-}
 
 export function SettingsView({ status, tab, onTab }: { status: AppStatus | null; tab: SettingsTab; onTab: (tab: SettingsTab) => void }) {
   const [settings, setSettings] = useState<Settings | null>(null)
   const nav = useRef<HTMLDivElement>(null)
   const [pillTop, setPillTop] = useState(0)
   const current = tab === 'categories' ? 'other' : tab
+  const [version, setVersion] = useState<string | null>(null)
+  useEffect(() => void window.dayflow.getVersion().then(setVersion), [])
 
+  // Reloaded when something else changes them too (an agent's category edit), so a later save
+  // here never writes an old category list back.
   useEffect(() => {
-    void window.dayflow.getSettings().then(setSettings)
+    const load = () => void window.dayflow.getSettings().then(setSettings)
+    load()
+    return window.dayflow.onCardsChanged(load)
   }, [])
   // The selected tab's pill slides to it.
   useEffect(() => {
@@ -80,6 +61,12 @@ export function SettingsView({ status, tab, onTab }: { status: AppStatus | null;
             {t.label}
           </button>
         ))}
+        <div className="settings-version">
+          {version && <span>Dayflow v{version}</span>}
+          <a href={RELEASE_NOTES_URL} target="_blank" rel="noreferrer">
+            Release notes ↗
+          </a>
+        </div>
       </nav>
       <div className="settings-content">
         <div className="settings-tab" key={current}>
@@ -359,7 +346,7 @@ function PrivacyTab({ settings, status, save }: { settings: Settings; status: Ap
       </Row>
       <Row
         label="Hide secrets in screenshots"
-        sub="Reads the text on each frame sent to the AI provider and blacks out API keys, passwords, private keys, seed phrases and recovery codes it recognizes. Catches less than upstream's model, and adds a few seconds per frame."
+        sub="Reads the text on each frame sent to the AI provider and blacks out API keys, passwords, private keys, seed phrases and recovery codes it recognizes. It recognizes these by pattern, so it misses some, and it adds a few seconds per frame."
       >
         <input
           type="checkbox"

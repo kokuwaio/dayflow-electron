@@ -3,7 +3,7 @@ import { connect } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { BridgeServer, handleBridgeLine } from './bridge'
+import { BridgeServer, agentSocketPath, handleBridgeLine } from './bridge'
 import { AgentWriteError } from './writes'
 
 let edits: boolean
@@ -31,6 +31,14 @@ const deps = () => ({
 const request = (o: Record<string, unknown>) => JSON.stringify({ protocol_version: 1, ...o })
 
 describe('bridge messages', () => {
+  it('reports a write that happened as done even when its log line cannot be written', async () => {
+    const failingLog = { ...deps(), log: () => { throw new Error('disk full') } }
+    expect(await handleBridgeLine(request({ operation: 'category_add', arguments: { name: 'Reading' } }), failingLog)).toEqual({
+      ok: true,
+      data: { message: 'Created Reading' }
+    })
+  })
+
   it('runs a write, answers with its data and logs the arguments as one NDJSON line', async () => {
     const r = await handleBridgeLine(request({ operation: 'category_add', arguments: { name: 'Reading' } }), deps())
     expect(r).toEqual({ ok: true, data: { message: 'Created Reading' } })
@@ -128,5 +136,14 @@ describe('bridge socket', () => {
     const answer = await exchange(socketPath, Buffer.alloc(1_048_577, 0x61))
     expect(answer).toBe('')
     expect(handled).toEqual([])
+  })
+})
+
+describe('agentSocketPath', () => {
+  it('uses agent.sock in the data folder, and a named pipe per data folder on Windows', () => {
+    expect(agentSocketPath('/home/me/.config/app', 'linux')).toBe(join('/home/me/.config/app', 'agent.sock'))
+    const pipe = agentSocketPath('C:\\Users\\me\\AppData\\Roaming\\app', 'win32')
+    expect(pipe).toMatch(/^\\\\\.\\pipe\\dayflow-electron-agent-[0-9a-f]{12}$/)
+    expect(agentSocketPath('C:\\other', 'win32')).not.toBe(pipe)
   })
 })

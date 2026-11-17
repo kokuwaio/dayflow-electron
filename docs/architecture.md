@@ -40,7 +40,7 @@ flowchart LR
     Files[("JPEG frames<br/>recordings/")]
     Pipeline["analysis/pipeline.ts<br/>batches, idle check,<br/>failover"]
     Providers["providers/<br/>Anthropic, Gemini,<br/>OpenAI-compatible,<br/>Claude Code, Codex"]
-    Privacy["privacy/<br/>OCR, hide secrets<br/>(opt-in)"]
+    Privacy["privacy/<br/>OCR, hide secrets<br/>(on by default)"]
     Insights["insights/daily.ts<br/>standup"]
     Notify["notifications.ts"]
     Retention["retention.ts<br/>storage limit"]

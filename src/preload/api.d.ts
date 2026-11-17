@@ -36,6 +36,8 @@ export interface DayflowApi {
   saveStandup(day: string, draft: StandupDraft): Promise<void>
   onNavigate(cb: (tab: Tab) => void): () => void
   onDailyChanged(cb: () => void): () => void
+  /** The app version (1.2.3, or 0.0.0-<branch>.<sha> for development builds). */
+  getVersion(): Promise<string>
   getConversations(): Promise<ChatConversation[]>
   getChatMessages(conversationId: string): Promise<ChatStoredMessage[]>
   deleteConversation(conversationId: string): Promise<void>

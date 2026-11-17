@@ -383,7 +383,7 @@ Settings then shows "Window detection works". Limits:
 For the strongest guarantee, pause recording from the tray before opening a
 vault.
 
-**Hide private browsing windows** (Settings → Blocked apps, on by default)
+**Hide private browsing windows** (Settings → Privacy, on by default)
 treats Chrome and Chromium incognito windows and Firefox private windows like
 blocked apps. It reads the window title, so it also needs window detection.
 

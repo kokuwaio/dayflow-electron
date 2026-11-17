@@ -37,6 +37,9 @@ export function wrapperScript(inv: Invocation): string {
 }
 
 /** A command to paste into a terminal that installs `dayflow` into ~/.local/bin. */
+/** Removes what terminalInstallCommand put in place (upstream's tab offers install and remove). */
+export const terminalRemoveCommand = (): string => `rm -f ${TERMINAL_COMMAND_PATH}`
+
 export function terminalInstallCommand(inv: Invocation): string {
   const lines = wrapperScript(inv).trimEnd().split('\n')
   return `mkdir -p ~/.local/bin && printf '%s\\n' ${lines.map(shQuote).join(' ')} > ${TERMINAL_COMMAND_PATH} && chmod +x ${TERMINAL_COMMAND_PATH}`

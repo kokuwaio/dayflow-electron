@@ -20,10 +20,10 @@ import { weekOf } from '../shared/week'
 import { WEEKLY_MIN_TRACKED_MINUTES, trackedMinutes } from '../shared/weekly'
 import type { AgentAccessInfo, AgentClientState, AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings, StandupEntry, Tab } from '../shared/types'
 import type { Span } from './db/store'
-import { BridgeServer } from './agent/bridge'
+import { BridgeServer, agentSocketPath } from './agent/bridge'
 import { type ClientEnv, clientStatus, connectClient, disconnectClient } from './agent/clients'
-import { cliInvocation, manualConfigSnippet, shellLine, terminalInstallCommand } from './agent/invocation'
-import { AGENT_SOCKET, WRITE_LOG } from './agent/protocol'
+import { cliInvocation, manualConfigSnippet, shellLine, terminalInstallCommand, terminalRemoveCommand } from './agent/invocation'
+import { WRITE_LOG } from './agent/protocol'
 import { createWriteHandlers } from './agent/writes'
 import { Pipeline } from './analysis/pipeline'
 import { Recorder } from './capture/recorder'
@@ -385,17 +385,23 @@ async function main(): Promise<void> {
   })
 
   // ---- agent access: the write bridge for the CLI and MCP server (src/main/agent/)
+  const writeHandlers = createWriteHandlers({
+    store,
+    categories: () => settings.get().categories,
+    saveCategories: async (categories) => (await savePreferences({ categories })).categories,
+    cardsChanged: () => changed(),
+    today: todayKey
+  })
   const bridge = new BridgeServer({
-    socketPath: join(dataDir, AGENT_SOCKET),
+    socketPath: agentSocketPath(dataDir),
     logFile: join(dataDir, WRITE_LOG),
     editsEnabled: () => settings.get().allowEdits,
-    handle: createWriteHandlers({
-      store,
-      categories: () => settings.get().categories,
-      saveCategories: async (categories) => (await savePreferences({ categories })).categories,
-      cardsChanged: () => changed(),
-      today: todayKey
-    })
+    handle: async (operation, args) => {
+      const result = await writeHandlers(operation, args)
+      // Category and goal writes change what open views show (Settings included), not only cards.
+      changed()
+      return result
+    }
   })
   const syncBridge = () =>
     (settings.get().allowEdits ? bridge.start() : bridge.stop()).catch((err: unknown) => log(`agent bridge: ${String(err)}`))
@@ -410,9 +416,15 @@ async function main(): Promise<void> {
     configuredPath: settings.get().cliPaths[cli],
     invocation: agentInvocation()
   })
+  ipcMain.handle('app:version', () => app.getVersion())
   ipcMain.handle('agent:info', (): AgentAccessInfo => {
     const inv = agentInvocation()
-    return { command: shellLine([inv.command, ...inv.args]), terminalInstall: terminalInstallCommand(inv), configSnippet: manualConfigSnippet(inv) }
+    return {
+      command: shellLine([inv.command, ...inv.args]),
+      terminalInstall: terminalInstallCommand(inv),
+      terminalRemove: terminalRemoveCommand(),
+      configSnippet: manualConfigSnippet(inv)
+    }
   })
   ipcMain.handle('agent:client', (_e, cli: unknown, action: unknown): Promise<AgentClientState> => {
     if (!isAgentClient(cli)) return Promise.resolve({ state: 'failed', message: 'Unknown client.' })

@@ -917,3 +917,13 @@ input[type='range'] { accent-color: var(--accent); }
   .spinner { animation: none !important; border-top-color: currentColor; }
   .chat-status .dots::after { animation: none !important; width: auto; }
 }
+
+/* A command or config to copy (Settings → MCP / CLI, CLI setup). */
+.command-block { display: flex; align-items: flex-start; gap: 8px; width: 100%; }
+.command-block code {
+  flex: 1; white-space: pre-wrap; overflow-wrap: anywhere; user-select: all;
+  padding: 8px 10px; border-radius: 7px; background: var(--input-fill, rgb(255 255 255 / 0.9)); border: 1px solid var(--input-border, #e1e1e1);
+}
+.settings-version { margin-top: auto; padding: 16px 10px 4px; display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--text-muted); }
+.settings-version a { color: var(--text-muted); text-decoration: none; }
+.settings-version a:hover { color: var(--accent-text); }

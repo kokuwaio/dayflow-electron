@@ -119,6 +119,8 @@ export interface AgentAccessInfo {
   command: string
   /** Paste into a terminal to install `dayflow` into ~/.local/bin. */
   terminalInstall: string
+  /** Paste into a terminal to remove it again. */
+  terminalRemove: string
   /** JSON for MCP clients without a registration command. */
   configSnippet: string
 }

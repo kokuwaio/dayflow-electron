@@ -5,9 +5,11 @@
 // only exists while "Allow edits" is on; file permissions (0600) are the
 // access control, and every request re-checks the setting.
 
+import { createHash } from 'node:crypto'
 import { appendFileSync, chmodSync, lstatSync, unlinkSync } from 'node:fs'
+import { join } from 'node:path'
 import { type Server, type Socket, createServer } from 'node:net'
-import { BRIDGE_PROTOCOL_VERSION, type BridgeResponse, WRITE_OPERATIONS, type WriteOperation, readLine } from './protocol'
+import { BRIDGE_PROTOCOL_VERSION, type BridgeResponse, WRITE_OPERATIONS, type WriteOperation, readLine, AGENT_SOCKET } from './protocol'
 import { AgentWriteError } from './writes'
 import { errorMessage } from '../../shared/errors'
 
@@ -40,16 +42,22 @@ export async function handleBridgeLine(line: string, deps: BridgeDeps): Promise<
   }
   const args = m.arguments ?? {}
   if (!args || typeof args !== 'object' || Array.isArray(args)) return failure('invalid_argument', 'arguments must be an object.')
+  let data: Awaited<ReturnType<BridgeDeps['handle']>>
   try {
-    const data = await deps.handle(operation as WriteOperation, args as Record<string, unknown>)
-    // Every write is recorded, so there is something to inspect if an agent does
-    // something unexpected. Arguments only, never returned data.
-    deps.log(`${JSON.stringify({ at: deps.now().toISOString(), operation, arguments: args })}\n`)
-    return { ok: true, data }
+    data = await deps.handle(operation as WriteOperation, args as Record<string, unknown>)
   } catch (err) {
     if (err instanceof AgentWriteError) return failure(err.code, err.message)
     return failure('internal_error', errorMessage(err))
   }
+  // Every write is recorded, so there is something to inspect if an agent does
+  // something unexpected. Arguments only, never returned data. The write has
+  // happened by now: a log that cannot be written must not report it as failed.
+  try {
+    deps.log(`${JSON.stringify({ at: deps.now().toISOString(), operation, arguments: args })}\n`)
+  } catch {
+    // the log is best effort
+  }
+  return { ok: true, data }
 }
 
 export interface BridgeServerOptions {
@@ -85,7 +93,8 @@ export class BridgeServer {
         process.umask(umask)
       }
     })
-    chmodSync(this.o.socketPath, 0o600)
+    // A Windows pipe has no file mode; its default ACL lets only this user write to it.
+    if (!isPipe(this.o.socketPath)) chmodSync(this.o.socketPath, 0o600)
     this.server = server
   }
 
@@ -94,6 +103,7 @@ export class BridgeServer {
     if (!server) return
     this.server = null
     await new Promise<void>((resolve) => server.close(() => resolve()))
+    if (isPipe(this.o.socketPath)) return
     try {
       unlinkSync(this.o.socketPath)
     } catch {
@@ -124,8 +134,20 @@ export class BridgeServer {
   }
 }
 
+/**
+ * Where the bridge listens: agent.sock in the data folder, or on Windows,
+ * where Node needs one, a named pipe named after the data folder.
+ */
+export function agentSocketPath(dataDir: string, platform: NodeJS.Platform = process.platform): string {
+  if (platform !== 'win32') return join(dataDir, AGENT_SOCKET)
+  return `\\\\.\\pipe\\dayflow-electron-agent-${createHash('sha256').update(dataDir.toLowerCase()).digest('hex').slice(0, 12)}`
+}
+
+const isPipe = (path: string) => path.startsWith('\\\\.\\pipe\\')
+
 /** A socket file left by a crash blocks listen(); anything else at that path is left alone. */
 function removeStaleSocket(path: string): void {
+  if (isPipe(path)) return
   try {
     if (lstatSync(path).isSocket()) unlinkSync(path)
   } catch {

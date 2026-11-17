@@ -7,7 +7,7 @@ import { connect } from 'node:net'
 import { join } from 'node:path'
 import { type Category, sanitizeCategories } from '../shared/categories'
 import { Store } from '../main/db/store'
-import { AGENT_SOCKET } from '../main/agent/protocol'
+import { agentSocketPath } from '../main/agent/bridge'
 
 /** Electron's userData folder name: package.json "name". */
 export const APP_DIR_NAME = 'dayflow-electron'
@@ -35,7 +35,7 @@ export function agentPaths(env: NodeJS.ProcessEnv, platform: NodeJS.Platform, ho
     dataDir,
     database: env.DAYFLOW_DB || join(dataDir, 'dayflow.sqlite'),
     settings: join(dataDir, 'settings.json'),
-    socket: join(dataDir, AGENT_SOCKET)
+    socket: agentSocketPath(dataDir)
   }
 }
 
