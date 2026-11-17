@@ -17,5 +17,6 @@ test:
 	$(IN_SDK) test ./...'
 
 # On the host: needs golangci-lint and the libpipewire-0.3 headers (CI installs both).
+# Some distributions' libpipewire-0.3.pc passes -fno-strict-overflow, which cgo blocks by default.
 lint:
-	golangci-lint run ./...
+	CGO_CFLAGS_ALLOW=-fno-strict-overflow golangci-lint run ./...
