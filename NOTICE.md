@@ -17,3 +17,11 @@ copyright notices are kept here as the MIT license requires.
 
 Both are licensed under the MIT License; the full license text is in
 [LICENSE](LICENSE).
+
+## BIP-0039 English word list
+
+- Source: https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt
+- Copyright (c) 2013 Marek Palatinus, Pavol Rusnak, Aaron Voisine, Sean Bowe
+- Used: the 2,048-word list in `src/main/privacy/bip39-english.ts`, to spot
+  wallet recovery phrases when hiding secrets in screenshots.
+- License: MIT (as stated in BIP-0039).
