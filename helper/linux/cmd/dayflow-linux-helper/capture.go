@@ -304,8 +304,12 @@ func runPWSession(conn *dbus.Conn, opts pwOptions, locked *atomic.Bool, interrup
 				return err
 			}
 			err = jpeg.Encode(f, out, &jpeg.Options{Quality: 75})
-			f.Close()
+			// Close reports write errors too; a half-written frame must not be announced.
+			if cerr := f.Close(); err == nil {
+				err = cerr
+			}
 			if err != nil {
+				_ = os.Remove(name)
 				return err
 			}
 			info, _ := os.Stat(name)

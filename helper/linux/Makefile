@@ -6,7 +6,7 @@ OUT ?= bin/dayflow-linux-helper
 GOROOT_HOST := $(shell go env GOROOT)
 IN_SDK = flatpak run --filesystem=home --command=sh $(SDK) -c 'cd $(CURDIR) && CGO_ENABLED=1 GOTOOLCHAIN=local $(GOROOT_HOST)/bin/go
 
-.PHONY: build vet test
+.PHONY: build vet test lint
 build:
 	$(IN_SDK) build -trimpath -o $(OUT) ./cmd/dayflow-linux-helper'
 
@@ -15,3 +15,7 @@ vet:
 
 test:
 	$(IN_SDK) test ./...'
+
+# On the host: needs golangci-lint and the libpipewire-0.3 headers (CI installs both).
+lint:
+	golangci-lint run ./...

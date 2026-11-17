@@ -23,7 +23,7 @@ release packaging are next. "dayflow-electron" is a working name.
 ## Requirements
 
 - Node.js 24 or later and npm
-- Go 1.27 (for the Linux helper)
+- Go 1.27 and golangci-lint 2 (for the Linux helper)
 - `flatpak-builder`, `org.freedesktop.Sdk//25.08` and
   `org.electronjs.Electron2.BaseApp//25.08` (the helper builds inside the SDK
   because it links `libpipewire`)
@@ -31,9 +31,9 @@ release packaging are next. "dayflow-electron" is a working name.
 ## Development
 
 ```sh
-npm install
-npm run helper      # builds helper/linux/bin/dayflow-linux-helper in the Flatpak SDK
-npm run dev         # starts Electron with hot reload
+make install        # npm ci
+make helper         # builds helper/linux/bin/dayflow-linux-helper in the Flatpak SDK
+make dev            # starts Electron with hot reload
 ```
 
 Set `DAYFLOW_DATA_DIR` to keep development data apart from a real install.
@@ -41,15 +41,15 @@ Set `DAYFLOW_DATA_DIR` to keep development data apart from a real install.
 Checks:
 
 ```sh
-npm run typecheck
-npm test            # Vitest: analysis, store, recorder, providers, Daily and Weekly math
-npm run test:helper # Go tests for helper/linux
+make check          # typecheck, Vitest, golangci-lint and the Go tests
 ```
+
+`make help` lists all targets.
 
 ## Flatpak
 
 ```sh
-npm run flatpak     # pack, build the helper, then flatpak-builder --user --install
+make flatpak        # pack, build the helper, then flatpak-builder --user --install
 flatpak run io.github.kokuwaio.DayflowElectron
 ```
 

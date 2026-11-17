@@ -43,9 +43,9 @@ the upstream repo) and port its behaviour, thresholds and texts.
   `TZ=Europe/Berlin` (set in `vitest.config.ts`), so write times as local
   wall-clock dates.
 - No native Node modules: SQLite is Node's built-in `node:sqlite`.
-- The Go helper links `libpipewire-0.3` through cgo. `npm run helper` and
-  `npm run test:helper` build inside the Flatpak SDK; CI installs
-  `libpipewire-0.3-dev` instead.
+- The Go helper links `libpipewire-0.3` through cgo. `make helper` and
+  `make test-helper` build inside the Flatpak SDK; `make lint` and CI need
+  the headers on the host (CI installs `libpipewire-0.3-dev`).
 - Scripts must run on Linux and macOS: POSIX tools and flags only.
 
 ## Changes
@@ -54,5 +54,5 @@ the upstream repo) and port its behaviour, thresholds and texts.
   builds the release notes from the PR titles.
 - With a feature change, update its checkbox in `docs/roadmap.md`, and
   `docs/usage.md` or `docs/architecture.md` where they describe it.
-- Before a PR: `npm run typecheck`, `npm test`, and `npm run test:helper` when
-  `helper/linux` changed.
+- Before a PR: `make check` (typecheck, Vitest, golangci-lint and the Go
+  tests); the root `Makefile` lists every task (`make help`).
