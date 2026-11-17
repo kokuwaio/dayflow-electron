@@ -23,6 +23,13 @@ describe('timeline review (upstream StorageManager+TimelineReview, TimelineRevie
     expect(unreviewedCards([a], enough, day)).toEqual([]) // 48 of 60, overlaps merged
   })
 
+  it('counts a card across the 4 AM boundary as reviewed once its part of the day is rated', () => {
+    // 3:50-4:10 AM the next morning belongs to this day, which ends at 4 AM.
+    const next = (h: number, m: number) => new Date(2026, 10, 18, h, m).getTime() / 1000
+    const late: TimelineCard = { ...card(10, 1), start: next(3, 50), end: next(4, 10) }
+    expect(unreviewedCards([late], [{ start: next(3, 50), end: next(4, 10), rating: 'focused' }], day)).toEqual([])
+  })
+
   it('sums rated time per rating, clipped to the 4 AM day, and the end of the latest rating', () => {
     const { start, end } = dayRange(day)
     const segments = [

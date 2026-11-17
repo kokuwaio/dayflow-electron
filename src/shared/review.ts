@@ -43,8 +43,11 @@ export function unreviewedCards(cards: TimelineCard[], segments: ReviewSegment[]
     .filter((c) => categoryKey(c.category) !== categoryKey(SYSTEM_CATEGORY))
     .sort((a, b) => a.start - b.start || a.id - b.id)
     .filter((c) => {
-      const rated = covered.reduce((sum, s) => sum + Math.max(0, Math.min(c.end, s.end) - Math.max(c.start, s.start)), 0)
-      return rated / Math.max(c.end - c.start, 1) < REVIEW_COVERAGE
+      // Both within the day window: ratings are clipped at 4 AM, so the card is too.
+      const from = Math.max(c.start, start)
+      const to = Math.min(c.end, end)
+      const rated = covered.reduce((sum, s) => sum + Math.max(0, Math.min(to, s.end) - Math.max(from, s.start)), 0)
+      return rated / Math.max(to - from, 1) < REVIEW_COVERAGE
     })
 }
 
