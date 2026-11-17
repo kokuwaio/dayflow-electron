@@ -47,16 +47,21 @@ a small MIT-licensed Electron port whose analysis loop and providers we reuse
 The parts that differ per OS. Everything else is plain Electron.
 
 On Linux all of this lives in one Go helper that talks D-Bus and Wayland and
-prints JSON lines (see [docs/platform-notes.md](platform-notes.md)).
+prints JSON lines (see [docs/platform-notes.md](platform-notes.md)). Windows
+and macOS use Electron's APIs (`src/main/platform/win32.ts`, `darwin.ts`,
+sharing `electron-capture.ts` and `power-session.ts`) plus one small script
+each for the focused window; no native modules. Both are built and unit
+tested in CI but not yet tried on real machines.
 
 | Piece | Linux Wayland | Linux X11 | Windows | macOS |
 | --- | --- | --- | --- | --- |
-| Screenshot of the screen under the mouse | ScreenCast portal: all monitors shared once, restore token skips the dialog afterwards, native PipeWire client grabs frames, cursor metadata picks the screen under the mouse (tested in Flatpak on KDE) | `desktopCapturer` | `desktopCapturer` (dayflow-windows) | `desktopCapturer` + Screen Recording permission |
-| Active app and window title | KDE: KWin script over D-Bus (tested in Flatpak, opt-in permission). GNOME needs a Shell extension; wlroots has `wlr-foreign-toplevel-management`; otherwise the first screen | `_NET_ACTIVE_WINDOW` | user32 (dayflow-windows), later a native module instead of PowerShell | `NSWorkspace` via a small helper |
-| Idle time | `ext-idle-notify-v1` (tested on KDE). Electron's `powerMonitor` always reports 0 on Wayland | `powerMonitor` | `powerMonitor` | `powerMonitor` |
-| Lock and sleep | `org.freedesktop.ScreenSaver.ActiveChanged` (tested, including restart after unlock), logind `PrepareForSleep`. Capture must pause while locked | same | `powerMonitor` events | `powerMonitor` events |
-| Autostart | XDG autostart `.desktop` file | same | `setLoginItemSettings` | `setLoginItemSettings` |
-| Deep links `scheme://` | `.desktop` `MimeType=x-scheme-handler/...` | same | `setAsDefaultProtocolClient` | same |
+| Screenshot of the screen under the mouse | ScreenCast portal: all monitors shared once, restore token skips the dialog afterwards, native PipeWire client grabs frames, cursor metadata picks the screen under the mouse (tested in Flatpak on KDE) | `desktopCapturer` | `desktopCapturer` of the display under `screen.getCursorScreenPoint()` (done, after dayflow-windows) | Same as Windows (done); needs the Screen Recording permission, missing permission shows as a capture error |
+| Active app and window title | KDE: KWin script over D-Bus (tested in Flatpak, opt-in permission). GNOME needs a Shell extension; wlroots has `wlr-foreign-toplevel-management`; otherwise the first screen | `_NET_ACTIVE_WINDOW` | user32 `GetForegroundWindow` from a long-running PowerShell process, process name as app ID (done, after dayflow-windows) | `NSWorkspace` frontmost app and `CGWindowListCopyWindowInfo` title from a long-running `osascript -l JavaScript` loop, bundle ID as app ID (done); titles need Screen Recording |
+| Idle time | `ext-idle-notify-v1` (tested on KDE). Electron's `powerMonitor` always reports 0 on Wayland | `powerMonitor` | `powerMonitor.getSystemIdleTime()`, polled every 5 s (done) | same as Windows (done) |
+| Lock and sleep | `org.freedesktop.ScreenSaver.ActiveChanged` (tested, including restart after unlock), logind `PrepareForSleep`. Capture must pause while locked | same | `powerMonitor` lock, unlock, suspend and resume events (done) | same as Windows (done) |
+| Autostart | XDG autostart `.desktop` file | same | `setLoginItemSettings` with `--hidden` (done) | `setLoginItemSettings`; `wasOpenedAtLogin` starts it hidden (done) |
+| Deep links `scheme://` | `.desktop` `MimeType=x-scheme-handler/...` | same | `setAsDefaultProtocolClient` | `CFBundleURLTypes` from electron-builder's `protocols`, `open-url` event |
+| Packages | Flatpak | | NSIS installer per architecture (x64, arm64), unsigned | dmg per architecture (arm64, x64), ad-hoc signed |
 | Tray | AppIndicator / StatusNotifierItem, plain menu items only | same | `Tray` | `Tray` |
 | Agent socket | Unix socket in `$XDG_RUNTIME_DIR` | same | Named pipe | Unix socket |
 
@@ -104,8 +109,8 @@ JSON-per-day store for SQLite.
 - [x] Capture through the platform interface; interval 1/5/10/20/30/60 s
       (default 10 s), 720p or 1080p, display under the cursor
       (upstream `Core/Recording/ScreenRecorder.swift`, `ActiveDisplayTracker.swift`).
-      Linux: `helper/linux` (portal + PipeWire); Windows and macOS report
-      "not implemented yet".
+      Linux: `helper/linux` (portal + PipeWire); Windows and macOS:
+      `desktopCapturer` (`src/main/platform/electron-capture.ts`).
 - [x] Pause on lock and sleep; resume 5 s after wake or unlock; back off on
       capture errors (60/120/300/600 s). While idle, capture keeps running
       and tags each frame with the idle seconds, like upstream, so idle
@@ -240,9 +245,17 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
 - [x] Database backups: a daily copy, the newest three kept, a damaged
   database restored from the newest copy on start, WAL checkpoints every 5
   minutes (upstream `StorageManager+Maintenance`).
-- [ ] Packages (Flatpak for x86_64 and aarch64 built in CI and attached to releases): Flatpak on Linux (own repository first, Flathub once the
+- [ ] Packages: Flatpak on Linux (own repository first, Flathub once the
   permissions are settled; updates come through Flatpak), NSIS and dmg with
   `electron-updater` from GitHub Releases; signing for Windows and macOS.
+  Done: Flatpak for x86_64 and aarch64, NSIS installers (x64, arm64) and dmg
+  images (arm64, x64), all built in CI and attached to releases. Open:
+  Windows and macOS signing and notarization (certificates needed, see
+  [release.md](release.md#signing-windows-and-macos)), `electron-updater`,
+  a macOS icon (needs 512 px artwork).
+- [ ] Windows and macOS on real machines: capture, window detection, lock,
+  idle, autostart and deep links are implemented and unit tested, not yet
+  tried by hand. Onboarding still says recording is not built there.
 - [ ] Own name, icon and artwork. Bundled fonts only with their OFL license files.
 
 ### Later or never

@@ -16,7 +16,8 @@ database and the network.
 - **Main process** (Node, Electron): records, stores, analyzes and serves the
   data.
 - **Linux helper**: a Go program for what Electron cannot do on Wayland.
-  The main process starts it and reads JSON lines from it.
+  The main process starts it and reads JSON lines from it. Windows and macOS
+  need no helper (see [Windows and macOS](#windows-and-macos)).
 
 ```mermaid
 flowchart LR
@@ -138,6 +139,25 @@ sequenceDiagram
   end
 ```
 
+## Windows and macOS
+
+The recorder sees the same `Platform` interface (`src/main/platform/types.ts`)
+on every OS; `createPlatform` in `platform/index.ts` picks the implementation.
+On Windows and macOS it is built from Electron APIs, which `index.ts` passes
+in, so the platform code never imports Electron and its tests run without it.
+
+| Piece | Windows (`win32.ts`) | macOS (`darwin.ts`) |
+| --- | --- | --- |
+| Frames | `electron-capture.ts`: every interval, `desktopCapturer` grabs the display under `screen.getCursorScreenPoint()` at the configured height and writes a JPEG named like the Linux helper's (`20261117-090507_s1.jpg`). While blocked it saves nothing and reports a skipped frame. Three failed screenshots in a row end capture, and the recorder backs off. | Same, after checking the Screen Recording permission before each frame; a missing permission ends capture with a message the status shows. |
+| Focused window | A long-running Windows PowerShell process calls user32 `GetForegroundWindow` and prints `{"app","title"}` lines on change; app is the process name. | A long-running `osascript -l JavaScript` loop reads `NSWorkspace`'s frontmost app and its window title from `CGWindowListCopyWindowInfo`; app is the bundle ID. Replaced every 5 minutes; off without Screen Recording. |
+| Lock, sleep, idle | `power-session.ts`: `powerMonitor` events, idle time polled every 5 s | same |
+| Autostart | `app.setLoginItemSettings` with `--hidden` | `app.setLoginItemSettings`; `wasOpenedAtLogin` starts hidden |
+
+`window-process.ts` runs either watcher script: it parses its lines
+(`window-lines.ts`), reports why it stopped as "window detection
+unavailable", and restarts it after 10 s, or after 5 minutes when it never
+worked.
+
 ## Insights
 
 - **Daily** builds its activity grid from the day's cards in the renderer.
@@ -177,7 +197,7 @@ sequenceDiagram
 | --- | --- |
 | `src/main/index.ts` | Starts everything and registers the IPC handlers |
 | `src/main/capture/` | Recorder: pause, restart with backoff, blocked apps |
-| `src/main/platform/` | OS interface; `linux.ts` runs the Go helper |
+| `src/main/platform/` | OS interface; `linux.ts` runs the Go helper, `win32.ts` and `darwin.ts` use Electron APIs and a window watcher script |
 | `src/main/analysis/` | Batching, idle check, prompts, card checks, two-step path, pipeline |
 | `src/main/providers/` | One adapter per provider; `cli/` runs Claude Code and Codex on the host |
 | `src/main/insights/` | Daily standup generation |

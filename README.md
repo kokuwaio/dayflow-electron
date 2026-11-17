@@ -10,15 +10,19 @@ Status: Linux / Wayland, packaged as a Flatpak. The timeline (M1, M2), the
 Daily and Weekly tabs and notifications (M3) work; chat, agent access and
 release packaging are next. "dayflow-electron" is a working name.
 
+Windows (NSIS installer) and macOS (dmg) builds come from CI with capture,
+window detection and autostart implemented, but are not yet tested on real
+machines and not signed.
+
 ## Documentation
 
 | Document | What |
 | --- | --- |
-| [docs/usage.md](docs/usage.md) | Install, providers, local models with Ollama, Claude Code and Codex, the tabs, blocked apps, troubleshooting |
+| [docs/usage.md](docs/usage.md) | Install on Linux, Windows and macOS, providers, local models with Ollama, Claude Code and Codex, the tabs, blocked apps, troubleshooting |
 | [docs/architecture.md](docs/architecture.md) | How the app works, with diagrams |
 | [docs/roadmap.md](docs/roadmap.md) | Every upstream feature mapped to a milestone, with what is done |
 | [docs/platform-notes.md](docs/platform-notes.md) | What was tested on which Linux desktop, and why |
-| [docs/release.md](docs/release.md) | Publishing a release and the Flathub submission |
+| [docs/release.md](docs/release.md) | Publishing a release, Windows and macOS signing, the Flathub submission |
 
 ## Requirements
 
@@ -46,6 +50,16 @@ make check          # typecheck, Vitest, golangci-lint and the Go tests
 
 `make help` lists all targets.
 
+## Windows and macOS
+
+```sh
+make dist-win       # on Windows: NSIS installers for x64 and arm64 in dist/
+make dist-mac       # on macOS: dmg images for arm64 and x64 in dist/
+```
+
+Neither needs the Go helper. CI builds both on every pull request and
+release; see [docs/release.md](docs/release.md) for signing.
+
 ## Flatpak
 
 ```sh
@@ -61,7 +75,7 @@ pauses while the screen is locked.
 
 | Path | What |
 | --- | --- |
-| `src/main/` | Electron main process: capture, analysis, providers, SQLite store, Daily standup, notifications, platform interface |
+| `src/main/` | Electron main process: capture, analysis, providers, SQLite store, Daily standup, notifications, platform interface (Linux helper, Windows and macOS through Electron) |
 | `src/renderer/` | React UI: Timeline, Daily, Weekly, Settings, onboarding |
 | `src/shared/` | Pure logic used by both: 4 AM days, categories, Daily and Weekly math, export |
 | `helper/linux/` | Go helper for Linux desktop access: ScreenCast portal + PipeWire, lock/sleep/idle, focused window, autostart |
