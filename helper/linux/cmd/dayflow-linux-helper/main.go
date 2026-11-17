@@ -11,6 +11,9 @@
 //	        screen lock, sleep and idle
 //	window  active window title and app (KDE only, opt-in KWin permission
 //	        in Flatpak); the app uses it for blocked apps
+//	grant   [-token F]
+//	        opens the ScreenCast share dialog once and stores the restore
+//	        token, without capturing; the app's onboarding uses it
 //	autostart -enable=true|false [-command C]
 //	        launch at login (Background portal inside Flatpak)
 package main
@@ -51,13 +54,15 @@ func fail(err error) {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: dayflow-linux-helper capture|watch|window|autostart|version [flags]")
+		fmt.Fprintln(os.Stderr, "usage: dayflow-linux-helper capture|grant|watch|window|autostart|version [flags]")
 		os.Exit(2)
 	}
 	var err error
 	switch os.Args[1] {
 	case "capture":
 		err = runCapture(os.Args[2:])
+	case "grant":
+		err = runGrant(os.Args[2:])
 	case "watch":
 		err = runWatch(os.Args[2:])
 	case "window":
