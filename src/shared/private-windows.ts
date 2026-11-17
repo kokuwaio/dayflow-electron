@@ -7,9 +7,10 @@ import type { ActiveWindow } from './blocklist'
 
 type Family = 'chromium' | 'firefox'
 
-/** Linux app IDs (KWin resource class or Flatpak ID, lower case) of the browsers upstream verifies. */
+/** App IDs of the browsers upstream verifies: Linux resource class or Flatpak ID, Windows process name, macOS bundle ID (lower case). */
 const FAMILIES: Record<string, Family> = {
   'google-chrome': 'chromium',
+  chrome: 'chromium', // Windows: the process name
   'google-chrome-beta': 'chromium',
   'google-chrome-unstable': 'chromium',
   'com.google.chrome': 'chromium',

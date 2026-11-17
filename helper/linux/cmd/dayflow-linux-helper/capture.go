@@ -298,7 +298,8 @@ func runPWSession(conn *dbus.Conn, opts pwOptions, locked *atomic.Bool, interrup
 			}
 			out := frames.ScaleToHeight(rgba, opts.height)
 			now := time.Now()
-			name := filepath.Join(opts.dir, fmt.Sprintf("%s_s%d.jpg", now.Format("20060102-150405"), idx))
+			// The UTC offset keeps the two frames of the repeated autumn hour apart.
+			name := filepath.Join(opts.dir, fmt.Sprintf("%s_s%d.jpg", now.Format("20060102-150405-0700"), idx))
 			f, err := os.Create(name)
 			if err != nil {
 				return err

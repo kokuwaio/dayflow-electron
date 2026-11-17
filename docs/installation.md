@@ -106,4 +106,4 @@ other MCP clients; [usage.md](usage.md) explains the commands.
 ## Which version is installed
 
 The Settings sidebar shows the version. Release builds carry the tag
-(`1.2.0`); builds from a branch show `0.0.0-<branch>.<commit>`.
+(`1.2.0`); builds from a branch show `0.0.0-<branch>.g<commit>`.

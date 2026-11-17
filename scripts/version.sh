@@ -1,6 +1,6 @@
 #!/bin/sh
 # Prints the version for builds: "1.2.3" for a release tag v1.2.3, otherwise
-# "0.0.0-<branch>.<short sha>" (a semver prerelease). Uses GitHub Actions'
+# "0.0.0-<branch>.g<short sha>" (a semver prerelease). Uses GitHub Actions'
 # variables in CI and git locally. POSIX sh, runs on Linux and macOS.
 set -eu
 
@@ -29,4 +29,10 @@ esac
 # Prerelease identifiers allow only [0-9A-Za-z-]; "feat/x_y" becomes "feat-x-y".
 slug=$(printf '%s' "$branch" | tr -c '0-9A-Za-z-' '-' | sed 's/--*/-/g; s/^-//; s/-$//')
 short=$(printf '%s' "$sha" | cut -c1-7)
-echo "0.0.0-${slug:-unknown}.${short:-0000000}"
+# A numeric identifier must not start with 0 (SemVer), so neither part may be
+# all digits: the commit gets git describe's "g", a numeric branch a "b".
+case "${slug:-unknown}" in
+  *[!0-9]*) ;;
+  *) slug="b$slug" ;;
+esac
+echo "0.0.0-${slug:-unknown}.g${short:-0000000}"

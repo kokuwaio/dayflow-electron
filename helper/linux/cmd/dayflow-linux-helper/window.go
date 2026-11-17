@@ -54,11 +54,21 @@ func runWindow() error {
 			return err
 		}
 	}
-	script := filepath.Join(scriptDir, "dayflow-electron-window.js")
-	if err := os.WriteFile(script, []byte(fmt.Sprintf(kwinScript, conn.Names()[0], appID)), 0o600); err != nil {
+	// A unique name: outside Flatpak the temp folder is shared by all users,
+	// and one user's file must not keep another user's watcher from starting.
+	f, err := os.CreateTemp(scriptDir, "dayflow-electron-window-*.js")
+	if err != nil {
 		return err
 	}
+	script := f.Name()
 	defer os.Remove(script)
+	if _, err := fmt.Fprintf(f, kwinScript, conn.Names()[0], appID); err != nil {
+		f.Close()
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
 
 	plugin := "dayflow-electron-window"
 	kwin := conn.Object("org.kde.KWin", "/Scripting")

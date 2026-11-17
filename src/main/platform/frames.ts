@@ -26,11 +26,17 @@ export interface DisplayInfo {
 
 const pad = (n: number, width = 2) => String(n).padStart(width, '0')
 
-/** "20261117-090507_s1.jpg": local capture time and screen index, like the Linux helper. */
+/**
+ * "20261117-090507+0100_s1.jpg": local capture time, UTC offset and screen
+ * index, like the Linux helper. The offset keeps the repeated autumn hour's
+ * frames apart.
+ */
 export function frameFileName(at: Date, displayIndex: number): string {
   const date = `${at.getFullYear()}${pad(at.getMonth() + 1)}${pad(at.getDate())}`
   const time = `${pad(at.getHours())}${pad(at.getMinutes())}${pad(at.getSeconds())}`
-  return `${date}-${time}_s${displayIndex}.jpg`
+  const offset = -at.getTimezoneOffset()
+  const zone = `${offset < 0 ? '-' : '+'}${pad(Math.floor(Math.abs(offset) / 60))}${pad(Math.abs(offset) % 60)}`
+  return `${date}-${time}${zone}_s${displayIndex}.jpg`
 }
 
 /** Distance from p to the rectangle; 0 inside it. */

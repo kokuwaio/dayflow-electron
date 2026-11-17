@@ -6,6 +6,8 @@ describe('private browser windows (upstream BrowserWindowClassifier, titles only
   it('recognizes Chromium incognito and Firefox private browsing titles', () => {
     expect(isPrivateBrowserWindow({ app: 'google-chrome', title: 'New Tab - Google Chrome (Incognito)' })).toBe(true)
     expect(isPrivateBrowserWindow({ app: 'org.chromium.Chromium', title: 'Neuer Tab - Chromium (Inkognito)' })).toBe(true)
+    // Windows reports the process name (chrome.exe → chrome).
+    expect(isPrivateBrowserWindow({ app: 'chrome', title: 'New Tab - Google Chrome (Incognito)' })).toBe(true)
     expect(isPrivateBrowserWindow({ app: 'org.mozilla.firefox', title: 'Example — Mozilla Firefox Private Browsing' })).toBe(true)
     expect(isPrivateBrowserWindow({ app: 'firefox', title: 'Beispiel — Mozilla Firefox Privates Surfen' })).toBe(true)
   })
