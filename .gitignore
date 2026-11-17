@@ -1,0 +1,9 @@
+node_modules/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+
+# core dumps
+core
+core.[0-9]*

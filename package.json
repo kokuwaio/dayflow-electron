@@ -1,0 +1,40 @@
+{
+  "name": "dayflow-electron",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cross-platform reimplementation of Dayflow: a timeline of your day from periodic screenshots.",
+  "license": "MIT",
+  "type": "module",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "helper": "make -C helper/linux build",
+    "test:helper": "make -C helper/linux test",
+    "pack": "electron-vite build && electron-builder --linux dir",
+    "flatpak": "npm run pack && npm run helper && flatpak-builder --user --install --force-clean flatpak/build flatpak/io.github.monotek.DayflowElectron.yml"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "electron": "45.3.3",
+    "electron-builder": "^26.18.0",
+    "electron-vite": "^6.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.9.0"
+  },
+  "author": "monotek",
+  "homepage": "https://github.com/monotek/dayflow-electron"
+}

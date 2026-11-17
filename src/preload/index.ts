@@ -1,0 +1,27 @@
+import { contextBridge, ipcRenderer } from 'electron'
+import type { DayflowApi } from './api'
+
+const api: DayflowApi = {
+  getDay: (day) => ipcRenderer.invoke('day:get', day),
+  getStatus: () => ipcRenderer.invoke('status:get'),
+  getSettings: () => ipcRenderer.invoke('settings:get'),
+  saveSettings: (next) => ipcRenderer.invoke('settings:save', next),
+  setApiKey: (kind, key) => ipcRenderer.invoke('key:set', kind, key),
+  testProvider: () => ipcRenderer.invoke('provider:test'),
+  pause: (seconds) => ipcRenderer.invoke('capture:pause', seconds),
+  resume: () => ipcRenderer.invoke('capture:resume'),
+  openRecordings: () => ipcRenderer.invoke('recordings:open'),
+  runAnalysis: () => ipcRenderer.invoke('analysis:run'),
+  onCardsChanged: (cb) => {
+    const listener = () => cb()
+    ipcRenderer.on('cards:changed', listener)
+    return () => ipcRenderer.off('cards:changed', listener)
+  },
+  onStatus: (cb) => {
+    const listener = (_e: unknown, s: Parameters<typeof cb>[0]) => cb(s)
+    ipcRenderer.on('status:changed', listener)
+    return () => ipcRenderer.off('status:changed', listener)
+  }
+}
+
+contextBridge.exposeInMainWorld('dayflow', api)
