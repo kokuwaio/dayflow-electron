@@ -1,4 +1,9 @@
-import type { ProviderKind } from './types'
+import type { CliName, ProviderKind } from './types'
+
+const CLI_OF: Partial<Record<ProviderKind, CliName>> = { 'claude-cli': 'claude', 'codex-cli': 'codex' }
+
+/** The agent CLI behind a provider kind, or null for API providers. */
+export const cliOf = (kind: ProviderKind): CliName | null => CLI_OF[kind] ?? null
 
 /**
  * A server on this computer or the local network (Ollama, LM Studio): it
@@ -20,5 +25,6 @@ export function isLocalUrl(url: string): boolean {
 
 /** Whether a provider can only run with an API key. */
 export function needsApiKey(kind: ProviderKind, openaiBaseUrl: string): boolean {
+  if (cliOf(kind)) return false
   return kind !== 'openai' || !isLocalUrl(openaiBaseUrl)
 }

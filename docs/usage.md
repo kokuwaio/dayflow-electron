@@ -119,22 +119,38 @@ Start LM Studio's local server (default `http://localhost:1234/v1`), load a
 vision model, and enter that URL and the model name the same way. No API key
 is needed.
 
-## Claude Code, Codex and other agent CLIs (planned)
+## Claude Code or Codex on your subscription
 
-Not available yet. The plan (ROADMAP.md, M2) is to let the app use the
-`claude` and `codex` command-line tools you already have, so analysis runs on
-your subscription instead of an API key. Because the app runs in the Flatpak
-sandbox and those tools live on the host, the app would start them through
-`flatpak-spawn --host`, which needs a one-time opt-in:
+Instead of an API key, the app can use the `claude` (Claude Code) or `codex`
+command-line tool you already use, with its login and subscription. Each
+15-minute batch then runs one `claude -p` or `codex exec` call with up to 15
+screenshots, like upstream Dayflow. The screenshots and prompt go to Anthropic
+or OpenAI under your account.
 
-```sh
-flatpak override --user --talk-name=org.freedesktop.Flatpak io.github.monotek.DayflowElectron
-```
+1. Install and log in on the host, in a normal terminal:
+   - Claude Code: `npm install -g @anthropic-ai/claude-code`, then run
+     `claude` and type `/login`.
+   - Codex: `npm install -g @openai/codex`, then `codex login`.
+2. Allow the Flatpak to start programs on your computer, once, then restart
+   the app. This permission lets the app run any program on the host, which
+   is why it is not on by default:
 
-That permission lets the app run any program on the host, which is why the
-app does not request it by default. Agent access in the other direction, so
-that Claude Code or another agent can read your timeline through a CLI or an
-MCP server, is planned for M4.
+   ```sh
+   flatpak override --user --talk-name=org.freedesktop.Flatpak io.github.monotek.DayflowElectron
+   ```
+
+3. In **Settings**, choose **Claude Code** or **Codex** and click **Check**.
+   The app finds the tool through your login shell (so installs through npm,
+   mise or nvm work), or you enter its full path. Then **Test connection**.
+
+Defaults follow upstream: Claude Code uses the `haiku` model, Codex
+`gpt-6-luna` (falling back to `gpt-5.6-luna` when your account cannot use it
+yet). Change the model in Settings. If the tool reports that you are logged
+out or hit your usage limit, the batch shows "Processing failed" with that
+message; the fallback provider, if set, takes over.
+
+Agent access in the other direction, so that Claude Code or another agent can
+read your timeline through a CLI or an MCP server, is planned for M4.
 
 ## Keep password managers out
 

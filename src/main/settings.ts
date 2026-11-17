@@ -7,7 +7,9 @@ import { dirname } from 'node:path'
 import { safeStorage } from 'electron'
 import { CAPTURE_INTERVALS, DEFAULT_SETTINGS, type ProviderKind, type Settings } from '../shared/types'
 
-const KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai']
+const KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'codex-cli']
+/** Providers that use an API key (the agent CLIs use the user's own login). */
+const KEY_KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai']
 
 async function writeAtomic(file: string, data: string): Promise<void> {
   await mkdir(dirname(file), { recursive: true })
@@ -49,6 +51,10 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
         ? Math.round(Number(r.storageLimitGb))
         : DEFAULT_SETTINGS.storageLimitGb,
     launchAtLogin: r.launchAtLogin === true,
+    cliPaths: {
+      claude: typeof r.cliPaths?.claude === 'string' ? r.cliPaths.claude.trim() : '',
+      codex: typeof r.cliPaths?.codex === 'string' ? r.cliPaths.codex.trim() : ''
+    },
     blockedApps: Array.isArray(r.blockedApps)
       ? r.blockedApps.filter((x): x is string => typeof x === 'string' && x.trim() !== '').map((x) => x.trim()).slice(0, 100)
       : [...DEFAULT_SETTINGS.blockedApps]
@@ -69,7 +75,7 @@ export class SettingsStore {
   static async open(settingsFile: string, keysFile: string): Promise<SettingsStore> {
     const store = new SettingsStore(settingsFile, keysFile)
     const stored = readJson(keysFile) as Record<string, string>
-    for (const k of KINDS) {
+    for (const k of KEY_KINDS) {
       const encrypted = stored[k]
       if (!encrypted) continue
       try {
@@ -96,8 +102,9 @@ export class SettingsStore {
   }
 
   hasKeys(): Record<ProviderKind, boolean> {
-    return { anthropic: !!this.keys.anthropic, gemini: !!this.keys.gemini, openai: !!this.keys.openai }
+    return Object.fromEntries(KINDS.map((k) => [k, !!this.keys[k]])) as Record<ProviderKind, boolean>
   }
+
 
   /** Stores the key encrypted; an empty key removes it. */
   async setApiKey(kind: ProviderKind, key: string): Promise<void> {
@@ -108,7 +115,7 @@ export class SettingsStore {
     if (trimmed) this.keys[kind] = trimmed
     else delete this.keys[kind]
     const out: Record<string, string> = {}
-    for (const k of KINDS) {
+    for (const k of KEY_KINDS) {
       const value = this.keys[k]
       if (value) out[k] = (await safeStorage.encryptStringAsync(value)).toString('base64')
     }

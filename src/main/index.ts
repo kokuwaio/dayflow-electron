@@ -1,4 +1,5 @@
 import { mkdirSync } from 'node:fs'
+import { homedir } from 'node:os'
 import { unlink } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -6,13 +7,14 @@ import { BrowserWindow, Menu, Tray, app, ipcMain, nativeImage, shell } from 'ele
 import { dayKey } from '../shared/day'
 import { needsApiKey } from '../shared/providers'
 import { PAUSE_PRESETS, describeRecorder } from '../shared/status'
-import type { AppStatus, ProviderKind, Settings } from '../shared/types'
+import type { AppStatus, CliName, ProviderKind, Settings } from '../shared/types'
 import { Pipeline } from './analysis/pipeline'
 import { DEFAULT_CATEGORIES } from './analysis/prompt'
 import { Recorder } from './capture/recorder'
 import { Store } from './db/store'
 import { createPlatform } from './platform'
 import { createProvider } from './providers'
+import { findCli, hostAccess, nodeRunner } from './providers/cli/host'
 import { selectFramesToPurge } from './retention'
 import { SettingsStore } from './settings'
 
@@ -76,9 +78,13 @@ async function main(): Promise<void> {
     () => settings.get().blockedApps
   )
 
+  const inFlatpak = !!process.env.FLATPAK_ID
+  const cliEnv = { inFlatpak, home: homedir(), scratchDir: join(dataDir, 'cli-frames'), appId: process.env.FLATPAK_ID ?? '' }
   const providerFor = (kind: ProviderKind) => {
     const s = settings.get()
-    return createProvider({ kind, model: s.models[kind], baseUrl: s.openaiBaseUrl }, settings.apiKey(kind))
+    return createProvider({ kind, model: s.models[kind], baseUrl: s.openaiBaseUrl }, settings.apiKey(kind), {
+      cli: { ...cliEnv, runner: nodeRunner, paths: s.cliPaths }
+    })
   }
   const currentProvider = () => providerFor(settings.get().provider)
   const usable = (kind: ProviderKind) => !needsApiKey(kind, settings.get().openaiBaseUrl) || !!settings.apiKey(kind)
@@ -155,6 +161,15 @@ async function main(): Promise<void> {
     updateTray()
   })
   ipcMain.handle('recordings:open', () => shell.openPath(recordingsDir))
+  ipcMain.handle('cli:check', async (_e, cli: CliName) => {
+    const access = await hostAccess(nodeRunner, inFlatpak, cliEnv.appId)
+    if (!access.ok) return { ok: false, message: access.reason }
+    const configuredPath = settings.get().cliPaths[cli]
+    const found = await findCli(nodeRunner, cli, { ...cliEnv, ...(configuredPath ? { configuredPath } : {}) })
+    return found
+      ? { ok: true, message: `Found ${found.path}. Click "Test connection" to check that you are logged in.` }
+      : { ok: false, message: `Not found${configuredPath ? ` at ${configuredPath}` : ''}. Install it, or enter its full path.` }
+  })
   ipcMain.handle('analysis:run', () => pipeline.tick())
 
   // ---- tray

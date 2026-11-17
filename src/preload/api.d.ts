@@ -1,4 +1,4 @@
-import type { AppStatus, ProviderKind, Settings, TimelineCard } from '../shared/types'
+import type { AppStatus, CliName, ProviderKind, Settings, TimelineCard } from '../shared/types'
 
 /** The API the preload script exposes to the renderer as window.dayflow. */
 export interface DayflowApi {
@@ -12,6 +12,7 @@ export interface DayflowApi {
   resume(): Promise<void>
   openRecordings(): Promise<string>
   runAnalysis(): Promise<void>
+  checkCli(cli: CliName): Promise<{ ok: boolean; message: string }>
   onCardsChanged(cb: () => void): () => void
   onStatus(cb: (status: AppStatus) => void): () => void
 }

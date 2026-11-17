@@ -12,6 +12,7 @@ const api: DayflowApi = {
   resume: () => ipcRenderer.invoke('capture:resume'),
   openRecordings: () => ipcRenderer.invoke('recordings:open'),
   runAnalysis: () => ipcRenderer.invoke('analysis:run'),
+  checkCli: (cli) => ipcRenderer.invoke('cli:check', cli),
   onCardsChanged: (cb) => {
     const listener = () => cb()
     ipcRenderer.on('cards:changed', listener)

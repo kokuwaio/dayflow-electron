@@ -34,7 +34,10 @@ export interface TimelineCard {
   appSites: AppSites
 }
 
-export type ProviderKind = 'anthropic' | 'gemini' | 'openai'
+export type ProviderKind = 'anthropic' | 'gemini' | 'openai' | 'claude-cli' | 'codex-cli'
+
+/** The agent CLIs that can act as providers. */
+export type CliName = 'claude' | 'codex'
 
 export interface Settings {
   provider: ProviderKind
@@ -51,19 +54,22 @@ export interface Settings {
   launchAtLogin: boolean
   /** Blocklist rules: app IDs, or "title:<text>" for window titles. */
   blockedApps: string[]
+  /** Optional absolute paths of the agent CLIs on the host; empty means find them. */
+  cliPaths: Record<CliName, string>
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   provider: 'anthropic',
   fallbackProvider: null,
-  models: { anthropic: 'claude-opus-5-5', gemini: 'gemini-4-hydrogen', openai: 'gpt-5.1' },
+  models: { anthropic: 'claude-opus-5-5', gemini: 'gemini-4-hydrogen', openai: 'gpt-5.1', 'claude-cli': 'haiku', 'codex-cli': 'gpt-6-luna' },
   openaiBaseUrl: 'https://api.openai.com/v1',
   outputLanguage: '',
   captureIntervalSec: 10,
   captureHeight: 1080,
   storageLimitGb: 10,
   launchAtLogin: false,
-  blockedApps: [...DEFAULT_BLOCKLIST]
+  blockedApps: [...DEFAULT_BLOCKLIST],
+  cliPaths: { claude: '', codex: '' }
 }
 
 export const CAPTURE_INTERVALS = [1, 5, 10, 20, 30, 60] as const

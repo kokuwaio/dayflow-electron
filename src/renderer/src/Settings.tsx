@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
-import { needsApiKey } from '@shared/providers'
-import { type AppStatus, CAPTURE_INTERVALS, type ProviderKind, type Settings } from '@shared/types'
+import { cliOf, needsApiKey } from '@shared/providers'
+import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings } from '@shared/types'
 
 const PROVIDERS: Array<{ kind: ProviderKind; label: string; hint: string }> = [
   { kind: 'anthropic', label: 'Anthropic', hint: 'Claude models through the Anthropic API.' },
   { kind: 'gemini', label: 'Gemini', hint: 'Google Gemini API; frames are sent inline.' },
-  { kind: 'openai', label: 'OpenAI-compatible', hint: 'OpenAI, OpenRouter, or a local Ollama or LM Studio server (no key needed; analyzed in small steps).' }
+  { kind: 'openai', label: 'OpenAI-compatible', hint: 'OpenAI, OpenRouter, or a local Ollama or LM Studio server (no key needed; analyzed in small steps).' },
+  { kind: 'claude-cli', label: 'Claude Code', hint: 'Your claude CLI and its subscription; no API key.' },
+  { kind: 'codex-cli', label: 'Codex', hint: 'Your codex CLI and its ChatGPT subscription; no API key.' }
 ]
 
 const gb = (bytes: number) => (bytes / 1024 ** 3).toFixed(2)
@@ -65,6 +67,8 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
             <input defaultValue={settings.openaiBaseUrl} onBlur={(e) => save({ openaiBaseUrl: e.target.value })} />
           </label>
         )}
+        {cliOf(provider) && <CliSetup cli={cliOf(provider)!} settings={settings} save={save} />}
+        {needsApiKey(provider, settings.openaiBaseUrl) || provider === 'openai' ? (
         <label className="field">
           API key {keys?.[provider] ? <em>(stored)</em> : <em>(not set)</em>}
           <span className="row">
@@ -78,6 +82,7 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
             <button onClick={() => void saveKey()}>{key.trim() || !keys?.[provider] ? 'Save key' : 'Remove key'}</button>
           </span>
         </label>
+        ) : null}
         {keyMessage && <p className="note">{keyMessage}</p>}
         <div className="row">
           <button
@@ -186,5 +191,44 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
         </label>
       </section>
     </div>
+  )
+}
+
+/** Where the agent CLI is and whether the app may start it on the host. */
+function CliSetup({ cli, settings, save }: { cli: CliName; settings: Settings; save: (next: Partial<Settings>) => void }) {
+  const [check, setCheck] = useState<{ ok: boolean; message: string } | 'running' | null>(null)
+  // Check right away, so a missing permission or install shows without a click.
+  useEffect(() => {
+    setCheck('running')
+    void window.dayflow.checkCli(cli).then(setCheck)
+  }, [cli])
+  return (
+    <>
+      <label className="field">
+        Path to {cli} <em>(optional; found automatically)</em>
+        <input
+          key={cli}
+          placeholder={`e.g. /home/you/.local/bin/${cli}`}
+          defaultValue={settings.cliPaths[cli]}
+          onBlur={(e) => save({ cliPaths: { ...settings.cliPaths, [cli]: e.target.value } })}
+        />
+      </label>
+      <div className="row">
+        <button
+          onClick={() => {
+            setCheck('running')
+            void window.dayflow.checkCli(cli).then(setCheck)
+          }}
+        >
+          Check {cli}
+        </button>
+        {check === 'running' && <span className="note">Looking…</span>}
+        {check && check !== 'running' && <span className={check.ok ? 'ok' : 'error'}>{check.message}</span>}
+      </div>
+      <p className="note">
+        Runs your own {cli} CLI with its login. Images and prompts go to {cli === 'claude' ? 'Anthropic' : 'OpenAI'} under your
+        subscription. In the Flatpak this needs a one-time opt-in, because it lets the app start programs on your computer.
+      </p>
+    </>
   )
 }

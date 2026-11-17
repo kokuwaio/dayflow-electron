@@ -1,4 +1,6 @@
-import type { ProviderKind } from '../../shared/types'
+import type { CliName, ProviderKind } from '../../shared/types'
+import type { CliEnv } from './cli/cli-providers'
+import type { ProcessRunner } from './cli/host'
 
 export type { ProviderKind }
 
@@ -40,6 +42,8 @@ export interface Provider {
 
 export interface ProviderOptions {
   fetch?: typeof fetch
+  /** For the agent CLI providers: how to reach the host and where to put temporary files. */
+  cli?: CliEnv & { runner: ProcessRunner; paths: Record<CliName, string> }
 }
 
 /** A failed provider call. retryable: worth trying again later (rate limit, outage). */

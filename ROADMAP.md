@@ -162,7 +162,7 @@ each of the three providers.
       providers fall back to it when their one-step cards keep failing
       validation. Primary and secondary provider with automatic failover;
       failed batches are retried after the next success (up to 3 times).
-- [ ] Optional CLI providers: Claude CLI (`claude -p`) and Codex CLI
+- [x] Optional CLI providers: Claude CLI (`claude -p`) and Codex CLI
       (`codex exec --json`), which use the user's subscription instead of an API
       key. In the Flatpak they run on the host through `flatpak-spawn --host`.
       The manifest does not request the needed `org.freedesktop.Flatpak`
