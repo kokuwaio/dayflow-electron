@@ -18,4 +18,8 @@ describe('JSON in model replies', () => {
     expect(jsonArray('[{"summary":"Documented ```json fences"}]', 'cards')).toEqual([{ summary: 'Documented ```json fences' }])
     expect(jsonArray('Here you go:\n```json\n[{"summary":"a ```json b"}]\n```', 'cards')).toEqual([{ summary: 'a ```json b' }])
   })
+
+  it('prefers the requested key of an enclosing object over sibling arrays', () => {
+    expect(jsonArray('Result: {"cards":[{"title":"Actual activity"}],"notes":[]}', 'cards')).toEqual([{ title: 'Actual activity' }])
+  })
 })

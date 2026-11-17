@@ -84,8 +84,8 @@ succeeds.
   title.
 - **Pause** (top right): opens ∞, 1h, 30m and 15m; while paused it turns
   into **Resume** and shows how long the pause lasts.
-- **Category chips** above the timeline: click one to dim its cards, drag to
-  reorder. The pencil opens **Settings → Other → Categories**, which edits
+- **Category chips** above the timeline: click one to dim its cards, drag it
+  (or press Alt+← / Alt+→ on it) to reorder. The pencil opens **Settings → Other → Categories**, which edits
   names, colors and the description the model sees, or applies a preset for
   your role.
 - **Card details** (right panel): click the title to rename the card, the

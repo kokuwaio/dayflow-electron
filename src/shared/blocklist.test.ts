@@ -33,4 +33,8 @@ describe('blockedBy', () => {
   it('ignores empty and blank rules', () => {
     expect(blockedBy(win('', ''), ['', '  ', 'title:'])).toBeNull()
   })
+
+  it('blocks 1Password by its macOS bundle ID too', () => {
+    expect(blockedBy({ app: 'com.1password.1password', title: '1Password' }, DEFAULT_BLOCKLIST)).toBe('com.1password.1password')
+  })
 })

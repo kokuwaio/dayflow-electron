@@ -19,7 +19,7 @@
       <li>Timeline by day and week, with categories, day summary and export</li>
       <li>Cloud providers (Anthropic, Gemini, OpenAI-compatible) or a local model with Ollama or LM Studio</li>
       <li>Daily standup notes and a weekly dashboard</li>
-      <li>Password managers and other blocked apps are never recorded</li>
+      <li>Password managers and other blocked apps are left out of recordings where the app can see the focused window (KDE Plasma with window detection allowed)</li>
     </ul>
   </description>
   <launchable type="desktop-id">io.github.kokuwaio.DayflowElectron.desktop</launchable>

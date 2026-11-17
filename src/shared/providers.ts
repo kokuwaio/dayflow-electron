@@ -17,6 +17,8 @@ export function isLocalUrl(url: string): boolean {
     return false
   }
   if (['localhost', '0.0.0.0', '::1'].includes(host) || host.endsWith('.localhost') || host.endsWith('.local')) return true
+  // IPv6 unique-local (fc00::/7) and link-local (fe80::/10) addresses, as URL hostnames write them.
+  if (host.includes(':')) return /^(?:f[cd][0-9a-f]{0,2}|fe[89ab][0-9a-f]?):/i.test(host)
   const ip = host.split('.').map(Number)
   if (ip.length !== 4 || ip.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return false
   const [a, b] = ip as [number, number, number, number]

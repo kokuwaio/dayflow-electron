@@ -80,7 +80,7 @@ export function fileSource(paths: AgentPaths): ReadSource {
     editsEnabled: () => readSettings(paths.settings).allowEdits === true,
     appRunning: () =>
       new Promise((resolve) => {
-        if (!existsSync(paths.socket)) return resolve(false)
+        // No existsSync first: a Windows named pipe is not a file. connect() reports a missing socket as an error.
         const socket = connect(paths.socket)
         socket.setTimeout(1_000)
         const finish = (ok: boolean) => {

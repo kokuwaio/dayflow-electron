@@ -51,12 +51,13 @@ export function jsonCandidates(text: string): unknown[] {
 
 /** The first candidate that is an array, or that holds an array under `key`. */
 export function jsonArray(text: string, key: string): unknown[] | null {
-  for (const v of jsonCandidates(text)) {
-    if (Array.isArray(v)) return v
-    const inner = v && typeof v === 'object' ? (v as Record<string, unknown>)[key] : undefined
+  const candidates = jsonCandidates(text)
+  // An object holding `key` wins over loose arrays: those can be its siblings ("notes": []).
+  for (const v of candidates) {
+    const inner = v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>)[key] : undefined
     if (Array.isArray(inner)) return inner
   }
-  return null
+  return candidates.find((v): v is unknown[] => Array.isArray(v)) ?? null
 }
 
 /** The first candidate that is a plain object. */

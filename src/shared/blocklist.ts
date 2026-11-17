@@ -15,6 +15,7 @@ export const DEFAULT_BLOCKLIST: readonly string[] = [
   'keepassxc',
   'keepass2',
   '1password',
+  'com.1password.1password', // macOS bundle ID
   'bitwarden',
   'com.bitwarden.desktop',
   'title:- KeePassXC',

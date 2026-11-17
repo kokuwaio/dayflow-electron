@@ -48,8 +48,16 @@ export function FilterBar(props: {
           className={`chip ${muted.has(muteKey(c.name)) ? 'muted' : ''}`}
           draggable={!c.isIdle}
           aria-pressed={!muted.has(muteKey(c.name))}
-          title={muted.has(muteKey(c.name)) ? `Show ${c.name}` : `Dim ${c.name}`}
+          title={`${muted.has(muteKey(c.name)) ? `Show ${c.name}` : `Dim ${c.name}`}${c.isIdle ? '' : ' · drag or Alt+←/→ to move'}`}
           onClick={() => props.onToggle(muteKey(c.name))}
+          onKeyDown={(e) => {
+            // Reordering without a pointer; Idle stays last.
+            if (c.isIdle || !e.altKey || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return
+            e.preventDefault()
+            const to = Math.min(regular.length - 1, Math.max(0, i + (e.key === 'ArrowLeft' ? -1 : 1)))
+            move(i, to)
+            requestAnimationFrame(() => bar.current?.querySelectorAll<HTMLButtonElement>('button.chip')[to]?.focus())
+          }}
           onDragStart={() => setDragging(i)}
           onDragOver={(e) => !c.isIdle && e.preventDefault()}
           onDrop={() => {
