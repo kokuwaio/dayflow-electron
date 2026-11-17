@@ -61,12 +61,12 @@ describe('startElectronCapture', () => {
 
     await vi.advanceTimersByTimeAsync(0)
     expect(state.requests).toEqual([{ width: 1280, height: 720 }])
-    expect(events.frames).toEqual([{ filePath: join(DIR, '20261117-090000+0100_s1.jpg'), capturedAt: T0 / 1000, bytes: 275 }])
-    expect(state.written).toEqual([{ path: join(DIR, '20261117-090000+0100_s1.jpg'), bytes: 275 }])
+    expect(events.frames).toEqual([{ filePath: join(DIR, '20261117-090000.000+0100_s1.jpg'), capturedAt: T0 / 1000, bytes: 275 }])
+    expect(state.written).toEqual([{ path: join(DIR, '20261117-090000.000+0100_s1.jpg'), bytes: 275 }])
 
     state.cursor = { x: 100, y: 100 }
     await vi.advanceTimersByTimeAsync(10_000)
-    expect(events.frames[1]).toEqual({ filePath: join(DIR, '20261117-090010+0100_s0.jpg'), capturedAt: T0 / 1000 + 10, bytes: 175 })
+    expect(events.frames[1]).toEqual({ filePath: join(DIR, '20261117-090010.000+0100_s0.jpg'), capturedAt: T0 / 1000 + 10, bytes: 175 })
     expect(state.requests[1]).toEqual({ width: 1152, height: 720 })
     handle.stop()
   })
