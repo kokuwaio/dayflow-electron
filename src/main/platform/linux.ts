@@ -3,9 +3,10 @@
 // Each helper command runs as a child process printing JSON lines.
 
 import { type ChildProcess, spawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline'
+import { kwinOverrideCommand } from '../../shared/permissions'
 import type { CaptureHandle, CaptureHandlers, CaptureOptions, Platform, SessionHandlers, Stoppable, WindowHandlers } from './types'
 
 type HelperEvent = { type: string; ts: number; [key: string]: unknown }
@@ -131,7 +132,7 @@ export function linuxPlatform(opts: LinuxOptions): Platform {
             let reason = lastError ?? `window watcher exited (${code})`
             if (!onKde()) reason = 'Window detection works on KDE Plasma only so far.'
             else if (process.env.FLATPAK_ID && /KWin/.test(reason)) {
-              reason = `Window detection needs KWin access. Run "flatpak override --user --talk-name=org.kde.KWin ${process.env.FLATPAK_ID}" once, then restart the app.`
+              reason = `Window detection needs KWin access. Run "${kwinOverrideCommand(process.env.FLATPAK_ID)}" once, then restart the app.`
             }
             handlers.unavailable(reason)
             // A watcher that worked and crashed comes back soon; a missing
@@ -181,21 +182,31 @@ export function linuxPlatform(opts: LinuxOptions): Platform {
       }
     },
 
-    setAutostart: (enable) => setAutostart(helper, enable, opts.launchCommand)
+    // Launch at login: the Background portal inside Flatpak.
+    setAutostart: (enable) => runOnce(helper, ['autostart', `-enable=${enable}`, '--', ...opts.launchCommand]),
+
+    screenAccess: () => (hasRestoreToken(tokenFile) ? 'granted' : 'not-granted'),
+    // The share dialog now, so recording starts without it; the helper stores the token.
+    requestScreenAccess: () => runOnce(helper, ['grant', '-token', tokenFile])
   }
 }
 
-/** Turns launch at login on or off (Background portal inside Flatpak). */
-function setAutostart(helper: string, enable: boolean, command: string[]): Promise<void> {
+function hasRestoreToken(file: string): boolean {
+  try {
+    return readFileSync(file, 'utf8').trim() !== ''
+  } catch {
+    return false
+  }
+}
+
+/** Runs a helper command to its end; rejects with its error message. */
+function runOnce(helper: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
-    let error: string | null = null
     runHelper(
       helper,
-      ['autostart', `-enable=${enable}`, '--', ...command],
-      (e) => {
-        if (e.type === 'error' && typeof e.message === 'string') error = e.message
-      },
-      (code, lastError) => (code === 0 ? resolve() : reject(new Error(error ?? lastError ?? `autostart failed (${code})`)))
+      args,
+      () => {},
+      (code, lastError) => (code === 0 ? resolve() : reject(new Error(lastError ?? `${args[0]} failed (${code})`)))
     )
   })
 }

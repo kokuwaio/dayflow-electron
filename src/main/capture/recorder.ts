@@ -1,6 +1,7 @@
 import { type ActiveWindow, blockedBy } from '../../shared/blocklist'
 import type { AppStatus, RecorderState } from '../../shared/types'
 import type { CaptureHandle, CaptureOptions, Platform, Stoppable } from '../platform/types'
+import { NO_WINDOW_REPORT, WINDOW_REPORT_TIMEOUT_MS } from '../platform/window-probe'
 
 export interface RecordedFrame {
   filePath: string
@@ -23,8 +24,6 @@ const nowSec = () => Math.floor(Date.now() / 1000)
 
 /** Wait after unlock or wake so monitors and the compositor are back. */
 const RESUME_DELAY_MS = 5_000
-/** How long capture stays blocked waiting for the first window report. */
-const WINDOW_REPORT_TIMEOUT_MS = 10_000
 /** Waits after consecutive capture failures; the last one repeats. */
 const BACKOFF_SEC = [60, 120, 300, 600]
 
@@ -102,7 +101,7 @@ export class Recorder {
       unavailable
     })
     this.windowTimeout = setTimeout(() => {
-      if (this.windowDetection === 'starting') unavailable('No window report from the desktop within 10 s.')
+      if (this.windowDetection === 'starting') unavailable(NO_WINDOW_REPORT)
     }, WINDOW_REPORT_TIMEOUT_MS)
     this.session = this.platform.watchSession(
       { idleSec: 60 },

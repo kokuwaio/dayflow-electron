@@ -34,7 +34,9 @@ function fakePlatform() {
       state.session = handlers
       return { stop: () => { state.session = null } }
     },
-    setAutostart: async () => {}
+    setAutostart: async () => {},
+    screenAccess: () => 'granted',
+    requestScreenAccess: async () => {}
   }
   return { platform, state }
 }

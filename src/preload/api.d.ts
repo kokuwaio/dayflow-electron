@@ -4,6 +4,7 @@ import type { GoalContext } from '../shared/goal-flow'
 import type { ReviewRating, ReviewSegment } from '../shared/review'
 import type { FrameRef } from '../shared/media'
 import type { UpdateMode } from '../shared/updates'
+import type { ScreenPermission, WindowCheck } from '../shared/permissions'
 import type { DayCards, Week } from '../shared/week'
 import type {
   AgentAccessInfo,
@@ -37,6 +38,14 @@ export interface DayflowApi {
   exportMarkdown(from: string, to: string): Promise<{ ok: boolean; message: string }>
   getFrames(span: { start: number; end: number }): Promise<FrameRef[]>
   completeOnboarding(): Promise<void>
+  /** Whether screen capture may run without asking (macOS permission, Linux restore token). */
+  getScreenPermission(): Promise<ScreenPermission>
+  /** Asks now: macOS prompt and Screen Recording settings, Linux share dialog. Resolves when done. */
+  requestScreenPermission(): Promise<{ ok: boolean; message: string }>
+  /** Quits and starts the app again (macOS applies Screen Recording only then). */
+  relaunch(): Promise<void>
+  /** Runs window detection once (takes up to 10 s). */
+  checkWindowDetection(): Promise<WindowCheck>
   getAccess(): Promise<Record<Feature, FeatureAccess>>
   getStandup(day: string): Promise<StandupEntry | null>
   generateStandup(day: string): Promise<{ ok: true; entry: StandupEntry } | { ok: false; message: string }>

@@ -36,6 +36,7 @@ import { AUTO_MIN_MINUTES, MANUAL_MIN_MINUTES, generateStandup, standupSourceDay
 import { handleMedia, registerMediaScheme } from './media'
 import { createNotifier } from './notifications'
 import { createPlatform } from './platform'
+import { probeWindowDetection } from './platform/window-probe'
 import { createProvider } from './providers'
 import { findCli, hostAccess, nodeRunner } from './providers/cli/host'
 import { selectFramesToPurge } from './retention'
@@ -45,6 +46,7 @@ import { SettingsStore } from './settings'
 import { type Updater, startUpdater } from './updater'
 import { type UpdateMode, parseCodesign, updateMode, isDevVersion } from '../shared/updates'
 import { errorMessage } from '../shared/errors'
+import { type ScreenPermission, type WindowCheck, windowFixCommand } from '../shared/permissions'
 import { type UiStyle, windowBackground } from '../shared/ui-style'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -128,7 +130,7 @@ async function main(): Promise<void> {
     resourcesPath: process.resourcesPath,
     tokenFile: join(dataDir, 'screencast-restore-token'),
     launchCommand: app.isPackaged ? [process.execPath] : [process.execPath, app.getAppPath()],
-    electron: { app, desktopCapturer, screen, powerMonitor, systemPreferences }
+    electron: { app, desktopCapturer, screen, powerMonitor, systemPreferences, shell }
   })
 
   const captureOptions = (s: Settings) => ({ dir: recordingsDir, intervalSec: s.captureIntervalSec, height: s.captureHeight })
@@ -664,6 +666,34 @@ async function main(): Promise<void> {
     updateTray()
   })
   if (settings.get().onboarded) recorder.start()
+
+  // The onboarding's Permissions step (src/shared/permissions.ts): ask before recording starts.
+  let screenRequested = false
+  let screenRequest: Promise<{ ok: boolean; message: string }> | null = null
+  ipcMain.handle('permissions:get', (): ScreenPermission => ({ screen: platform.screenAccess(), requested: screenRequested }))
+  ipcMain.handle('permissions:requestScreen', () => {
+    screenRequested = true
+    // One share dialog at a time.
+    screenRequest ??= platform
+      .requestScreenAccess()
+      .then(
+        () => ({ ok: true, message: '' }),
+        (err: unknown) => ({ ok: false, message: errorMessage(err) })
+      )
+      .finally(() => {
+        screenRequest = null
+      })
+    return screenRequest
+  })
+  // macOS applies Screen Recording only to a new process (upstream's Quit and Reopen).
+  ipcMain.handle('permissions:relaunch', () => {
+    app.relaunch()
+    app.quit()
+  })
+  ipcMain.handle('permissions:window', async (): Promise<WindowCheck> => {
+    const result = await probeWindowDetection(platform)
+    return { ...result, command: windowFixCommand(result.reason, process.env.FLATPAK_ID ?? '') }
+  })
 
   // Deep links (upstream AppDeepLinkRouter): start resumes a pause, stop pauses until resumed.
   openLink = (link) => {
