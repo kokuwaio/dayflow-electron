@@ -9,6 +9,9 @@ files:
   - out/**
   - resources/**
   - package.json
+  - NOTICE.md
+  - LICENSE
+  - licenses/**
 asarUnpack:
   - resources/**
 linux:
