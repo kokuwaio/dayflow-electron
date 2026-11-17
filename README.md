@@ -19,12 +19,12 @@ machines and not signed.
 
 | Document | What |
 | --- | --- |
-| [docs/installation.md](docs/installation.md) | Every package (Flatpak, Windows installer, macOS disk image) and building from source |
+| [docs/installation.md](docs/installation.md) | Every package (Flatpak, Windows installer, macOS disk image, Homebrew) and building from source |
 | [docs/usage.md](docs/usage.md) | Install on Linux, Windows and macOS, providers, local models with Ollama, Claude Code and Codex, the tabs, blocked apps, troubleshooting |
 | [docs/architecture.md](docs/architecture.md) | How the app works, with diagrams |
 | [docs/roadmap.md](docs/roadmap.md) | Every upstream feature mapped to a milestone, with what is done |
 | [docs/platform-notes.md](docs/platform-notes.md) | What was tested on which Linux desktop, and why |
-| [docs/release.md](docs/release.md) | Publishing a release, versions, Windows and macOS signing |
+| [docs/release.md](docs/release.md) | Publishing a release, Windows and macOS signing, the Flathub submission |
 
 ## Requirements
 
@@ -83,7 +83,7 @@ pauses while the screen is locked.
 | `src/shared/` | Pure logic used by both: 4 AM days, categories, Daily and Weekly math, review, goals, export |
 | `src/cli/` | The `dayflow-electron` CLI and MCP server |
 | `helper/linux/` | Go helper for Linux desktop access: ScreenCast portal + PipeWire, lock/sleep/idle, focused window, autostart |
-| `packaging/` | Flatpak manifest, desktop file and metainfo (`flatpak/`) |
+| `packaging/` | Flatpak manifests, desktop file and metainfo (`flatpak/`), Homebrew cask (`homebrew/`) |
 
 [docs/architecture.md](docs/architecture.md) shows how the parts work together.
 

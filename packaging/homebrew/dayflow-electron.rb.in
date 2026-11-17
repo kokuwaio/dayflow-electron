@@ -1,0 +1,38 @@
+# Homebrew cask for the macOS disk images attached to each GitHub release.
+# scripts/homebrew-cask.sh fills in the version and checksums; the release
+# workflow attaches the result and pushes it to the kokuwaio/homebrew-tap repo.
+cask "dayflow-electron" do
+  arch arm: "arm64", intel: "x64"
+
+  version "@VERSION@"
+  sha256 arm:   "@SHA256_ARM64@",
+         intel: "@SHA256_X64@"
+
+  url "https://github.com/kokuwaio/dayflow-electron/releases/download/v#{version}/dayflow-electron-v#{version}-mac-#{arch}.dmg"
+  name "dayflow-electron"
+  desc "Timeline of your day from periodic screenshots, written by an AI model you choose"
+  homepage "https://github.com/kokuwaio/dayflow-electron"
+
+  livecheck do
+    url :url
+    strategy :github_latest
+  end
+
+  # Electron 45 needs macOS 12 or later.
+  depends_on macos: ">= :monterey"
+
+  app "dayflow-electron.app"
+
+  zap trash: [
+    "~/Library/Application Support/dayflow-electron",
+    "~/Library/Logs/dayflow-electron",
+    "~/Library/Preferences/io.github.kokuwaio.DayflowElectron.plist",
+    "~/Library/Saved Application State/io.github.kokuwaio.DayflowElectron.savedState",
+  ]
+
+  caveats <<~EOS
+    dayflow-electron is not notarized by Apple yet. Before the first start, run:
+      xattr -dr com.apple.quarantine "#{appdir}/dayflow-electron.app"
+    Then allow it under System Settings → Privacy & Security → Screen Recording.
+  EOS
+end
