@@ -34,10 +34,16 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.9.0",
+    "@tesseract.js-data/eng": "1.0.0",
     "echarts": "^6.1.0",
+    "jpeg-js": "0.4.4",
     "react-markdown": "10.1.0",
-    "remark-gfm": "4.0.1"
+    "remark-gfm": "4.0.1",
+    "tesseract.js": "7.0.0"
   },
   "author": "kokuwaio",
-  "homepage": "https://github.com/kokuwaio/dayflow-electron"
+  "homepage": "https://github.com/kokuwaio/dayflow-electron",
+  "overrides": {
+    "wasm-feature-detect": "1.9.0"
+  }
 }
