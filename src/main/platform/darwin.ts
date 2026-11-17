@@ -17,6 +17,9 @@ export const SCREEN_PERMISSION_MESSAGE =
 export const WINDOW_PERMISSION_MESSAGE =
   'Window detection needs the Screen Recording permission (it reads window titles). Allow dayflow-electron in System Settings → Privacy & Security → Screen Recording, then quit and reopen the app.'
 
+/** System Settings → Privacy & Security → Screen Recording. */
+export const SCREEN_SETTINGS_URL = 'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
+
 /**
  * Prints {"app": bundle ID, "title": front window title} whenever the focused
  * window changes. Running the run loop between checks keeps NSWorkspace's
@@ -66,17 +69,23 @@ export interface DarwinOptions {
 }
 
 export function darwinPlatform(opts: DarwinOptions): Platform {
-  const { app, desktopCapturer, screen, powerMonitor, systemPreferences } = opts.electron
+  const { app, desktopCapturer, screen, powerMonitor, systemPreferences, shell } = opts.electron
   const screenGranted = () => systemPreferences.getMediaAccessStatus('screen') === 'granted'
   let prompted = false
+
+  // A capture attempt makes macOS ask once and lists the app under Screen Recording (switched off).
+  const prompt = () =>
+    desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1, height: 1 } }).then(
+      () => {},
+      () => {}
+    )
 
   /** Null when capture may run; asks macOS once to show its permission prompt. */
   const screenAccess = () => {
     if (screenGranted()) return null
     if (!prompted && systemPreferences.getMediaAccessStatus('screen') === 'not-determined') {
       prompted = true
-      // The first capture attempt makes macOS ask and lists the app under Screen Recording.
-      void desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1, height: 1 } }).catch(() => {})
+      void prompt()
     }
     return SCREEN_PERMISSION_MESSAGE
   }
@@ -98,6 +107,14 @@ export function darwinPlatform(opts: DarwinOptions): Platform {
       ),
     async setAutostart(enable) {
       app.setLoginItemSettings({ openAtLogin: enable })
+    },
+    screenAccess: () => (screenGranted() ? 'granted' : 'not-granted'),
+    // Upstream's Grant: CGRequestScreenCaptureAccess, then the Screen Recording settings.
+    async requestScreenAccess() {
+      if (screenGranted()) return
+      prompted = true
+      await prompt()
+      await shell.openExternal(SCREEN_SETTINGS_URL)
     }
   }
 }

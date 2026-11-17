@@ -7,7 +7,8 @@ const electron = {
   desktopCapturer: { getSources: vi.fn() },
   screen: { getCursorScreenPoint: vi.fn(), getAllDisplays: vi.fn() },
   powerMonitor: { on: vi.fn(), removeListener: vi.fn(), getSystemIdleTime: vi.fn() },
-  systemPreferences: { getMediaAccessStatus: vi.fn() }
+  systemPreferences: { getMediaAccessStatus: vi.fn() },
+  shell: { openExternal: vi.fn() }
 } as unknown as ElectronApis
 
 const opts = {
@@ -54,5 +55,7 @@ describe('createPlatform', () => {
     expect(failed).toEqual(['Screen capture is not supported on freebsd.'])
     expect(unavailable).toEqual(['Screen capture is not supported on freebsd.'])
     await expect(platform.setAutostart(true)).rejects.toThrow('not supported on freebsd')
+    expect(platform.screenAccess()).toBe('not-granted')
+    await expect(platform.requestScreenAccess()).rejects.toThrow('not supported on freebsd')
   })
 })

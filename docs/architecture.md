@@ -89,7 +89,9 @@ flowchart LR
 ## From frame to card
 
 1. **Capture.** The helper shares all screens once through the ScreenCast
-   portal and keeps the restore token, so later starts show no dialog. It
+   portal and keeps the restore token, so later starts show no dialog (the
+   onboarding's Permissions step can run that dialog ahead with
+   `helper grant`, which stores the token and captures nothing). It
    reads frames from PipeWire and uses the cursor metadata to keep only the
    screen under the mouse. Every few seconds (10 s by default) it writes a
    JPEG and prints a `frame` line.

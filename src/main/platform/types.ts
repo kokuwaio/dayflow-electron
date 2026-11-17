@@ -1,4 +1,5 @@
 import type { ActiveWindow } from '../../shared/blocklist'
+import type { ScreenAccess } from '../../shared/permissions'
 
 // The OS-specific pieces sit behind this interface, one implementation per
 // platform (see docs/roadmap.md, "Platform matrix").
@@ -57,4 +58,12 @@ export interface Platform {
   watchActiveWindow(handlers: WindowHandlers): Stoppable
   /** Turns launch at login on or off. */
   setAutostart(enable: boolean): Promise<void>
+  /** Whether capture may run without asking (macOS permission, Linux restore token). */
+  screenAccess(): ScreenAccess
+  /**
+   * Asks for screen capture now instead of at the first recording: macOS
+   * shows its prompt and opens System Settings, Linux the share dialog.
+   * Rejects with what went wrong.
+   */
+  requestScreenAccess(): Promise<void>
 }

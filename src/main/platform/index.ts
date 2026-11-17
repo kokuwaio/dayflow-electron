@@ -27,7 +27,9 @@ function unsupportedPlatform(name: string, message: string): Platform {
       const timer = setTimeout(() => handlers.unavailable(message), 0)
       return { stop: () => clearTimeout(timer) }
     },
-    setAutostart: () => Promise.reject(new Error(message))
+    setAutostart: () => Promise.reject(new Error(message)),
+    screenAccess: () => 'not-granted',
+    requestScreenAccess: () => Promise.reject(new Error(message))
   }
 }
 

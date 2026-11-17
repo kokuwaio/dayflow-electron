@@ -190,6 +190,12 @@ each of the three providers.
       Gemini video upload (needs `ffmpeg`); 720p JPEGs use about 25 MB per hour.
 - [x] Onboarding: provider choice and setup with test, capture consent
       (portal on Linux, Screen Recording on macOS), categories preset.
+- [x] Onboarding permission rows with live state and Grant (upstream
+      `ScreenRecordingPermissionView`, `SystemPermissionRow`): macOS Screen
+      Recording with Quit and Reopen, Next off until granted; Linux opens the
+      share dialog ahead of recording (helper `grant`) and checks window
+      detection, with the Flatpak KWin command. Upstream's Accessibility row
+      is left out: window titles come through Screen Recording.
 
 ### M3 Insights
 

@@ -90,6 +90,9 @@ export function win32Platform(opts: Win32Options): Platform {
     async setAutostart(enable) {
       const [path, ...args] = opts.launchCommand
       app.setLoginItemSettings({ openAtLogin: enable, path, args: [...args, '--hidden'] })
-    }
+    },
+    // Windows lets any app capture the screen.
+    screenAccess: () => 'granted',
+    requestScreenAccess: async () => {}
   }
 }
