@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { CATEGORY_PRESETS, type Category, presetCategories } from '@shared/categories'
 import { todayKey } from '@shared/day'
 import { cliOf, needsApiKey } from '@shared/providers'
+import { AgentAccessSettings } from './AgentAccessSettings'
 import { PROVIDER_CHOICES } from './providers'
 import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings } from '@shared/types'
 
@@ -219,6 +220,8 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
           Launch at login
         </label>
       </section>
+
+      <AgentAccessSettings settings={settings} save={save} />
     </div>
   )
 }
