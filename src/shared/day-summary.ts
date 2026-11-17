@@ -42,6 +42,8 @@ export interface DaySummary {
   focusMinutes: number
   distractedMinutes: number
   longestFocusMinutes: number
+  /** Where the longest focus block lies (Unix seconds), or null without focus time. */
+  longestFocus: { start: number; end: number } | null
 }
 
 type Interval = { start: number; end: number; category: string }
@@ -95,12 +97,12 @@ export function summarizeDay(cards: TimelineCard[], categories: Category[], plan
 
   const inList = (list: string[]) => (i: Interval) => list.some((n) => key(n) === key(i.category))
   const focus = intervals.filter(inList(plan.focusCategories))
-  let longest = 0
+  let longest: { start: number; end: number } | null = null
   let block: { start: number; end: number } | null = null
   for (const i of [...focus].sort((a, b) => a.start - b.start)) {
     if (block && i.start - block.end < FOCUS_GAP_SEC) block.end = Math.max(block.end, i.end)
     else block = { start: i.start, end: i.end }
-    longest = Math.max(longest, block.end - block.start)
+    if (!longest || block.end - block.start > longest.end - longest.start) longest = { ...block }
   }
 
   return {
@@ -108,7 +110,8 @@ export function summarizeDay(cards: TimelineCard[], categories: Category[], plan
     capturedMinutes: minutes(intervals),
     focusMinutes: minutes(focus),
     distractedMinutes: minutes(intervals.filter(inList(plan.distractionCategories))),
-    longestFocusMinutes: Math.floor(longest / 60)
+    longestFocusMinutes: longest ? Math.floor((longest.end - longest.start) / 60) : 0,
+    longestFocus: longest
   }
 }
 

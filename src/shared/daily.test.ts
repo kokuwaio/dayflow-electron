@@ -13,11 +13,11 @@ const card = (start: number, end: number, category: string, extra: Partial<Timel
 describe('accessProgress (upstream Core/Access)', () => {
   it('unlocks Daily at 5 h, Chat at 10 h and Weekly at 30 h of analyzed batches', () => {
     expect(accessProgress(13)).toEqual({
-      daily: { unlocked: false, label: '3h 15m / 5h' },
-      chat: { unlocked: false, label: '3h 15m / 10h' },
-      weekly: { unlocked: false, label: '3h 15m / 30h' }
+      daily: { unlocked: false, label: '3h 15m / 5h', progress: 0.65 },
+      chat: { unlocked: false, label: '3h 15m / 10h', progress: 0.325 },
+      weekly: { unlocked: false, label: '3h 15m / 30h', progress: 0.1083 }
     })
-    expect(accessProgress(40)).toMatchObject({ daily: { unlocked: true, label: '5h / 5h' }, chat: { unlocked: true } })
+    expect(accessProgress(40)).toMatchObject({ daily: { unlocked: true, label: '5h / 5h', progress: 1 }, chat: { unlocked: true, progress: 1 } })
   })
 })
 

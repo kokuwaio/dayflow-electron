@@ -259,7 +259,7 @@ flowchart LR
 | `src/main/notifications.ts` | Desktop notifications |
 | `src/preload/` | The `window.dayflow` API |
 | `src/renderer/src/` | React views: Timeline, Daily, Weekly, Chat, Settings, Onboarding |
-| `src/shared/` | Pure logic used by both sides: days, categories, Daily and Weekly math, export, failure kinds |
+| `src/shared/` | Pure logic used by both sides: days, categories, day canvas geometry (`canvas.ts`), Daily and Weekly math, export, failure kinds |
 | `helper/linux/` | Go helper: `portal/`, `pipewire/`, `wayland/`, `frames/`, commands in `cmd/` |
 | `flatpak/` | Flatpak manifest and desktop file |
 

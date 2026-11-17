@@ -49,7 +49,11 @@ describe('summarizeDay', () => {
       card(at(9, 44), at(10, 30), 'Personal'), // 4 min gap: same block
       card(at(10, 36), at(11, 30), 'Work') // 6 min gap: new block
     ]
-    expect(summarizeDay(cards, DEFAULT_CATEGORIES, plan).longestFocusMinutes).toBe(90)
+    const s = summarizeDay(cards, DEFAULT_CATEGORIES, plan)
+    expect(s.longestFocusMinutes).toBe(90)
+    // Its span, for the mini timeline under "Longest focus duration".
+    expect(s.longestFocus).toEqual({ start: at(9, 0), end: at(10, 30) })
+    expect(summarizeDay([], DEFAULT_CATEGORIES, plan).longestFocus).toBeNull()
   })
 
   it('counts only the part of a card inside its 4 AM day, and matches categories regardless of case', () => {

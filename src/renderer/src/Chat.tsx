@@ -6,19 +6,40 @@ import { historyGroups } from '@shared/chat-history'
 import type { FeatureAccess } from '@shared/daily'
 import { formatClock, todayKey } from '@shared/day'
 import type { ChatConversation, ChatStoredMessage, ProviderKind } from '@shared/types'
+import {
+  ArrowUp,
+  ArrowUpRight,
+  BadgeCheck,
+  Brain,
+  Check,
+  CircleCheck,
+  Copy,
+  FileText,
+  History as HistoryIcon,
+  type LucideIcon,
+  MessageSquareText,
+  MessageSquareWarning,
+  MessagesSquare,
+  Sparkles,
+  Trash2,
+  Wrench,
+  Zap
+} from 'lucide-react'
 import { ChatChart } from './ChatChart'
+import { ProgressBar } from './LockedFeature'
 import { PROVIDER_CHOICES } from './providers'
 
-/** Upstream's welcome prompts (Views/UI/ChatWelcomeComponents.swift). */
-const WELCOME_PROMPTS = [
-  'Generate standup notes for yesterday',
-  'What did I get done last week?',
-  'When was I most focused this week',
-  'Compare this week to last week'
+/** Upstream's welcome prompts and their icons (Views/UI/ChatView+State.swift). */
+const WELCOME_PROMPTS: Array<{ text: string; icon: LucideIcon }> = [
+  { text: 'Generate standup notes for yesterday', icon: FileText },
+  { text: 'What did I get done last week?', icon: BadgeCheck },
+  { text: 'When was I most focused this week', icon: MessageSquareWarning },
+  { text: 'Compare this week to last week', icon: Sparkles }
 ]
 
 type Status = 'thinking' | 'tools' | 'answering'
 const STATUS_TEXT: Record<Status, string> = { thinking: 'Thinking', tools: 'Running tools', answering: 'Answering' }
+const STATUS_ICON: Record<Status, LucideIcon> = { thinking: Sparkles, tools: Wrench, answering: MessageSquareText }
 type Panel = 'history' | 'memory' | null
 const MEMORY_MAX = 10_000
 const providerLabel = (kind: string) => PROVIDER_CHOICES.find((p) => p.kind === kind)?.label ?? kind
@@ -112,25 +133,36 @@ export function Chat() {
   if (!access) return null
   if (!access.unlocked) {
     return (
-      <div className="locked chat-locked">
-        <h2>
-          Unlock Beta <span className="badge">BETA</span>
-        </h2>
-        <p>Chat lets you ask questions about your Dayflow activity and get summaries, comparisons, and insights.</p>
-        <ul className="requirements">
-          <li>
-            <strong>10 hours of timeline data required</strong>
-            <span className="note">Chat unlocks after Dayflow has analyzed enough activity. {access.label}</span>
-          </li>
-          <li>
-            <strong>{providers.length ? 'AI provider configured' : 'AI provider required'}</strong>
-            {!providers.length && <span className="note">Unlock chat by adding an AI provider in Settings.</span>}
-          </li>
-        </ul>
-        <p className="note">
-          <strong>Privacy note:</strong> your questions and the answers stay on this computer; only the provider you chose
-          sees them.
-        </p>
+      <div className="locked-page">
+        <div className="locked-card">
+          <h2>
+            Unlock Beta<span className="beta">BETA</span>
+          </h2>
+          <p>Chat lets you ask questions about your Dayflow activity and get summaries, comparisons, and insights.</p>
+          <ul className="requirements">
+            <li>
+              <Zap size={18} color="#F98D3D" />
+              <div>
+                <strong>10 hours of timeline data required</strong>
+                <span className="note">Chat unlocks after Dayflow has analyzed enough activity. {access.label}</span>
+              </div>
+            </li>
+            <li>
+              {providers.length ? <CircleCheck size={18} color="#34C759" /> : <Zap size={18} color="#F98D3D" />}
+              <div>
+                <strong>{providers.length ? 'AI provider configured' : 'AI provider required'}</strong>
+                {!providers.length && <span className="note">Unlock chat by adding an AI provider in Settings.</span>}
+              </div>
+            </li>
+          </ul>
+          <ProgressBar value={access.progress} />
+          <button className="btn-primary" disabled>
+            Keep recording to unlock
+          </button>
+          <p className="note">
+            <strong>Privacy note:</strong> your questions and the answers stay on this computer; only the provider you chose sees them.
+          </p>
+        </div>
       </div>
     )
   }
@@ -143,10 +175,10 @@ export function Chat() {
             New chat
           </button>
           <button className={`icon ${panel === 'history' ? 'on' : ''}`} aria-label="History" title="History" onClick={() => setPanel(panel === 'history' ? null : 'history')}>
-            ⟲
+            <HistoryIcon size={14} />
           </button>
           <button className={`icon ${panel === 'memory' ? 'on' : ''}`} aria-label="Memory" title="Memory" onClick={() => setPanel(panel === 'memory' ? null : 'memory')}>
-            ✦
+            <Brain size={14} />
           </button>
         </div>
         <div className="chat-scroll">
@@ -160,6 +192,10 @@ export function Chat() {
               {streaming && <AssistantText text={visibleStreamingText(streaming)} />}
               {status && (
                 <div className="chat-status">
+                  {(() => {
+                    const Icon = STATUS_ICON[status]
+                    return <Icon size={13} color="var(--accent)" />
+                  })()}
                   {STATUS_TEXT[status]}
                   <span className="dots" />
                   {toolNote && <div className="note">{toolNote}</div>}
@@ -218,7 +254,7 @@ export function Chat() {
               </div>
             )}
             <button type="submit" className="send" aria-label="Send" disabled={!input.trim() || !!status}>
-              ↑
+              <ArrowUp size={16} strokeWidth={2.25} />
             </button>
           </div>
         </form>
@@ -244,7 +280,9 @@ function Welcome({ onPick }: { onPick: (prompt: string) => void }) {
   return (
     <div className="chat-welcome">
       <div className="chat-welcome-head">
-        <span className="bubble-icon">💬</span>
+        <span className="bubble-icon">
+          <MessagesSquare size={18} />
+        </span>
         <div>
           <h2>Ask about your Dayflow data</h2>
           <p>Ask questions, analyze your timeline, and generate charts/graphs.</p>
@@ -252,10 +290,13 @@ function Welcome({ onPick }: { onPick: (prompt: string) => void }) {
         </div>
       </div>
       <p className="note">Try one of these</p>
-      {WELCOME_PROMPTS.map((p) => (
-        <button key={p} className="chat-prompt" onClick={() => onPick(p)}>
-          <span>{p}</span>
-          <span aria-hidden>↗</span>
+      {WELCOME_PROMPTS.map(({ text, icon: Icon }) => (
+        <button key={text} className="chat-prompt" onClick={() => onPick(text)}>
+          <span className="lead">
+            <Icon size={13} />
+          </span>
+          <span className="text">{text}</span>
+          <ArrowUpRight size={14} aria-hidden="true" />
         </button>
       ))}
     </div>
@@ -264,7 +305,13 @@ function Welcome({ onPick }: { onPick: (prompt: string) => void }) {
 
 function Message({ message }: { message: ChatStoredMessage }) {
   if (message.role === 'user') return <div className="chat-bubble user">{message.content}</div>
-  if (message.role === 'toolCall') return <div className="chat-tool">{message.content}</div>
+  if (message.role === 'toolCall')
+    return (
+      <div className="chat-tool">
+        <Wrench size={12} aria-hidden="true" />
+        {message.content}
+      </div>
+    )
   return <AssistantText text={message.content} copyable />
 }
 
@@ -289,7 +336,8 @@ function AssistantText({ text, copyable }: { text: string; copyable?: boolean })
       {copyable && (
         <div className="chat-bubble-footer">
           <button
-            className="link"
+            aria-label="Copy answer"
+            title="Copy"
             onClick={() =>
               void window.dayflow.copyText(text).then(() => {
                 setCopied(true)
@@ -297,7 +345,7 @@ function AssistantText({ text, copyable }: { text: string; copyable?: boolean })
               })
             }
           >
-            {copied ? 'Copied' : 'Copy'}
+            {copied ? <Check size={13} /> : <Copy size={13} />}
           </button>
         </div>
       )}
@@ -323,8 +371,8 @@ function History(props: { conversations: ChatConversation[]; current: string | n
                   {formatClock(c.updatedAt)} · {providerLabel(c.provider)}
                 </span>
               </button>
-              <button className="icon delete" aria-label={`Delete ${c.title}`} onClick={() => props.onDelete(c.id)}>
-                🗑
+              <button className="delete" aria-label={`Delete ${c.title}`} onClick={() => props.onDelete(c.id)}>
+                <Trash2 size={13} />
               </button>
             </div>
           ))}

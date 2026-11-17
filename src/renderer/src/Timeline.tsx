@@ -1,24 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Calendar, Check, ChevronLeft, ChevronRight, Copy, Pencil } from 'lucide-react'
+import { dayChanged, weekTrackedMinutes } from '@shared/canvas'
 import { type Category, PRIVATE_CATEGORY, SYSTEM_CATEGORY } from '@shared/categories'
 import { parseKey, shiftDay, todayKey } from '@shared/day'
-import type { Rating, TimelineCard } from '@shared/types'
+import type { AppStatus, Rating, TimelineCard } from '@shared/types'
 import type { DayCards, Week } from '@shared/week'
-import { AppIcon } from './AppIcon'
+import { CardDetail } from './CardDetail'
+import { DayCanvas } from './DayCanvas'
 import { DaySummary } from './DaySummary'
-import { FramePlayer } from './FramePlayer'
-import { FilterBar, muteKey } from './FilterBar'
+import { FilterBar } from './FilterBar'
+import { PausePill } from './PausePill'
+import type { SettingsTab } from './Settings'
 import { WeekGrid } from './WeekGrid'
 
 /** Colors for cards the app writes itself, outside the user's categories. */
 const BUILT_IN_COLORS: Record<string, string> = { [SYSTEM_CATEGORY]: '#E0A100', [PRIVATE_CATEGORY]: '#5C6B7A' }
+/** Upstream's fallback for a category without a colour. */
+const FALLBACK = '#4F80EB'
 
-const today = todayKey
-
-function formatDay(key: string): string {
-  return parseKey(key).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
+/** "Today, Nov 17" or "Mon, Nov 10", like upstream's header. */
+function headerDate(key: string, isToday: boolean): string {
+  const d = parseKey(key)
+  return isToday
+    ? `Today, ${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}`
+    : d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
 }
-
-const minutes = (c: TimelineCard) => Math.max(1, Math.round((c.end - c.start) / 60))
 
 /** The rating covering most of the card, if any. */
 function ratingFor(card: TimelineCard, ratings: Rating[]): Rating | undefined {
@@ -28,8 +34,14 @@ function ratingFor(card: TimelineCard, ratings: Rating[]): Rating | undefined {
     .sort((a, b) => b.overlap - a.overlap)[0]?.r
 }
 
-export function Timeline() {
-  const [day, setDay] = useState(today)
+const nowSec = () => Date.now() / 1000
+
+/**
+ * The Timeline tab (upstream MainView): header with navigation and the pause
+ * pill, category chips, the day canvas or week grid, and the inspector card.
+ */
+export function Timeline(props: { status: AppStatus | null; onStatusChange: (s: AppStatus) => void; onOpenSettings: (tab: SettingsTab) => void }) {
+  const [day, setDay] = useState(todayKey)
   const [mode, setMode] = useState<'day' | 'week'>('day')
   const [cards, setCards] = useState<TimelineCard[]>([])
   const [week, setWeek] = useState<(Week & { columns: DayCards[]; ratings: Rating[] }) | null>(null)
@@ -38,8 +50,13 @@ export function Timeline() {
   const [categories, setCategories] = useState<Category[]>([])
   const [selected, setSelected] = useState<number | null>(null)
   const [muted, setMuted] = useState<Set<string>>(new Set())
-  const [copied, setCopied] = useState(false)
+  const [copy, setCopy] = useState<'idle' | 'copying' | 'copied'>('idle')
   const [showIcons, setShowIcons] = useState(false)
+  const [now, setNow] = useState(nowSec)
+  const [scrollToNow, setScrollToNow] = useState(0)
+  const [footerHidden, setFooterHidden] = useState(false)
+  const lastSeenDay = useRef(todayKey())
+  const datePicker = useRef<HTMLInputElement>(null)
 
   const load = useCallback(() => {
     // Only the newest request may update the view, so fast paging cannot show an older week.
@@ -49,295 +66,186 @@ export function Timeline() {
       setCards(r.cards)
       setRatings(r.ratings)
     })
-    if (mode === 'week') void window.dayflow.getWeek(day).then((w) => id === loadId.current && setWeek(w))
+    // The week also feeds "N hours tracked this week" in day mode.
+    void window.dayflow.getWeek(day).then((w) => id === loadId.current && setWeek(w))
     void window.dayflow.getSettings().then((s) => {
       setCategories(s.categories)
       setShowIcons(s.showAppIcons)
     })
-  }, [day, mode])
+  }, [day])
 
   useEffect(() => {
     load()
     return window.dayflow.onCardsChanged(load)
   }, [load])
 
+  // Every minute: move the status card along, and at 4 AM jump to the new day (upstream Lifecycle.swift).
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(nowSec())
+      const next = dayChanged(lastSeenDay.current, nowSec())
+      if (next) {
+        lastSeenDay.current = next
+        setDay(next)
+        setSelected(null)
+        setScrollToNow((n) => n + 1)
+      }
+    }, 60_000)
+    return () => clearInterval(timer)
+  }, [])
+
   const colorOf = (category: string) =>
-    categories.find((c) => c.name === category)?.color ?? BUILT_IN_COLORS[category] ?? '#888888'
-  const allCards = mode === 'week' ? (week?.columns.flatMap((c) => c.cards) ?? []) : cards
+    categories.find((c) => c.name.trim().toLowerCase() === category.trim().toLowerCase())?.color ?? BUILT_IN_COLORS[category] ?? FALLBACK
+  const weekCards = week?.columns.flatMap((c) => c.cards) ?? []
+  const allCards = mode === 'week' ? weekCards : cards
   const visibleRatings = mode === 'week' ? (week?.ratings ?? []) : ratings
   const card = allCards.find((c) => c.id === selected) ?? null
-  const isToday = day === today()
+  const today = todayKey()
+  const isToday = day === today
   const step = mode === 'week' ? 7 : 1
-  const inCurrentPeriod = mode === 'week' ? (week?.columns.some((c) => c.day === today()) ?? true) : isToday
+  const inCurrentPeriod = mode === 'week' ? (week?.columns.some((c) => c.day === today) ?? true) : isToday
+  const trackedHours = Math.floor(weekTrackedMinutes(weekCards) / 60)
+  const goTo = (next: string) => {
+    setDay(next)
+    setSelected(null)
+    if (next === todayKey()) setScrollToNow((n) => n + 1)
+  }
+  const refreshStatus = () => void window.dayflow.getStatus().then(props.onStatusChange)
 
   return (
     <div className="timeline">
-      <section className="day">
-        <div className="daynav">
-          <div className="segmented" role="group" aria-label="View">
-            {(['day', 'week'] as const).map((m) => (
-              <button key={m} className={mode === m ? 'active' : ''} onClick={() => (setMode(m), setSelected(null))}>
-                {m === 'day' ? 'Day' : 'Week'}
+      <section className="tl-main">
+        <header className="tl-header">
+          <div className="tl-lead">
+            <div className="nav-arrows">
+              <button className="nav-arrow" aria-label={`Previous ${mode}`} onClick={() => goTo(shiftDay(day, -step))}>
+                <ChevronLeft size={24} strokeWidth={1.5} />
               </button>
-            ))}
+              <button className="nav-arrow" aria-label={`Next ${mode}`} disabled={inCurrentPeriod} onClick={() => goTo(shiftDay(day, step))}>
+                <ChevronRight size={24} strokeWidth={1.5} />
+              </button>
+            </div>
+            <button className="btn-glass cal-pill" aria-label="Pick a date" onClick={() => datePicker.current?.showPicker()}>
+              <Calendar size={16} />
+              <input
+                ref={datePicker}
+                type="date"
+                tabIndex={-1}
+                aria-hidden="true"
+                value={day}
+                max={today}
+                onChange={(e) => e.target.value && goTo(e.target.value)}
+              />
+            </button>
+            <div className="segment" role="group" aria-label="View">
+              <span className={`thumb ${mode}`} />
+              {(['day', 'week'] as const).map((m) => (
+                <button key={m} className={mode === m ? 'active' : ''} aria-pressed={mode === m} onClick={() => (setMode(m), setSelected(null))}>
+                  {m === 'day' ? 'Day' : 'Week'}
+                </button>
+              ))}
+            </div>
+            {!inCurrentPeriod && (
+              <button className="today-btn" onClick={() => goTo(todayKey())}>
+                Today
+              </button>
+            )}
+            <h1 className="tl-date">{mode === 'week' ? (week?.title ?? '') : headerDate(day, isToday)}</h1>
           </div>
-          <button aria-label={`Previous ${mode}`} onClick={() => setDay(shiftDay(day, -step))}>
-            ‹
+          {props.status && <PausePill status={props.status} onChange={refreshStatus} />}
+        </header>
+
+        <div className="tl-chips">
+          <FilterBar
+            categories={categories}
+            muted={muted}
+            onToggle={(name) => {
+              const next = new Set(muted)
+              if (next.has(name)) next.delete(name)
+              else next.add(name)
+              setMuted(next)
+            }}
+            onReorder={(next) => {
+              setCategories(next)
+              void window.dayflow.saveSettings({ categories: next })
+            }}
+          />
+          <button className="icon-circle" aria-label="Edit categories" title="Edit categories" onClick={() => props.onOpenSettings('categories')}>
+            <Pencil size={13} />
           </button>
-          <h1>{mode === 'week' ? (week?.title ?? '') : isToday ? 'Today' : formatDay(day)}</h1>
-          <button aria-label={`Next ${mode}`} disabled={inCurrentPeriod} onClick={() => setDay(shiftDay(day, step))}>
-            ›
-          </button>
-          {!inCurrentPeriod && (
-            <button className="link" onClick={() => setDay(today())}>
-              Today
-            </button>
-          )}
-          <span className="push-right" />
-          <button
-            className="link"
-            onClick={() =>
-              void window.dayflow.copyTimeline(mode, day).then(() => {
-                setCopied(true)
-                setTimeout(() => setCopied(false), 2000)
-              })
-            }
-          >
-            {copied ? 'Copied' : 'Copy'}
-          </button>
-          {mode === 'day' && cards.length > 0 && (
-            <button
-              className="link"
-              onClick={() => {
-                if (confirm('Analyze this day again? Its cards are replaced; your recordings stay.')) {
-                  void window.dayflow.reprocessDay(day)
-                }
-              }}
-            >
-              Reprocess day
-            </button>
-          )}
         </div>
-        <FilterBar
-          categories={categories}
-          muted={muted}
-          onToggle={(name) => {
-            const next = new Set(muted)
-            if (next.has(name)) next.delete(name)
-            else next.add(name)
-            setMuted(next)
-          }}
-          onReorder={(next) => {
-            setCategories(next)
-            void window.dayflow.saveSettings({ categories: next })
-          }}
-        />
+
         {mode === 'week' && week ? (
-          <WeekGrid columns={week.columns} today={today()} selected={selected} muted={muted} colorOf={colorOf} onSelect={setSelected} />
-        ) : cards.length === 0 ? (
-          <p className="empty">
-            {isToday
-              ? 'No cards yet. The first ones appear about 15 minutes after recording starts.'
-              : 'Nothing was recorded on this day.'}
-          </p>
+          <WeekGrid
+            columns={week.columns}
+            today={today}
+            now={now}
+            recorder={props.status?.recorder.state ?? null}
+            selected={selected}
+            muted={muted}
+            colorOf={colorOf}
+            onSelect={setSelected}
+            onFooterOverlap={setFooterHidden}
+          />
         ) : (
-          <ol className="cards">
-            {cards.map((c) => {
-              const rating = ratingFor(c, ratings)
-              return (
-                <li key={c.id}>
-                  <button
-                    className={`card ${c.id === selected ? 'selected' : ''} ${muted.has(muteKey(c.category)) ? 'muted' : ''}`}
-                    style={{ '--cat': colorOf(c.category) } as React.CSSProperties}
-                    onClick={() => setSelected(c.id === selected ? null : c.id)}
-                  >
-                    <span className="time">
-                      {c.startTime} – {c.endTime}
-                      {rating && <span className="rated">{rating.rating === 'up' ? ' · 👍' : ' · 👎'}</span>}
-                    </span>
-                    <span className="title">
-                      {showIcons && <AppIcon site={c.appSites.primary} />}
-                      {c.title}
-                    </span>
-                    <span className="meta">
-                      {c.category} · {minutes(c)} min
-                    </span>
-                  </button>
-                </li>
-              )
-            })}
-          </ol>
+          <DayCanvas
+            day={day}
+            cards={cards}
+            now={now}
+            recorder={props.status?.recorder.state ?? null}
+            selected={selected}
+            muted={muted}
+            showIcons={showIcons}
+            scrollToNow={scrollToNow}
+            colorOf={colorOf}
+            onSelect={setSelected}
+            onResume={() => void window.dayflow.resume().then(refreshStatus)}
+            onFooterOverlap={setFooterHidden}
+          />
         )}
+
+        <footer className="tl-footer">
+          <button
+            className="copy-btn"
+            disabled={copy === 'copying'}
+            onClick={() => {
+              setCopy('copying')
+              void window.dayflow.copyTimeline(mode, day).then(() => {
+                setCopy('copied')
+                setTimeout(() => setCopy('idle'), 2000)
+              })
+            }}
+          >
+            {copy === 'copying' ? <span className="spinner dark" /> : copy === 'copied' ? <Check size={12} /> : <Copy size={11.5} />}
+            {copy === 'copied' ? 'Copied' : 'Copy timeline'}
+          </button>
+          <span className={`tracked ${footerHidden ? 'hidden' : ''}`}>
+            <b>{trackedHours} hours</b>
+            {mode === 'week' ? ' of activities tracked this week' : ' tracked this week'}
+          </span>
+        </footer>
       </section>
-      <aside className="detail">
-        {card ? (
-          <>
-            <button className="link" onClick={() => setSelected(null)}>
-              ← {mode === 'day' ? 'Day summary' : 'Close'}
-            </button>
+
+      {(mode === 'day' || card) && (
+        <aside className={`inspector ${mode}`} aria-label={card ? 'Card details' : 'Day summary'}>
+          {card ? (
             <CardDetail
               key={card.id}
               card={card}
               color={colorOf(card.category)}
               categories={categories}
               rating={ratingFor(card, visibleRatings)}
+              onClose={() => setSelected(null)}
               onDeleted={() => setSelected(null)}
+              onEditCategories={() => props.onOpenSettings('categories')}
             />
-          </>
-        ) : mode === 'day' ? (
-          <DaySummary day={day} cards={cards} categories={categories} />
-        ) : (
-          <p className="empty">Select a card to see what happened.</p>
-        )}
-      </aside>
+          ) : (
+            <div className="inspector-scroll">
+              <DaySummary day={day} cards={cards} categories={categories} recorder={props.status?.recorder.state ?? null} />
+            </div>
+          )}
+        </aside>
+      )}
     </div>
-  )
-}
-
-function CardDetail(props: {
-  card: TimelineCard
-  color: string
-  categories: Category[]
-  rating: Rating | undefined
-  onDeleted: () => void
-}) {
-  const { card, color, categories, rating } = props
-  const [editing, setEditing] = useState(false)
-  const [title, setTitle] = useState(card.title)
-  const [category, setCategory] = useState(card.category)
-  const [feedback, setFeedback] = useState<string | null>(null)
-  const [showFrames, setShowFrames] = useState(false)
-  const span = { start: card.start, end: card.end }
-  const isFailed = card.category === SYSTEM_CATEGORY
-  const [busy, setBusy] = useState<string | null>(null)
-  const reprocess = () =>
-    card.batchId !== null &&
-    void window.dayflow
-      .reprocessBatch(card.batchId)
-      .then((ok) => setBusy(ok ? 'Queued for analysis.' : 'This batch is being analyzed right now; try again in a moment.'))
-
-  return (
-    <>
-      <p className="time">
-        {card.startTime} – {card.endTime} · {minutes(card)} min
-      </p>
-      {editing ? (
-        <div className="edit">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Title" />
-          <select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">
-            {[...new Set([...categories.map((c) => c.name), card.category])].map((name) => (
-              <option key={name}>{name}</option>
-            ))}
-          </select>
-          <div className="row">
-            <button
-              onClick={() =>
-                void window.dayflow.updateCard(card.id, { title: title.trim() || card.title, category }).then(() => setEditing(false))
-              }
-            >
-              Save
-            </button>
-            <button className="link" onClick={() => setEditing(false)}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        <>
-          <h2>{card.title}</h2>
-          <span className="tag" style={{ background: color }}>
-            {card.category}
-            {card.subcategory ? ` · ${card.subcategory}` : ''}
-          </span>
-        </>
-      )}
-      <p>{card.summary}</p>
-
-      <div className="row actions">
-        {isFailed ? (
-          card.batchId !== null && <button onClick={reprocess}>Retry</button>
-        ) : (
-          <>
-            <button
-              className={rating?.rating === 'up' ? 'active' : ''}
-              aria-label="Good card"
-              onClick={() => void window.dayflow.rateCard(span, 'up')}
-            >
-              👍
-            </button>
-            <button
-              className={rating?.rating === 'down' ? 'active' : ''}
-              aria-label="Bad card"
-              onClick={() => setFeedback(rating?.feedback ?? '')}
-            >
-              👎
-            </button>
-            {!editing && <button onClick={() => setEditing(true)}>Edit</button>}
-            {card.batchId !== null && card.category !== PRIVATE_CATEGORY && (
-              <button onClick={() => confirm('Analyze this card\'s 15 minutes again?') && reprocess()}>Reanalyze</button>
-            )}
-          </>
-        )}
-        <button
-          className="link danger"
-          onClick={() => {
-            if (confirm('Delete this card?')) void window.dayflow.deleteCard(card.id).then(props.onDeleted)
-          }}
-        >
-          Delete
-        </button>
-      </div>
-      {feedback !== null && (
-        <div className="edit">
-          <textarea
-            rows={3}
-            placeholder="What was wrong? (optional)"
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-          />
-          <div className="row">
-            <button onClick={() => void window.dayflow.rateCard(span, 'down', feedback).then(() => setFeedback(null))}>
-              Send 👎
-            </button>
-            <button className="link" onClick={() => setFeedback(null)}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-      {busy && <p className="note">{busy}</p>}
-      {rating?.feedback && feedback === null && <p className="note">Your note: {rating.feedback}</p>}
-
-      {card.category !== PRIVATE_CATEGORY && (
-        <>
-          <button className="link" onClick={() => setShowFrames(!showFrames)}>
-            {showFrames ? 'Hide screenshots' : 'Screenshots and timelapse'}
-          </button>
-          {showFrames && <FramePlayer start={card.start} end={card.end} />}
-        </>
-      )}
-      {card.detailedSummary && (
-        <>
-          <h3>Details</h3>
-          <pre className="log">{card.detailedSummary}</pre>
-        </>
-      )}
-      {card.distractions.length > 0 && (
-        <>
-          <h3>Distractions</h3>
-          <ul>
-            {card.distractions.map((d, i) => (
-              <li key={i}>
-                <strong>
-                  {d.startTime} – {d.endTime}
-                </strong>{' '}
-                {d.title}
-                {d.summary ? `: ${d.summary}` : ''}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </>
   )
 }
