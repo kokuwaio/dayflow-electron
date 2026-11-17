@@ -278,6 +278,11 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   popover. Left out: upstream's intro video, referral survey and personal
   goal step (analytics), particles and confetti on the ring, and per-chart
   PNG export.
+- [x] Modern theme (not upstream): Settings → Other → Theme switches between
+  upstream's look (Dayflow, the default) and Modern, flat neutral greys with
+  Inter (bundled with its OFL text), one indigo accent and 1px borders, in
+  light and dark. `data-ui-style` on the root element switches the CSS
+  tokens; category colours and the onboarding stay as they are.
 - [ ] Goal pop-up trigger: upstream checks at app level and switches to the
   timeline itself; here the check runs when today's day summary is shown
   (the app opens there, so it differs only when another tab is open at 4 AM).

@@ -34,6 +34,7 @@ The window bundles these, each under its own license; the full texts are in
 | What | Source | License | Text |
 | --- | --- | --- | --- |
 | Figtree (variable) | `@fontsource-variable/figtree` 5.3.0, https://github.com/erikdkennedy/figtree, Copyright 2022 The Figtree Project Authors | SIL Open Font License 1.1 | [licenses/Figtree-OFL.txt](licenses/Figtree-OFL.txt) |
+| Inter (variable), Modern theme | `@fontsource-variable/inter` 5.3.0, https://github.com/rsms/inter, Copyright 2016 The Inter Project Authors | SIL Open Font License 1.1 | [licenses/Inter-OFL.txt](licenses/Inter-OFL.txt) |
 | Instrument Serif | `@fontsource/instrument-serif` 5.3.0, https://github.com/Instrument/instrument-serif, Copyright 2022 The Instrument Serif Project Authors | SIL Open Font License 1.1 | [licenses/InstrumentSerif-OFL.txt](licenses/InstrumentSerif-OFL.txt) |
 | Lucide icons | `lucide-react` 1.66.0, https://lucide.dev, Copyright (c) 2026 Lucide Icons and Contributors; some icons derived from Feather, Copyright (c) 2013-present Cole Bemis | ISC (Feather-derived icons: MIT) | [licenses/Lucide-ISC.txt](licenses/Lucide-ISC.txt) |
 

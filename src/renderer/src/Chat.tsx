@@ -141,14 +141,14 @@ export function Chat() {
           <p>Chat lets you ask questions about your Dayflow activity and get summaries, comparisons, and insights.</p>
           <ul className="requirements">
             <li>
-              <Zap size={18} color="#F98D3D" />
+              <Zap size={18} color="var(--accent-icon)" />
               <div>
                 <strong>10 hours of timeline data required</strong>
                 <span className="note">Chat unlocks after Dayflow has analyzed enough activity. {access.label}</span>
               </div>
             </li>
             <li>
-              {providers.length ? <CircleCheck size={18} color="#34C759" /> : <Zap size={18} color="#F98D3D" />}
+              {providers.length ? <CircleCheck size={18} color="#34C759" /> : <Zap size={18} color="var(--accent-icon)" />}
               <div>
                 <strong>{providers.length ? 'AI provider configured' : 'AI provider required'}</strong>
                 {!providers.length && <span className="note">Unlock chat by adding an AI provider in Settings.</span>}

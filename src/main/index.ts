@@ -45,6 +45,7 @@ import { SettingsStore } from './settings'
 import { type Updater, startUpdater } from './updater'
 import { type UpdateMode, parseCodesign, updateMode, isDevVersion } from '../shared/updates'
 import { errorMessage } from '../shared/errors'
+import { type UiStyle, windowBackground } from '../shared/ui-style'
 
 const here = dirname(fileURLToPath(import.meta.url))
 /** A deep link among the arguments (dayflow-electron://stop-recording), from the desktop or a second launch. */
@@ -84,6 +85,8 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 let window: BrowserWindow | null = null
+/** The visual theme from settings, for the window's first colour and the page's first paint. */
+let uiStyle: UiStyle = 'dayflow'
 const changed = () => window?.webContents.send('cards:changed')
 let tray: Tray | null = null
 /** Set once the update check started (Windows and macOS packages). */
@@ -102,6 +105,7 @@ async function main(): Promise<void> {
   const settings = await SettingsStore.open(join(dataDir, 'settings.json'), join(dataDir, 'keys.json'))
   // The window follows this; CSS sees it as prefers-color-scheme.
   nativeTheme.themeSource = settings.get().theme
+  uiStyle = settings.get().uiStyle
   const backupDir = join(dataDir, 'backups')
   const { store, restoredFrom } = openWithRecovery(join(dataDir, 'dayflow.sqlite'), backupDir)
   log(`dayflow-electron ${app.getVersion()}`)
@@ -494,6 +498,10 @@ async function main(): Promise<void> {
     }
     const saved = await settings.save(next)
     if (saved.theme !== before.theme) nativeTheme.themeSource = saved.theme
+    if (saved.theme !== before.theme || saved.uiStyle !== before.uiStyle) {
+      uiStyle = saved.uiStyle
+      window?.setBackgroundColor(windowBackground(uiStyle, nativeTheme.shouldUseDarkColors))
+    }
     // Cards follow renamed categories (matched by id after the names were cleaned up).
     const renames = renamedCategories(before.categories, saved.categories)
     for (const { from, to } of renames) store.renameCategory(from, to)
@@ -702,7 +710,7 @@ function showWindow(): void {
     minHeight: 558,
     title: 'Dayflow',
     // The theme's base colour, so the window does not flash before the page paints.
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#303C5B' : '#FFE6E0',
+    backgroundColor: windowBackground(uiStyle, nativeTheme.shouldUseDarkColors),
     icon: join(app.getAppPath(), 'resources/icon.png'),
     autoHideMenuBar: true,
     webPreferences: {
@@ -730,6 +738,8 @@ function showWindow(): void {
     event.preventDefault()
     if (/^https?:/.test(url)) void shell.openExternal(url)
   })
-  if (process.env.ELECTRON_RENDERER_URL) void window.loadURL(process.env.ELECTRON_RENDERER_URL)
-  else void window.loadFile(join(here, '../renderer/index.html'))
+  // The page sets its theme from the query before React renders, so it does not flash the other look.
+  const query = { uiStyle }
+  if (process.env.ELECTRON_RENDERER_URL) void window.loadURL(`${process.env.ELECTRON_RENDERER_URL}?${new URLSearchParams(query)}`)
+  else void window.loadFile(join(here, '../renderer/index.html'), { query })
 }

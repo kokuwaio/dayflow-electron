@@ -1,6 +1,7 @@
 import { DEFAULT_BLOCKLIST } from './blocklist'
 import { type Category, DEFAULT_CATEGORIES } from './categories'
 import type { StandupDraft } from './daily'
+import type { UiStyle } from './ui-style'
 
 // Types shared by the main process and the renderer.
 
@@ -93,6 +94,8 @@ export interface Settings {
   promptOverrides: PromptOverrides
   /** Window theme; dark unless changed. "system" follows the desktop. */
   theme: Theme
+  /** Visual theme: upstream Dayflow's look (the default) or the flat "Modern" one. */
+  uiStyle: UiStyle
   /** Show app and site icons on cards (fetched from the sites themselves). */
   showAppIcons: boolean
   /** The first-run setup is done. */
@@ -164,6 +167,7 @@ export const DEFAULT_SETTINGS: Settings = {
   categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })),
   promptOverrides: { title: '', summary: '', detailedSummary: '' },
   theme: 'dark',
+  uiStyle: 'dayflow',
   showAppIcons: false,
   showDailyGoalPopups: true,
   onboarded: false,

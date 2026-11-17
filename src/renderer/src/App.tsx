@@ -6,6 +6,7 @@ import { Daily } from './Daily'
 import { Onboarding } from './Onboarding'
 import { type SettingsTab, SettingsView } from './Settings'
 import { Timeline } from './Timeline'
+import { applyUiStyle } from './ui-style'
 import { Weekly } from './Weekly'
 
 /** Upstream's sidebar (MainView/SidebarView.swift), with Lucide icons in place of its artwork. */
@@ -27,7 +28,10 @@ export function App() {
 
   useEffect(() => {
     void window.dayflow.getStatus().then(setStatus)
-    void window.dayflow.getSettings().then(setSettings)
+    void window.dayflow.getSettings().then((s) => {
+      applyUiStyle(s.uiStyle)
+      setSettings(s)
+    })
     const offNavigate = window.dayflow.onNavigate((tab) => TABS.some((t) => t.id === tab) && setView(tab as View))
     const offStatus = window.dayflow.onStatus(setStatus)
     return () => {
