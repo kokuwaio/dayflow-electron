@@ -449,7 +449,7 @@ function Permissions({ platform, onBack, onNext }: { platform: string; onBack: (
           ]
         : [{ title: 'Nothing to allow', detail: 'Windows needs no permission for screenshots. Recording starts as soon as you launch.' }]
   return (
-    <div className="onb-perms">
+    <div className={`onb-perms ${platform === 'darwin' ? '' : 'single'}`}>
       <div className="onb-perms-left">
         <span className="last-step">Last step!</span>
         <h3>Permissions</h3>
@@ -468,30 +468,34 @@ function Permissions({ platform, onBack, onNext }: { platform: string; onBack: (
           </div>
         ))}
       </div>
-      <div className="onb-perms-mock" aria-hidden="true">
-        <div className="mock-window">
-          <div className="mock-bar">
-            <span />
-            <span />
-            <span />
+      {platform === 'darwin' && (
+        // A picture of macOS's Screen Recording list, not controls; other systems ask in their own dialog.
+        <figure className="onb-perms-mock" aria-hidden="true">
+          <div className="mock-window">
+            <div className="mock-bar">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="mock-row highlight">
+              <span className="mock-icon" />
+              Dayflow Electron
+              <span className="mock-toggle on" />
+            </div>
+            <div className="mock-row">
+              <span className="mock-icon" />
+              Browser
+              <span className="mock-toggle" />
+            </div>
+            <div className="mock-row">
+              <span className="mock-icon" />
+              Terminal
+              <span className="mock-toggle" />
+            </div>
           </div>
-          <div className="mock-row highlight">
-            <span className="mock-icon" />
-            Dayflow Electron
-            <span className="mock-toggle on" />
-          </div>
-          <div className="mock-row">
-            <span className="mock-icon" />
-            Browser
-            <span className="mock-toggle" />
-          </div>
-          <div className="mock-row">
-            <span className="mock-icon" />
-            Terminal
-            <span className="mock-toggle" />
-          </div>
-        </div>
-      </div>
+          <figcaption>Example: System Settings → Privacy &amp; Security → Screen Recording</figcaption>
+        </figure>
+      )}
       <div className="onb-perms-actions">
         <button className="onb-secondary" onClick={onBack}>
           Back

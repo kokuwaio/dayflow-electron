@@ -1621,7 +1621,11 @@ input[type='range'] { accent-color: var(--accent); }
 .perm-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; background: rgb(255 255 255 / 0.5); border: 1px solid rgb(232 221 213); }
 .perm-row b { font-size: 14px; color: #333; }
 .perm-row span { font-size: 12px; font-weight: 500; color: #5b5b5b; }
-.onb-perms-mock { display: grid; place-items: center; }
+.onb-perms-mock { display: grid; place-items: center; gap: 10px; margin: 0; cursor: default; }
+.onb-perms-mock figcaption { font-size: 12px; color: #8a7a70; text-align: center; }
+/* Without the macOS picture: one centred column. */
+.onb-perms.single { grid-template-columns: minmax(0, 520px); justify-content: center; }
+.onb-perms.single .privacy-box { max-width: none; }
 .mock-window { width: min(420px, 100%); border-radius: 8px; border: 1px solid #f0f0f0; background: rgb(255 255 255 / 0.85); box-shadow: 0 8px 30px rgb(185 155 123 / 0.25); padding: 12px; display: grid; gap: 8px; }
 .mock-bar { display: flex; gap: 6px; padding-bottom: 6px; }
 .mock-bar span { width: 10px; height: 10px; border-radius: 50%; background: #e4d3c2; }
@@ -1698,6 +1702,7 @@ input[type='range'] { accent-color: var(--accent); }
 :root[data-ui-style='modern'] .onb-perms .last-step { font-size: 13px; font-weight: 600; color: var(--accent-text); }
 :root[data-ui-style='modern'] .onb-perms h3 { font-weight: 600; font-size: 28px; letter-spacing: -0.02em; color: var(--text-primary); }
 :root[data-ui-style='modern'] .onb-perms .muted { color: var(--text-secondary); }
+:root[data-ui-style='modern'] .onb-perms-mock figcaption { color: var(--text-muted); }
 :root[data-ui-style='modern'] .privacy-box { max-width: none; border-radius: 8px; background: var(--soft-fill); border: 1px solid var(--soft-border); box-shadow: none; color: var(--text-secondary); }
 :root[data-ui-style='modern'] .privacy-box b { color: var(--accent-text); }
 :root[data-ui-style='modern'] .perm-row { background: var(--panel-fill); border: 1px solid var(--panel-border); }
