@@ -226,15 +226,20 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
       blocked frames. Defaults cover KeePassXC, KeePass, 1Password, Bitwarden
       and the Passbolt web app. Needs the opt-in KWin permission in the
       Flatpak; GNOME needs a Shell extension.
-- [ ] Private browser windows: only where the window title reveals it; upstream's
-  URL-based rules need accessibility APIs (AT-SPI on Linux) and may stay
-  macOS/Windows-only.
+- [x] Private browser windows: Chrome incognito and Firefox private windows,
+  detected from the window title with upstream's localized markers; on by
+  default. Upstream's toolbar and URL checks need accessibility APIs (AT-SPI on
+  Linux) and stay open, as do its site categories.
 - [ ] Secret masking: rules from upstream `PIIMaskRules` on Tesseract OCR output,
   opt-in. Upstream's ML model is served from its paid backend and is out of
   reach.
 - [ ] Dark mode, app language, show/hide icons, pause presets (all but the
   app language done; dark mode follows the system).
-- [ ] Deep links: `start-recording`, `stop-recording`.
+- [x] Deep links: `dayflow-electron://start-recording` and `stop-recording`
+  (aliases `start`, `resume`, `stop`, `pause`).
+- [x] Database backups: a daily copy, the newest three kept, a damaged
+  database restored from the newest copy on start, WAL checkpoints every 5
+  minutes (upstream `StorageManager+Maintenance`).
 - [ ] Packages: Flatpak on Linux (own repository first, Flathub once the
   permissions are settled; updates come through Flatpak), NSIS and dmg with
   `electron-updater` from GitHub Releases; signing for Windows and macOS.

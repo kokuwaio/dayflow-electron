@@ -81,6 +81,8 @@ export interface Settings {
   launchAtLogin: boolean
   /** Blocklist rules: app IDs, or "title:<text>" for window titles. */
   blockedApps: string[]
+  /** Chrome incognito and Firefox private windows count as blocked (upstream "Hide private browsing windows"). */
+  hidePrivateWindows: boolean
   /** Optional absolute paths of the agent CLIs on the host; empty means find them. */
   cliPaths: Record<CliName, string>
   /** Timeline categories; the last one is Idle. */
@@ -119,6 +121,7 @@ export const DEFAULT_SETTINGS: Settings = {
   storageLimitGb: 10,
   launchAtLogin: false,
   blockedApps: [...DEFAULT_BLOCKLIST],
+  hidePrivateWindows: true,
   cliPaths: { claude: '', codex: '' },
   categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })),
   promptOverrides: { title: '', summary: '', detailedSummary: '' },

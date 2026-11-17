@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { basename } from 'node:path'
-import { DatabaseSync } from 'node:sqlite'
+import { DatabaseSync, backup } from 'node:sqlite'
 import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from '../../shared/categories'
 import { dayKey, dayRange, formatClock } from '../../shared/day'
 import type { GoalPlan } from '../../shared/day-summary'
@@ -77,6 +77,22 @@ export class Store {
 
   close(): void {
     this.db.close()
+  }
+
+  /** Copies the whole database to `path` while it stays in use. */
+  async backupTo(path: string): Promise<void> {
+    await backup(this.db, path)
+  }
+
+  /** SQLite's quick integrity check; false for a damaged database. */
+  isHealthy(): boolean {
+    const row = this.db.prepare('PRAGMA quick_check').get() as Record<string, unknown> | undefined
+    return row !== undefined && Object.values(row)[0] === 'ok'
+  }
+
+  /** Moves the write-ahead log into the database file (upstream does this every 5 minutes). */
+  checkpoint(): void {
+    this.db.exec('PRAGMA wal_checkpoint(PASSIVE)')
   }
 
   private tx<T>(fn: () => T): T {
@@ -256,11 +272,11 @@ export class Store {
     if (span.end <= span.start) return
     this.tx(() => {
       const overlapping = this.db
-        .prepare('SELECT id, start_ts AS start, end_ts AS end, rating, feedback FROM timeline_review_ratings WHERE NOT (end_ts <= ? OR start_ts >= ?)')
+        .prepare('SELECT id, start_ts AS start, end_ts AS end, rating, feedback FROM timeline_card_feedback WHERE NOT (end_ts <= ? OR start_ts >= ?)')
         .all(span.start, span.end) as unknown as Array<Span & { id: number; rating: string; feedback: string | null }>
-      const insert = this.db.prepare('INSERT INTO timeline_review_ratings (start_ts, end_ts, rating, feedback) VALUES (?, ?, ?, ?)')
+      const insert = this.db.prepare('INSERT INTO timeline_card_feedback (start_ts, end_ts, rating, feedback) VALUES (?, ?, ?, ?)')
       for (const r of overlapping) {
-        this.db.prepare('DELETE FROM timeline_review_ratings WHERE id = ?').run(r.id)
+        this.db.prepare('DELETE FROM timeline_card_feedback WHERE id = ?').run(r.id)
         if (r.start < span.start) insert.run(r.start, Math.min(span.start, r.end), r.rating, r.feedback)
         if (r.end > span.end) insert.run(Math.max(span.end, r.start), r.end, r.rating, r.feedback)
       }
@@ -271,7 +287,7 @@ export class Store {
   ratings(span: Span): Rating[] {
     return this.db
       .prepare(
-        'SELECT start_ts AS start, end_ts AS end, rating, feedback FROM timeline_review_ratings WHERE NOT (end_ts <= ? OR start_ts >= ?) ORDER BY start_ts'
+        'SELECT start_ts AS start, end_ts AS end, rating, feedback FROM timeline_card_feedback WHERE NOT (end_ts <= ? OR start_ts >= ?) ORDER BY start_ts'
       )
       .all(span.start, span.end) as unknown as Rating[]
   }

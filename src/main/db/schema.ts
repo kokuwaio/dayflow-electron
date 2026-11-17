@@ -164,5 +164,20 @@ export const MIGRATIONS: string[] = [
     sort_order INTEGER NOT NULL
   );
   CREATE INDEX idx_chat_messages_conversation ON chat_messages(conversation_id, sort_order);
+  `,
+  // 8: thumbs up/down move to their own table; upstream keeps timeline_review_ratings for its
+  // review flow (distracted/neutral/focused) and sends thumbs only to its analytics.
+  `
+  CREATE TABLE timeline_card_feedback (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    start_ts INTEGER NOT NULL,
+    end_ts INTEGER NOT NULL,
+    rating TEXT NOT NULL CHECK(rating IN ('up', 'down')),
+    feedback TEXT
+  );
+  CREATE INDEX idx_card_feedback_time ON timeline_card_feedback(start_ts, end_ts);
+  INSERT INTO timeline_card_feedback (start_ts, end_ts, rating, feedback)
+    SELECT start_ts, end_ts, rating, feedback FROM timeline_review_ratings WHERE rating IN ('up', 'down');
+  DELETE FROM timeline_review_ratings WHERE rating IN ('up', 'down');
   `
 ]

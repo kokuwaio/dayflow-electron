@@ -163,6 +163,9 @@ sequenceDiagram
   counted with `PRAGMA user_version`. Times are Unix seconds.
 - **Days run from 4 AM to 4 AM**, so a late night stays on the day it began
   (`src/shared/day.ts`).
+- **Backups**: a daily copy of the database in `backups/` (newest three);
+  `src/main/db/backup.ts` restores the newest one when the database is
+  damaged at start.
 - **Frames** are JPEG files in `recordings/`. The retention job deletes the
   oldest ones when the storage limit is reached; cards stay.
 - **Settings** are a JSON file. API keys are encrypted with Electron's

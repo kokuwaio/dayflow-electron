@@ -243,6 +243,10 @@ Settings then shows "Window detection works". Limits:
 For the strongest guarantee, pause recording from the tray before opening a
 vault.
 
+**Hide private browsing windows** (Settings → Blocked apps, on by default)
+treats Chrome and Chromium incognito windows and Firefox private windows like
+blocked apps. It reads the window title, so it also needs window detection.
+
 ## Pause, privacy and storage
 
 - **Pause** from the tray or the status pill in the window: 15, 30 or 60
@@ -253,6 +257,12 @@ vault.
   **Open recordings folder** in the tray shows the screenshots.
 - **Settings → Storage** caps the space used by screenshots (default 10 GB);
   the oldest are deleted first.
+- The database is backed up once a day to `backups/` in the same folder (the
+  newest three are kept). If it is ever damaged, the app restores the newest
+  backup on start and keeps the damaged file as `dayflow.sqlite.corrupt-…`.
+- **Deep links** start and stop recording from scripts or launchers:
+  `xdg-open dayflow-electron://stop-recording` pauses until you resume,
+  `xdg-open dayflow-electron://start-recording` resumes.
 - No telemetry. Nothing leaves your computer except the screenshots and text
   sent to the AI provider you chose.
 

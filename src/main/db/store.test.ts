@@ -152,3 +152,12 @@ describe('Store: chat tool data', () => {
     expect(store.observationsBetween(900, 1500)).toEqual([{ start: 1000, end: 1100, text: 'Editing' }])
   })
 })
+
+describe('Store: card feedback storage', () => {
+  it('keeps thumbs ratings out of upstream timeline_review_ratings', () => {
+    store.rateRange({ start: 100, end: 200 }, 'up', 'great')
+    expect(store.ratings({ start: 0, end: 1000 })).toEqual([{ start: 100, end: 200, rating: 'up', feedback: 'great' }])
+    const db = (store as unknown as { db: { prepare(sql: string): { all(): unknown[] } } }).db
+    expect(db.prepare('SELECT * FROM timeline_review_ratings').all()).toEqual([])
+  })
+})

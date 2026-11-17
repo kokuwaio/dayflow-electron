@@ -157,6 +157,14 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
           defaultValue={settings.blockedApps.join('\n')}
           onBlur={(e) => save({ blockedApps: e.target.value.split('\n') })}
         />
+        <label className="check">
+          <input type="checkbox" checked={settings.hidePrivateWindows} onChange={(e) => save({ hidePrivateWindows: e.target.checked })} />
+          Hide private browsing windows
+        </label>
+        <p className="note">
+          Chrome incognito and Firefox private windows get a redaction card instead of a screenshot. Detected from the
+          window title, so it needs window detection too.
+        </p>
         {status?.recorder.windowDetection === 'unavailable' && (
           <p className="error">
             Window detection is off, so blocked apps are recorded like any other window.{' '}

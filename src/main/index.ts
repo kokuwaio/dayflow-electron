@@ -9,6 +9,8 @@ import { dayKey, dayRange, shiftDay, todayKey } from '../shared/day'
 import { needsApiKey } from '../shared/providers'
 import { PAUSE_PRESETS, describeRecorder } from '../shared/status'
 import { renamedCategories } from '../shared/categories'
+import { PRIVATE_WINDOWS_RULE } from '../shared/blocklist'
+import { DEEP_LINK_SCHEME, deepLinkAction } from '../shared/deep-link'
 import { type StandupDraft, accessProgress } from '../shared/daily'
 import type { FrameRef } from '../shared/media'
 import { type GoalPlan, defaultGoalPlan } from '../shared/day-summary'
@@ -19,7 +21,7 @@ import type { AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings, Stan
 import type { Span } from './db/store'
 import { Pipeline } from './analysis/pipeline'
 import { Recorder } from './capture/recorder'
-import { Store } from './db/store'
+import { backupDatabase, listBackups, openWithRecovery } from './db/backup'
 import { ChatError, sendChatMessage } from './chat/service'
 import { frameUrl } from '../shared/media'
 import { AUTO_MIN_MINUTES, MANUAL_MIN_MINUTES, generateStandup, standupSourceDay } from './insights/daily'
@@ -32,7 +34,13 @@ import { selectFramesToPurge } from './retention'
 import { SettingsStore } from './settings'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const startHidden = process.argv.includes('--hidden')
+/** A deep link among the arguments (dayflow-electron://stop-recording), from the desktop or a second launch. */
+const linkIn = (argv: string[]) => argv.find((a) => a.startsWith(`${DEEP_LINK_SCHEME}:`))
+// A launch for a deep link does its job without showing the window.
+const startHidden = process.argv.includes('--hidden') || !!linkIn(process.argv)
+/** Set once the recorder exists; links that arrive earlier wait in pendingLink. */
+let openLink: ((link: string) => void) | null = null
+let pendingLink = linkIn(process.argv) ?? null
 registerMediaScheme()
 // Separate data for development and tests.
 if (process.env.DAYFLOW_DATA_DIR) app.setPath('userData', process.env.DAYFLOW_DATA_DIR)
@@ -40,7 +48,12 @@ if (process.env.DAYFLOW_DATA_DIR) app.setPath('userData', process.env.DAYFLOW_DA
 if (!app.requestSingleInstanceLock()) {
   app.quit()
 } else {
-  app.on('second-instance', () => showWindow())
+  app.on('second-instance', (_event, argv) => {
+    const link = linkIn(argv)
+    if (!link) return showWindow()
+    if (openLink) openLink(link)
+    else pendingLink = link
+  })
   app.whenReady().then(main).catch((err) => {
     console.error('startup failed', err)
     app.exit(1)
@@ -60,7 +73,16 @@ async function main(): Promise<void> {
   mkdirSync(recordingsDir, { recursive: true })
 
   const settings = await SettingsStore.open(join(dataDir, 'settings.json'), join(dataDir, 'keys.json'))
-  const store = Store.open(join(dataDir, 'dayflow.sqlite'))
+  const backupDir = join(dataDir, 'backups')
+  const { store, restoredFrom } = openWithRecovery(join(dataDir, 'dayflow.sqlite'), backupDir)
+  if (restoredFrom) log(`the database was damaged; restored ${restoredFrom}`)
+  // Upstream's maintenance: a backup a day (the first after an hour, or now when there is none) and a WAL checkpoint every 5 minutes.
+  const backup = () => void backupDatabase(store, backupDir).catch((err) => log(`backup failed: ${String(err)}`))
+  setTimeout(() => {
+    backup()
+    setInterval(backup, 24 * 3600_000)
+  }, listBackups(backupDir).length ? 3600_000 : 0)
+  setInterval(() => store.checkpoint(), 5 * 60_000)
   // After the data folder moved, stored paths point at the old place: follow the files
   // and give the batches that failed on missing frames another go.
   const relocated = store.relocateScreenshots(recordingsDir)
@@ -94,7 +116,10 @@ async function main(): Promise<void> {
         }
       )
     },
-    () => settings.get().blockedApps
+    () => {
+      const s = settings.get()
+      return s.hidePrivateWindows ? [...s.blockedApps, PRIVATE_WINDOWS_RULE] : s.blockedApps
+    }
   )
 
   const inFlatpak = !!process.env.FLATPAK_ID
@@ -464,6 +489,19 @@ async function main(): Promise<void> {
     updateTray()
   })
   if (settings.get().onboarded) recorder.start()
+
+  // Deep links (upstream AppDeepLinkRouter): start resumes a pause, stop pauses until resumed.
+  openLink = (link) => {
+    const action = deepLinkAction(link)
+    if (!action || !settings.get().onboarded) return
+    log(`deep link: ${action}`)
+    if (action === 'start') recorder.resume()
+    else recorder.pause(null)
+  }
+  // Outside the Flatpak the desktop file is not installed; register the scheme for this user.
+  if (!process.env.FLATPAK_ID && app.isPackaged) app.setAsDefaultProtocolClient(DEEP_LINK_SCHEME)
+  if (pendingLink) openLink(pendingLink)
+  pendingLink = null
   pipeline.start()
   updateTray()
   void purge()

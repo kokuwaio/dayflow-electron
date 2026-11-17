@@ -7,3 +7,6 @@ coverage/
 # core dumps
 core
 core.[0-9]*
+
+# Agent worktrees
+.claude/worktrees/
