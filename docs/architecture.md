@@ -250,6 +250,9 @@ flowchart LR
   `timeline_cards`, `observations`, `llm_calls`, `timeline_review_ratings`,
   `day_goals`, `day_goal_categories`, `daily_standup_entries`. Migrations are
   counted with `PRAGMA user_version`. Times are Unix seconds.
+  `timeline_review_ratings` holds the review flow's distracted, neutral and
+  focused ratings as time ranges (`src/shared/review.ts`); thumbs up and down
+  live in `timeline_card_feedback`.
 - **Days run from 4 AM to 4 AM**, so a late night stays on the day it began
   (`src/shared/day.ts`).
 - **Backups**: a daily copy of the database in `backups/` (newest three);

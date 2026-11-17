@@ -7,7 +7,7 @@ import { formatMinutes } from '@shared/day-summary'
 import { escapeHtml } from '@shared/html'
 import type { TimelineCard } from '@shared/types'
 import type { Week } from '@shared/week'
-import { WEEKLY_MIN_TRACKED_MINUTES, contextShifts, donutItems, sankeyLinks, trackedMinutes, treemap, workflowHeatmap } from '@shared/weekly'
+import { type FocusHeatmap, WEEKLY_MIN_TRACKED_MINUTES, contextShifts, donutItems, focusHeatmap, heatmapColor, sankeyLinks, trackedMinutes, treemap, workflowHeatmap } from '@shared/weekly'
 import { Chart, useDark } from './Chart'
 import { LockedFeature, ProgressBar } from './LockedFeature'
 
@@ -53,6 +53,7 @@ export function Weekly() {
       donut: donutItems(cards, categories),
       shifts: contextShifts(cards, categories, week.days),
       heatmap: workflowHeatmap(cards, categories, week.days),
+      focus: focusHeatmap(cards, categories, week.days),
       tree: treemap(cards, previous, categories),
       sankey: sankeyLinks(cards, categories)
     }
@@ -194,6 +195,7 @@ export function Weekly() {
                 ))}
               </div>
             </section>
+            <FocusHeatmapCard map={charts.focus} />
             <section className="w-card wide">
               <h3>Most used per category</h3>
               <Chart
@@ -280,5 +282,54 @@ function HeatRow({ day, cells }: { day: string; cells: Array<{ category: string 
         />
       ))}
     </>
+  )
+}
+
+/** "Focus and distraction heat map": 5-minute cells per day, Sunday first (upstream WeeklyFocusHeatmapSection). */
+function FocusHeatmapCard({ map }: { map: FocusHeatmap }) {
+  const count = map.rows[0]?.values.length ?? 0
+  const span = map.endMinute - map.startMinute
+  const hours: number[] = []
+  for (let m = Math.ceil(map.startMinute / 60) * 60; m <= map.endMinute; m += 60) hours.push(m)
+  return (
+    <section className="w-card wide focus-heat">
+      <div className="focus-heat-head">
+        <h3>Focus and distraction heat map</h3>
+        <div className="focus-heat-legend" aria-hidden="true">
+          <span className="bar" />
+          <span className="labels">
+            <span>Focused work</span>
+            <span>Distracted</span>
+          </span>
+        </div>
+      </div>
+      <div className="focus-heat-body">
+        <div className="focus-heat-days">
+          {map.rows.map((r) => (
+            <span key={r.day}>{parseKey(r.day).toLocaleDateString([], { weekday: 'short' })}</span>
+          ))}
+        </div>
+        <div className="focus-heat-scroll">
+          <div className="focus-heat-grid" role="img" aria-label="Focus (blue) and distraction (peach) per 5 minutes and day" style={{ gridTemplateColumns: `repeat(${count}, minmax(4px, 1fr))` }}>
+            {map.rows.flatMap((r) =>
+              r.values.map((_, i) => {
+                const color = heatmapColor(r.values, i)
+                return <span key={`${r.day}-${i}`} style={color ? { background: color } : undefined} />
+              })
+            )}
+          </div>
+          <div className="focus-heat-axis">
+            {hours.map((m) => {
+              const at = span ? ((m - map.startMinute) / span) * 100 : 0
+              return (
+                <span key={m} style={{ left: `${at}%`, transform: at <= 0 ? 'none' : at >= 100 ? 'translateX(-100%)' : 'translateX(-50%)' }}>
+                  {hourLabel(m)}
+                </span>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }

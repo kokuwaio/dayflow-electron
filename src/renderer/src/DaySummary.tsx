@@ -3,7 +3,29 @@ import { Brain, Info, Pencil, Shapes } from 'lucide-react'
 import type { Category } from '@shared/categories'
 import { formatClock, todayKey } from '@shared/day'
 import { type CategoryTotal, type GoalPlan, formatMinutes, summarizeDay } from '@shared/day-summary'
+import { type GoalContext, goalFlowStart, goalPromptAction } from '@shared/goal-flow'
+import { REVIEW_RATINGS, type ReviewSegment, reviewSummary } from '@shared/review'
 import type { RecorderState, TimelineCard } from '@shared/types'
+import { GoalFlow } from './GoalFlow'
+import { RATING_LOOK, RatingBars } from './ReviewOverlay'
+
+/** Days the pop-up was handled and yesterday's review shown, kept per device like upstream's UserDefaults. */
+const HANDLED_KEY = 'dayGoalPromptHandledTimelineDay'
+const REVIEW_SHOWN_KEY = 'dayGoalReviewShownTimelineDay'
+const readDay = (k: string): string | null => {
+  try {
+    return localStorage.getItem(k)
+  } catch {
+    return null
+  }
+}
+const writeDay = (k: string, day: string) => {
+  try {
+    localStorage.setItem(k, day)
+  } catch {
+    // Without storage the pop-up may open once more; nothing else depends on it.
+  }
+}
 
 const hours = (minutes: number) => {
   const h = minutes / 60
@@ -16,16 +38,45 @@ const key = (name: string) => name.trim().toLowerCase()
  * Components/DaySummaryView.swift, DayGoalHeader.swift,
  * DayFocusSummarySection.swift, DayDistractionSummarySection.swift).
  */
-export function DaySummary(props: { day: string; cards: TimelineCard[]; categories: Category[]; recorder: RecorderState | null }) {
+export function DaySummary(props: {
+  day: string
+  cards: TimelineCard[]
+  categories: Category[]
+  recorder: RecorderState | null
+  review: { segments: ReviewSegment[]; toReview: number } | null
+  onReview: () => void
+}) {
   const { day, cards, categories } = props
   const [plan, setPlan] = useState<GoalPlan | null>(null)
-  const [editing, setEditing] = useState(false)
+  const [flow, setFlow] = useState<{ context: GoalContext; start: 'review' | 'setup' } | null>(null)
 
   // Reload when categories change too, so a renamed category keeps counting.
   const categoryNames = categories.map((c) => c.name).join('\n')
   useEffect(() => {
     void window.dayflow.getGoals(day).then(setPlan)
   }, [day, categoryNames])
+
+  const openFlow = async (context?: GoalContext) => {
+    const ctx = context ?? (await window.dayflow.getGoalContext(day))
+    const start = goalFlowStart(ctx.yesterday?.plan ?? null, readDay(REVIEW_SHOWN_KEY), day)
+    if (start === 'review') writeDay(REVIEW_SHOWN_KEY, day)
+    setFlow({ context: ctx, start })
+  }
+  // The first visit after 4 AM opens the pop-up by itself (upstream requestDailyGoalPromptIfNeeded).
+  useEffect(() => {
+    const today = todayKey()
+    if (day !== today || readDay(HANDLED_KEY) === today) return
+    let live = true
+    void Promise.all([window.dayflow.getSettings(), window.dayflow.getGoalContext(today)]).then(([settings, context]) => {
+      if (!live) return
+      const action = goalPromptAction({ enabled: settings.showDailyGoalPopups, handledDay: readDay(HANDLED_KEY), today, ...context })
+      if (action !== 'none') writeDay(HANDLED_KEY, today)
+      if (action === 'open') void openFlow(context)
+    })
+    return () => {
+      live = false
+    }
+  }, [day])
   if (!plan) return null
 
   const s = summarizeDay(cards, categories, plan, day)
@@ -51,19 +102,32 @@ export function DaySummary(props: { day: string; cards: TimelineCard[]; categori
             <h3>{plan.skipped ? "Set today's goals" : isToday ? "Today's targets" : 'Targets'}</h3>
             <p className="status">{statusLine}</p>
           </div>
-          <button className="icon-circle" aria-label="Edit goals" aria-expanded={editing} title="Edit goals" onClick={() => setEditing(!editing)}>
-            <Pencil size={11} />
-          </button>
+          {plan.skipped ? (
+            <button className="btn-glass set-goals" onClick={() => void openFlow()}>
+              Set goals
+            </button>
+          ) : (
+            <button className="icon-circle" aria-label="Edit goals" title="Edit goals" onClick={() => void openFlow()}>
+              <Pencil size={11} />
+            </button>
+          )}
         </div>
-        {editing ? (
-          <GoalEditor plan={plan} categories={categories} onChange={savePlan} onDone={() => setEditing(false)} />
-        ) : (
-          <>
-            <FocusRow plan={plan} focusTotals={focusTotals} focusMinutes={s.focusMinutes} />
-            <DistractionRow plan={plan} distracted={s.distractedMinutes} />
-          </>
-        )}
+        <FocusRow plan={plan} focusTotals={focusTotals} focusMinutes={s.focusMinutes} />
+        <DistractionRow plan={plan} distracted={s.distractedMinutes} />
       </section>
+      {flow && (
+        <GoalFlow
+          plan={plan}
+          categories={categories}
+          context={flow.context}
+          start={flow.start}
+          onClose={() => setFlow(null)}
+          onSave={(next) => {
+            savePlan(next)
+            setFlow(null)
+          }}
+        />
+      )}
 
       <div className="summary-sections">
         <section>
@@ -90,6 +154,8 @@ export function DaySummary(props: { day: string; cards: TimelineCard[]; categori
             </div>
           )}
         </section>
+
+        {props.review && <YourReview segments={props.review.segments} toReview={props.review.toReview} day={day} onReview={props.onReview} />}
 
         <section>
           <h3 className="small">
@@ -293,68 +359,30 @@ function Ring({ ratio }: { ratio: number }) {
   )
 }
 
-function GoalEditor(props: { plan: GoalPlan; categories: Category[]; onChange: (p: GoalPlan) => void; onDone: () => void }) {
-  const { plan, categories, onChange } = props
-  const options = Array.from({ length: 12 * 12 + 1 }, (_, i) => i * 5)
-  const toggle = (list: string[], name: string) => (list.includes(name) ? list.filter((n) => n !== name) : [...list, name])
-  const regular = categories.filter((c) => !c.isIdle)
+/** "Your review": rated time per rating for the day (upstream TimelineReviewSummaryCard). */
+function YourReview({ segments, toReview, day, onReview }: { segments: ReviewSegment[]; toReview: number; day: string; onReview: () => void }) {
+  const r = reviewSummary(segments, day)
   return (
-    <div className="goal-editor">
-      <label>
-        Focus target
-        <select value={plan.focusTargetMinutes} onChange={(e) => onChange({ ...plan, focusTargetMinutes: Number(e.target.value), skipped: false })}>
-          {options.map((m) => (
-            <option key={m} value={m}>
-              {formatMinutes(m)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Distraction limit
-        <select
-          value={plan.distractionLimitMinutes}
-          onChange={(e) => onChange({ ...plan, distractionLimitMinutes: Number(e.target.value), skipped: false })}
-        >
-          {options.map((m) => (
-            <option key={m} value={m}>
-              {formatMinutes(m)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p className="note">Counts as focus / as distraction:</p>
-      {regular.map((c) => (
-        <div key={c.id} className="cat-row">
-          <label>
-            <input
-              type="checkbox"
-              className="switch"
-              checked={plan.focusCategories.includes(c.name)}
-              onChange={() => onChange({ ...plan, focusCategories: toggle(plan.focusCategories, c.name), skipped: false })}
-            />
-            focus
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              className="switch"
-              checked={plan.distractionCategories.includes(c.name)}
-              onChange={() => onChange({ ...plan, distractionCategories: toggle(plan.distractionCategories, c.name), skipped: false })}
-            />
-            distraction
-          </label>
-          <span className="dot" style={{ background: c.color, width: 8, height: 8 }} /> {c.name}
-        </div>
-      ))}
-      <div className="row spread">
-        <button className="link" onClick={() => onChange({ ...plan, skipped: true })}>
-          No goals today
-        </button>
-        <button className="btn-primary" onClick={props.onDone}>
-          Done
-        </button>
-      </div>
-    </div>
+    <section className="your-review">
+      <h3 className="mid">Your review</h3>
+      <p className="review-status">
+        {r.lastReviewedAt !== null ? `Last reviewed at ${formatClock(r.lastReviewedAt)}.` : 'No reviews yet.'}
+        {toReview > 0 && (
+          <button className="link-accent" onClick={onReview}>
+            {` Review ${toReview} cards to update your data.`}
+          </button>
+        )}
+      </p>
+      <RatingBars summary={r} height={39} all />
+      <ul className="legend rating-legend-small">
+        {REVIEW_RATINGS.map((k) => (
+          <li key={k} style={{ '--c': k === 'neutral' ? 'var(--track-border)' : RATING_LOOK[k].color } as React.CSSProperties}>
+            <span className="swatch" />
+            <span className="name">{RATING_LOOK[k].label}</span>
+            {r.total > 0 && <span className="value">{formatMinutes(Math.floor(r[k] / 60))}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }

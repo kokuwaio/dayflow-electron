@@ -194,7 +194,7 @@ each of the three providers.
 
 - [x] Daily standup tab: activity grid, yesterday's highlights, today's
   priorities, blockers (upstream `Views/UI/DailyView*.swift`).
-- [x] Weekly dashboard (focus heatmap still open): overview, donut, treemap, Sankey, focus heatmap,
+- [x] Weekly dashboard: overview, donut, treemap, Sankey, focus heatmap,
   context switches, app interaction graph, highlights. No AI needed; built
   from `timeline_cards` (upstream `Core/Weekly/`).
 - [x] Chat with your journal: streamed answers, tool calls for timeline and
@@ -265,9 +265,16 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   card, the pause pill, the inspector card, Daily, Weekly and Chat surfaces,
   and Settings with a tab sidebar (upstream `Utilities/DayflowTheme.swift`,
   `Views/UI/**`). Upstream's artwork is replaced by Lucide icons and CSS.
-- [ ] Look, still open: onboarding (provider table, progress ring), the
-  focus and distraction heat map in Weekly, the "Your review" card, the
-  goal pop-up, the date picker popover (a native date picker for now).
+- [x] Look, the rest: onboarding in upstream's flow (role chips, provider
+  comparison table, setup wizard with a required test, permissions per
+  platform, progress ring), the focus and distraction heat map in Weekly,
+  the timeline review with its "Review cards" badge and the "Your review"
+  card (upstream `TimelineReviewOverlay`, ratings in
+  `timeline_review_ratings`), the daily goal pop-up with yesterday's review
+  and its once-a-day prompt (upstream `DayGoalFlowView`), and the calendar
+  popover. Left out: upstream's intro video, referral survey and personal
+  goal step (analytics), particles and confetti on the ring, and per-chart
+  PNG export.
 - [x] Deep links: `dayflow-electron://start-recording` and `stop-recording`
   (aliases `start`, `resume`, `stop`, `pause`).
 - [x] Database backups: a daily copy, the newest three kept, a damaged
@@ -284,7 +291,7 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   (needs 512 px artwork).
 - [ ] Windows and macOS on real machines: capture, window detection, lock,
   idle, autostart and deep links are implemented and unit tested, not yet
-  tried by hand. Onboarding still says recording is not built there.
+  tried by hand.
 - [ ] Own name, icon and artwork. Bundled fonts only with their OFL license files.
 
 ### Later or never

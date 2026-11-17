@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_CATEGORIES } from './categories'
-import { appOf, contextShifts, donutItems, sankeyLinks, trackedMinutes, treemap, workflowHeatmap } from './weekly'
+import { appOf, contextShifts, donutItems, focusHeatmap, heatmapColor, sankeyLinks, trackedMinutes, treemap, workflowHeatmap } from './weekly'
 import type { TimelineCard } from './types'
 
 const at = (d: number, h: number, m = 0) => new Date(2026, 10, d, h, m).getTime() / 1000
@@ -70,5 +70,67 @@ describe('weekly dashboard (upstream Core/Weekly)', () => {
     expect(new Set(links.map((l) => l.target)).size).toBe(10) // nine apps plus Other
     expect(links.find((l) => l.target === 'Other apps')).toMatchObject({ source: 'Work', minutes: 21 + 20 + 19 })
     expect(sankeyLinks(cards.slice(0, 10), DEFAULT_CATEGORIES).some((l) => l.target === 'Other apps')).toBe(false) // ten fit
+  })
+})
+
+describe('focus and distraction heat map (upstream WeeklyDashboardBuilder+HeatmapWorkflow)', () => {
+  const week = ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22']
+  const monday = (cards: TimelineCard[]) => focusHeatmap(cards, DEFAULT_CATEGORIES, week).rows[1]!.values
+
+  it('lists the days Sunday first, in 5-minute buckets over the padded activity window', () => {
+    const map = focusHeatmap([card(16, 9, 60, 'Work')], DEFAULT_CATEGORIES, week)
+    expect(map.rows.map((r) => r.day)).toEqual(['2026-11-22', ...week.slice(0, 6)])
+    expect([map.startMinute, map.endMinute, map.bucketMinutes]).toEqual([8 * 60 + 30, 10 * 60 + 30, 5])
+    expect(map.rows[1]!.values).toHaveLength(24)
+  })
+
+  it('falls back to 9 AM to 10 PM without cards, and leaves Idle and failed cards out', () => {
+    const map = focusHeatmap([card(16, 9, 60, 'Idle'), card(16, 11, 30, 'System')], DEFAULT_CATEGORIES, week)
+    expect([map.startMinute, map.endMinute]).toEqual([9 * 60, 22 * 60])
+    expect(map.rows.every((r) => r.values.every((v) => v === 0))).toBe(true)
+  })
+
+  it('scores clean focus negative, reaching -1 after six buckets in a row', () => {
+    const values = monday([card(16, 9, 60, 'Work')])
+    // 9:00 is bucket 6.
+    expect(values.slice(6, 18).every((v) => v === -1)).toBe(true)
+    expect(values[5]).toBe(0)
+    // Two clean buckets: 0.35 + 0.65 * 2/6.
+    expect(monday([card(16, 9, 10, 'Work')])[6]).toBeCloseTo(-(0.35 + 0.65 * (2 / 6)))
+  })
+
+  it('scores distraction cards positive, and the distractions listed inside a focus card too', () => {
+    expect(monday([card(16, 9, 15, 'Distraction')]).slice(6, 9)).toEqual([1, 1, 1])
+    const values = monday([card(16, 9, 30, 'Work', undefined, { distractions: [{ startTime: '9:10 AM', endTime: '9:15 AM', title: 'feed', summary: '' }] })])
+    expect(values[8]).toBe(1) // 9:10-9:15 is all distraction
+    expect(values[6]).toBeLessThan(0)
+  })
+
+  it('adds switch pressure when the category or app changes within 20 minutes', () => {
+    const switched = monday([card(16, 9, 30, 'Work', 'github.com'), card(16, 9.5, 30, 'Personal', 'github.com')])
+    const same = monday([card(16, 9, 30, 'Work', 'github.com'), card(16, 9.5, 30, 'Work', 'github.com')])
+    expect(same[12]).toBe(-1)
+    // The 9:30 bucket carries one switch (0.5 * 0.22), then is smoothed with its focused neighbours.
+    expect(switched[12]).toBeCloseTo(-(0.89 * 0.55 + 0.45 * (2.89 / 3)))
+  })
+})
+
+describe('heat map colours (upstream WeeklyFocusHeatmapSection)', () => {
+  it('leaves near-zero cells neutral and maps the extremes to the dark ends', () => {
+    expect(heatmapColor([0.04], 0)).toBeNull()
+    expect(heatmapColor([-1], 0)).toBe('#4276e9')
+    expect(heatmapColor([1], 0)).toBe('#fc7645')
+  })
+
+  it('fades runs of four or more cells at the edges and boosts their centre', () => {
+    const run = [-0.5, -0.5, -0.5, -0.5, -0.5]
+    const at = (intensity: number) => {
+      const p = Math.pow(intensity, 0.72)
+      const mix = (a: number, b: number) => Math.round(a + (b - a) * p).toString(16).padStart(2, '0')
+      return `#${mix(0xe3, 0x42)}${mix(0xdb, 0x76)}${mix(0xfd, 0xe9)}`
+    }
+    expect(heatmapColor(run, 2)).toBe(at(0.84)) // 0.5 + 0.34
+    expect(heatmapColor(run, 0)).toBe(at(0.175)) // 0.5 * (1 - 0.65)
+    expect(heatmapColor([-0.5, -0.5, -0.5], 0)).toBe(at(0.5)) // three cells are too short to fade
   })
 })

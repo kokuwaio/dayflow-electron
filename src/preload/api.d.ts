@@ -1,5 +1,7 @@
 import type { Feature, FeatureAccess, StandupDraft } from '../shared/daily'
 import type { GoalPlan } from '../shared/day-summary'
+import type { GoalContext } from '../shared/goal-flow'
+import type { ReviewRating, ReviewSegment } from '../shared/review'
 import type { FrameRef } from '../shared/media'
 import type { DayCards, Week } from '../shared/week'
 import type {
@@ -25,6 +27,9 @@ export interface DayflowApi {
   getWeek(day: string): Promise<Week & { columns: DayCards[]; ratings: Rating[] }>
   getGoals(day: string): Promise<GoalPlan>
   setGoals(day: string, plan: GoalPlan): Promise<void>
+  getGoalContext(day: string): Promise<GoalContext>
+  getReview(day: string): Promise<{ segments: ReviewSegment[]; toReview: number }>
+  rateReview(span: { start: number; end: number }, rating: ReviewRating): Promise<void>
   copyTimeline(mode: 'day' | 'week', day: string): Promise<void>
   copyText(text: string): Promise<void>
   exportMarkdown(from: string, to: string): Promise<{ ok: boolean; message: string }>

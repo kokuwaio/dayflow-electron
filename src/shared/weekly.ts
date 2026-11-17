@@ -220,3 +220,177 @@ export function sankeyLinks(cards: TimelineCard[], categories: Category[]): Arra
   }
   return [...links.values()]
 }
+
+// ---- Focus and distraction heat map (upstream WeeklyDashboardBuilder+HeatmapWorkflow.swift,
+// Views/UI/Weekly/Sections/WeeklyFocusHeatmapSection.swift)
+
+const BUCKET = 5
+
+/** A card in clock minutes (24:00-28:00 for the hours after midnight). */
+interface Fact {
+  card: TimelineCard
+  start: number
+  end: number
+}
+
+/** The week's activity, padded by 30 minutes and snapped to 15 (upstream weeklyActivityWindow). */
+function activityWindow(facts: Fact[]): { start: number; end: number } {
+  if (!facts.length) return { start: 9 * 60, end: 22 * 60 }
+  const start = Math.floor(Math.max(4 * 60, Math.min(...facts.map((f) => f.start)) - 30) / 15) * 15
+  let end = Math.ceil(Math.min(28 * 60, Math.max(...facts.map((f) => f.end)) + 30) / 15) * 15
+  if (end === 24 * 60) end = 28 * 60
+  return end > start ? { start, end } : { start: 9 * 60, end: 22 * 60 }
+}
+
+/** A whole distraction card: its category says so, or it lists no distractions but its texts do. */
+function isFullDistraction(card: TimelineCard): boolean {
+  const text = `${card.category} ${card.subcategory}`.toLowerCase()
+  if (text.includes('distraction') || text.includes('distracted')) return true
+  return card.distractions.length ? false : isDistraction(card)
+}
+
+/** Clock-minute range, moving times before 4 AM past midnight (upstream normalizedMinuteRange). */
+function normalizedRange(start: number, end: number): { start: number; end: number } {
+  const s = start < 240 ? start + 1440 : start
+  let e = end < 240 ? end + 1440 : end
+  if (e <= s) e += 1440
+  return { start: s, end: e }
+}
+
+/** The distractions listed in a card, placed inside it (upstream alignedDistractionRange). */
+function embeddedDistractions(f: Fact): Array<{ start: number; end: number }> {
+  const out: Array<{ start: number; end: number }> = []
+  for (const d of f.card.distractions) {
+    const s = parseClockLabel(d.startTime)
+    const e = parseClockLabel(d.endTime)
+    if (s === null || e === null) continue
+    const n = normalizedRange(s, e)
+    const best = [n, { start: n.start - 1440, end: n.end - 1440 }, { start: n.start + 1440, end: n.end + 1440 }]
+      .filter((c) => c.start >= f.start - 2 && c.end <= f.end + 2 && c.end > c.start)
+      .sort((a, b) => Math.abs(a.start - f.start) + Math.abs(f.end - a.end) * 0.1 - (Math.abs(b.start - f.start) + Math.abs(f.end - b.end) * 0.1))[0]
+    if (best) out.push(best)
+  }
+  return out
+}
+
+/** Adds the minutes of [start, end) to each bucket they touch. */
+function addInterval(values: number[], from: number, start: number, end: number, weight = 1): void {
+  for (let i = 0; i < values.length; i++) values[i]! += slotOverlap(start, end, from + i * BUCKET, BUCKET) * weight
+}
+
+/** For each cell, the length of the run of true cells it belongs to. */
+function runLengths(flags: boolean[]): number[] {
+  const out = flags.map(() => 0)
+  for (let i = 0; i < flags.length; ) {
+    if (!flags[i]) {
+      i++
+      continue
+    }
+    let j = i
+    while (j < flags.length && flags[j]) j++
+    for (let k = i; k < j; k++) out[k] = j - i
+    i = j
+  }
+  return out
+}
+
+const clamp1 = (v: number) => Math.max(-1, Math.min(1, v))
+
+/** One day's scores: -1 deep focus … +1 distracted (upstream heatmapValues and heatmapScores). */
+function dayScores(facts: Fact[], from: number, count: number): number[] {
+  const focus = new Array<number>(count).fill(0)
+  const distraction = new Array<number>(count).fill(0)
+  const switches = new Array<number>(count).fill(0)
+  const signature = (f: Fact) => `${normalized(f.card.category)}|${appOf(f.card).toLowerCase()}`
+  let previous: Fact | null = null
+  for (const f of [...facts].sort((a, b) => a.start - b.start)) {
+    if (previous && f.start - previous.end <= 20 && signature(f) !== signature(previous)) {
+      const i = Math.floor((f.start - from) / BUCKET)
+      if (f.start >= from && i < count) switches[i]! += 1
+    }
+    if (isFullDistraction(f.card)) addInterval(distraction, from, f.start, f.end)
+    else {
+      addInterval(focus, from, f.start, f.end)
+      for (const d of embeddedDistractions(f)) {
+        addInterval(distraction, from, d.start, d.end)
+        addInterval(focus, from, d.start, d.end, -1)
+      }
+    }
+    previous = f
+  }
+  const runs = runLengths(focus.map((m, i) => m >= BUCKET * 0.6 && distraction[i]! < 1))
+  const raw = focus.map((m, i) => {
+    const focusStrength = Math.max(0, Math.min(1, m / BUCKET)) * (0.35 + 0.65 * Math.min(1, runs[i]! / 6))
+    const distractionStrength = Math.min(1, Math.max(0, Math.min(1, distraction[i]! / BUCKET)) * 1.25)
+    const switchStrength = Math.min(1, switches[i]! / 2) * 0.22
+    return clamp1(distractionStrength + switchStrength - focusStrength)
+  })
+  if (raw.length <= 2) return raw
+  // Focused cells are smoothed with their focused neighbours (upstream smoothFocusedHeatmapScores).
+  return raw.map((v, i) => {
+    if (v >= 0) return v
+    const near = raw.slice(Math.max(0, i - 1), i + 2).filter((x) => x < 0)
+    if (near.length <= 1) return v
+    return clamp1(v * 0.55 + (near.reduce((a, b) => a + b, 0) / near.length) * 0.45)
+  })
+}
+
+export interface FocusHeatmap {
+  startMinute: number
+  endMinute: number
+  bucketMinutes: number
+  /** Sunday first, like upstream; `values` run from -1 (focused) to +1 (distracted). */
+  rows: Array<{ day: string; values: number[] }>
+}
+
+/** The week's focus and distraction scores in 5-minute buckets. `days` run Monday to Sunday. */
+export function focusHeatmap(cards: TimelineCard[], categories: Category[], days: string[]): FocusHeatmap {
+  const facts = counted(cards, categories).map((c) => {
+    const start = clockMinutes(c.start)
+    return { card: c, start, end: start + (c.end - c.start) / 60 }
+  })
+  const window = activityWindow(facts)
+  const count = Math.max(1, Math.ceil((window.end - window.start) / BUCKET))
+  const order = days.length === 7 ? [days[6]!, ...days.slice(0, 6)] : days
+  return {
+    startMinute: window.start,
+    endMinute: window.start + count * BUCKET,
+    bucketMinutes: BUCKET,
+    rows: order.map((day) => ({ day, values: dayScores(facts.filter((f) => f.card.day === day), window.start, count) }))
+  }
+}
+
+const NEUTRAL_THRESHOLD = 0.045
+const FOCUS_SOFT = [0xe3, 0xdb, 0xfd]
+const FOCUS_DARK = [0x42, 0x76, 0xe9]
+const DISTRACTION_SOFT = [0xf8, 0xd1, 0xca]
+const DISTRACTION_DARK = [0xfc, 0x76, 0x45]
+
+/** A cell's score after fading the edges of runs of 4+ same-signed cells and boosting their centre. */
+function adjusted(values: number[], index: number): number {
+  const value = values[index]!
+  if (Math.abs(value) < NEUTRAL_THRESHOLD) return value
+  const sign = value < 0 ? -1 : 1
+  const same = (v: number) => Math.abs(v) >= NEUTRAL_THRESHOLD && (v < 0 ? -1 : 1) === sign
+  let start = index
+  let end = index
+  while (start > 0 && same(values[start - 1]!)) start--
+  while (end < values.length - 1 && same(values[end + 1]!)) end++
+  const length = end - start + 1
+  if (length < 4) return value
+  const center = (length - 1) / 2
+  const linear = Math.max(0, Math.min(1, 1 - Math.abs(index - start - center) / Math.max(center, 1)))
+  const progress = linear * linear * (3 - 2 * linear)
+  const edge = Math.max(NEUTRAL_THRESHOLD, Math.abs(value) * (1 - 0.65))
+  const centre = Math.min(1, Math.abs(value) + 0.34)
+  return sign * (edge + (centre - edge) * progress)
+}
+
+/** The cell colour: blue for focus, peach for distraction, null for the neutral empty cell. */
+export function heatmapColor(values: number[], index: number): string | null {
+  const v = adjusted(values, index)
+  if (Math.abs(v) < NEUTRAL_THRESHOLD) return null
+  const p = Math.pow(Math.max(0, Math.min(1, Math.abs(v))), 0.72)
+  const [from, to] = v < 0 ? [FOCUS_SOFT, FOCUS_DARK] : [DISTRACTION_SOFT, DISTRACTION_DARK]
+  return `#${from.map((a, i) => Math.round(a + (to[i]! - a) * p).toString(16).padStart(2, '0')).join('')}`
+}
