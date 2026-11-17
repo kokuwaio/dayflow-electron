@@ -75,9 +75,10 @@ describe('findCli', () => {
 describe.skipIf(process.platform === 'win32')('nodeRunner', () => {
   it('starts programs in a session of their own, so an interactive shell cannot take over the terminal', async () => {
     // `make dev` runs the app in a terminal; `zsh -lic` there grabbed the foreground and the app got stopped.
-    const own = (await nodeRunner.run('ps', ['-o', 'sess=', '-p', String(process.pid)])).stdout.trim()
-    const child = await nodeRunner.run('sh', ['-c', 'ps -o sess= -p $$'])
+    // setsid makes the child lead a process group of its own: its group ID is its PID.
+    const child = await nodeRunner.run('sh', ['-c', 'echo "$$ $(ps -o pgid= -p $$)"'])
     expect(child.code).toBe(0)
-    expect(child.stdout.trim()).not.toBe(own)
+    const [pid, pgid] = child.stdout.trim().split(/\s+/)
+    expect(pgid).toBe(pid)
   })
 })

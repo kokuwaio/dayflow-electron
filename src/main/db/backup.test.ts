@@ -40,10 +40,11 @@ describe('database backups (upstream StorageManager+Maintenance)', () => {
     expect(readdirSync(dir).some((f) => f.startsWith('dayflow.sqlite.corrupt-'))).toBe(true)
   })
 
-  it('says so when a damaged database has no backup to restore', () => {
+  // Inserting row by row is slow on Windows runners.
+  it('says so when a damaged database has no backup to restore', { timeout: 30_000 }, () => {
     const path = join(dir, 'dayflow.sqlite')
     const store = Store.open(path)
-    for (let i = 0; i < 2000; i++) store.insertScreenshot({ capturedAt: i, filePath: `/frames/${i}.jpg`, fileSize: 1, idleSeconds: null })
+    for (let i = 0; i < 600; i++) store.insertScreenshot({ capturedAt: i, filePath: `/frames/${i}.jpg`, fileSize: 1, idleSeconds: null })
     store.close()
     // Scribble over pages in the middle: the header still opens, the integrity check fails.
     const bytes = readFileSync(path)
