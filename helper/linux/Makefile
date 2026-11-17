@@ -3,12 +3,13 @@
 # also test on the host with plain "go test ./frames/... ./portal/... ./wayland/...".
 SDK ?= org.freedesktop.Sdk//25.08
 OUT ?= bin/dayflow-linux-helper
+VERSION ?= dev
 GOROOT_HOST := $(shell go env GOROOT)
 IN_SDK = flatpak run --filesystem=home --command=sh $(SDK) -c 'cd $(CURDIR) && CGO_ENABLED=1 GOTOOLCHAIN=local $(GOROOT_HOST)/bin/go
 
 .PHONY: build vet test lint
 build:
-	$(IN_SDK) build -trimpath -o $(OUT) ./cmd/dayflow-linux-helper'
+	$(IN_SDK) build -trimpath -ldflags "-X main.version=$(VERSION)" -o $(OUT) ./cmd/dayflow-linux-helper'
 
 vet:
 	$(IN_SDK) vet ./...'

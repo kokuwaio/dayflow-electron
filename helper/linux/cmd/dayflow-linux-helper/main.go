@@ -27,6 +27,9 @@ import (
 
 const appID = "io.github.kokuwaio.DayflowElectron"
 
+// version is set at build time: go build -ldflags "-X main.version=1.2.3" (scripts/version.sh).
+var version = "dev"
+
 var emitMu sync.Mutex
 
 func emit(kind string, fields map[string]any) {
@@ -48,7 +51,7 @@ func fail(err error) {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: dayflow-linux-helper capture|watch|window|autostart [flags]")
+		fmt.Fprintln(os.Stderr, "usage: dayflow-linux-helper capture|watch|window|autostart|version [flags]")
 		os.Exit(2)
 	}
 	var err error
@@ -61,6 +64,8 @@ func main() {
 		err = runWindow()
 	case "autostart":
 		err = runAutostart(os.Args[2:])
+	case "version":
+		fmt.Println(version)
 	default:
 		err = fmt.Errorf("unknown command %q", os.Args[1])
 	}

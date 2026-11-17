@@ -20,6 +20,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Version
+        # 1.2.3 for a release tag v1.2.3, else 0.0.0-<branch>.<sha>.
+        working-directory: .
+        run: echo "VERSION=$(scripts/version.sh)" >> "$GITHUB_ENV"
+
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
@@ -40,7 +45,7 @@ jobs:
         # electron-builder fetches Electron for each architecture; both unpack as linux-unpacked.
         run: |
           npx electron-vite build
-          npx electron-builder --linux dir --x64 --arm64
+          npx electron-builder --linux dir --x64 --arm64 -c.extraMetadata.version="$VERSION"
           tar -C dist -czf app-x86_64.tar.gz linux-unpacked
           mkdir -p dist/arm64 && mv dist/linux-arm64-unpacked dist/arm64/linux-unpacked
           tar -C dist/arm64 -czf app-aarch64.tar.gz linux-unpacked
@@ -81,6 +86,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Version
+        # 1.2.3 for a release tag v1.2.3, else 0.0.0-<branch>.<sha>.
+        working-directory: .
+        run: echo "VERSION=$(scripts/version.sh)" >> "$GITHUB_ENV"
+
       - name: Install libpipewire
         # The pipewire package links libpipewire-0.3 through cgo.
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpipewire-0.3-dev
@@ -103,7 +113,7 @@ jobs:
         run: go test ./...
 
       - name: Build
-        run: go build -trimpath -o bin/dayflow-linux-helper ./cmd/dayflow-linux-helper
+        run: go build -trimpath -ldflags "-X main.version=$VERSION" -o bin/dayflow-linux-helper ./cmd/dayflow-linux-helper
 
       - name: Upload helper
         uses: actions/upload-artifact@v7
@@ -132,6 +142,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Version
+        # 1.2.3 for a release tag v1.2.3, else 0.0.0-<branch>.<sha>.
+        working-directory: .
+        run: echo "VERSION=$(scripts/version.sh)" >> "$GITHUB_ENV"
+
       - name: Download app
         uses: actions/download-artifact@v8
         with:
@@ -145,6 +160,9 @@ jobs:
 
       - name: Unpack app
         run: mkdir -p dist && tar -C dist -xzf "app-${{ matrix.arch }}.tar.gz"
+
+      - name: Add the release to the metainfo
+        run: scripts/metainfo-release.sh "$VERSION"
 
       - name: Build Flatpak
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6

@@ -34,6 +34,9 @@ jobs:
         with:
           path: artifacts
 
+      - name: Add the release to the metainfo
+        run: scripts/metainfo-release.sh "${TAG#v}"
+
       - name: Create tarballs and bundles
         # Per architecture: everything the Flathub manifest installs, at the top level, and the Flatpak bundle.
         run: |

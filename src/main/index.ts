@@ -80,6 +80,7 @@ async function main(): Promise<void> {
   const settings = await SettingsStore.open(join(dataDir, 'settings.json'), join(dataDir, 'keys.json'))
   const backupDir = join(dataDir, 'backups')
   const { store, restoredFrom } = openWithRecovery(join(dataDir, 'dayflow.sqlite'), backupDir)
+  log(`dayflow-electron ${app.getVersion()}`)
   if (restoredFrom) log(`the database was damaged; restored ${restoredFrom}`)
   // Upstream's maintenance: a backup a day (the first after an hour, or now when there is none) and a WAL checkpoint every 5 minutes.
   const backup = () => void backupDatabase(store, backupDir).catch((err) => log(`backup failed: ${String(err)}`))

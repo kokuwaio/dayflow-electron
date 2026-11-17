@@ -15,8 +15,14 @@
      icon, desktop file and metainfo, which the Flathub manifest builds from
    - `SHA256SUMS`
 
-Bump `<release>` in `flatpak/io.github.kokuwaio.DayflowElectron.metainfo.xml`
-in the PR before a release; software centers show these entries.
+## Versions
+
+`scripts/version.sh` gives every build its version: `1.2.3` for the tag
+`v1.2.3`, otherwise `0.0.0-<branch>.<short sha>`. CI and `make` pass it to the
+Electron app (electron-builder's `extraMetadata.version`, so `package.json`
+stays as it is), to the Go helper (`dayflow-linux-helper version`) and to the
+metainfo, where `scripts/metainfo-release.sh` adds the release entry that
+software centers show. `make version` prints it.
 
 ## Flathub
 

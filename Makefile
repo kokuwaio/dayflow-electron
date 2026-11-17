@@ -2,8 +2,10 @@
 # The npm scripts and helper/linux/Makefile do the work; CI runs the same steps.
 
 HELPER = helper/linux
+# 1.2.3 on a release tag, else 0.0.0-<branch>.<sha>; override with make VERSION=...
+VERSION ?= $(shell scripts/version.sh)
 
-.PHONY: help install dev check typecheck test test-helper lint build helper pack flatpak clean
+.PHONY: help install dev check typecheck test test-helper lint build helper pack flatpak version clean
 
 help:
 	@echo "make install      install npm dependencies (npm ci)"
@@ -17,6 +19,7 @@ help:
 	@echo "make helper       build the Linux helper inside the Flatpak SDK"
 	@echo "make pack         package the app into dist/linux-unpacked"
 	@echo "make flatpak      pack, build the helper and install the Flatpak for this user"
+	@echo "make version      print the version builds get (VERSION=... overrides it)"
 	@echo "make clean        remove build output"
 
 install:
@@ -43,13 +46,17 @@ build:
 	npm run build
 
 helper:
-	$(MAKE) -C $(HELPER) build
+	$(MAKE) -C $(HELPER) build VERSION=$(VERSION)
 
 pack:
-	npm run pack
+	npx electron-vite build
+	npx electron-builder --linux dir -c.extraMetadata.version=$(VERSION)
 
-flatpak:
-	npm run flatpak
+flatpak: pack helper
+	flatpak-builder --user --install --force-clean flatpak/build flatpak/io.github.kokuwaio.DayflowElectron.yml
+
+version:
+	@echo $(VERSION)
 
 clean:
 	rm -rf out dist flatpak/build flatpak/.flatpak-builder flatpak/repo $(HELPER)/bin

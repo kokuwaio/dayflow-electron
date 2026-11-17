@@ -13,10 +13,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "helper": "make -C helper/linux build",
+    "helper": "make helper",
     "test:helper": "make -C helper/linux test",
-    "pack": "electron-vite build && electron-builder --linux dir",
-    "flatpak": "npm run pack && npm run helper && flatpak-builder --user --install --force-clean flatpak/build flatpak/io.github.kokuwaio.DayflowElectron.yml"
+    "pack": "make pack",
+    "flatpak": "make flatpak"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
