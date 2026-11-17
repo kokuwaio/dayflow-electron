@@ -18,6 +18,7 @@ release packaging are next. "dayflow-electron" is a working name.
 | [docs/architecture.md](docs/architecture.md) | How the app works, with diagrams |
 | [docs/roadmap.md](docs/roadmap.md) | Every upstream feature mapped to a milestone, with what is done |
 | [docs/platform-notes.md](docs/platform-notes.md) | What was tested on which Linux desktop, and why |
+| [docs/release.md](docs/release.md) | Publishing a release and the Flathub submission |
 
 ## Requirements
 

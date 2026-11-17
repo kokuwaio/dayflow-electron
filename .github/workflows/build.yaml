@@ -1,0 +1,127 @@
+name: Build
+
+# Tests and builds everything; CI and releases call this workflow. The Flatpak
+# job packs the app and helper built by the other two jobs, like
+# `npm run flatpak` does locally.
+
+permissions: read-all
+
+on:
+  workflow_call:
+
+jobs:
+  typescript:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    env:
+      # Tests run without Electron; electron-builder fetches its own copy.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          # node:sqlite needs Node 24, the version Electron ships.
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Package
+        run: |
+          npm run pack
+          tar -C dist -czf app-linux-unpacked.tar.gz linux-unpacked
+
+      - name: Upload app
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-linux-unpacked
+          path: app-linux-unpacked.tar.gz
+          retention-days: 7
+
+  go:
+    name: Go helper
+    # Not ubuntu-latest: the helper must not need a newer glibc than the
+    # Flatpak runtime (freedesktop 25.08) ships.
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: helper/linux
+    env:
+      # Ubuntu's libpipewire-0.3.pc passes this flag, which cgo blocks by default.
+      CGO_CFLAGS_ALLOW: -fno-strict-overflow
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install libpipewire
+        # The pipewire package links libpipewire-0.3 through cgo.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpipewire-0.3-dev
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: helper/linux/go.mod
+          cache-dependency-path: helper/linux/go.sum
+
+      - name: Check formatting
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build
+        run: go build -trimpath -o bin/dayflow-linux-helper ./cmd/dayflow-linux-helper
+
+      - name: Upload helper
+        uses: actions/upload-artifact@v7
+        with:
+          name: helper
+          path: helper/linux/bin/dayflow-linux-helper
+          retention-days: 7
+
+  flatpak:
+    name: Flatpak
+    needs:
+      - typescript
+      - go
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
+      options: --privileged
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download app
+        uses: actions/download-artifact@v8
+        with:
+          name: app-linux-unpacked
+
+      - name: Download helper
+        uses: actions/download-artifact@v8
+        with:
+          name: helper
+          path: helper/linux/bin
+
+      - name: Unpack app
+        run: mkdir -p dist && tar -C dist -xzf app-linux-unpacked.tar.gz
+
+      - name: Build Flatpak
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          manifest-path: flatpak/io.github.kokuwaio.DayflowElectron.yml
+          bundle: dayflow-electron.flatpak
+          artifact-name: dayflow-electron-flatpak

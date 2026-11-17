@@ -1,4 +1,5 @@
-# Flatpak for dayflow-electron. Build the inputs first:
+# Flatpak for dayflow-electron from a local build (`npm run flatpak`, CI).
+# Releases on Flathub use flatpak/flathub/ instead. Build the inputs first:
 #   npm run build && npx electron-builder --linux dir && npm run helper
 # then: flatpak-builder --user --install --force-clean build flatpak/io.github.kokuwaio.DayflowElectron.yml
 id: io.github.kokuwaio.DayflowElectron
@@ -35,6 +36,7 @@ modules:
       - install -Dm755 dayflow-electron.sh /app/bin/dayflow-electron
       - install -Dm644 icon.png /app/share/icons/hicolor/256x256/apps/io.github.kokuwaio.DayflowElectron.png
       - install -Dm644 io.github.kokuwaio.DayflowElectron.desktop /app/share/applications/io.github.kokuwaio.DayflowElectron.desktop
+      - install -Dm644 io.github.kokuwaio.DayflowElectron.metainfo.xml /app/share/metainfo/io.github.kokuwaio.DayflowElectron.metainfo.xml
     sources:
       - type: dir
         path: ../dist/linux-unpacked
@@ -45,6 +47,8 @@ modules:
         path: ../resources/icon.png
       - type: file
         path: io.github.kokuwaio.DayflowElectron.desktop
+      - type: file
+        path: io.github.kokuwaio.DayflowElectron.metainfo.xml
       - type: script
         dest-filename: dayflow-electron.sh
         commands:
