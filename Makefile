@@ -3,7 +3,7 @@
 
 HELPER = helper/linux
 
-.PHONY: help install dev check typecheck test test-helper lint build helper pack flatpak clean
+.PHONY: help install dev check typecheck test test-helper lint build helper pack flatpak dist-win dist-mac clean
 
 help:
 	@echo "make install      install npm dependencies (npm ci)"
@@ -17,6 +17,8 @@ help:
 	@echo "make helper       build the Linux helper inside the Flatpak SDK"
 	@echo "make pack         package the app into dist/linux-unpacked"
 	@echo "make flatpak      pack, build the helper and install the Flatpak for this user"
+	@echo "make dist-win     Windows NSIS installers (x64, arm64) in dist/; run on Windows"
+	@echo "make dist-mac     macOS dmg images (arm64, x64) in dist/; run on macOS"
 	@echo "make clean        remove build output"
 
 install:
@@ -50,6 +52,12 @@ pack:
 
 flatpak:
 	npm run flatpak
+
+dist-win:
+	npm run dist:win
+
+dist-mac:
+	npm run dist:mac
 
 clean:
 	rm -rf out dist flatpak/build flatpak/.flatpak-builder flatpak/repo $(HELPER)/bin

@@ -16,6 +16,8 @@
     "helper": "make -C helper/linux build",
     "test:helper": "make -C helper/linux test",
     "pack": "electron-vite build && electron-builder --linux dir",
+    "dist:win": "electron-vite build && electron-builder --win nsis --x64 --publish never && electron-builder --win nsis --arm64 --publish never",
+    "dist:mac": "electron-vite build && electron-builder --mac dmg --arm64 --x64 --publish never",
     "flatpak": "npm run pack && npm run helper && flatpak-builder --user --install --force-clean flatpak/build flatpak/io.github.kokuwaio.DayflowElectron.yml"
   },
   "devDependencies": {
