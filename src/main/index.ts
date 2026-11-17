@@ -4,12 +4,13 @@ import { unlink } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { BrowserWindow, Menu, Tray, app, ipcMain, nativeImage, shell } from 'electron'
-import { dayKey } from '../shared/day'
+import { dayKey, dayRange } from '../shared/day'
 import { needsApiKey } from '../shared/providers'
 import { PAUSE_PRESETS, describeRecorder } from '../shared/status'
-import type { AppStatus, CliName, ProviderKind, Settings } from '../shared/types'
+import { renamedCategories } from '../shared/categories'
+import type { AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings } from '../shared/types'
+import type { Span } from './db/store'
 import { Pipeline } from './analysis/pipeline'
-import { DEFAULT_CATEGORIES } from './analysis/prompt'
 import { Recorder } from './capture/recorder'
 import { Store } from './db/store'
 import { createPlatform } from './platform'
@@ -34,6 +35,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 let window: BrowserWindow | null = null
+const changed = () => window?.webContents.send('cards:changed')
 let tray: Tray | null = null
 let quitting = false
 
@@ -99,8 +101,8 @@ async function main(): Promise<void> {
       return ready.length ? ready.map(providerFor) : `No API key set for ${s.provider}. Add one in Settings.`
     },
     language: () => settings.get().outputLanguage,
-    categories: () => DEFAULT_CATEGORIES,
-    onCardsChanged: () => window?.webContents.send('cards:changed'),
+    categories: () => settings.get().categories,
+    onCardsChanged: () => changed(),
     log
   })
 
@@ -122,8 +124,34 @@ async function main(): Promise<void> {
   // ---- IPC (see src/preload/index.ts)
   ipcMain.handle('day:get', (_e, day?: string) => {
     const key = day ?? dayKey(Math.floor(Date.now() / 1000))
-    return { day: key, cards: store.cardsForDay(key) }
+    return { day: key, cards: store.cardsForDay(key), ratings: store.ratings(dayRange(key)) }
   })
+  ipcMain.handle('card:update', (_e, id: number, change: CardEdit) => {
+    const card = store.updateCard(id, change)
+    changed()
+    return card
+  })
+  ipcMain.handle('card:delete', (_e, id: number) => {
+    store.deleteCard(id)
+    changed()
+  })
+  ipcMain.handle('card:rate', (_e, span: Span, rating: Rating['rating'], feedback?: string) => {
+    store.rateRange(span, rating, feedback ?? null)
+    changed()
+  })
+  ipcMain.handle('batch:reprocess', (_e, batchId: number) => {
+    const reset = store.reprocessBatch(batchId)
+    changed()
+    void pipeline.tick()
+    return reset
+  })
+  ipcMain.handle('day:reprocess', (_e, day: string) => {
+    const count = store.reprocessDay(day)
+    changed()
+    void pipeline.tick()
+    return count
+  })
+
   ipcMain.handle('status:get', () => status())
   ipcMain.handle('settings:get', () => settings.get())
   ipcMain.handle('settings:save', async (_e, next: Partial<Settings>) => {
@@ -133,6 +161,10 @@ async function main(): Promise<void> {
       await platform.setAutostart(next.launchAtLogin)
     }
     const saved = await settings.save(next)
+    // Cards follow renamed categories (matched by id after the names were cleaned up).
+    const renames = renamedCategories(before.categories, saved.categories)
+    for (const { from, to } of renames) store.renameCategory(from, to)
+    if (renames.length) changed()
     if (saved.captureIntervalSec !== before.captureIntervalSec || saved.captureHeight !== before.captureHeight) {
       recorder.reconfigure(captureOptions(saved))
     }

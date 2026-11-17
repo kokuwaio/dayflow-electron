@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Store } from '../db/store'
 import { type GenerateRequest, type Provider, ProviderError, type ProviderKind } from '../providers/types'
 import { Pipeline } from './pipeline'
-import { DEFAULT_CATEGORIES } from './prompt'
+import { DEFAULT_CATEGORIES } from '../../shared/categories'
 
 const at = (h: number, m: number, s = 0) => new Date(2026, 10, 17, h, m, s).getTime() / 1000
 

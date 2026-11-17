@@ -3,6 +3,11 @@ import type { DayflowApi } from './api'
 
 const api: DayflowApi = {
   getDay: (day) => ipcRenderer.invoke('day:get', day),
+  updateCard: (id, change) => ipcRenderer.invoke('card:update', id, change),
+  deleteCard: (id) => ipcRenderer.invoke('card:delete', id),
+  rateCard: (span, rating, feedback) => ipcRenderer.invoke('card:rate', span, rating, feedback),
+  reprocessBatch: (batchId) => ipcRenderer.invoke('batch:reprocess', batchId),
+  reprocessDay: (day) => ipcRenderer.invoke('day:reprocess', day),
   getStatus: () => ipcRenderer.invoke('status:get'),
   getSettings: () => ipcRenderer.invoke('settings:get'),
   saveSettings: (next) => ipcRenderer.invoke('settings:save', next),

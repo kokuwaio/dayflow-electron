@@ -8,7 +8,8 @@ import { type Provider, ProviderError } from '../providers/types'
 import { BATCHING, planBatches } from './batching'
 import { parseCards } from './cards'
 import { assessIdleBatch } from './idle'
-import { type Category, type PromptFrame, buildCardRequest, sampleEvenly, withCorrection } from './prompt'
+import { type Category, PRIVATE_CATEGORY, idleCategory } from '../../shared/categories'
+import { type PromptFrame, buildCardRequest, sampleEvenly, withCorrection } from './prompt'
 import { cardFromObservations, transcribe } from './two-step'
 
 const TICK_MS = 60_000
@@ -39,6 +40,7 @@ const nowSec = () => Math.floor(Date.now() / 1000)
 export class Pipeline {
   private timer: ReturnType<typeof setInterval> | null = null
   private busy = false
+  private runAgain = false
   private lastRunAt: number | null = null
   private lastError: string | null = null
 
@@ -59,9 +61,12 @@ export class Pipeline {
     return { busy: this.busy, lastRunAt: this.lastRunAt, lastError: this.lastError }
   }
 
-  /** Plans new batches and analyzes pending ones. Overlapping calls are skipped. */
+  /** Plans new batches and analyzes pending ones. A call while busy runs again right after. */
   async tick(): Promise<void> {
-    if (this.busy) return
+    if (this.busy) {
+      this.runAgain = true
+      return
+    }
     this.busy = true
     try {
       const { store } = this.deps
@@ -79,6 +84,10 @@ export class Pipeline {
       this.deps.log(`analysis tick failed: ${String(err)}`)
     } finally {
       this.busy = false
+      if (this.runAgain) {
+        this.runAgain = false
+        void this.tick()
+      }
     }
   }
 
@@ -115,7 +124,7 @@ export class Pipeline {
 
     const idle = assessIdleBatch(shots)
     if (idle) {
-      store.replaceCards(span, batch.id, [idleCard(span)], batch.start)
+      store.replaceCards(span, batch.id, [idleCard(span, idleCategory(this.deps.categories())?.name ?? 'Idle')], batch.start)
       store.finishBatch(batch.id, 'analyzed', 'idle_shortcut_applied')
       this.deps.onCardsChanged()
       return 'analyzed'
@@ -246,7 +255,8 @@ export class Pipeline {
       const parsed = parseCards(text, {
         window,
         previous: previousCards.map((c) => ({ start: c.start, end: c.end })),
-        categories: categories.map((c) => c.name)
+        categories: categories.map((c) => c.name),
+        idleCategory: idleCategory(categories)?.name
       })
       if (!parsed.ok) {
         store.logLlmCall({
@@ -290,7 +300,7 @@ function privateCard(span: { start: number; end: number }): NewCard {
   return {
     ...span,
     title: 'Private',
-    category: 'Private',
+    category: PRIVATE_CATEGORY,
     subcategory: '',
     summary: 'Not recorded: a blocked app, such as a password manager, was in front.',
     detailedSummary: '',
@@ -299,11 +309,11 @@ function privateCard(span: { start: number; end: number }): NewCard {
   }
 }
 
-function idleCard(span: { start: number; end: number }): NewCard {
+function idleCard(span: { start: number; end: number }, category: string): NewCard {
   return {
     ...span,
     title: 'Idle',
-    category: 'Idle',
+    category,
     subcategory: '',
     summary: 'You were idle during this period.',
     detailedSummary: 'Idle period. Dayflow skipped activity summarization for this block.',

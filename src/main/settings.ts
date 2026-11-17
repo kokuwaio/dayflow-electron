@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs'
 import { mkdir, rename, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { safeStorage } from 'electron'
+import { sanitizeCategories } from '../shared/categories'
 import { CAPTURE_INTERVALS, DEFAULT_SETTINGS, type ProviderKind, type Settings } from '../shared/types'
 
 const KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'codex-cli']
@@ -55,6 +56,7 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
       claude: typeof r.cliPaths?.claude === 'string' ? r.cliPaths.claude.trim() : '',
       codex: typeof r.cliPaths?.codex === 'string' ? r.cliPaths.codex.trim() : ''
     },
+    categories: sanitizeCategories(r.categories ?? DEFAULT_SETTINGS.categories),
     blockedApps: Array.isArray(r.blockedApps)
       ? r.blockedApps.filter((x): x is string => typeof x === 'string' && x.trim() !== '').map((x) => x.trim()).slice(0, 100)
       : [...DEFAULT_SETTINGS.blockedApps]

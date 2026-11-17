@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { CATEGORY_PRESETS, type Category, presetCategories } from '@shared/categories'
 import { cliOf, needsApiKey } from '@shared/providers'
 import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings } from '@shared/types'
 
@@ -147,6 +148,8 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
         <p className="note">Only the screen under the mouse is recorded. Recording pauses while the screen is locked.</p>
       </section>
 
+      <CategoryEditor categories={settings.categories} save={save} />
+
       <section>
         <h2>Blocked apps</h2>
         <p className="note">
@@ -230,5 +233,84 @@ function CliSetup({ cli, settings, save }: { cli: CliName; settings: Settings; s
         subscription. In the Flatpak this needs a one-time opt-in, because it lets the app start programs on your computer.
       </p>
     </>
+  )
+}
+
+/** Category list: color, name and the description the model sees; presets from upstream's onboarding. */
+function CategoryEditor({ categories, save }: { categories: Category[]; save: (next: Partial<Settings>) => void }) {
+  const [rows, setRows] = useState(categories)
+  // Reset local rows only when the stored categories really changed, so other saves keep unsaved edits.
+  const stored = JSON.stringify(categories)
+  useEffect(() => setRows(JSON.parse(stored)), [stored])
+  const persist = (next: Category[]) => {
+    setRows(next)
+    save({ categories: next })
+  }
+  const update = (i: number, change: Partial<Category>) => setRows(rows.map((c, j) => (j === i ? { ...c, ...change } : c)))
+
+  return (
+    <section>
+      <h2>Categories</h2>
+      <p className="note">The description tells the model what belongs in each category. Idle is used for time away.</p>
+      <ul className="categories">
+        {rows.map((c, i) => (
+          <li key={i} className="row">
+            <input
+              type="color"
+              value={c.color}
+              aria-label={`Color of ${c.name}`}
+              onChange={(e) => update(i, { color: e.target.value })}
+              onBlur={() => persist(rows)}
+            />
+            <input
+              className="name"
+              value={c.name}
+              aria-label="Name"
+              onChange={(e) => update(i, { name: e.target.value })}
+              onBlur={() => persist(rows)}
+            />
+            <input
+              className="description"
+              value={c.description}
+              aria-label={`Description of ${c.name}`}
+              placeholder={c.isIdle ? 'Time away from the computer' : 'What belongs here'}
+              onChange={(e) => update(i, { description: e.target.value })}
+              onBlur={() => persist(rows)}
+            />
+            {!c.isIdle && (
+              <button className="link danger" aria-label={`Remove ${c.name}`} onClick={() => persist(rows.filter((_, j) => j !== i))}>
+                ✕
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="row">
+        <button
+          onClick={() => {
+            const idle = rows.findIndex((c) => c.isIdle)
+            const next = [...rows]
+            next.splice(idle < 0 ? next.length : idle, 0, { id: '', name: `Category ${rows.length}`, color: '#6A7EFF', description: '' })
+            setRows(next)
+          }}
+        >
+          Add category
+        </button>
+        <select
+          value=""
+          aria-label="Apply a preset"
+          onChange={(e) => {
+            if (e.target.value && confirm(`Replace your categories with the ${e.target.value} preset? Existing cards keep their names.`)) {
+              persist(presetCategories(e.target.value))
+            }
+          }}
+        >
+          <option value="">Use a preset for…</option>
+          {Object.keys(CATEGORY_PRESETS).map((role) => (
+            <option key={role}>{role}</option>
+          ))}
+        </select>
+      </div>
+    </section>
   )
 }

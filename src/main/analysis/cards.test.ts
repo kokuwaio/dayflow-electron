@@ -28,14 +28,14 @@ describe('parseCards: reading the reply', () => {
     expect(result).toMatchObject({ ok: true, cards: [{ start: at(23, 55), end: at(0, 10, 18) }] })
   })
 
-  it('maps categories case-insensitively, "idle time" to Idle and unknown ones to the first category', () => {
+  it('maps categories case-insensitively, "idle time" to the idle category and unknown ones to the first category', () => {
     const cards = [
       card('2:00 PM', '2:05 PM', { category: 'personal' }),
       card('2:05 PM', '2:10 PM', { category: 'idle time' }),
       card('2:10 PM', '2:15 PM', { category: 'Gaming' })
     ]
     // Short cards are fine here: this test is about categories only.
-    const result = parseCards(JSON.stringify(cards), { window, previous: [], categories: CATEGORIES, validate: false })
+    const result = parseCards(JSON.stringify(cards), { window, previous: [], categories: CATEGORIES, idleCategory: 'Idle', validate: false })
     expect(result.ok && result.cards.map((c) => c.category)).toEqual(['Personal', 'Idle', 'Work'])
   })
 })

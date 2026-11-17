@@ -1,5 +1,6 @@
 // Builds the one-step card request like upstream ClaudeProvider+Timeline.swift.
 
+import type { Category } from '../../shared/categories'
 import { formatClock } from '../../shared/day'
 import type { TimelineCard } from '../../shared/types'
 import type { GenerateRequest, Part } from '../providers/types'
@@ -13,19 +14,6 @@ import {
   SYSTEM_PROMPT,
   correctionPrompt
 } from './prompt-template'
-
-export interface Category {
-  name: string
-  description: string
-  isIdle?: boolean
-}
-
-export const DEFAULT_CATEGORIES: Category[] = [
-  { name: 'Work', description: 'Career, school, or productivity-focused activities (projects, emails, assignments, video calls, learning skills, etc.)' },
-  { name: 'Personal', description: 'Purposeful non-work activities or life tasks (paying bills, fitness tracking, meal planning, personal research, creative hobbies, etc.)' },
-  { name: 'Distraction', description: 'Passive consumption or aimless browsing (scrolling feeds, watching random videos, clicking through news, mindless games, etc.)' },
-  { name: 'Idle', description: 'For when the user is idle for most of the time.', isIdle: true }
-]
 
 /** At most this many frames go to the model, evenly spaced. */
 export const MAX_FRAMES = 15
@@ -49,7 +37,7 @@ export function categoriesSection(categories: Category[]): string {
   const idle = categories.find((c) => c.isIdle)
   const lines = categories.map(
     (c, i) =>
-      `${i + 1}. "${c.name}" — ${c.isIdle ? 'Use when the user is idle for more than half of this period.' : c.description}`
+      `${i + 1}. "${c.name}" — ${c.description || (c.isIdle ? 'Use when the user is idle for more than half of this period.' : '')}`
   )
   return [
     'USER CATEGORIES (choose exactly one label):',

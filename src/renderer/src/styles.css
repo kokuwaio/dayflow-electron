@@ -97,3 +97,13 @@ main { flex: 1; overflow: hidden; }
 textarea { width: 100%; font-family: ui-monospace, monospace; font-size: 12px; }
 code { font-size: 12px; }
 .error { overflow-wrap: anywhere; }
+.push-right { margin-left: auto; }
+.actions { margin: 12px 0; }
+.actions button.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, var(--panel)); }
+.danger { color: var(--danger); }
+.edit { display: grid; gap: 8px; margin: 8px 0; }
+.rated { font-size: 11px; }
+.categories { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.categories input[type="color"] { width: 36px; height: 30px; padding: 2px; }
+.categories .name { width: 160px; flex: none; }
+.categories .description { flex: 1; }

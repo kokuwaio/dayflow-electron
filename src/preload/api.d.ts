@@ -1,8 +1,14 @@
-import type { AppStatus, CliName, ProviderKind, Settings, TimelineCard } from '../shared/types'
+import type { AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings, TimelineCard } from '../shared/types'
 
 /** The API the preload script exposes to the renderer as window.dayflow. */
 export interface DayflowApi {
-  getDay(day?: string): Promise<{ day: string; cards: TimelineCard[] }>
+  getDay(day?: string): Promise<{ day: string; cards: TimelineCard[]; ratings: Rating[] }>
+  updateCard(id: number, change: CardEdit): Promise<TimelineCard | undefined>
+  deleteCard(id: number): Promise<void>
+  rateCard(span: { start: number; end: number }, rating: Rating['rating'], feedback?: string): Promise<void>
+  /** Analyzes a batch again (retries a failed one); false while it is being analyzed. */
+  reprocessBatch(batchId: number): Promise<boolean>
+  reprocessDay(day: string): Promise<number>
   getStatus(): Promise<AppStatus>
   getSettings(): Promise<Settings>
   saveSettings(next: Partial<Settings>): Promise<Settings>

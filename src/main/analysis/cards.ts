@@ -30,6 +30,8 @@ export interface ParseContext {
   previous: Span[]
   /** Allowed category names; the first is the fallback. */
   categories: string[]
+  /** The idle category's name (found by its flag, so it may be renamed). */
+  idleCategory?: string
   /** Check durations, gaps and coverage (default true). */
   validate?: boolean
 }
@@ -57,12 +59,11 @@ export function resolveClock(label: string, anchor: number): number | null {
 }
 
 /** Maps a model's category to an allowed one: exact (any case), idle aliases, else the first. */
-export function normalizeCategory(raw: unknown, categories: string[]): string {
+export function normalizeCategory(raw: unknown, categories: string[], idleName?: string): string {
   const name = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
   const exact = categories.find((c) => c.toLowerCase() === name)
   if (exact) return exact
-  const idle = categories.find((c) => c.toLowerCase() === 'idle')
-  if (idle && (name === 'idle' || name === 'idle time')) return idle
+  if (idleName && (name === 'idle' || name === 'idle time')) return idleName
   return categories[0] ?? 'Work'
 }
 
@@ -91,7 +92,7 @@ export function parseCards(text: string, ctx: ParseContext): ParseResult {
       end,
       startTime,
       endTime,
-      category: normalizeCategory(c.category, ctx.categories),
+      category: normalizeCategory(c.category, ctx.categories, ctx.idleCategory),
       subcategory: str(c.subcategory),
       title: str(c.title).trim() || 'Untitled',
       summary: str(c.summary),

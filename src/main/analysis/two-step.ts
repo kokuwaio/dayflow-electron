@@ -14,7 +14,8 @@ import type { NewCard, Span } from '../db/store'
 import { type GenerateRequest, type Provider, ProviderError } from '../providers/types'
 import { normalizeCategory } from './cards'
 import { type Observation, parseSegments } from './observations'
-import type { Category, PromptFrame } from './prompt'
+import { type Category, idleCategory } from '../../shared/categories'
+import type { PromptFrame } from './prompt'
 import { jsonObject } from './json'
 import * as prompts from './two-step-prompts'
 
@@ -160,7 +161,7 @@ export async function cardFromObservations(
       return {
         value: {
           summary: trimmed(o.summary),
-          category: normalizeCategory(o.category, names),
+          category: normalizeCategory(o.category, names, idleCategory(categories)?.name),
           appSites: {
             ...(trimmed(sites.primary) ? { primary: trimmed(sites.primary) } : {}),
             ...(trimmed(sites.secondary) ? { secondary: trimmed(sites.secondary) } : {})

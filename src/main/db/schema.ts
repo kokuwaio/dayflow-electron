@@ -101,5 +101,16 @@ export const MIGRATIONS: string[] = [
   // 3: placeholders for frames not saved because a blocked app was in front
   `
   ALTER TABLE screenshots ADD COLUMN is_blocked INTEGER NOT NULL DEFAULT 0;
+  `,
+  // 4: thumbs up/down on time ranges (upstream timeline_review_ratings, plus feedback text)
+  `
+  CREATE TABLE timeline_review_ratings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    start_ts INTEGER NOT NULL,
+    end_ts INTEGER NOT NULL,
+    rating TEXT NOT NULL,
+    feedback TEXT
+  );
+  CREATE INDEX idx_review_ratings_time ON timeline_review_ratings(start_ts, end_ts);
   `
 ]

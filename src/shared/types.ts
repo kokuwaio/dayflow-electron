@@ -1,4 +1,5 @@
 import { DEFAULT_BLOCKLIST } from './blocklist'
+import { type Category, DEFAULT_CATEGORIES } from './categories'
 
 // Types shared by the main process and the renderer.
 
@@ -12,6 +13,20 @@ export interface Distraction {
 export interface AppSites {
   primary?: string
   secondary?: string
+}
+
+/** A thumbs up/down on a time range (upstream timeline_review_ratings). */
+export interface Rating {
+  start: number
+  end: number
+  rating: 'up' | 'down'
+  feedback: string | null
+}
+
+/** What the user may change on a card. */
+export interface CardEdit {
+  title?: string
+  category?: string
 }
 
 export interface TimelineCard {
@@ -56,6 +71,8 @@ export interface Settings {
   blockedApps: string[]
   /** Optional absolute paths of the agent CLIs on the host; empty means find them. */
   cliPaths: Record<CliName, string>
+  /** Timeline categories; the last one is Idle. */
+  categories: Category[]
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -69,7 +86,8 @@ export const DEFAULT_SETTINGS: Settings = {
   storageLimitGb: 10,
   launchAtLogin: false,
   blockedApps: [...DEFAULT_BLOCKLIST],
-  cliPaths: { claude: '', codex: '' }
+  cliPaths: { claude: '', codex: '' },
+  categories: DEFAULT_CATEGORIES.map((c) => ({ ...c }))
 }
 
 export const CAPTURE_INTERVALS = [1, 5, 10, 20, 30, 60] as const

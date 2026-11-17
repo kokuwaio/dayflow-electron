@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite'
-import { dayKey, formatClock } from '../../shared/day'
-import type { AppSites, Distraction, TimelineCard } from '../../shared/types'
+import { SYSTEM_CATEGORY } from '../../shared/categories'
+import { dayKey, dayRange, formatClock } from '../../shared/day'
+import type { AppSites, CardEdit, Distraction, Rating, TimelineCard } from '../../shared/types'
 import type { Observation } from '../analysis/observations'
 import type { StoredFrame } from '../retention'
 import { MIGRATIONS } from './schema'
@@ -211,6 +212,81 @@ export class Store {
     })
   }
 
+  updateCard(id: number, change: CardEdit): TimelineCard | undefined {
+    if (change.title !== undefined) this.db.prepare('UPDATE timeline_cards SET title = ? WHERE id = ?').run(change.title, id)
+    if (change.category !== undefined) this.db.prepare('UPDATE timeline_cards SET category = ? WHERE id = ?').run(change.category, id)
+    const row = this.db.prepare(`SELECT ${CARD_COLUMNS} FROM timeline_cards WHERE id = ? AND is_deleted = 0`).get(id)
+    return row ? toCard(row as unknown as CardRow) : undefined
+  }
+
+  deleteCard(id: number): void {
+    this.db.prepare('UPDATE timeline_cards SET is_deleted = 1 WHERE id = ?').run(id)
+  }
+
+  renameCategory(from: string, to: string): void {
+    this.db.prepare('UPDATE timeline_cards SET category = ? WHERE category = ? AND is_deleted = 0').run(to, from)
+  }
+
+  /**
+   * Rates a time range. Like upstream applyReviewRating, older ratings keep
+   * only their parts outside the new range.
+   */
+  rateRange(span: Span, rating: Rating['rating'], feedback: string | null = null): void {
+    if (span.end <= span.start) return
+    this.tx(() => {
+      const overlapping = this.db
+        .prepare('SELECT id, start_ts AS start, end_ts AS end, rating, feedback FROM timeline_review_ratings WHERE NOT (end_ts <= ? OR start_ts >= ?)')
+        .all(span.start, span.end) as unknown as Array<Span & { id: number; rating: string; feedback: string | null }>
+      const insert = this.db.prepare('INSERT INTO timeline_review_ratings (start_ts, end_ts, rating, feedback) VALUES (?, ?, ?, ?)')
+      for (const r of overlapping) {
+        this.db.prepare('DELETE FROM timeline_review_ratings WHERE id = ?').run(r.id)
+        if (r.start < span.start) insert.run(r.start, Math.min(span.start, r.end), r.rating, r.feedback)
+        if (r.end > span.end) insert.run(Math.max(span.end, r.start), r.end, r.rating, r.feedback)
+      }
+      insert.run(span.start, span.end, rating, feedback?.trim() || null)
+    })
+  }
+
+  ratings(span: Span): Rating[] {
+    return this.db
+      .prepare(
+        'SELECT start_ts AS start, end_ts AS end, rating, feedback FROM timeline_review_ratings WHERE NOT (end_ts <= ? OR start_ts >= ?) ORDER BY start_ts'
+      )
+      .all(span.start, span.end) as unknown as Rating[]
+  }
+
+  /**
+   * Starts batches over, like upstream's reprocessing: they become pending
+   * with no attempts, and their cards and observations go. A batch that is
+   * being analyzed right now is left alone. Returns the ids that were reset.
+   */
+  private resetBatches(where: string, ...params: Array<number>): number[] {
+    return this.tx(() => {
+      const ids = (
+        this.db
+          .prepare(`SELECT id FROM analysis_batches WHERE ${where} AND status IN ('completed', 'failed', 'analyzed')`)
+          .all(...params) as Array<{ id: number }>
+      ).map((r) => r.id)
+      for (const id of ids) {
+        this.db.prepare('UPDATE timeline_cards SET is_deleted = 1 WHERE batch_id = ?').run(id)
+        this.db.prepare('DELETE FROM observations WHERE batch_id = ?').run(id)
+        this.db.prepare("UPDATE analysis_batches SET status = 'pending', reason = NULL, attempts = 0 WHERE id = ?").run(id)
+      }
+      return ids
+    })
+  }
+
+  /** Analyzes one batch again (also retries a failed one). False when it cannot be reset now. */
+  reprocessBatch(id: number): boolean {
+    return this.resetBatches('id = ?', id).length > 0
+  }
+
+  /** Analyzes a day again; returns how many batches were reset. */
+  reprocessDay(day: string): number {
+    const { start, end } = dayRange(day)
+    return this.resetBatches('batch_start_ts >= ? AND batch_start_ts < ?', start, end).length
+  }
+
   storedFrames(): StoredFrame[] {
     return this.db
       .prepare('SELECT id, captured_at AS capturedAt, COALESCE(file_size, 0) AS bytes FROM screenshots WHERE is_deleted = 0 ORDER BY captured_at')
@@ -236,7 +312,7 @@ export class Store {
   /** Live cards overlapping the span that the model may revise (no System cards). */
   contextCards(span: Span): TimelineCard[] {
     const rows = this.db
-      .prepare(`SELECT ${CARD_COLUMNS} FROM timeline_cards WHERE ${OVERLAPS} AND category != 'System' ORDER BY start_ts`)
+      .prepare(`SELECT ${CARD_COLUMNS} FROM timeline_cards WHERE ${OVERLAPS} AND category != '${SYSTEM_CATEGORY}' ORDER BY start_ts`)
       .all({ from: span.start, to: span.end }) as unknown as CardRow[]
     return rows.map(toCard)
   }
@@ -252,7 +328,7 @@ export class Store {
         .prepare(
           `UPDATE timeline_cards SET is_deleted = 1
            WHERE ${OVERLAPS}
-             AND (category != 'System' OR batch_id = :batch)
+             AND (category != '${SYSTEM_CATEGORY}' OR batch_id = :batch)
              AND NOT (start_ts > :keepAfter AND COALESCE(batch_id, -1) IN
                       (SELECT id FROM analysis_batches WHERE batch_start_ts > :keepAfter))`
         )
@@ -299,7 +375,7 @@ export class Store {
         {
           ...span,
           title: 'Processing failed',
-          category: 'System',
+          category: SYSTEM_CATEGORY,
           subcategory: 'Error',
           summary: `${message} Your recording is saved.`,
           detailedSummary: '',

@@ -145,10 +145,10 @@ each of the three providers.
 ### M2 Timeline parity
 
 - [ ] Week view (7-column grid), category filter bar (mute, reorder).
-- [ ] Categories: editor with name, color and description sent to the model;
+- [x] Categories: editor with name, color and description sent to the model;
       defaults Work, Personal, Distraction, Idle; role presets
       (upstream `Models/TimelineCategory.swift`).
-- [ ] Card actions: edit title and category, delete, thumbs up/down with
+- [x] Card actions: edit title and category, delete, thumbs up/down with
       feedback, retry a failed card, reprocess a day or batch.
 - [ ] Screenshot slideshow and timelapse player at 20x/40x/60x (`ffmpeg`).
 - [ ] App and site icons from the model's `appSites` (upstream
