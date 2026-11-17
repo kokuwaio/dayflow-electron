@@ -58,9 +58,12 @@ analyzed in small steps: one short request per screenshot, then a few
 text-only requests for the card. Small models handle that far better than one
 large request.
 
-You need a **vision model**. `qwen3-vl:8b` (about 6 GB) is a good start;
-`qwen3-vl:30b-a3b` (about 20 GB, but only 3B active parameters) gives better
-cards if your machine has the memory.
+You need a **vision model**. `qwen3-vl:8b-instruct` (about 6 GB) is a good start;
+`qwen3-vl:30b-a3b-instruct` (about 20 GB, but only 3B active parameters) gives
+better cards if your machine has the memory. Take the `-instruct` tags: the
+plain tags are "thinking" variants that write a few hundred hidden reasoning
+tokens before every answer, which makes each screenshot several times slower,
+and Ollama's OpenAI-compatible API cannot switch that off per request.
 
 ### 1. Install and start Ollama
 
@@ -84,14 +87,14 @@ sudo mkdir -p /etc/systemd/system/ollama.service.d
 printf '[Service]\nEnvironment="OLLAMA_CONTEXT_LENGTH=32768"\nEnvironment="OLLAMA_IGPU_ENABLE=1"\n' | sudo tee /etc/systemd/system/ollama.service.d/context.conf
 sudo systemctl daemon-reload
 sudo systemctl enable --now ollama
-ollama pull qwen3-vl:8b
+ollama pull qwen3-vl:8b-instruct
 ```
 
 Check that the model runs on the GPU: `ollama ps` should show `GPU` under
 PROCESSOR after the first request.
 
 ```sh
-ollama run qwen3-vl:8b "Say OK"
+ollama run qwen3-vl:8b-instruct "Say OK"
 ollama ps
 ```
 
@@ -100,7 +103,7 @@ ollama ps
 In **Settings**:
 
 1. AI provider: **OpenAI-compatible**.
-2. Model: `qwen3-vl:8b`.
+2. Model: `qwen3-vl:8b-instruct`.
 3. Base URL: `http://localhost:11434/v1`.
 4. Leave the API key empty and click **Test connection**.
 5. Recording → Resolution: **720p**. Smaller screenshots make every request
