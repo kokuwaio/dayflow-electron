@@ -98,4 +98,10 @@ describe('chat turns with tools', () => {
     const provider = openaiProvider('m', 'key', 'https://openrouter.ai/api/v1', { fetch })
     await expect(provider.chatTurn!({ system: 'S', messages: [{ role: 'user', text: 'Q' }], tools })).rejects.toThrow(/502.*Provider returned error/)
   })
+
+  it('Gemini: a response blocked for safety fails the turn instead of passing as an empty answer', async () => {
+    const { fetch } = fakeFetch({ sse: [{ candidates: [{ finishReason: 'SAFETY', content: { role: 'model', parts: [] } }] }] })
+    const provider = geminiProvider('gemini-x', 'key', { fetch })
+    await expect(provider.chatTurn!({ system: 'S', messages: [{ role: 'user', text: 'Q' }], tools })).rejects.toThrow(/blocked.*SAFETY/)
+  })
 })

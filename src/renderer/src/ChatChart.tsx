@@ -1,4 +1,5 @@
 import type { ChatChart as Spec } from '@shared/chat-content'
+import { escapeHtml } from '@shared/html'
 import { Chart } from './Chart'
 
 /** Upstream's chat chart palette (Views/UI/ChatCharts.swift). */
@@ -6,7 +7,7 @@ const PALETTE = ['#F96E00', '#1F6FEB', '#2E7D32', '#8E24AA', '#00897B']
 const color = (c: string | null, i: number) => c ?? PALETTE[i % PALETTE.length]!
 const grid = { left: 8, right: 8, top: 8, bottom: 4, containLabel: true }
 
-/** ECharts options for upstream's chart blocks: bar, line, stacked_bar, donut, heatmap and gantt. */
+/** ECharts options for upstream's chart blocks (tooltip formatters return HTML, so labels are escaped): bar, line, stacked_bar, donut, heatmap and gantt. */
 function option(spec: Spec): Record<string, unknown> {
   switch (spec.type) {
     case 'bar':
@@ -55,7 +56,7 @@ function option(spec: Spec): Record<string, unknown> {
       const labels = spec.items.map((i) => i.label)
       return {
         grid,
-        tooltip: { trigger: 'item', formatter: (p: { dataIndex: number }) => `${labels[p.dataIndex]}: ${spec.items[p.dataIndex]!.start}–${spec.items[p.dataIndex]!.end}` },
+        tooltip: { trigger: 'item', formatter: (p: { dataIndex: number }) => `${escapeHtml(labels[p.dataIndex] ?? '')}: ${spec.items[p.dataIndex]!.start}–${spec.items[p.dataIndex]!.end}` },
         xAxis: { type: 'value', min: Math.min(...spec.items.map((i) => i.start)) },
         yAxis: { type: 'category', data: labels, inverse: true },
         series: [

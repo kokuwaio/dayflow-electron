@@ -13,4 +13,9 @@ describe('JSON in model replies', () => {
     expect(jsonObject('Sure! {"done":["x"]} hope that helps')).toEqual({ done: ['x'] })
     expect(jsonArray('no json here', 'cards')).toBeNull()
   })
+
+  it('leaves backticks inside JSON strings alone and still reads fenced replies', () => {
+    expect(jsonArray('[{"summary":"Documented ```json fences"}]', 'cards')).toEqual([{ summary: 'Documented ```json fences' }])
+    expect(jsonArray('Here you go:\n```json\n[{"summary":"a ```json b"}]\n```', 'cards')).toEqual([{ summary: 'a ```json b' }])
+  })
 })

@@ -26,9 +26,23 @@ export function listBackups(dir: string): string[] {
 export async function backupDatabase(store: Store, dir: string, now = new Date()): Promise<string> {
   mkdirSync(dir, { recursive: true })
   const path = join(dir, `${PREFIX}${stamp(now)}.sqlite`)
-  await store.backupTo(path)
+  // Written under a temporary name and renamed when complete, so an interrupted
+  // backup is never taken for the newest one.
+  const partial = `${path}.partial`
+  try {
+    await store.backupTo(partial)
+    renameSync(partial, path)
+  } finally {
+    rmSync(partial, { force: true })
+  }
   for (const old of listBackups(dir).slice(KEEP)) rmSync(old, { force: true })
   return path
+}
+
+/** SQLITE_CORRUPT (11) and SQLITE_NOTADB (26), possibly as extended codes. */
+function isCorruption(err: unknown): boolean {
+  const code = (err as { errcode?: unknown } | null)?.errcode
+  return typeof code === 'number' && [11, 26].includes(code & 0xff)
 }
 
 /** Opens the database; if it is damaged, keeps it aside as .corrupt-<timestamp> and restores the newest backup. */
@@ -37,8 +51,10 @@ export function openWithRecovery(path: string, backupDir: string): { store: Stor
     const store = Store.open(path)
     if (store.isHealthy()) return { store, restoredFrom: null }
     store.close()
-  } catch {
-    // unreadable: try the backups
+  } catch (err) {
+    // Only a damaged file is replaced; a busy database or any other startup
+    // error must not cost the live database and its recent changes.
+    if (!isCorruption(err)) throw err
   }
   const newest = listBackups(backupDir)[0]
   if (!newest) return { store: Store.open(path), restoredFrom: null }

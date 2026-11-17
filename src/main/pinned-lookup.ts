@@ -36,7 +36,8 @@ export function fetchPublicImage(host: string, path: string, maxBytes: number, t
     const req = get({ host, path, lookup: publicOnlyLookup() as never, timeout: timeoutMs }, (res) => {
       const type = res.headers['content-type']?.split(';')[0]?.trim() ?? ''
       if (res.statusCode !== 200 || !type.startsWith('image/') || Number(res.headers['content-length'] ?? 0) > maxBytes) {
-        res.resume()
+        // Drop it rather than drain it: an oversized or endless body is never read.
+        res.destroy()
         return resolve(null)
       }
       const chunks: Buffer[] = []

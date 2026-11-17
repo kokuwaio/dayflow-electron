@@ -38,7 +38,8 @@ export function jsonCandidates(text: string): unknown[] {
       // not JSON
     }
   }
-  const cleaned = text.replace(/```(?:json)?/g, '').trim()
+  // Only fence lines go, so backticks inside the JSON's own strings stay as written.
+  const cleaned = text.replace(/^[ \t]*```[a-z]*[ \t]*$/gim, '').trim()
   tryParse(cleaned)
   // Arrays, the last one first (models put the answer after their notes).
   for (const span of arraySpans(cleaned).reverse()) tryParse(span)

@@ -22,6 +22,21 @@ describe('cardBox', () => {
     expect(cardBox({ start: at(18, 1, 0), end: at(18, 2, 0) }, '2026-11-17').top).toBe(21 * 60 * PX_PER_MIN + 1)
   })
 
+  it('ends cards on the wall clock too, so cards across the spring jump stay contiguous', () => {
+    // 29 March 2026, Europe/Berlin: 2:00 jumps to 3:00. A 1:55-3:10 card and the next one at 3:10 must touch.
+    const t = (h: number, m: number) => new Date(2026, 2, 29, h, m).getTime() / 1000
+    const first = cardBox({ start: t(1, 55), end: t(3, 10) }, '2026-03-28')
+    const next = cardBox({ start: t(3, 10), end: t(3, 40) }, '2026-03-28')
+    expect(first.top + first.height + 2).toBeCloseTo(next.top, 5)
+  })
+
+  it('falls back to the elapsed time when the autumn hour repeats', () => {
+    // 25 October 2026: 3:00 CEST goes back to 2:00 CET. 2:50 CEST to 2:10 CET is 20 minutes.
+    const start = new Date('2026-10-25T00:50:00Z').getTime() / 1000
+    const box = cardBox({ start, end: start + 20 * 60 }, '2026-10-24')
+    expect(box.height).toBeCloseTo(20 * PX_PER_MIN - 2, 5)
+  })
+
   it('places cards by the clock, so a DST change does not shift them off the hour lines', () => {
     // Night of 28/29 March 2026 in Europe/Berlin: clocks jump from 2:00 to 3:00. 3:30 AM still belongs to the
     // 28 March day and sits 23.5 clock hours below 4 AM, although only 22.5 hours have passed.

@@ -4,6 +4,7 @@ import type { Category } from '@shared/categories'
 import type { FeatureAccess } from '@shared/daily'
 import { hourLabel, parseKey, shiftDay, todayKey } from '@shared/day'
 import { formatMinutes } from '@shared/day-summary'
+import { escapeHtml } from '@shared/html'
 import type { TimelineCard } from '@shared/types'
 import type { Week } from '@shared/week'
 import { WEEKLY_MIN_TRACKED_MINUTES, contextShifts, donutItems, sankeyLinks, trackedMinutes, treemap, workflowHeatmap } from '@shared/weekly'
@@ -201,7 +202,8 @@ export function Weekly() {
                   tooltip: {
                     formatter: (p: unknown) => {
                       const { name, value, data } = p as { name: string; value: number; data: { change?: number | null } }
-                      return `${name}: ${formatMinutes(value)}${changeText(data.change)}`
+                      // Tooltips render HTML; app names come from the model.
+                      return `${escapeHtml(name)}: ${formatMinutes(value)}${changeText(data.change)}`
                     }
                   },
                   series: [

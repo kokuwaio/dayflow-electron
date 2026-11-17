@@ -45,7 +45,8 @@ describe('CLI invocation', () => {
     )
   })
 
-  it('builds a terminal install command that writes exactly that wrapper', () => {
+  // The terminal command is a POSIX shell script for ~/.local/bin; Windows has neither.
+  it.skipIf(process.platform === 'win32')('builds a terminal install command that writes exactly that wrapper', () => {
     const home = mkdtempSync(join(tmpdir(), 'dayflow-home-'))
     try {
       execFileSync('sh', ['-c', terminalInstallCommand(plain)], { env: { ...process.env, HOME: home } })

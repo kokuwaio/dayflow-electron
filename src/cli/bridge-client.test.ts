@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { BridgeServer } from '../main/agent/bridge'
+import { BridgeServer, agentSocketPath } from '../main/agent/bridge'
 import { AgentWriteError } from '../main/agent/writes'
 import { sendToApp } from './bridge-client'
 import { BridgeError } from './bridge-client'
@@ -20,7 +20,7 @@ afterEach(async () => {
 
 const start = async (edits: boolean) => {
   server = new BridgeServer({
-    socketPath: join(dir, 'agent.sock'),
+    socketPath: agentSocketPath(dir),
     logFile: join(dir, 'agent-writes.log'),
     editsEnabled: () => edits,
     handle: async (operation, args) => {
@@ -42,20 +42,20 @@ const failure = (p: Promise<unknown>) =>
 describe('CLI ↔ app bridge', () => {
   it('sends a write and returns the app\'s data', async () => {
     await start(true)
-    expect(await sendToApp(join(dir, 'agent.sock'), 'category_add', { name: 'Reading' })).toEqual({ message: 'category_add Reading' })
+    expect(await sendToApp(agentSocketPath(dir), 'category_add', { name: 'Reading' })).toEqual({ message: 'category_add Reading' })
   })
 
   it('surfaces the app\'s error codes', async () => {
     await start(true)
-    expect(await failure(sendToApp(join(dir, 'agent.sock'), 'category_remove', { name: 'Nope' }))).toEqual({ code: 'not_found', message: 'No category named "Nope".' })
-    expect((await failure(sendToApp(join(dir, 'agent.sock'), 'drop_tables', {}))).code).toBe('unknown_operation')
+    expect(await failure(sendToApp(agentSocketPath(dir), 'category_remove', { name: 'Nope' }))).toEqual({ code: 'not_found', message: 'No category named "Nope".' })
+    expect((await failure(sendToApp(agentSocketPath(dir), 'drop_tables', {}))).code).toBe('unknown_operation')
   })
 
   it('reports edits switched off in the app, and an app that is not running', async () => {
     await start(false)
-    expect((await failure(sendToApp(join(dir, 'agent.sock'), 'category_add', { name: 'x' }))).code).toBe('edits_disabled')
+    expect((await failure(sendToApp(agentSocketPath(dir), 'category_add', { name: 'x' }))).code).toBe('edits_disabled')
     await server!.stop()
-    expect(await failure(sendToApp(join(dir, 'agent.sock'), 'category_add', { name: 'x' }))).toEqual({
+    expect(await failure(sendToApp(agentSocketPath(dir), 'category_add', { name: 'x' }))).toEqual({
       code: 'app_not_running',
       message: "Dayflow isn't running. Reads work offline; edits need the app open."
     })

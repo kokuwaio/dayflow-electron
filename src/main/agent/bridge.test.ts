@@ -28,6 +28,7 @@ const deps = () => ({
   now: () => new Date('2026-11-17T08:00:00Z')
 })
 
+const POSIX = process.platform !== 'win32'
 const request = (o: Record<string, unknown>) => JSON.stringify({ protocol_version: 1, ...o })
 
 describe('bridge messages', () => {
@@ -113,24 +114,25 @@ describe('bridge socket', () => {
     })
 
   it('listens owner-only, answers one line per connection, appends the log and removes the socket on stop', async () => {
-    const socketPath = join(dir, 'agent.sock')
+    const socketPath = agentSocketPath(dir)
     const logFile = join(dir, 'agent-writes.log')
     server = new BridgeServer({ socketPath, logFile, editsEnabled: () => edits, handle: (op, args) => handler(op, args) })
     await server.start()
-    expect(statSync(socketPath).mode & 0o777).toBe(0o600)
+    // File modes exist on Linux and macOS; Windows uses a named pipe, which is no file.
+    if (POSIX) expect(statSync(socketPath).mode & 0o777).toBe(0o600)
 
     const answer = await exchange(socketPath, `${request({ operation: 'category_add', arguments: { name: 'Reading' } })}\n`)
     expect(JSON.parse(answer)).toEqual({ ok: true, data: { message: 'Created Reading' } })
     expect(answer.endsWith('\n')).toBe(true)
     expect(JSON.parse(readFileSync(logFile, 'utf8').trim())).toMatchObject({ operation: 'category_add', arguments: { name: 'Reading' } })
-    expect(statSync(logFile).mode & 0o777).toBe(0o600)
+    if (POSIX) expect(statSync(logFile).mode & 0o777).toBe(0o600)
 
     await server.stop()
-    expect(() => statSync(socketPath)).toThrow()
+    if (POSIX) expect(() => statSync(socketPath)).toThrow()
   })
 
   it('drops requests over 1 MB without handling them', async () => {
-    const socketPath = join(dir, 'agent.sock')
+    const socketPath = agentSocketPath(dir)
     server = new BridgeServer({ socketPath, logFile: join(dir, 'log'), editsEnabled: () => true, handle: (op, args) => handler(op, args) })
     await server.start()
     const answer = await exchange(socketPath, Buffer.alloc(1_048_577, 0x61))

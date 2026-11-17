@@ -72,6 +72,11 @@ export function geminiProvider(model: string, apiKey: string, options: ProviderO
         (chunk) => {
           if (chunk?.promptFeedback?.blockReason) throw new ProviderError(`Gemini blocked the request (${chunk.promptFeedback.blockReason})`, false)
           if (typeof chunk?.modelVersion === 'string') modelVersion = chunk.modelVersion
+          // A response blocked while generating carries no blockReason, only this finish reason.
+          const finish = chunk?.candidates?.[0]?.finishReason
+          if (finish === 'SAFETY' || finish === 'PROHIBITED_CONTENT' || finish === 'BLOCKLIST' || finish === 'SPII') {
+            throw new ProviderError(`Gemini blocked the response (${finish})`, false)
+          }
           for (const part of (chunk?.candidates?.[0]?.content?.parts ?? []) as GeminiPart[]) {
             parts.push(part)
             if (typeof part.text === 'string' && !part.thought && part.text) onText?.(part.text)

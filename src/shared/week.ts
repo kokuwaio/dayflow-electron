@@ -29,13 +29,20 @@ export function weekOf(day: string, locale?: string): Week {
   return { days, title: `${fmt(days[0]!)} - ${fmt(days[6]!)}` }
 }
 
+/** Wall-clock minutes of `ts` after 4 AM on `day` (a time on the next calendar day counts on). */
+function wallMinutes(ts: number, day: string): number {
+  const d = new Date(ts * 1000)
+  const dayNumber = Math.round((parseKey(dayKeyOf(d)).getTime() - parseKey(day).getTime()) / 86_400_000)
+  return (d.getHours() + dayNumber * 24) * 60 + d.getMinutes() + d.getSeconds() / 60 - 4 * 60
+}
+
 /** Vertical position and height of a card in its day column (the column starts at 4 AM). */
 export function cardBox(card: { start: number; end: number }, day: string): { top: number; height: number } {
   // By the wall clock, like upstream, so DST nights keep cards on their hour lines.
-  const start = new Date(card.start * 1000)
-  const dayNumber = Math.round((parseKey(dayKeyOf(start)).getTime() - parseKey(day).getTime()) / 86_400_000)
-  const startMin = (start.getHours() + dayNumber * 24) * 60 + start.getMinutes() - 4 * 60
-  const minutes = (card.end - card.start) / 60
+  const startMin = wallMinutes(card.start, day)
+  const wallLength = wallMinutes(card.end, day) - startMin
+  // When the autumn hour repeats, the wall-clock end can come before the start: use the elapsed time then.
+  const minutes = wallLength > 0 ? wallLength : (card.end - card.start) / 60
   return { top: startMin * PX_PER_MIN + 1, height: Math.max(MIN_CARD_HEIGHT, minutes * PX_PER_MIN - 2) }
 }
 

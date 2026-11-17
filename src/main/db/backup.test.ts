@@ -1,8 +1,8 @@
-import { mkdtempSync, readdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { backupDatabase, openWithRecovery } from './backup'
+import { backupDatabase, listBackups, openWithRecovery } from './backup'
 import { Store } from './store'
 
 let dir: string
@@ -44,5 +44,20 @@ describe('database backups (upstream StorageManager+Maintenance)', () => {
     const { store, restoredFrom } = openWithRecovery(join(dir, 'dayflow.sqlite'), backups)
     keep(store)
     expect(restoredFrom).toBeNull()
+  })
+
+  it('passes other open errors on without touching the files or the backups', async () => {
+    const store = keep(Store.open(join(dir, 'dayflow.sqlite')))
+    await backupDatabase(store, backups, new Date(2026, 10, 1, 12))
+    const notADatabaseFile = join(dir, 'a-folder')
+    mkdirSync(notADatabaseFile)
+    expect(() => openWithRecovery(notADatabaseFile, backups)).toThrow()
+    expect(readdirSync(dir).some((f) => f.includes('.corrupt-'))).toBe(false)
+  })
+
+  it('never lists a backup that is still being written', async () => {
+    mkdirSync(backups, { recursive: true })
+    writeFileSync(join(backups, 'dayflow-20261105-120000.sqlite.partial'), 'half')
+    expect(listBackups(backups)).toEqual([])
   })
 })

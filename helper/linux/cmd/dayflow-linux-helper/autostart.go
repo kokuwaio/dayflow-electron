@@ -95,5 +95,9 @@ func execLine(args []string) string {
 		b.WriteByte('"')
 		quoted[i] = b.String()
 	}
-	return strings.Join(quoted, " ")
+	// The Exec value is also a desktop-entry string, so backslashes are escaped a
+	// second time, and a literal % is written as %% (field codes start with %).
+	line := strings.Join(quoted, " ")
+	line = strings.ReplaceAll(line, `\`, `\\`)
+	return strings.ReplaceAll(line, "%", "%%")
 }
