@@ -1,12 +1,20 @@
 import { useEffect, useState } from 'react'
 import type { AppStatus, Settings } from '@shared/types'
+import { Daily } from './Daily'
 import { Onboarding } from './Onboarding'
 import { SettingsView } from './Settings'
 import { StatusPill } from './StatusPill'
 import { Timeline } from './Timeline'
 
+const TABS = [
+  { id: 'timeline', label: 'Timeline' },
+  { id: 'daily', label: 'Daily' },
+  { id: 'settings', label: 'Settings' }
+] as const
+type View = (typeof TABS)[number]['id']
+
 export function App() {
-  const [view, setView] = useState<'timeline' | 'settings'>('timeline')
+  const [view, setView] = useState<View>('timeline')
   const [status, setStatus] = useState<AppStatus | null>(null)
 
   const [settings, setSettings] = useState<Settings | null>(null)
@@ -14,7 +22,12 @@ export function App() {
   useEffect(() => {
     void window.dayflow.getStatus().then(setStatus)
     void window.dayflow.getSettings().then(setSettings)
-    return window.dayflow.onStatus(setStatus)
+    const offNavigate = window.dayflow.onNavigate((tab) => TABS.some((t) => t.id === tab) && setView(tab as View))
+    const offStatus = window.dayflow.onStatus(setStatus)
+    return () => {
+      offNavigate()
+      offStatus()
+    }
   }, [])
 
   if (settings && !settings.onboarded) {
@@ -31,12 +44,11 @@ export function App() {
     <div className="app">
       <header className="topbar">
         <nav className="tabs">
-          <button className={view === 'timeline' ? 'active' : ''} onClick={() => setView('timeline')}>
-            Timeline
-          </button>
-          <button className={view === 'settings' ? 'active' : ''} onClick={() => setView('settings')}>
-            Settings
-          </button>
+          {TABS.map((t) => (
+            <button key={t.id} className={view === t.id ? 'active' : ''} onClick={() => setView(t.id)}>
+              {t.label}
+            </button>
+          ))}
         </nav>
         {status && <StatusPill status={status} onChange={() => void window.dayflow.getStatus().then(setStatus)} />}
       </header>
@@ -49,7 +61,11 @@ export function App() {
       {status?.recorder.state === 'backoff' && status.recorder.lastError && (
         <div className="banner">Capture: {status.recorder.lastError}</div>
       )}
-      <main>{view === 'timeline' ? <Timeline /> : <SettingsView status={status} />}</main>
+      <main>
+        {view === 'timeline' && <Timeline />}
+        {view === 'daily' && <Daily />}
+        {view === 'settings' && <SettingsView status={status} />}
+      </main>
     </div>
   )
 }

@@ -9,6 +9,7 @@ import { dayKey, dayRange, shiftDay, todayKey } from '../shared/day'
 import { needsApiKey } from '../shared/providers'
 import { PAUSE_PRESETS, describeRecorder } from '../shared/status'
 import { renamedCategories } from '../shared/categories'
+import { type StandupDraft, accessProgress } from '../shared/daily'
 import type { FrameRef } from '../shared/media'
 import { type GoalPlan, defaultGoalPlan } from '../shared/day-summary'
 import { exportFileName, rangeMarkdown, timelineText, weekText } from '../shared/export'
@@ -19,7 +20,9 @@ import { Pipeline } from './analysis/pipeline'
 import { Recorder } from './capture/recorder'
 import { Store } from './db/store'
 import { frameUrl } from '../shared/media'
+import { AUTO_MIN_MINUTES, MANUAL_MIN_MINUTES, NoSourceDayError, generateStandup } from './insights/daily'
 import { handleMedia, registerMediaScheme } from './media'
+import { type Tab, createNotifier } from './notifications'
 import { createPlatform } from './platform'
 import { createProvider } from './providers'
 import { findCli, hostAccess, nodeRunner } from './providers/cli/host'
@@ -99,15 +102,17 @@ async function main(): Promise<void> {
   const currentProvider = () => providerFor(settings.get().provider)
   const usable = (kind: ProviderKind) => !needsApiKey(kind, settings.get().openaiBaseUrl) || !!settings.apiKey(kind)
 
+  const pipelineProviders = () => {
+    const s = settings.get()
+    const kinds = [s.provider, ...(s.fallbackProvider ? [s.fallbackProvider] : [])]
+    for (const k of kinds.filter((k) => !usable(k))) log(`no API key for ${k}; skipping it`)
+    const ready = kinds.filter(usable)
+    return ready.length ? ready.map(providerFor) : `No API key set for ${s.provider}. Add one in Settings.`
+  }
+
   const pipeline = new Pipeline({
     store,
-    providers: () => {
-      const s = settings.get()
-      const kinds = [s.provider, ...(s.fallbackProvider ? [s.fallbackProvider] : [])]
-      for (const k of kinds.filter((k) => !usable(k))) log(`no API key for ${k}; skipping it`)
-      const ready = kinds.filter(usable)
-      return ready.length ? ready.map(providerFor) : `No API key set for ${s.provider}. Add one in Settings.`
-    },
+    providers: () => pipelineProviders(),
     language: () => settings.get().outputLanguage,
     overrides: () => settings.get().promptOverrides,
     categories: () => settings.get().categories,
@@ -141,6 +146,62 @@ async function main(): Promise<void> {
     for (let d = from; d <= to; d = shiftDay(d, 1)) days.push(d)
     return days
   }
+  const notifier = createNotifier({
+    open: (tab: Tab) => {
+      showWindow()
+      window?.webContents.send('navigate', tab)
+    },
+    windowFocused: () => !!window?.isFocused(),
+    today: todayKey
+  })
+  const access = () => accessProgress(store.analyzedBatchCount())
+  const configuredProviders = () => {
+    const p = pipelineProviders()
+    return typeof p === 'string' ? [] : p
+  }
+  const standupAttempts = new Map<string, number>()
+  const writeStandup = async (day: string, minMinutes: number) => {
+    const entry = await generateStandup({
+      store,
+      providers: configuredProviders(),
+      target: day,
+      today: todayKey(),
+      language: settings.get().outputLanguage,
+      minMinutes
+    })
+    store.saveStandup(day, entry)
+    notifier.standupReady(day)
+    window?.webContents.send('daily:changed')
+    return entry
+  }
+  // Upstream's scheduler: once Daily is unlocked, after 4 AM, at most 3 tries a day.
+  const scheduleStandup = async () => {
+    const day = todayKey()
+    if (!access().daily.unlocked || new Date().getHours() < 4 || store.standup(day)) return
+    const tries = standupAttempts.get(day) ?? 0
+    if (tries >= 3 || configuredProviders().length === 0) return
+    standupAttempts.set(day, tries + 1)
+    await writeStandup(day, AUTO_MIN_MINUTES).catch((err) => {
+      if (!(err instanceof NoSourceDayError)) log(`standup failed: ${String(err)}`)
+    })
+  }
+  setInterval(() => void scheduleStandup(), 5 * 60_000)
+  setTimeout(() => void scheduleStandup(), 30_000)
+
+  ipcMain.handle('access:get', () => access())
+  ipcMain.handle('daily:get', (_e, day: string) => store.standup(day))
+  ipcMain.handle('daily:generate', async (_e, day: string) => {
+    try {
+      return { ok: true, entry: await writeStandup(day, MANUAL_MIN_MINUTES) }
+    } catch (err) {
+      return { ok: false, message: err instanceof Error ? err.message : String(err) }
+    }
+  })
+  ipcMain.handle('daily:save', (_e, day: string, draft: StandupDraft) => {
+    const current = store.standup(day)
+    store.saveStandup(day, { draft, sourceDay: current?.sourceDay ?? null, provider: current?.provider ?? 'user', model: current?.model ?? '', generatedAt: current?.generatedAt ?? 0 })
+  })
+
   ipcMain.handle('week:get', (_e, day: string) => {
     const week = weekOf(day)
     const last = week.days[week.days.length - 1]!
@@ -288,7 +349,27 @@ async function main(): Promise<void> {
   tray.on('click', () => showWindow())
 
   let lastStatus = ''
+  let lastProblem: string | null = null
+  const checkNotifications = () => {
+    const shown = settings.get().notified
+    const analyzed = store.analyzedBatchCount()
+    if (!shown.firstCards && analyzed > 0) {
+      notifier.firstCards()
+      void settings.save({ notified: { ...settings.get().notified, firstCards: true } })
+    }
+    if (!shown.weeklyUnlock && accessProgress(analyzed).weekly.unlocked) {
+      notifier.weeklyUnlocked()
+      void settings.save({ notified: { ...settings.get().notified, weeklyUnlock: true } })
+    }
+    const problem = pipeline.status().lastError
+    if (problem && problem !== lastProblem) {
+      const waiting = (store.pendingBatches().length + store.retryableBatches(0, 3).length) * 15
+      notifier.providerProblem(problem, waiting)
+    }
+    lastProblem = problem
+  }
   setInterval(() => {
+    checkNotifications()
     const s = status()
     const key = JSON.stringify([s.recorder, s.analysis])
     if (key === lastStatus) return

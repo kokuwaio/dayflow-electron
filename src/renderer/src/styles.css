@@ -151,3 +151,14 @@ code { font-size: 12px; }
 .onboarding-card { width: min(640px, 100%); display: grid; gap: 14px; background: var(--panel); border: 1px solid var(--line);
   border-radius: 14px; padding: 24px; }
 .onboarding-card h2 { margin: 0; }
+.daily { overflow-y: auto; height: 100%; padding: 16px 24px; display: grid; gap: 16px; align-content: start; }
+.workflow { display: grid; gap: 2px 1px; align-items: center; font-size: 11px; }
+.workflow .hour { color: var(--muted); }
+.workflow .row-label { color: var(--muted); padding-right: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.workflow .cell { height: 18px; border-radius: 2px; }
+.standup-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.standup h4 { margin: 8px 0; }
+.items { list-style: disc; margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.items input { width: 100%; border: none; background: transparent; padding: 2px 4px; }
+.items input:focus { background: var(--panel); outline: 1px solid var(--line); }
+.locked { padding: 48px; max-width: 560px; display: grid; gap: 8px; }

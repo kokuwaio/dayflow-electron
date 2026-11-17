@@ -184,7 +184,7 @@ each of the three providers.
 
 ### M3 Insights
 
-- Daily standup tab: activity grid, yesterday's highlights, today's
+- [x] Daily standup tab: activity grid, yesterday's highlights, today's
   priorities, blockers (upstream `Views/UI/DailyView*.swift`).
 - Weekly dashboard: overview, donut, treemap, Sankey, focus heatmap,
   context switches, app interaction graph, highlights. No AI needed; built
@@ -193,11 +193,11 @@ each of the three providers.
   observations, inline charts from fenced `chart` blocks, history panel,
   memory (upstream `Core/AI/Chat*`, `ChatPromptBuilder.swift`). CLI providers
   run through `node-pty`.
-- Desktop notifications: first cards ready, provider problem, weekly
+- [x] Desktop notifications: first cards ready, provider problem, weekly
   unlocked. Clicks open the matching tab.
-- Unlock thresholds like upstream: Daily after 5 h, Chat after 10 h, Weekly
+- [x] Unlock thresholds like upstream: Daily after 5 h, Chat after 10 h, Weekly
   after 30 h of recorded data (upstream `Core/Access/`).
-- Day goals (`day_goals`, `day_goal_categories`).
+- [x] Day goals (`day_goals`, `day_goal_categories`; built in M2 with the day summary).
 
 ### M4 Agent access (CLI and MCP)
 

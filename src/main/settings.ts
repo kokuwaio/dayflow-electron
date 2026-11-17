@@ -65,6 +65,7 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
       detailedSummary: overrideText(r.promptOverrides?.detailedSummary)
     },
     showAppIcons: r.showAppIcons === true,
+    notified: { firstCards: r.notified?.firstCards === true, weeklyUnlock: r.notified?.weeklyUnlock === true },
     // Existing installs that never saw onboarding count as set up once a provider was chosen.
     onboarded: r.onboarded === true || (r.onboarded === undefined && typeof r.provider === 'string'),
     blockedApps: Array.isArray(r.blockedApps)

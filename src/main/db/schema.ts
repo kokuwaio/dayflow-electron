@@ -133,5 +133,15 @@ export const MIGRATIONS: string[] = [
     PRIMARY KEY (day, kind, category_id)
   );
   CREATE INDEX idx_day_goal_categories_day_kind ON day_goal_categories(day, kind, sort_order);
+  `,
+  // 6: Daily standups (upstream daily_standup_entries: one JSON payload per standup day)
+  `
+  CREATE TABLE daily_standup_entries (
+    standup_day TEXT NOT NULL PRIMARY KEY,
+    payload_json TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX idx_daily_standup_entries_created_at ON daily_standup_entries(created_at DESC);
   `
 ]

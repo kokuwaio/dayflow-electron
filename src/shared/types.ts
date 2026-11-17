@@ -15,6 +15,17 @@ export interface AppSites {
   secondary?: string
 }
 
+/** A saved standup (upstream DailyStandupDraft plus how it was made). */
+export interface StandupEntry {
+  draft: import('./daily').StandupDraft
+  /** The day it summarizes. */
+  sourceDay: string | null
+  provider: string
+  model: string
+  /** Unix seconds; 0 for a placeholder. */
+  generatedAt: number
+}
+
 /** A thumbs up/down on a time range (upstream timeline_review_ratings). */
 export interface Rating {
   start: number
@@ -79,6 +90,8 @@ export interface Settings {
   showAppIcons: boolean
   /** The first-run setup is done. */
   onboarded: boolean
+  /** One-time notifications already shown. */
+  notified: { firstCards: boolean; weeklyUnlock: boolean }
 }
 
 export interface PromptOverrides {
@@ -102,7 +115,8 @@ export const DEFAULT_SETTINGS: Settings = {
   categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })),
   promptOverrides: { title: '', summary: '', detailedSummary: '' },
   showAppIcons: false,
-  onboarded: false
+  onboarded: false,
+  notified: { firstCards: false, weeklyUnlock: false }
 }
 
 export const CAPTURE_INTERVALS = [1, 5, 10, 20, 30, 60] as const

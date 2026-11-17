@@ -3,6 +3,20 @@ import type { DayflowApi } from './api'
 
 const api: DayflowApi = {
   getDay: (day) => ipcRenderer.invoke('day:get', day),
+  getAccess: () => ipcRenderer.invoke('access:get'),
+  getStandup: (day) => ipcRenderer.invoke('daily:get', day),
+  generateStandup: (day) => ipcRenderer.invoke('daily:generate', day),
+  saveStandup: (day, draft) => ipcRenderer.invoke('daily:save', day, draft),
+  onNavigate: (cb) => {
+    const listener = (_e: unknown, tab: Parameters<typeof cb>[0]) => cb(tab)
+    ipcRenderer.on('navigate', listener)
+    return () => ipcRenderer.off('navigate', listener)
+  },
+  onDailyChanged: (cb) => {
+    const listener = () => cb()
+    ipcRenderer.on('daily:changed', listener)
+    return () => ipcRenderer.off('daily:changed', listener)
+  },
   getFrames: (span) => ipcRenderer.invoke('frames:get', span),
   completeOnboarding: () => ipcRenderer.invoke('onboarding:complete'),
   getWeek: (day) => ipcRenderer.invoke('week:get', day),

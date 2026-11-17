@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite'
 import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from '../../shared/categories'
 import type { GoalPlan } from '../../shared/day-summary'
+import type { StandupEntry } from '../../shared/types'
 import { dayKey, dayRange, formatClock } from '../../shared/day'
 import type { AppSites, CardEdit, Distraction, Rating, TimelineCard } from '../../shared/types'
 import type { Observation } from '../analysis/observations'
@@ -358,6 +359,58 @@ export class Store {
          ORDER BY captured_at`
       )
       .all(span.start, span.end) as unknown as Array<{ id: number; capturedAt: number; filePath: string }>
+  }
+
+  standup(day: string): StandupEntry | null {
+    const row = this.db.prepare('SELECT payload_json AS json FROM daily_standup_entries WHERE standup_day = ?').get(day) as
+      | { json: string }
+      | undefined
+    if (!row) return null
+    try {
+      return JSON.parse(row.json) as StandupEntry
+    } catch {
+      return null
+    }
+  }
+
+  saveStandup(day: string, entry: StandupEntry): void {
+    this.db
+      .prepare(
+        `INSERT INTO daily_standup_entries (standup_day, payload_json) VALUES (?, ?)
+         ON CONFLICT(standup_day) DO UPDATE SET payload_json = excluded.payload_json, updated_at = CURRENT_TIMESTAMP`
+      )
+      .run(day, JSON.stringify(entry))
+  }
+
+  /** Days already summarized by the standups of other days. */
+  usedSourceDays(exceptDay: string): Set<string> {
+    const rows = this.db.prepare('SELECT payload_json AS json FROM daily_standup_entries WHERE standup_day != ?').all(exceptDay) as Array<{
+      json: string
+    }>
+    const days = new Set<string>()
+    for (const r of rows) {
+      try {
+        const day = (JSON.parse(r.json) as StandupEntry).sourceDay
+        if (day) days.add(day)
+      } catch {
+        // skip unreadable rows
+      }
+    }
+    return days
+  }
+
+  /** Batches that produced cards; each stands for 15 minutes (feature unlocks). */
+  analyzedBatchCount(): number {
+    return (this.db.prepare("SELECT COUNT(*) AS n FROM analysis_batches WHERE status IN ('completed', 'analyzed')").get() as { n: number }).n
+  }
+
+  /** Minutes covered by the cards that start on a day (upstream's minimum-activity measure). */
+  cardMinutesOn(day: string): number {
+    const { start, end } = dayRange(day)
+    const row = this.db
+      .prepare('SELECT COALESCE(SUM(end_ts - start_ts), 0) AS sec FROM timeline_cards WHERE start_ts >= ? AND start_ts < ? AND is_deleted = 0')
+      .get(start, end) as { sec: number }
+    return Math.floor(row.sec / 60)
   }
 
   storedFrames(): StoredFrame[] {
