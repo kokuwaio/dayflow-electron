@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Dayflow
+Comment=A timeline of your day from periodic screenshots
+Exec=dayflow-electron
+Icon=io.github.monotek.DayflowElectron
+Categories=Utility;
+StartupWMClass=dayflow-electron
