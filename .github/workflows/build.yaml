@@ -2,7 +2,9 @@ name: Build
 
 # Tests and builds everything for x86_64 and aarch64; CI and releases call
 # this workflow. The Flatpak job packs the app and helper built by the other
-# two jobs, like `npm run flatpak` does locally.
+# two jobs, like `npm run flatpak` does locally. The installers job tests on
+# Windows and macOS and builds their installers (one job per OS: macOS
+# minutes cost ten times as much in private repositories).
 
 permissions: read-all
 
@@ -171,3 +173,65 @@ jobs:
           bundle: dayflow-electron.flatpak
           arch: ${{ matrix.arch }}
           artifact-name: dayflow-electron-flatpak-${{ matrix.arch }}
+
+  installers:
+    name: Installers (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows
+            runner: windows-latest
+            # One NSIS installer per architecture: x64 and arm64.
+            package: npx electron-builder --win nsis --x64 --publish never -c.extraMetadata.version="$VERSION" && npx electron-builder --win nsis --arm64 --publish never -c.extraMetadata.version="$VERSION"
+            files: dist/*.exe
+          - os: macos
+            runner: macos-latest
+            # One dmg per architecture: arm64 and x64.
+            package: npx electron-builder --mac dmg --arm64 --x64 --publish never -c.extraMetadata.version="$VERSION"
+            files: dist/*.dmg
+    runs-on: ${{ matrix.runner }}
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      # electron-builder skips all macOS signing in pull requests; the
+      # ad-hoc signature that Apple silicon needs uses no secret.
+      CSC_FOR_PULL_REQUEST: "true"
+    defaults:
+      run:
+        # Git Bash on Windows, so the same commands and scripts/version.sh work everywhere.
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Version
+        run: echo "VERSION=$(scripts/version.sh)" >> "$GITHUB_ENV"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Package
+        # Unsigned; signing certificates plug in through the environment (docs/release.md).
+        run: |
+          npx electron-vite build
+          ${{ matrix.package }}
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v7
+        with:
+          name: installers-${{ matrix.os }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+          retention-days: 7

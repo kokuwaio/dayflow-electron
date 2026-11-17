@@ -5,7 +5,7 @@ HELPER = helper/linux
 # 1.2.3 on a release tag, else 0.0.0-<branch>.<sha>; override with make VERSION=...
 VERSION ?= $(shell scripts/version.sh)
 
-.PHONY: help install dev check typecheck test test-helper lint build helper pack flatpak version clean
+.PHONY: help install dev check typecheck test test-helper lint build helper pack flatpak dist-win dist-mac version clean
 
 help:
 	@echo "make install      install npm dependencies (npm ci)"
@@ -20,6 +20,8 @@ help:
 	@echo "make pack         package the app into dist/linux-unpacked"
 	@echo "make flatpak      pack, build the helper and install the Flatpak for this user"
 	@echo "make version      print the version builds get (VERSION=... overrides it)"
+	@echo "make dist-win     Windows NSIS installers (x64, arm64) in dist/; run on Windows"
+	@echo "make dist-mac     macOS dmg images (arm64, x64) in dist/; run on macOS"
 	@echo "make clean        remove build output"
 
 install:
@@ -57,6 +59,15 @@ flatpak: pack helper
 
 version:
 	@echo $(VERSION)
+
+dist-win:
+	npx electron-vite build
+	npx electron-builder --win nsis --x64 --publish never -c.extraMetadata.version=$(VERSION)
+	npx electron-builder --win nsis --arm64 --publish never -c.extraMetadata.version=$(VERSION)
+
+dist-mac:
+	npx electron-vite build
+	npx electron-builder --mac dmg --arm64 --x64 --publish never -c.extraMetadata.version=$(VERSION)
 
 clean:
 	rm -rf out dist flatpak/build flatpak/.flatpak-builder flatpak/repo $(HELPER)/bin

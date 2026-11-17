@@ -16,6 +16,8 @@
     "helper": "make helper",
     "test:helper": "make -C helper/linux test",
     "pack": "make pack",
+    "dist:win": "electron-vite build && electron-builder --win nsis --x64 --publish never && electron-builder --win nsis --arm64 --publish never",
+    "dist:mac": "electron-vite build && electron-builder --mac dmg --arm64 --x64 --publish never",
     "flatpak": "make flatpak"
   },
   "devDependencies": {

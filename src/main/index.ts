@@ -4,7 +4,7 @@ import { unlink } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { writeFile } from 'node:fs/promises'
-import { BrowserWindow, Menu, Tray, app, clipboard, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { BrowserWindow, Menu, Tray, app, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, powerMonitor, screen, shell, systemPreferences } from 'electron'
 import { dayKey, dayRange, shiftDay, todayKey } from '../shared/day'
 import { needsApiKey } from '../shared/providers'
 import { PAUSE_PRESETS, describeRecorder } from '../shared/status'
@@ -43,8 +43,12 @@ import { SettingsStore } from './settings'
 const here = dirname(fileURLToPath(import.meta.url))
 /** A deep link among the arguments (dayflow-electron://stop-recording), from the desktop or a second launch. */
 const linkIn = (argv: string[]) => argv.find((a) => a.startsWith(`${DEEP_LINK_SCHEME}:`))
-// A launch for a deep link does its job without showing the window.
-const startHidden = process.argv.includes('--hidden') || !!linkIn(process.argv)
+// A launch for a deep link does its job without showing the window. macOS
+// login items get no arguments, so there the login launch is asked for.
+const startHidden =
+  process.argv.includes('--hidden') ||
+  !!linkIn(process.argv) ||
+  (process.platform === 'darwin' && app.getLoginItemSettings().wasOpenedAtLogin)
 /** Set once the recorder exists; links that arrive earlier wait in pendingLink. */
 let openLink: ((link: string) => void) | null = null
 let pendingLink = linkIn(process.argv) ?? null
@@ -58,6 +62,12 @@ if (!app.requestSingleInstanceLock()) {
   app.on('second-instance', (_event, argv) => {
     const link = linkIn(argv)
     if (!link) return showWindow()
+    if (openLink) openLink(link)
+    else pendingLink = link
+  })
+  // macOS delivers deep links as an event, also to a running app.
+  app.on('open-url', (event, link) => {
+    event.preventDefault()
     if (openLink) openLink(link)
     else pendingLink = link
   })
@@ -75,6 +85,8 @@ let quitting = false
 const log = (message: string) => console.log(`[dayflow] ${message}`)
 
 async function main(): Promise<void> {
+  // Windows shows notifications only for an app ID that matches the installer's shortcut.
+  if (process.platform === 'win32') app.setAppUserModelId('io.github.kokuwaio.DayflowElectron')
   const dataDir = app.getPath('userData')
   const recordingsDir = join(dataDir, 'recordings')
   mkdirSync(recordingsDir, { recursive: true })
@@ -99,7 +111,8 @@ async function main(): Promise<void> {
     appPath: app.getAppPath(),
     resourcesPath: process.resourcesPath,
     tokenFile: join(dataDir, 'screencast-restore-token'),
-    launchCommand: app.isPackaged ? [process.execPath] : [process.execPath, app.getAppPath()]
+    launchCommand: app.isPackaged ? [process.execPath] : [process.execPath, app.getAppPath()],
+    electron: { app, desktopCapturer, screen, powerMonitor, systemPreferences }
   })
 
   const captureOptions = (s: Settings) => ({ dir: recordingsDir, intervalSec: s.captureIntervalSec, height: s.captureHeight })
@@ -572,6 +585,8 @@ async function main(): Promise<void> {
   })
   // Closing the window keeps recording; quit from the tray.
   app.on('window-all-closed', () => {})
+  // macOS: clicking the Dock icon brings the window back.
+  app.on('activate', () => showWindow())
 
   if (!startHidden) showWindow()
 }

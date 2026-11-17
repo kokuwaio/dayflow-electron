@@ -3,10 +3,15 @@
 dayflow-electron takes a screenshot of the screen under your mouse every few
 seconds, sends 15-minute batches to an AI model you choose, and turns them
 into a timeline of what you did. This page covers setup and daily use on
-Linux. See [platform-notes.md](platform-notes.md) for what was tested on which
-desktop.
+Linux, Windows and macOS. See [platform-notes.md](platform-notes.md) for what
+was tested on which Linux desktop.
 
 ## Install
+
+The app starts with a window and a tray icon. Closing the window keeps it
+recording; quit from the tray.
+
+### Linux
 
 The app ships as a Flatpak. Until it is published, build and install it from
 the repository (see the [README](../README.md#flatpak)):
@@ -17,16 +22,45 @@ npm run flatpak
 flatpak run io.github.kokuwaio.DayflowElectron
 ```
 
-The app starts with a window and a tray icon. Closing the window keeps it
-recording; quit from the tray.
+### Windows
 
-## First start: share your screens
+Download `dayflow-electron-<version>-win-x64.exe` (or `-win-arm64.exe` for
+ARM devices) from the release and run it. It installs for your user only, no
+administrator rights needed.
 
-On the first start your desktop asks which screens the app may record. Pick
-**all screens** and allow **restoring the permission**, so the question does
-not come back. The app keeps only the screen under the mouse and pauses while
-the screen is locked or the computer sleeps. While it records, KDE shows its
-"screen is being shared" icon in the tray.
+The installer is not signed yet, so Windows SmartScreen warns about an
+unknown publisher: click **More info**, then **Run anyway**.
+
+### macOS
+
+Download `dayflow-electron-<version>-mac-arm64.dmg` (Apple silicon) or
+`-mac-x64.dmg` (Intel), open it and drag the app into **Applications**.
+
+The app is not signed with an Apple Developer ID or notarized yet, so macOS
+refuses the first start. Open it once, then go to **System Settings → Privacy
+& Security** and click **Open Anyway** next to the dayflow-electron message.
+Alternatively, in a terminal:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/dayflow-electron.app
+```
+
+## First start: allow screen recording
+
+- **Linux:** your desktop asks which screens the app may record. Pick **all
+  screens** and allow **restoring the permission**, so the question does not
+  come back. While it records, KDE shows its "screen is being shared" icon in
+  the tray.
+- **Windows:** nothing to allow.
+- **macOS:** macOS asks for the **Screen Recording** permission. Allow
+  dayflow-electron in **System Settings → Privacy & Security → Screen
+  Recording**, then quit the app from the tray and open it again. Until then
+  Settings shows "Screen Recording permission is missing" and the app
+  retries every few minutes. Because the app is not signed with a Developer
+  ID yet, macOS may ask again after each update.
+
+The app keeps only the screen under the mouse and pauses while the screen is
+locked or the computer sleeps.
 
 ## Choose an AI model
 
@@ -308,13 +342,29 @@ yet, 6 the app is not running (for edits). `timeline delete` and
 While one of the apps under **Settings → Privacy → Blocked apps** is the focused window,
 nothing is saved and the time shows as "Private" in the timeline. The list
 starts with KeePassXC, KeePass, 1Password, Bitwarden and the Passbolt web app.
-Add more, one rule per line: an app ID such as `org.keepassxc.KeePassXC`, or
-`title:` followed by text from the window title (for example
-`title:Online Banking`).
+Add more, one rule per line: an app ID, or `title:` followed by text from
+the window title (for example `title:Online Banking`). The app ID depends on
+the system:
 
-This needs to know the focused window, which on KDE Plasma comes from KWin.
-The Flatpak does not have that permission by default. Grant it once, then
-restart the app:
+| System | App ID | Example |
+| --- | --- | --- |
+| Linux (KDE) | Window class or Flatpak ID | `org.keepassxc.KeePassXC` |
+| Windows | Process name without `.exe` (Task Manager → Details) | `KeePassXC`, `1Password` |
+| macOS | Bundle ID (`osascript -e 'id of app "1Password"'`) | `com.1password.1password` |
+
+Rules ignore upper and lower case.
+
+This needs to know the focused window:
+
+- **Windows:** a hidden PowerShell process asks Windows for the focused
+  window twice a second. Nothing to set up.
+- **macOS:** a hidden `osascript` process asks macOS for the frontmost app
+  and its window title once a second. Window titles need the Screen
+  Recording permission from the first start; without it, window detection
+  stays off.
+- **Linux (KDE Plasma):** the focused window comes from KWin. The Flatpak
+  does not have that permission by default. Grant it once, then restart the
+  app:
 
 ```sh
 flatpak override --user --talk-name=org.kde.KWin io.github.kokuwaio.DayflowElectron
@@ -326,7 +376,9 @@ Settings then shows "Window detection works". Limits:
   background on the recorded screen is still captured.
 - Popups of browser extensions do not change the window title and cannot be
   detected.
-- Window detection works on KDE Plasma only so far.
+- On Linux, window detection works on KDE Plasma only so far.
+- On Windows, a store app (UWP) shows up as `ApplicationFrameHost`; use a
+  `title:` rule for those.
 
 For the strongest guarantee, pause recording from the tray before opening a
 vault.
@@ -375,7 +427,9 @@ is retried later.
   minutes, or until you resume.
 - Recording also pauses while the screen is locked or the computer sleeps.
 - Screenshots, the database and settings live in
-  `~/.var/app/io.github.kokuwaio.DayflowElectron/config/dayflow-electron/`.
+  `~/.var/app/io.github.kokuwaio.DayflowElectron/config/dayflow-electron/`
+  (Flatpak), `%APPDATA%\dayflow-electron\` (Windows) or
+  `~/Library/Application Support/dayflow-electron/` (macOS).
   **Open recordings folder** in the tray shows the screenshots.
 - **Settings → Storage** caps the space used by screenshots (default 10 GB);
   the oldest are deleted first.
@@ -384,7 +438,11 @@ is retried later.
   backup on start and keeps the damaged file as `dayflow.sqlite.corrupt-…`.
 - **Deep links** start and stop recording from scripts or launchers:
   `xdg-open dayflow-electron://stop-recording` pauses until you resume,
-  `xdg-open dayflow-electron://start-recording` resumes.
+  `xdg-open dayflow-electron://start-recording` resumes. On macOS use `open`
+  instead of `xdg-open`, on Windows `start ""`.
+- **Launch at login** (Settings) uses the desktop's autostart on Linux, the
+  Startup apps list on Windows and Login Items on macOS. The app then starts
+  in the tray without a window.
 - No telemetry. Nothing leaves your computer except the screenshots and text
   sent to the AI provider you chose.
 
@@ -399,4 +457,6 @@ is retried later.
 | The share dialog comes back on every start | Allow restoring the permission in the dialog. |
 | "Window detection needs KWin access" | Run the `flatpak override` command above, then restart the app. |
 | `dayflow` edits fail with "Dayflow isn't running" | Start the app and check that **Settings → MCP / CLI → Allow edits** is on. |
+| macOS: "Screen Recording permission is missing" | Allow dayflow-electron in System Settings → Privacy & Security → Screen Recording, then quit and reopen the app. After an update, remove it from the list with **−** and allow it again. |
+| Windows: "Window detection is off" | The PowerShell window watcher could not start; the message shows why. Company policies that block PowerShell also block it. |
 | Capture failed, retrying | The screen-sharing session ended (for example after a monitor change); the app retries after 1, 2, 5 and then every 10 minutes. |
