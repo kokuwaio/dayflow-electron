@@ -212,8 +212,72 @@ yet). Change the model in Settings. If the tool reports that you are logged
 out or hit your usage limit, the batch shows "Processing failed" with that
 message; the fallback provider, if set, takes over.
 
-Agent access in the other direction, so that Claude Code or another agent can
-read your timeline through a CLI or an MCP server, is planned for M4.
+For the other direction, where Claude Code or Codex reads your timeline, see
+the next section.
+
+## Use your timeline from Claude Code, Codex and the terminal
+
+The app ships upstream Dayflow's `dayflow` command-line tool and MCP server.
+Both read the database directly and work while the app is closed. AI tools get
+the timeline only when you ask them something in your own conversations.
+
+### Connect Claude Code or Codex
+
+Open **Settings → MCP / CLI** and click **Connect** next to Claude Code or
+Codex. The app runs `claude mcp add --scope user dayflow ...` or
+`codex mcp add dayflow ...` on your computer, so the "dayflow" server is
+available in every project. Restart the tool afterwards.
+
+The Flatpak can only run these commands with the opt-in permission from
+[Claude Code or Codex on your subscription](#claude-code-or-codex-on-your-subscription).
+Without it, the row shows the command; paste it into a terminal:
+
+```sh
+claude mcp add --scope user dayflow -- flatpak run --command=dayflow-cli io.github.kokuwaio.DayflowElectron mcp
+```
+
+**Other apps** shows a JSON snippet for any other MCP client (Claude Desktop,
+Cursor, VS Code).
+
+The MCP server offers upstream's tools: `get_time_breakdown`, `get_timeline`,
+`get_activity_detail`, `search_activities`, `get_daily`, `get_weekly`,
+`list_categories` and `get_status`. Ask for example "Where did my time go
+this week?" or "Write my standup from yesterday's timeline".
+
+### Allow edits
+
+With **Allow edits** off (the default), AI tools can only read. Turn it on and
+they also get `create_category`, `update_category`, `delete_category`,
+`update_activity`, `delete_activity` and `set_day_goal`. Edits go through the
+running app, so it has to be open; it listens on `agent.sock` in the data
+folder only while the switch is on. Every edit is appended to
+`agent-writes.log` in the same folder. The tools tell the AI to confirm deletes
+with you first, but the app cannot enforce that; leave edits off if you do not
+want an agent to delete anything.
+
+### The terminal command
+
+**Settings → MCP / CLI → Terminal command** shows a command that adds a small
+`dayflow` script to `~/.local/bin`. Paste it into a terminal once. Without
+it, run `flatpak run --command=dayflow-cli io.github.kokuwaio.DayflowElectron`
+instead of `dayflow`.
+
+```sh
+dayflow today
+dayflow timeline 2026-11-17 --summary
+dayflow timeline --from 2026-11-10 --to 2026-11-16
+dayflow card 42
+dayflow weekly --json
+dayflow search "code review"
+dayflow categories rename Work "Deep work"
+dayflow goal set --focus-minutes 240 --focus-category Work
+```
+
+`dayflow help` lists every command. `--json` prints stable JSON with
+`schema_version: 1`; errors then go to stderr as JSON. Exit codes: 0 ok,
+1 unexpected error, 2 bad arguments, 3 not found, 4 edits are off, 5 no data
+yet, 6 the app is not running (for edits). `timeline delete` and
+`categories remove` ask first; in scripts, pass `--yes`.
 
 ## Keep password managers out
 
@@ -276,4 +340,5 @@ blocked apps. It reads the window title, so it also needs window detection.
 | "Processing failed" cards or very slow batches with a local model | Run `ollama ps` while a batch runs: `100% CPU` on a machine with an integrated GPU means `OLLAMA_IGPU_ENABLE=1` is missing. Check the context length setting above, try 720p. |
 | The share dialog comes back on every start | Allow restoring the permission in the dialog. |
 | "Window detection needs KWin access" | Run the `flatpak override` command above, then restart the app. |
+| `dayflow` edits fail with "Dayflow isn't running" | Start the app and check that **Settings → MCP / CLI → Allow edits** is on. |
 | Capture failed, retrying | The screen-sharing session ended (for example after a monitor change); the app retries after 1, 2, 5 and then every 10 minutes. |

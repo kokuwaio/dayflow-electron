@@ -54,6 +54,8 @@ const api: DayflowApi = {
   openRecordings: () => ipcRenderer.invoke('recordings:open'),
   runAnalysis: () => ipcRenderer.invoke('analysis:run'),
   checkCli: (cli) => ipcRenderer.invoke('cli:check', cli),
+  getAgentAccess: () => ipcRenderer.invoke('agent:info'),
+  agentClient: (cli, action) => ipcRenderer.invoke('agent:client', cli, action),
   onCardsChanged: (cb) => {
     const listener = () => cb()
     ipcRenderer.on('cards:changed', listener)
