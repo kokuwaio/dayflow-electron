@@ -8,5 +8,6 @@ coverage/
 core
 core.[0-9]*
 
-# Agent worktrees
-.claude/worktrees/
+# Local tool state: Claude Code settings and agent worktrees, flatpak-builder cache
+.claude/
+.flatpak-builder/
