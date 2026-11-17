@@ -31,7 +31,7 @@ export function Chart({ option, height = 280 }: { option: Option; height?: numbe
   useEffect(() => {
     if (!el.current) return
     // Dayflow keeps ECharts' own light and dark themes; Modern takes its colours from the CSS tokens.
-    const theme = uiStyle === 'modern' ? tokenTheme() : dark ? 'dark' : undefined
+    const theme = uiStyle === 'modern' ? tokenTheme(dark) : dark ? 'dark' : undefined
     chart.current = echarts.init(el.current, theme, { renderer: 'svg' })
     const resize = new ResizeObserver(() => chart.current?.resize())
     resize.observe(el.current)
@@ -52,7 +52,7 @@ export function cssToken(name: string): string {
 }
 
 /** ECharts colours for text, axes, grid lines and tooltips, from the --chart-* tokens. */
-function tokenTheme(): object {
+function tokenTheme(dark: boolean): object {
   const text = cssToken('--chart-text')
   const muted = cssToken('--chart-muted')
   const axis = { color: cssToken('--chart-axis') }
@@ -65,6 +65,8 @@ function tokenTheme(): object {
     splitArea: { areaStyle: { color: ['transparent', grid] } }
   }
   return {
+    // Picks the label halo and other contrast defaults for a dark or light background.
+    darkMode: dark,
     textStyle: { color: text },
     title: { textStyle: { color: text }, subtextStyle: { color: muted } },
     legend: { textStyle: { color: text } },
