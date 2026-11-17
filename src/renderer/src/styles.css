@@ -748,6 +748,11 @@
 :root[data-ui-style='modern'] .goal-review h2 { font-size: 24px; }
 :root[data-ui-style='modern'] .goal-setup h2 { font-size: 18px; }
 :root[data-ui-style='modern'] :is(.review-badge, .review-close-btn) { border-radius: 6px; }
+/* The first-run setup keeps upstream's look in both themes. */
+:root[data-ui-style='modern'] .onboarding {
+  --font-ui: 'Figtree Variable', 'Figtree', system-ui, sans-serif; --font-serif: 'Instrument Serif', Georgia, serif;
+  --radius-control: 7px; --radius-pill: 999px; font-family: var(--font-ui); font-variant-numeric: normal;
+}
 
 /* ================================================================ base */
 * { box-sizing: border-box; }
