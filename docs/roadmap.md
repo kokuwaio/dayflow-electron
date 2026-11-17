@@ -240,7 +240,7 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
 - [x] Database backups: a daily copy, the newest three kept, a damaged
   database restored from the newest copy on start, WAL checkpoints every 5
   minutes (upstream `StorageManager+Maintenance`).
-- [ ] Packages: Flatpak on Linux (own repository first, Flathub once the
+- [ ] Packages (Flatpak for x86_64 and aarch64 built in CI and attached to releases): Flatpak on Linux (own repository first, Flathub once the
   permissions are settled; updates come through Flatpak), NSIS and dmg with
   `electron-updater` from GitHub Releases; signing for Windows and macOS.
 - [ ] Own name, icon and artwork. Bundled fonts only with their OFL license files.

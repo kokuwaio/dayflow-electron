@@ -1,8 +1,8 @@
 name: Release
 
 # Publishing the release that Release Drafter prepared builds the app and
-# attaches the Flatpak bundle and the tarball that the Flathub manifest
-# (flatpak/flathub/) builds from.
+# attaches, for x86_64 and aarch64, the Flatpak bundle and the tarball that
+# the Flathub manifest (flatpak/flathub/) builds from.
 
 permissions: read-all
 
@@ -34,15 +34,18 @@ jobs:
         with:
           path: artifacts
 
-      - name: Create tarball
-        # Everything the Flathub manifest installs, at the top level.
+      - name: Create tarballs and bundles
+        # Per architecture: everything the Flathub manifest installs, at the top level, and the Flatpak bundle.
         run: |
-          mkdir -p "release/dayflow-electron"
-          tar -C release/dayflow-electron -xzf artifacts/app-linux-unpacked/app-linux-unpacked.tar.gz
-          install -m755 artifacts/helper/dayflow-linux-helper release/dayflow-electron/dayflow-linux-helper
-          cp resources/icon.png flatpak/io.github.kokuwaio.DayflowElectron.desktop flatpak/io.github.kokuwaio.DayflowElectron.metainfo.xml release/dayflow-electron/
-          tar -C release -czf "dayflow-electron-$TAG-linux-x86_64.tar.gz" dayflow-electron
-          cp "$(find artifacts -name 'dayflow-electron.flatpak' | head -n 1)" "dayflow-electron-$TAG-x86_64.flatpak"
+          for arch in x86_64 aarch64; do
+            dir="release/$arch/dayflow-electron"
+            mkdir -p "$dir"
+            tar -C "$dir" -xzf "artifacts/app-$arch/app-$arch.tar.gz"
+            install -m755 "artifacts/helper-$arch/dayflow-linux-helper" "$dir/dayflow-linux-helper"
+            cp resources/icon.png flatpak/io.github.kokuwaio.DayflowElectron.desktop flatpak/io.github.kokuwaio.DayflowElectron.metainfo.xml "$dir/"
+            tar -C "release/$arch" -czf "dayflow-electron-$TAG-linux-$arch.tar.gz" dayflow-electron
+            cp "artifacts/dayflow-electron-flatpak-$arch/dayflow-electron.flatpak" "dayflow-electron-$TAG-$arch.flatpak"
+          done
           sha256sum dayflow-electron-"$TAG"-* > SHA256SUMS
 
       - name: Upload to release

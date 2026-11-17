@@ -1,8 +1,8 @@
 name: Build
 
-# Tests and builds everything; CI and releases call this workflow. The Flatpak
-# job packs the app and helper built by the other two jobs, like
-# `npm run flatpak` does locally.
+# Tests and builds everything for x86_64 and aarch64; CI and releases call
+# this workflow. The Flatpak job packs the app and helper built by the other
+# two jobs, like `npm run flatpak` does locally.
 
 permissions: read-all
 
@@ -37,22 +37,40 @@ jobs:
         run: npm test
 
       - name: Package
+        # electron-builder fetches Electron for each architecture; both unpack as linux-unpacked.
         run: |
-          npm run pack
-          tar -C dist -czf app-linux-unpacked.tar.gz linux-unpacked
+          npx electron-vite build
+          npx electron-builder --linux dir --x64 --arm64
+          tar -C dist -czf app-x86_64.tar.gz linux-unpacked
+          mkdir -p dist/arm64 && mv dist/linux-arm64-unpacked dist/arm64/linux-unpacked
+          tar -C dist/arm64 -czf app-aarch64.tar.gz linux-unpacked
 
-      - name: Upload app
+      - name: Upload app (x86_64)
         uses: actions/upload-artifact@v7
         with:
-          name: app-linux-unpacked
-          path: app-linux-unpacked.tar.gz
+          name: app-x86_64
+          path: app-x86_64.tar.gz
+          retention-days: 7
+
+      - name: Upload app (aarch64)
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-aarch64
+          path: app-aarch64.tar.gz
           retention-days: 7
 
   go:
-    name: Go helper
-    # Not ubuntu-latest: the helper must not need a newer glibc than the
-    # Flatpak runtime (freedesktop 25.08) ships.
-    runs-on: ubuntu-24.04
+    name: Go helper (${{ matrix.arch }})
+    strategy:
+      matrix:
+        include:
+          # Not ubuntu-latest: the helper must not need a newer glibc than the
+          # Flatpak runtime (freedesktop 25.08) ships.
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     defaults:
       run:
         working-directory: helper/linux
@@ -75,6 +93,7 @@ jobs:
 
       - name: Lint
         # Same check as `make lint`: go vet, formatting and more (helper/linux/.golangci.yml).
+        if: matrix.arch == 'x86_64'
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.15.0
@@ -89,16 +108,23 @@ jobs:
       - name: Upload helper
         uses: actions/upload-artifact@v7
         with:
-          name: helper
+          name: helper-${{ matrix.arch }}
           path: helper/linux/bin/dayflow-linux-helper
           retention-days: 7
 
   flatpak:
-    name: Flatpak
+    name: Flatpak (${{ matrix.arch }})
     needs:
       - typescript
       - go
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
       options: --privileged
@@ -109,20 +135,21 @@ jobs:
       - name: Download app
         uses: actions/download-artifact@v8
         with:
-          name: app-linux-unpacked
+          name: app-${{ matrix.arch }}
 
       - name: Download helper
         uses: actions/download-artifact@v8
         with:
-          name: helper
+          name: helper-${{ matrix.arch }}
           path: helper/linux/bin
 
       - name: Unpack app
-        run: mkdir -p dist && tar -C dist -xzf app-linux-unpacked.tar.gz
+        run: mkdir -p dist && tar -C dist -xzf "app-${{ matrix.arch }}.tar.gz"
 
       - name: Build Flatpak
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           manifest-path: flatpak/io.github.kokuwaio.DayflowElectron.yml
           bundle: dayflow-electron.flatpak
-          artifact-name: dayflow-electron-flatpak
+          arch: ${{ matrix.arch }}
+          artifact-name: dayflow-electron-flatpak-${{ matrix.arch }}

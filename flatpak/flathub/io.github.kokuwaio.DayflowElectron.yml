@@ -50,6 +50,16 @@ modules:
           version-query: .tag_name | sub("^v"; "")
           url-query: '"https://github.com/kokuwaio/dayflow-electron/releases/download/v" + $version + "/dayflow-electron-v" + $version + "-linux-x86_64.tar.gz"'
           is-main-source: true
+      - type: archive
+        only-arches:
+          - aarch64
+        url: https://github.com/kokuwaio/dayflow-electron/releases/download/v0.1.0/dayflow-electron-v0.1.0-linux-aarch64.tar.gz
+        sha256: 0000000000000000000000000000000000000000000000000000000000000000
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/kokuwaio/dayflow-electron/releases/latest
+          version-query: .tag_name | sub("^v"; "")
+          url-query: '"https://github.com/kokuwaio/dayflow-electron/releases/download/v" + $version + "/dayflow-electron-v" + $version + "-linux-aarch64.tar.gz"'
       - type: script
         dest-filename: dayflow-electron.sh
         commands:
