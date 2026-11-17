@@ -11,3 +11,6 @@ core.[0-9]*
 # Local tool state: Claude Code settings and agent worktrees, flatpak-builder cache
 .claude/
 .flatpak-builder/
+
+# Data of `make dev-clean`
+.dev-clean-data/

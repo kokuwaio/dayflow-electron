@@ -6,11 +6,12 @@ HELPER = helper/linux
 # 1.2.3 on a release tag, else 0.0.0-<branch>.<sha>; override with make VERSION=...
 VERSION ?= $(shell scripts/version.sh)
 
-.PHONY: help install dev check typecheck test test-helper lint build helper pack flatpak dist-win dist-mac version clean
+.PHONY: help install dev dev-clean check typecheck test test-helper lint build helper pack flatpak dist-win dist-mac version clean
 
 help:
 	@echo "make install      install npm dependencies (npm ci)"
 	@echo "make dev          start the app with hot reload"
+	@echo "make dev-clean    like dev, with empty data, so the first-run setup shows again"
 	@echo "make check        typecheck, test and lint everything (run before a PR)"
 	@echo "make typecheck    TypeScript typecheck of main and renderer"
 	@echo "make test         Vitest"
@@ -30,6 +31,13 @@ install:
 
 dev:
 	npm run dev
+
+# The first-run setup again: an empty data folder in .dev-clean-data, emptied
+# at each start (kept after quitting, to look at). The usual dev data stays
+# untouched; API keys live in the system keyring and stay too.
+dev-clean:
+	rm -rf .dev-clean-data
+	DAYFLOW_DATA_DIR="$(CURDIR)/.dev-clean-data" npm run dev
 
 check: typecheck test lint test-helper
 

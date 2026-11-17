@@ -40,6 +40,7 @@ machines and not signed.
 make install        # npm ci
 make helper         # builds helper/linux/bin/dayflow-linux-helper in the Flatpak SDK
 make dev            # starts Electron with hot reload
+make dev-clean      # the same with empty data, to go through the first-run setup again
 ```
 
 Set `DAYFLOW_DATA_DIR` to keep development data apart from a real install.
