@@ -186,11 +186,10 @@ export async function cardFromObservations(
     }
   )
 
-  const first = observations[0]!
-  const last = observations[observations.length - 1]!
+  // Segments can overlap or nest: the card spans all of them.
   const card: NewCard = {
-    start: first.start,
-    end: last.end,
+    start: Math.min(...observations.map((o) => o.start)),
+    end: Math.max(...observations.map((o) => o.end)),
     title,
     summary: summary.summary,
     category: summary.category,

@@ -8,6 +8,7 @@ import {
   type Provider,
   type ProviderOptions,
   ProviderError,
+  isRetryableStatus,
   postJson,
   postSse,
   toBase64
@@ -103,6 +104,13 @@ export function openaiProvider(model: string, apiKey: string | undefined, baseUr
           tools: tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } }))
         },
         (chunk) => {
+          // OpenRouter and others report failures mid-stream, after HTTP 200.
+          const failed = chunk?.error ?? (chunk?.choices?.[0]?.finish_reason === 'error' ? { message: 'the model stopped with an error' } : null)
+          if (failed) {
+            const status = Number(failed.code) || undefined
+            const message = typeof failed.message === 'string' ? failed.message : JSON.stringify(failed)
+            throw new ProviderError(`${label}${status ? ` ${status}` : ''}: ${message}`, status === undefined || isRetryableStatus(status), status)
+          }
           if (typeof chunk?.model === 'string') served = chunk.model
           const delta = chunk?.choices?.[0]?.delta
           if (typeof delta?.content === 'string' && delta.content) {

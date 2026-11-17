@@ -92,4 +92,10 @@ describe('chat turns with tools', () => {
       { role: 'tool', tool_call_id: 'call_1', content: '{"summary":"Fetched 1 timeline card."}' }
     ])
   })
+
+  it('OpenAI-compatible: an error event after HTTP 200 fails the turn instead of passing as an answer', async () => {
+    const { fetch } = fakeFetch({ sse: [{ choices: [{ index: 0, delta: { content: 'Partial' } }] }, { error: { code: 502, message: 'Provider returned error' }, choices: [{ index: 0, delta: {}, finish_reason: 'error' }] }] })
+    const provider = openaiProvider('m', 'key', 'https://openrouter.ai/api/v1', { fetch })
+    await expect(provider.chatTurn!({ system: 'S', messages: [{ role: 'user', text: 'Q' }], tools })).rejects.toThrow(/502.*Provider returned error/)
+  })
 })

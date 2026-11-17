@@ -16,5 +16,7 @@ describe('deep links (upstream AppDeepLinkRouter)', () => {
     expect(deepLinkAction(`${DEEP_LINK_SCHEME}://referral?code=1`)).toBeNull()
     expect(deepLinkAction(`${DEEP_LINK_SCHEME}://delete-everything`)).toBeNull()
     expect(deepLinkAction('not a url')).toBeNull()
+    expect(deepLinkAction(`${DEEP_LINK_SCHEME}://constructor`)).toBeNull()
+    expect(deepLinkAction(`${DEEP_LINK_SCHEME}://?action=__proto__`)).toBeNull()
   })
 })

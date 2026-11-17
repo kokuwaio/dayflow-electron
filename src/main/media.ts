@@ -3,7 +3,6 @@
 //   dayflow-media://frame/<screenshot id>  a frame from the recordings folder
 //   dayflow-media://icon/<site>            a site's icon, cached on disk
 
-import { lookup } from 'node:dns/promises'
 import { mkdirSync } from 'node:fs'
 import { readFile, stat, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
@@ -11,7 +10,7 @@ import { pathToFileURL } from 'node:url'
 import { net, protocol } from 'electron'
 import { MEDIA_SCHEME } from '../shared/media'
 import { iconHost } from '../shared/favicon'
-import { isPrivateAddress } from './private-address'
+import { fetchPublicImage } from './pinned-lookup'
 
 /** Must run before the app is ready. */
 export function registerMediaScheme(): void {
@@ -22,36 +21,6 @@ const MAX_ICON_BYTES = 256 * 1024
 /** A site without a usable icon is asked again after this long. */
 const RETRY_FAILED_MS = 7 * 24 * 3600_000
 const notFound = () => new Response(null, { status: 404 })
-
-/** True when the host only resolves to this computer or the local network. */
-async function resolvesPrivately(host: string): Promise<boolean> {
-  try {
-    const addresses = await lookup(host, { all: true })
-    return addresses.length === 0 || addresses.some((a) => isPrivateAddress(a.address))
-  } catch {
-    return true
-  }
-}
-
-/** Reads at most `max` bytes of a response body; null when it is larger. */
-async function readCapped(res: Response, max: number): Promise<Buffer | null> {
-  if (Number(res.headers.get('content-length') ?? 0) > max) return null
-  const reader = res.body?.getReader()
-  if (!reader) return null
-  const chunks: Uint8Array[] = []
-  let size = 0
-  for (;;) {
-    const { done, value } = await reader.read()
-    if (done) break
-    size += value.byteLength
-    if (size > max) {
-      await reader.cancel()
-      return null
-    }
-    chunks.push(value)
-  }
-  return Buffer.concat(chunks)
-}
 
 export function handleMedia(opts: {
   recordingsDir: string
@@ -72,12 +41,10 @@ export function handleMedia(opts: {
       // never failed
     }
     try {
-      if (await resolvesPrivately(host)) throw new Error('local address')
-      const res = await net.fetch(`https://${host}/favicon.ico`, { redirect: 'manual', signal: AbortSignal.timeout(5_000) })
-      const type = res.headers.get('content-type')?.split(';')[0]?.trim() ?? ''
-      if (res.status !== 200 || !type.startsWith('image/')) throw new Error('no icon')
-      const body = await readCapped(res, MAX_ICON_BYTES)
-      if (!body || body.length === 0) throw new Error('no icon')
+      // The checked DNS answer is the address that gets connected to (pinned-lookup.ts).
+      const icon = await fetchPublicImage(host, '/favicon.ico', MAX_ICON_BYTES)
+      if (!icon) throw new Error('no icon')
+      const { body, type } = icon
       await writeFile(join(opts.iconDir, `${host}.img`), body)
       await writeFile(join(opts.iconDir, `${host}.type`), type)
       return { body, type }

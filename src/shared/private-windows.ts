@@ -68,6 +68,7 @@ function matchesTitle(title: string, tokens: string[]): boolean {
 
 /** True for a private window of a browser upstream knows; other apps and unknown browsers are never matched. */
 export function isPrivateBrowserWindow(window: ActiveWindow): boolean {
-  const family = FAMILIES[window.app.trim().toLowerCase()]
-  return family ? matchesTitle(window.title, TOKENS[family]) : false
+  const app = window.app.trim().toLowerCase()
+  // Own keys only, so an app ID like "constructor" is just an unknown app.
+  return Object.hasOwn(FAMILIES, app) ? matchesTitle(window.title, TOKENS[FAMILIES[app]!]) : false
 }

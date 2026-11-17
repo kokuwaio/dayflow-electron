@@ -23,8 +23,9 @@ export function deepLinkAction(link: string): 'start' | 'stop' | null {
   if (url.protocol !== `${DEEP_LINK_SCHEME}:`) return null
   const candidates = [url.hostname, url.pathname.split('/').find(Boolean) ?? '', url.searchParams.get('action') ?? '']
   for (const candidate of candidates) {
-    const action = ACTIONS[candidate.toLowerCase()]
-    if (action) return action
+    // Own keys only: "constructor" and friends are not actions.
+    const key = candidate.toLowerCase()
+    if (Object.hasOwn(ACTIONS, key)) return ACTIONS[key]!
   }
   return null
 }
