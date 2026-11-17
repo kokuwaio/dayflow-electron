@@ -229,9 +229,11 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   `mcp add` command (or show it to copy without host access), a config
   snippet for other clients, the edits switch, and a `~/.local/bin` install
   command for the terminal.
-- [ ] One-click setup for Claude Desktop, Cursor and VS Code (upstream writes
-  their configs or opens install links; the snippet covers them for now), and
-  repairing stale registrations at launch (only matters outside the Flatpak).
+- [x] One-click setup for Claude Desktop (config merge, through the host in
+  the Flatpak), Cursor and VS Code (install links), and repairing stale
+  registrations at launch (outside the Flatpak; not in development builds).
+  The CLI's `ELECTRON_RUN_AS_NODE` travels in the entry's `env`, so the
+  registrations work on Windows too.
 
 ### M5 Privacy, polish and release
 
@@ -284,11 +286,15 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   permissions are settled; updates come through Flatpak), NSIS and dmg with
   `electron-updater` from GitHub Releases; signing for Windows and macOS.
   Done: Flatpak for x86_64 and aarch64, NSIS installers (x64, arm64) and dmg
-  images (arm64, x64), all built in CI and attached to releases. Open:
-  Windows and macOS signing and notarization (certificates needed, see
-  [release.md](release.md#signing-windows-and-macos)), Homebrew and Flathub
-  (prepared in a separate pull request), `electron-updater`, a macOS icon
-  (needs 512 px artwork).
+  images (arm64, x64), all built in CI and attached to releases;
+  `electron-updater` (check at start and every 6 hours, background download,
+  "Install updates automatically" in Settings → Other, restart from the tray
+  or a notification; unsigned macOS only notifies). Open: Windows and macOS
+  signing and notarization (certificates needed, see
+  [release.md](release.md#signing-windows-and-macos); macOS installs updates
+  only once signed), a public repository (the updater downloads without a
+  token), Homebrew and Flathub (prepared in a separate pull request), a macOS
+  icon (needs 512 px artwork).
 - [ ] Windows and macOS on real machines: capture, window detection, lock,
   idle, autostart and deep links are implemented and unit tested, not yet
   tried by hand.

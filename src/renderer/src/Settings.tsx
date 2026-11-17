@@ -3,6 +3,7 @@ import { ArrowRight, Download, FolderOpen, RotateCw } from 'lucide-react'
 import { CATEGORY_PRESETS, type Category, presetCategories } from '@shared/categories'
 import { todayKey } from '@shared/day'
 import { cliOf, needsApiKey } from '@shared/providers'
+import type { UpdateMode } from '@shared/updates'
 import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings, type Theme } from '@shared/types'
 import { AgentAccessSettings } from './AgentAccessSettings'
 import { Row, Section, StatusDot } from './SettingsLayout'
@@ -451,9 +452,36 @@ function OtherTab({ settings, save }: { settings: Settings; save: Save }) {
             aria-label="Show daily goal popups"
           />
         </Row>
+        <UpdatesRow settings={settings} save={save} />
       </Section>
       <CategoryEditor categories={settings.categories} save={save} />
     </>
+  )
+}
+
+/** Windows and macOS packages update from GitHub Releases; the Flatpak and development builds show nothing. */
+function UpdatesRow({ settings, save }: { settings: Settings; save: Save }) {
+  const [support, setSupport] = useState<UpdateMode | null>(null)
+  useEffect(() => void window.dayflow.getUpdateSupport().then(setSupport), [])
+  if (!support || support.mode === 'off') return null
+  return (
+    <Row
+      label="Install updates automatically"
+      sub={
+        support.mode === 'notify'
+          ? "This copy isn't signed with a Developer ID, so macOS won't let it install updates. Dayflow tells you when a new version is out."
+          : 'Downloads new versions from GitHub in the background and installs them when Dayflow restarts. Off: Dayflow only tells you about them.'
+      }
+    >
+      <input
+        type="checkbox"
+        className="switch"
+        checked={support.mode === 'install' && settings.autoInstallUpdates}
+        disabled={support.mode !== 'install'}
+        onChange={(e) => save({ autoInstallUpdates: e.target.checked })}
+        aria-label="Install updates automatically"
+      />
+    </Row>
   )
 }
 

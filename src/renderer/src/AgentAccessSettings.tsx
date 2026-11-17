@@ -1,15 +1,22 @@
 // Settings → "MCP / CLI", after upstream Dayflow
 // (Views/UI/Settings/SettingsAgentAccessTabView.swift): connect AI tools to
 // the bundled `dayflow` CLI, the edits switch, and the terminal command.
+// Claude Code and Codex are connected with their own CLI, Claude Desktop by
+// its config file, Cursor and VS Code through their install links.
 
 import { useEffect, useState } from 'react'
 import { AGENT_CLIENT_NAMES } from '@shared/agent-clients'
-import type { AgentAccessInfo, AgentClientState, CliName, Settings } from '@shared/types'
+import type { AgentAccessInfo, AgentClient, AgentClientState, Settings } from '@shared/types'
 import { CommandBlock, Row, Section, StatusDot } from './SettingsLayout'
 
-const CLIENTS: Array<{ cli: CliName; name: string; restart: string }> = [
-  { cli: 'codex', name: AGENT_CLIENT_NAMES.codex, restart: 'Restart Codex to pick up the connection.' },
-  { cli: 'claude', name: AGENT_CLIENT_NAMES.claude, restart: 'Restart it to pick up the connection.' }
+// Upstream's order and texts (AgentClient in AgentClientRegistration.swift).
+const RESTART = 'Restart it to pick up the connection.'
+const CLIENTS: Array<{ client: AgentClient; restart: string }> = [
+  { client: 'codex', restart: 'Restart Codex to pick up the connection.' },
+  { client: 'claude', restart: RESTART },
+  { client: 'claude-desktop', restart: RESTART },
+  { client: 'cursor', restart: RESTART },
+  { client: 'vscode', restart: RESTART }
 ]
 
 type RowState = AgentClientState | { state: 'checking' | 'connecting' | 'disconnecting' }
@@ -22,10 +29,10 @@ export function AgentAccessSettings({ settings, save }: { settings: Settings; sa
     <>
       <Section
         title="Connect to AI tools"
-        sub="Let Codex, Claude, and other AI tools read your Dayflow timeline. Connections are saved to each tool's user configuration, so Dayflow is available across projects on this computer. Nothing leaves your computer except what you send in your own conversations."
+        sub="Let Codex, Claude, Cursor, and other AI tools read your Dayflow timeline. Connections are saved to each tool's user configuration, so Dayflow is available across projects on this computer. Nothing leaves your computer except what you send in your own conversations."
       >
         {CLIENTS.map((c) => (
-          <ClientRow key={c.cli} {...c} />
+          <ClientRow key={c.client} {...c} />
         ))}
         {info && (
           <Row label="Other apps" sub="Paste this into any MCP client's configuration." stack>
@@ -71,12 +78,13 @@ export function AgentAccessSettings({ settings, save }: { settings: Settings; sa
   )
 }
 
-function ClientRow({ cli, name, restart }: { cli: CliName; name: string; restart: string }) {
+function ClientRow({ client, restart }: { client: AgentClient; restart: string }) {
+  const name = AGENT_CLIENT_NAMES[client]
   const [row, setRow] = useState<RowState>({ state: 'checking' })
-  useEffect(() => void window.dayflow.agentClient(cli, 'status').then(setRow), [cli])
+  useEffect(() => void window.dayflow.agentClient(client, 'status').then(setRow), [client])
   const act = (action: 'connect' | 'disconnect') => {
     setRow({ state: action === 'connect' ? 'connecting' : 'disconnecting' })
-    void window.dayflow.agentClient(cli, action).then(setRow, (err: unknown) => setRow({ state: 'failed', message: String(err) }))
+    void window.dayflow.agentClient(client, action).then(setRow, (err: unknown) => setRow({ state: 'failed', message: String(err) }))
   }
 
   const status =
@@ -93,7 +101,9 @@ function ClientRow({ cli, name, restart }: { cli: CliName; name: string; restart
     ) : row.state === 'disconnecting' ? (
       'Disconnecting…'
     ) : row.state === 'manual' ? (
-      `${row.message} Or run this in a terminal to connect ${name}:`
+      row.message
+    ) : row.state === 'openedInstaller' ? (
+      'Approve the install dialog it just showed.'
     ) : undefined
 
   return (
@@ -113,7 +123,8 @@ function ClientRow({ cli, name, restart }: { cli: CliName; name: string; restart
           Retry
         </button>
       )}
-      {row.state === 'manual' && <CommandBlock text={row.command} />}
+      {row.state === 'openedInstaller' && <StatusDot kind="neutral">Finish in {name}</StatusDot>}
+      {row.state === 'manual' && <CommandBlock text={row.command} label={client === 'claude-desktop' ? 'Copy config' : 'Copy'} />}
     </Row>
   )
 }

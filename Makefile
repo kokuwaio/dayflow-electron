@@ -21,8 +21,8 @@ help:
 	@echo "make pack         package the app into dist/linux-unpacked"
 	@echo "make flatpak      pack, build the helper and install the Flatpak for this user"
 	@echo "make version      print the version builds get (VERSION=... overrides it)"
-	@echo "make dist-win     Windows NSIS installers (x64, arm64) in dist/; run on Windows"
-	@echo "make dist-mac     macOS dmg images (arm64, x64) in dist/; run on macOS"
+	@echo "make dist-win     Windows NSIS installers (x64, arm64) and latest.yml in dist/; run on Windows"
+	@echo "make dist-mac     macOS dmg images and update zips (arm64, x64) in dist/; run on macOS"
 	@echo "make clean        remove build output"
 
 install:
@@ -53,7 +53,7 @@ helper:
 
 pack:
 	npx electron-vite build
-	npx electron-builder --linux dir -c.extraMetadata.version=$(VERSION)
+	npx electron-builder --linux dir --publish never -c.extraMetadata.version=$(VERSION)
 
 flatpak: pack helper
 	flatpak-builder --user --install --force-clean packaging/flatpak/build packaging/flatpak/io.github.kokuwaio.DayflowElectron.yml
@@ -64,11 +64,14 @@ version:
 dist-win:
 	npx electron-vite build
 	npx electron-builder --win nsis --x64 --publish never -c.extraMetadata.version=$(VERSION)
+	mv dist/latest.yml dist/latest-x64.yml
 	npx electron-builder --win nsis --arm64 --publish never -c.extraMetadata.version=$(VERSION)
+	node scripts/merge-update-feeds.ts dist/latest.yml dist/latest-x64.yml dist/latest.yml
+	rm dist/latest-x64.yml
 
 dist-mac:
 	npx electron-vite build
-	npx electron-builder --mac dmg --arm64 --x64 --publish never -c.extraMetadata.version=$(VERSION)
+	npx electron-builder --mac dmg zip --arm64 --x64 --publish never -c.extraMetadata.version=$(VERSION)
 
 clean:
 	rm -rf out dist packaging/flatpak/build packaging/flatpak/.flatpak-builder packaging/flatpak/repo $(HELPER)/bin

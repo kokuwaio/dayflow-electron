@@ -5,7 +5,7 @@
 
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { type Invocation, TERMINAL_COMMAND_PATH, WRAPPER_MARKER, shellLine, terminalInstallCommand, wrapperScript } from '../main/agent/invocation'
+import { type Invocation, TERMINAL_COMMAND_PATH, WRAPPER_MARKER, posixArgv, shellLine, terminalInstallCommand, wrapperScript } from '../main/agent/invocation'
 
 export interface LinkEnv {
   inFlatpak: boolean
@@ -37,7 +37,7 @@ export function terminalCommand(remove: boolean, env: LinkEnv): string[] {
   const lines = [
     'This adds a `dayflow` command to ~/.local/bin so you can run it from anywhere:',
     '',
-    `  ${target} → ${shellLine([env.invocation.command, ...env.invocation.args])}`,
+    `  ${target} → ${shellLine(posixArgv(env.invocation))}`,
     '',
     'Nothing is downloaded and your shell configuration is not touched.',
     '✓ Installed. Try: dayflow timeline'

@@ -267,29 +267,45 @@ message; the fallback provider, if set, takes over.
 For the other direction, where Claude Code or Codex reads your timeline, see
 the next section.
 
-## Use your timeline from Claude Code, Codex and the terminal
+## Use your timeline from Claude, Codex, Cursor, VS Code and the terminal
 
 The app ships upstream Dayflow's `dayflow` command-line tool and MCP server.
 Both read the database directly and work while the app is closed. AI tools get
 the timeline only when you ask them something in your own conversations.
 
-### Connect Claude Code or Codex
+### Connect your AI tools
 
-Open **Settings → MCP / CLI** and click **Connect** next to Claude Code or
-Codex. The app runs `claude mcp add --scope user dayflow ...` or
-`codex mcp add dayflow ...` on your computer, so the "dayflow" server is
-available in every project. Restart the tool afterwards.
+Open **Settings → MCP / CLI**. Each tool has a row that shows **Not found**,
+**Connect**, or **Connected** with **Disconnect**; restart the tool after
+connecting it.
 
-The Flatpak can only run these commands with the opt-in permission from
+| Tool | What **Connect** does |
+| --- | --- |
+| Codex | Runs `codex mcp add dayflow ...` on your computer. |
+| Claude Code | Runs `claude mcp add --scope user dayflow ...`, so the server is available in every project. |
+| Claude Desktop | Adds the "dayflow" entry under `mcpServers` in `claude_desktop_config.json` (`~/.config/Claude/` on Linux, `~/Library/Application Support/Claude/` on macOS, `%APPDATA%\Claude\` on Windows) and keeps everything else in it. A file that is not valid JSON is reported and left alone. |
+| Cursor, VS Code | Opens their install link. Approve the dialog in the editor; the row then says "Finish in Cursor". They keep the entry in their own settings, so remove it there. |
+
+The Flatpak can only run these commands and reach Claude Desktop's config
+with the opt-in permission from
 [Claude Code or Codex on your subscription](#claude-code-or-codex-on-your-subscription).
-Without it, the row shows the command; paste it into a terminal:
+Without it, the Codex and Claude Code rows show the command to paste into a
+terminal, and the Claude Desktop row the entry to paste into its config:
 
 ```sh
 claude mcp add --scope user dayflow -- flatpak run --command=dayflow-cli io.github.kokuwaio.DayflowElectron mcp
 ```
 
-**Other apps** shows a JSON snippet for any other MCP client (Claude Desktop,
-Cursor, VS Code).
+Cursor and VS Code need no permission: their links open through the desktop
+portal. Without it the app cannot tell whether they are installed, so their
+rows always offer **Connect**.
+
+Outside the Flatpak, the registered command is the app's own path. When the
+app moves (a reinstall to another folder), it rewrites its entries for Claude
+Desktop, Claude Code and Codex at the next start, like upstream; Cursor and VS
+Code need **Connect** again. The Flatpak's command never changes.
+
+**Other apps** shows a JSON snippet for any other MCP client.
 
 The MCP server offers upstream's tools: `get_time_breakdown`, `get_timeline`,
 `get_activity_detail`, `search_activities`, `get_daily`, `get_weekly`,

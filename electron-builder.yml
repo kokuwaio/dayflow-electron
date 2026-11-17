@@ -1,13 +1,19 @@
 # Packs the built app (out/):
 # - Linux: dist/linux-unpacked, which the Flatpak manifest in packaging/flatpak/ wraps.
 # - Windows: an NSIS installer per architecture (x64, arm64).
-# - macOS: a dmg per architecture (arm64, x64).
+# - macOS: a dmg per architecture (arm64, x64), and a zip of the app for
+#   auto-updates (Squirrel.Mac installs from the zip).
 # Windows and macOS builds are unsigned for now; docs/release.md says where
-# the certificates plug in.
+# the certificates plug in. The publish config makes electron-builder write
+# the update feeds (latest.yml, latest-mac.yml) and app-update.yml, which
+# electron-updater reads; CI builds with --publish never and the release
+# workflow uploads the files.
 appId: io.github.kokuwaio.DayflowElectron
 productName: dayflow-electron
 executableName: dayflow-electron
-artifactName: ${productName}-${os}-${arch}.${ext}
+# The tag in the name: the release assets keep it, and electron-updater
+# finds the previous version's blockmap by swapping the version in the URL.
+artifactName: ${productName}-v${version}-${os}-${arch}.${ext}
 directories:
   output: dist
 files:
@@ -44,9 +50,15 @@ nsis:
   # Keeps the recordings and the database; they live in %APPDATA%\dayflow-electron.
   deleteAppDataOnUninstall: false
 mac:
-  target: dmg
+  target:
+    - dmg
+    - zip
   category: public.app-category.productivity
   # Ad-hoc signature: Apple silicon runs no unsigned code. To sign and
   # notarize, drop these two lines and set the variables in docs/release.md.
   identity: "-"
   hardenedRuntime: false
+publish:
+  provider: github
+  owner: kokuwaio
+  repo: dayflow-electron

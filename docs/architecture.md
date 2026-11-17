@@ -228,9 +228,17 @@ module. The Flatpak wraps that in `/app/bin/dayflow-cli`, started as
   app checks the switch again, validates every argument, runs the write
   through the same settings save and store calls as the window, appends it to
   `agent-writes.log` and tells the window to reload.
-- **Settings → MCP / CLI** registers the server with `claude mcp add` or
-  `codex mcp add` on the host (through `flatpak-spawn --host`, which needs the
-  same opt-in as the CLI providers), or shows the command to copy.
+- **Settings → MCP / CLI** (`src/main/agent/clients.ts`) registers the
+  server with `claude mcp add` or `codex mcp add` on the host, merges it into
+  Claude Desktop's `claude_desktop_config.json`, and opens Cursor's and VS
+  Code's install links. Inside the Flatpak, commands and files go through
+  `flatpak-spawn --host` (the same opt-in as the CLI providers); without it
+  the row shows the command or snippet to copy. Outside the Flatpak the
+  command is the app's path with `ELECTRON_RUN_AS_NODE=1` in the entry's
+  environment (no `env` program, which Windows lacks); at launch the app
+  rewrites its entries that point at a moved copy (upstream
+  `repairStaleRegistrations`). The JSON merge, install links and stale check
+  are pure functions in `client-config.ts`.
 
 ```mermaid
 flowchart LR
@@ -280,11 +288,13 @@ flowchart LR
 | `src/cli/` | The `dayflow` CLI and MCP server (`out/main/cli.js`) |
 | `src/main/media.ts` | Serves frames and site icons to the window |
 | `src/main/notifications.ts` | Desktop notifications |
+| `src/main/updater.ts` | Auto-update of the Windows and macOS builds (electron-updater; policy in `src/shared/updates.ts`) |
 | `src/preload/` | The `window.dayflow` API |
 | `src/renderer/src/` | React views: Timeline, Daily, Weekly, Chat, Settings, Onboarding |
 | `src/shared/` | Pure logic used by both sides: days, categories, day canvas geometry (`canvas.ts`), Daily and Weekly math, export, failure kinds |
 | `helper/linux/` | Go helper: `portal/`, `pipewire/`, `wayland/`, `frames/`, commands in `cmd/` |
 | `packaging/` | Flatpak manifest, desktop file and metainfo (`flatpak/`) |
+| `scripts/` | Build version, metainfo release entry, merging the Windows update feeds |
 
 Most logic sits in `src/shared/` and `src/main/analysis/` as pure functions,
 so the tests run without Electron. Run them with `npm test`; run the Go tests

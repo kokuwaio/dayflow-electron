@@ -17,7 +17,7 @@
     "test:helper": "make -C helper/linux test",
     "pack": "make pack",
     "dist:win": "electron-vite build && electron-builder --win nsis --x64 --publish never && electron-builder --win nsis --arm64 --publish never",
-    "dist:mac": "electron-vite build && electron-builder --mac dmg --arm64 --x64 --publish never",
+    "dist:mac": "electron-vite build && electron-builder --mac dmg zip --arm64 --x64 --publish never",
     "flatpak": "make flatpak"
   },
   "devDependencies": {
@@ -40,6 +40,7 @@
     "@fontsource/instrument-serif": "5.3.0",
     "@tesseract.js-data/eng": "1.0.0",
     "echarts": "^6.1.0",
+    "electron-updater": "6.8.12",
     "jpeg-js": "0.4.4",
     "lucide-react": "1.66.0",
     "react-markdown": "10.1.0",

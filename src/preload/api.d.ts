@@ -3,9 +3,11 @@ import type { GoalPlan } from '../shared/day-summary'
 import type { GoalContext } from '../shared/goal-flow'
 import type { ReviewRating, ReviewSegment } from '../shared/review'
 import type { FrameRef } from '../shared/media'
+import type { UpdateMode } from '../shared/updates'
 import type { DayCards, Week } from '../shared/week'
 import type {
   AgentAccessInfo,
+  AgentClient,
   AgentClientState,
   AppStatus,
   CardEdit,
@@ -43,6 +45,8 @@ export interface DayflowApi {
   onDailyChanged(cb: () => void): () => void
   /** The app version (1.2.3, or 0.0.0-<branch>.g<sha> for development builds). */
   getVersion(): Promise<string>
+  /** Whether this build updates itself: "install", "notify" (unsigned macOS) or "off" (Flatpak, development builds). */
+  getUpdateSupport(): Promise<UpdateMode>
   getConversations(): Promise<ChatConversation[]>
   getChatMessages(conversationId: string): Promise<ChatStoredMessage[]>
   deleteConversation(conversationId: string): Promise<void>
@@ -78,8 +82,8 @@ export interface DayflowApi {
   checkCli(cli: CliName): Promise<{ ok: boolean; message: string }>
   /** How AI tools and terminals start the bundled CLI. */
   getAgentAccess(): Promise<AgentAccessInfo>
-  /** Looks up, adds or removes the "dayflow" MCP server in Claude Code or Codex. */
-  agentClient(cli: CliName, action: 'status' | 'connect' | 'disconnect'): Promise<AgentClientState>
+  /** Looks up, adds or removes the "dayflow" MCP server in an AI tool; for Cursor and VS Code "connect" opens their install link. */
+  agentClient(client: AgentClient, action: 'status' | 'connect' | 'disconnect'): Promise<AgentClientState>
   onCardsChanged(cb: () => void): () => void
   onStatus(cb: (status: AppStatus) => void): () => void
 }

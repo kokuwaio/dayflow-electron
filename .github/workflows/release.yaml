@@ -2,7 +2,9 @@ name: Release
 
 # Publishing the release that Release Drafter prepared builds the app and
 # attaches the Flatpak bundles (x86_64, aarch64), the Windows installers
-# (x64, arm64) and the macOS disk images (arm64, x64), with SHA256SUMS.
+# (x64, arm64) and the macOS disk images (arm64, x64), with SHA256SUMS. The
+# update feeds (latest.yml, latest-mac.yml), the macOS update zips and the
+# blockmaps are for electron-updater in the installed apps.
 
 permissions: read-all
 
@@ -32,19 +34,29 @@ jobs:
           path: artifacts
 
       - name: Collect release files
-        # The Flatpak bundle per architecture and the installers, renamed to carry the tag.
+        # The Flatpak bundle per architecture, renamed to carry the tag. The
+        # installers already carry it (electron-builder's artifactName) and
+        # keep their names: the update feeds point at them by name.
         run: |
           for arch in x86_64 aarch64; do
             cp "artifacts/dayflow-electron-flatpak-$arch/dayflow-electron.flatpak" "dayflow-electron-$TAG-$arch.flatpak"
           done
-          # dayflow-electron-win-x64.exe -> dayflow-electron-<tag>-win-x64.exe, likewise for the dmg images.
-          for file in artifacts/installers-windows/*.exe artifacts/installers-macos/*.dmg; do
+          for file in artifacts/installers-windows/* artifacts/installers-macos/*; do
             name="${file##*/}"
-            cp "$file" "dayflow-electron-$TAG-${name#dayflow-electron-}"
+            case "$name" in
+              latest.yml | latest-mac.yml | "dayflow-electron-$TAG-"*) cp "$file" . ;;
+              *)
+                echo "::error::$name does not carry the tag $TAG"
+                exit 1
+                ;;
+            esac
           done
-          sha256sum dayflow-electron-"$TAG"-* > SHA256SUMS
+          sha256sum dayflow-electron-"$TAG"-* latest.yml latest-mac.yml > SHA256SUMS
 
       - name: Upload to release
-        run: gh release upload "$TAG" dayflow-electron-"$TAG"-* SHA256SUMS --clobber --repo "$GITHUB_REPOSITORY"
+        # The feeds last, so installed apps never see a version whose files are missing.
+        run: |
+          gh release upload "$TAG" dayflow-electron-"$TAG"-* SHA256SUMS --clobber --repo "$GITHUB_REPOSITORY"
+          gh release upload "$TAG" latest.yml latest-mac.yml --clobber --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

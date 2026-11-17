@@ -107,11 +107,20 @@ export interface Settings {
   showDailyGoalPopups: boolean
   /** AI tools (CLI, MCP) may change categories, activities and goals through the running app. Off by default. */
   allowEdits: boolean
+  /** Windows and macOS: download updates in the background and install them on the next quit. On by default. */
+  autoInstallUpdates: boolean
 }
 
-/** Whether an agent CLI has the "dayflow" MCP server; "manual" when the app cannot run the CLI and shows the command instead. */
+/** The AI tools Settings → MCP / CLI connects: the agent CLIs, Claude Desktop (config file) and the editors (install links). */
+export type AgentClient = CliName | 'claude-desktop' | 'cursor' | 'vscode'
+
+/**
+ * Whether a client has the "dayflow" MCP server; "manual" when the app cannot
+ * reach the client and shows what to run or paste instead; "openedInstaller"
+ * after an install link opened (the client finishes in its own dialog).
+ */
 export type AgentClientState =
-  | { state: 'connected' | 'available' }
+  | { state: 'connected' | 'available' | 'openedInstaller' }
   | { state: 'notFound' | 'failed'; message: string }
   | { state: 'manual'; message: string; command: string }
 
@@ -159,7 +168,8 @@ export const DEFAULT_SETTINGS: Settings = {
   notified: { firstCards: false, weeklyUnlock: false, problemDays: {} },
   standupAttempts: { day: '', count: 0 },
   chatMemory: '',
-  allowEdits: false
+  allowEdits: false,
+  autoInstallUpdates: true
 }
 
 export const THEMES = ['dark', 'light', 'system'] as const
