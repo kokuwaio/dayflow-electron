@@ -13,7 +13,16 @@ Linux, the Windows installer, the macOS disk image, and
 building from source. The app starts with a window and a tray icon. Closing
 the window keeps it recording; quit from the tray.
 
-## First start: allow screen recording
+## First start
+
+A short setup runs first, in upstream's look: what you do for work (picks the
+categories), a table comparing the ways to run the app (Claude or ChatGPT
+through their CLIs, the Anthropic API, Gemini, an OpenAI-compatible endpoint
+or a local model), a setup wizard for the one you pick with a connection
+test (**Skip for now** leaves it for Settings), and what recording needs on
+your system. **Launch Dayflow** starts recording.
+
+### Allow screen recording
 
 - **Linux:** your desktop asks which screens the app may record. Pick **all
   screens** and allow **restoring the permission**, so the question does not
@@ -63,7 +72,8 @@ succeeds.
 ## The timeline
 
 - **Header**: the arrows step a day (or week) back and forward, the calendar
-  button picks a date, **Day / Week** switches the view, and **Today** comes
+  button opens a month (Monday first; future days are greyed out, and in
+  week mode the whole week is marked), **Day / Week** switches the view, and **Today** comes
   back to today. After 4 AM the timeline moves to the new day by itself.
 - **Day view**: cards sit on a 4 AM to 4 AM time axis, sized by how long
   they lasted. Today the view opens at the current time, and a card marks
@@ -86,7 +96,21 @@ succeeds.
 - **Day summary** (right panel when no card is selected): today's targets
   for focus and distraction, time per category, total and longest focus, and
   time distracted. Idle, failed and private time is not counted. The pencil
-  edits the goals.
+  (or **Set goals**) opens the goal pop-up: yesterday's review first, once a
+  day, when yesterday had goals, then today's focus goal and distraction
+  limit. Drag categories into the two panels (or click one to cycle it
+  through focus, distraction and untracked) and set the time on the wheels;
+  each panel shows yesterday's time and last week's daily average for its
+  categories. **Confirm** saves, **Skip today** leaves today without goals.
+  From the fourth day with cards on, the pop-up opens by itself on the first
+  visit after 4 AM, unless goals are set, five days in a row were skipped,
+  or **Settings → Other → Show daily goal popups** is off.
+- **Your review** (day summary) shows how much of the day you rated as
+  distracted, neutral or focused. **Review cards** (bottom of the day view)
+  or the link under "Your review" shows the day's cards rated less than 80%,
+  one at a time: swipe or press ← for distracted, ↑ for neutral, → for
+  focused; **Z** goes back a card, **Space** plays its screenshots, **Esc**
+  closes. Ratings are stored per time range, like upstream.
 - **Copy timeline** (bottom left) puts the day or week on the clipboard as
   text, next to the hours tracked this week. **Settings → Export** saves a
   date range as Markdown and analyzes a whole day again (**Reprocess day**).
@@ -109,7 +133,9 @@ after 5 hours, Weekly after 30 hours. Until then each tab shows the progress.
   - **Copy standup update** puts it on the clipboard as plain text.
 - **Weekly** needs no AI. It opens the newest week with at least 15 hours
   tracked and shows time per category, context shifts and distractions per
-  day, a heatmap of the week, your most used apps per category with the
+  day, a grid of the week's categories, a focus and distraction heat map
+  (5-minute cells, Sunday first: blue for sustained focus, peach for
+  distraction and quick switches), your most used apps per category with the
   change against the week before, and how categories flow into apps.
 - **Notifications** tell you when your first cards are ready, when the
   standup is written, when Weekly unlocks, and when the AI provider has a
