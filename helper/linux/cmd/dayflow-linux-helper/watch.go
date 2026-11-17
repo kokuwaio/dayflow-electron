@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/godbus/dbus/v5"
-	"github.com/monotek/dayflow-electron/helper/linux/wayland"
+	"github.com/kokuwaio/dayflow-electron/helper/linux/wayland"
 )
 
 // runWatch reports screen lock, sleep and idle as JSON lines until stopped.

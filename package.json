@@ -16,7 +16,7 @@
     "helper": "make -C helper/linux build",
     "test:helper": "make -C helper/linux test",
     "pack": "electron-vite build && electron-builder --linux dir",
-    "flatpak": "npm run pack && npm run helper && flatpak-builder --user --install --force-clean flatpak/build flatpak/io.github.monotek.DayflowElectron.yml"
+    "flatpak": "npm run pack && npm run helper && flatpak-builder --user --install --force-clean flatpak/build flatpak/io.github.kokuwaio.DayflowElectron.yml"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
@@ -36,6 +36,6 @@
     "@anthropic-ai/sdk": "^1.9.0",
     "echarts": "^6.1.0"
   },
-  "author": "monotek",
-  "homepage": "https://github.com/monotek/dayflow-electron"
+  "author": "kokuwaio",
+  "homepage": "https://github.com/kokuwaio/dayflow-electron"
 }

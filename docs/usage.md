@@ -14,7 +14,7 @@ the repository (see the [README](../README.md#flatpak)):
 ```sh
 npm install
 npm run flatpak
-flatpak run io.github.monotek.DayflowElectron
+flatpak run io.github.kokuwaio.DayflowElectron
 ```
 
 The app starts with a window and a tray icon. Closing the window keeps it
@@ -179,7 +179,7 @@ or OpenAI under your account.
    is why it is not on by default:
 
    ```sh
-   flatpak override --user --talk-name=org.freedesktop.Flatpak io.github.monotek.DayflowElectron
+   flatpak override --user --talk-name=org.freedesktop.Flatpak io.github.kokuwaio.DayflowElectron
    ```
 
 3. In **Settings**, choose **Claude Code** or **Codex** and click **Check**.
@@ -209,7 +209,7 @@ The Flatpak does not have that permission by default. Grant it once, then
 restart the app:
 
 ```sh
-flatpak override --user --talk-name=org.kde.KWin io.github.monotek.DayflowElectron
+flatpak override --user --talk-name=org.kde.KWin io.github.kokuwaio.DayflowElectron
 ```
 
 Settings then shows "Window detection works". Limits:
@@ -229,7 +229,7 @@ vault.
   minutes, or until you resume.
 - Recording also pauses while the screen is locked or the computer sleeps.
 - Screenshots, the database and settings live in
-  `~/.var/app/io.github.monotek.DayflowElectron/config/dayflow-electron/`.
+  `~/.var/app/io.github.kokuwaio.DayflowElectron/config/dayflow-electron/`.
   **Open recordings folder** in the tray shows the screenshots.
 - **Settings → Storage** caps the space used by screenshots (default 10 GB);
   the oldest are deleted first.

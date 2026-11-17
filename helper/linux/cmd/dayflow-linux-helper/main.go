@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-const appID = "io.github.monotek.DayflowElectron"
+const appID = "io.github.kokuwaio.DayflowElectron"
 
 var emitMu sync.Mutex
 

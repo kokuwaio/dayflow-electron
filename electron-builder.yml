@@ -1,6 +1,6 @@
 # Packs the built app (out/) into dist/linux-unpacked; the Flatpak manifest in
 # flatpak/ wraps that directory. Windows and macOS targets come later.
-appId: io.github.monotek.DayflowElectron
+appId: io.github.kokuwaio.DayflowElectron
 productName: dayflow-electron
 executableName: dayflow-electron
 directories:

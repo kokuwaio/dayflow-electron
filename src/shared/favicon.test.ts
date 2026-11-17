@@ -4,7 +4,7 @@ import { iconHost } from './favicon'
 describe('iconHost (upstream FaviconService.normalizedHost)', () => {
   it.each([
     ['docs.google.com', 'docs.google.com'],
-    ['https://GitHub.com/monotek/dayflow', 'github.com'],
+    ['https://GitHub.com/kokuwaio/dayflow', 'github.com'],
     ['developer.apple.com/xcode', 'developer.apple.com'],
     ['  slack.com  ', 'slack.com'],
     ['www.figma.com', 'www.figma.com']

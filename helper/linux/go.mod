@@ -1,4 +1,4 @@
-module github.com/monotek/dayflow-electron/helper/linux
+module github.com/kokuwaio/dayflow-electron/helper/linux
 
 go 1.27.4
 

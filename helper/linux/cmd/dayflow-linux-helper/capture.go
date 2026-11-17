@@ -23,9 +23,9 @@ import (
 	"time"
 
 	"github.com/godbus/dbus/v5"
-	"github.com/monotek/dayflow-electron/helper/linux/frames"
-	"github.com/monotek/dayflow-electron/helper/linux/pipewire"
-	"github.com/monotek/dayflow-electron/helper/linux/portal"
+	"github.com/kokuwaio/dayflow-electron/helper/linux/frames"
+	"github.com/kokuwaio/dayflow-electron/helper/linux/pipewire"
+	"github.com/kokuwaio/dayflow-electron/helper/linux/portal"
 )
 
 type pwOptions struct {

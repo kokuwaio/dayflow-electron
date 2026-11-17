@@ -1,7 +1,7 @@
 # Flatpak for dayflow-electron. Build the inputs first:
 #   npm run build && npx electron-builder --linux dir && npm run helper
-# then: flatpak-builder --user --install --force-clean build flatpak/io.github.monotek.DayflowElectron.yml
-id: io.github.monotek.DayflowElectron
+# then: flatpak-builder --user --install --force-clean build flatpak/io.github.kokuwaio.DayflowElectron.yml
+id: io.github.kokuwaio.DayflowElectron
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
@@ -33,8 +33,8 @@ modules:
       - cp -a linux-unpacked /app/dayflow-electron
       - install -Dm755 dayflow-linux-helper /app/bin/dayflow-linux-helper
       - install -Dm755 dayflow-electron.sh /app/bin/dayflow-electron
-      - install -Dm644 icon.png /app/share/icons/hicolor/256x256/apps/io.github.monotek.DayflowElectron.png
-      - install -Dm644 io.github.monotek.DayflowElectron.desktop /app/share/applications/io.github.monotek.DayflowElectron.desktop
+      - install -Dm644 icon.png /app/share/icons/hicolor/256x256/apps/io.github.kokuwaio.DayflowElectron.png
+      - install -Dm644 io.github.kokuwaio.DayflowElectron.desktop /app/share/applications/io.github.kokuwaio.DayflowElectron.desktop
     sources:
       - type: dir
         path: ../dist/linux-unpacked
@@ -44,7 +44,7 @@ modules:
       - type: file
         path: ../resources/icon.png
       - type: file
-        path: io.github.monotek.DayflowElectron.desktop
+        path: io.github.kokuwaio.DayflowElectron.desktop
       - type: script
         dest-filename: dayflow-electron.sh
         commands:

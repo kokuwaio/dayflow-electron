@@ -49,7 +49,7 @@ npm run test:helper # Go tests for helper/linux
 
 ```sh
 npm run flatpak     # pack, build the helper, then flatpak-builder --user --install
-flatpak run io.github.monotek.DayflowElectron
+flatpak run io.github.kokuwaio.DayflowElectron
 ```
 
 On first start KDE (or GNOME) asks once which screens to share: choose all of
