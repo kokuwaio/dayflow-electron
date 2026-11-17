@@ -68,14 +68,20 @@ On Arch or Manjaro, pick the backend for your GPU: `ollama-vulkan` works on
 most AMD and Intel GPUs, `ollama-rocm` on AMD GPUs that ROCm supports,
 `ollama-cuda` on NVIDIA. Other distributions: see ollama.com.
 
-Raise Ollama's context length before starting it. Its OpenAI-compatible API
-cannot change the context per request, and a default context that is too
-small silently cuts off the start of the prompt.
+Before starting it, set two options for the service:
+
+- `OLLAMA_CONTEXT_LENGTH`: Ollama's OpenAI-compatible API cannot change the
+  context per request, and a default context that is too small silently cuts
+  off the start of the prompt.
+- `OLLAMA_IGPU_ENABLE=1`: Ollama ignores integrated GPUs (AMD Radeon 7xxM and
+  8xxM, Intel Arc iGPUs) unless this is set, and runs on the CPU instead,
+  roughly ten times slower. The log then says "dropping integrated GPU". Not
+  needed for a dedicated GPU.
 
 ```sh
 sudo pacman -S ollama-vulkan
 sudo mkdir -p /etc/systemd/system/ollama.service.d
-printf '[Service]\nEnvironment="OLLAMA_CONTEXT_LENGTH=32768"\n' | sudo tee /etc/systemd/system/ollama.service.d/context.conf
+printf '[Service]\nEnvironment="OLLAMA_CONTEXT_LENGTH=32768"\nEnvironment="OLLAMA_IGPU_ENABLE=1"\n' | sudo tee /etc/systemd/system/ollama.service.d/context.conf
 sudo systemctl daemon-reload
 sudo systemctl enable --now ollama
 ollama pull qwen3-vl:8b
@@ -173,7 +179,7 @@ vault.
 | Symptom | What to check |
 | --- | --- |
 | No cards after 20 minutes | Settings → AI provider: a key or a reachable local server; **Test connection**. The banner at the top of the window shows the last analysis error. |
-| "Processing failed" cards with a local model | Run `ollama ps` while a batch runs (GPU or CPU?), check the context length setting above, try 720p. |
+| "Processing failed" cards or very slow batches with a local model | Run `ollama ps` while a batch runs: `100% CPU` on a machine with an integrated GPU means `OLLAMA_IGPU_ENABLE=1` is missing. Check the context length setting above, try 720p. |
 | The share dialog comes back on every start | Allow restoring the permission in the dialog. |
 | "Window detection needs KWin access" | Run the `flatpak override` command above, then restart the app. |
 | Capture failed, retrying | The screen-sharing session ended (for example after a monitor change); the app retries after 1, 2, 5 and then every 10 minutes. |
