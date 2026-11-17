@@ -1,11 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight, Copy, GripVertical, Plus, RotateCw } from 'lucide-react'
 import type { Category } from '@shared/categories'
-import { type FeatureAccess, type StandupDraft, distractionInSlot, emptyStandup, standupText, standupTitles, workflowGrid } from '@shared/daily'
+import { type FeatureAccess, type StandupDraft, emptyStandup, standupText, standupTitles, workflowGrid } from '@shared/daily'
 import { hourLabel, parseKey, shiftDay, todayKey } from '@shared/day'
 import { formatMinutes } from '@shared/day-summary'
 import type { StandupEntry, TimelineCard } from '@shared/types'
+import { LockedFeature } from './LockedFeature'
 
 const DISTRACTION_COLOR = '#FF5950'
+/** Minutes per grid cell. */
+const SLOT = 15
+const isDistraction = (name: string) => ['distraction', 'distractions'].includes(name.trim().toLowerCase())
+
+/** "Today, November 17" or "Monday, November 10", like upstream's Daily title. */
+function longDate(day: string, today: string): string {
+  const text = parseKey(day).toLocaleDateString([], { weekday: day === today ? undefined : 'long', month: 'long', day: 'numeric' })
+  return day === today ? `Today, ${text}` : text
+}
 
 /** Runs `load` now and whenever `subscribe` fires, dropping answers that arrive after the inputs changed. */
 function useFresh<T>(load: () => Promise<T>, apply: (value: T) => void, subscribe?: (cb: () => void) => () => void) {
@@ -45,64 +56,88 @@ export function Daily() {
   if (!access) return null
   if (!access.unlocked) {
     return (
-      <div className="locked">
-        <h2>Daily</h2>
+      <LockedFeature title="Dayflow Daily" italic beta access={access}>
         <p>Daily is a new way to visualize your day and turn it into a standup update fast.</p>
-        <p className="note">Daily unlocks after 5 hours of analyzed timeline data. {access.label}</p>
-      </div>
+        <p>Daily unlocks after 5 hours of analyzed timeline data.</p>
+      </LockedFeature>
     )
   }
 
   const grid = workflowGrid(cards, categories)
-  const heading =
-    day === today ? 'Today so far. Come back tomorrow for the full day view.' : day === shiftDay(today, -1) ? 'Your workflow yesterday' : `Your workflow on ${parseKey(day).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}`
-  const hours = Array.from({ length: Math.ceil(grid.slots / 4) }, (_, i) => grid.startMinute + i * 60)
+  const yesterday = shiftDay(today, -1)
+  const short = parseKey(day).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
+  const heading = day === today ? 'Today so far. Come back tomorrow for the full day view.' : day === yesterday ? 'Your workflow yesterday' : `Your workflow on ${short}`
+  const totalTitle = day === today ? "Today's total so far" : day === yesterday ? "Yesterday's total" : `Total for ${short}`
+  const span = grid.slots * SLOT
+  const rows = grid.rows.filter((r) => !(grid.hasDistractionRow && isDistraction(r.category)))
+  const colorOf = (name: string) => grid.rows.find((r) => r.category === name)?.color ?? DISTRACTION_COLOR
 
   return (
     <div className="daily">
-      <div className="daynav">
-        <button aria-label="Previous day" onClick={() => setDay(shiftDay(day, -1))}>
-          ‹
-        </button>
-        <h1>{day === today ? 'Today' : parseKey(day).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}</h1>
-        <button aria-label="Next day" disabled={day === today} onClick={() => setDay(shiftDay(day, 1))}>
-          ›
-        </button>
-      </div>
-      <section>
-        <h3>{heading}</h3>
-        <div className="workflow" style={{ gridTemplateColumns: `120px repeat(${grid.slots}, 1fr)` }}>
-          <span />
-          {hours.map((m) => (
-            <span key={m} className="hour" style={{ gridColumn: `span 4` }}>
-              {hourLabel(m)}
-            </span>
-          ))}
-          {grid.rows.map((row) => (
-            <Row key={row.category} label={row.category}>
-              {row.cells.map((v, i) => (
-                <span key={i} className="cell" style={{ background: row.color, opacity: v ? 0.2 + 0.8 * v : 0.05 }} />
-              ))}
-            </Row>
-          ))}
-          {grid.hasDistractionRow && (
-            <Row label="Distractions">
-              {Array.from({ length: grid.slots }, (_, i) => {
-                const hit = distractionInSlot(grid, i)
-                return <span key={i} className="cell" title={hit?.title} style={{ background: DISTRACTION_COLOR, opacity: hit ? 1 : 0.05 }} />
-              })}
-            </Row>
-          )}
+      <div className="daily-page">
+        <div className="date-row">
+          <button className="nav-arrow" aria-label="Previous day" onClick={() => setDay(shiftDay(day, -1))}>
+            <ChevronLeft size={24} strokeWidth={1.5} />
+          </button>
+          <h1>{longDate(day, today)}</h1>
+          <button className="nav-arrow" aria-label="Next day" disabled={day === today} onClick={() => setDay(shiftDay(day, 1))}>
+            <ChevronRight size={24} strokeWidth={1.5} />
+          </button>
         </div>
-        <p className="note">
-          {grid.totals.length === 0
-            ? day === today
-              ? 'No captured activity yet.'
-              : 'No captured activity during 9am-9pm'
-            : `${day === today ? "Today's total so far" : 'Total'}: ` + grid.totals.map((t) => `${t.category} ${formatMinutes(t.minutes)}`).join(' · ')}
-        </p>
-      </section>
-      <Standup day={day} />
+        <h2 className="serif-heading">{heading}</h2>
+        <div className="workflow-card">
+          <div className="workflow-scroll">
+            <div className="workflow" style={{ gridTemplateColumns: `auto repeat(${grid.slots}, 19.8px)` }}>
+              {rows.map((row) => (
+                <Row key={row.category} label={row.category}>
+                  {row.cells.map((v, i) => (
+                    <span
+                      key={i}
+                      className="cell"
+                      title={v ? row.category : undefined}
+                      style={{ background: v ? `color-mix(in srgb, ${row.color} ${Math.round((0.3 + 0.7 * v) * 100)}%, transparent)` : 'var(--empty-cell)' }}
+                    />
+                  ))}
+                </Row>
+              ))}
+              {grid.hasDistractionRow && (
+                <Row label="Distractions">
+                  <span className="distraction-track" style={{ gridColumn: '2 / -1' }}>
+                    {grid.distractions.map((d, i) => (
+                      <i
+                        key={i}
+                        title={`${formatMinutes(Math.max(1, Math.round(d.end - d.start)))}: ${d.title}`}
+                        style={{ left: `${((d.start - grid.startMinute) / span) * 100}%`, width: `${((d.end - d.start) / span) * 100}%` }}
+                      />
+                    ))}
+                  </span>
+                </Row>
+              )}
+              <span />
+              <div className="axis" style={{ gridColumn: '2 / -1' }}>
+                {Array.from({ length: Math.floor(grid.slots / 4) + 1 }, (_, i) => (
+                  <span key={i} style={{ left: `${((i * 60) / span) * 100}%` }}>
+                    {hourLabel(grid.startMinute + i * 60).replace(/(am|pm)$/, (m) => ` ${m.toUpperCase()}`)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="totals-strip">
+            <h4>{totalTitle}</h4>
+            {grid.totals.length === 0 ? (
+              <span className="note">{day === today ? 'No captured activity yet.' : 'No captured activity during 9am-9pm'}</span>
+            ) : (
+              grid.totals.map((t) => (
+                <span key={t.category}>
+                  {t.category} <b style={{ color: colorOf(t.category) }}>{formatMinutes(t.minutes)}</b>
+                </span>
+              ))
+            )}
+          </div>
+        </div>
+        <Standup day={day} />
+      </div>
     </div>
   )
 }
@@ -165,55 +200,82 @@ function Standup({ day }: { day: string }) {
   }
 
   const titles = standupTitles(day, entry?.sourceDay ?? null, todayKey())
+  const regenerating = busy === 'Writing your standup…'
   return (
     <section className="standup">
-      <div className="row spread">
-        <h3>Standup</h3>
-        <div className="row">
-          <button
-            onClick={() =>
-              void window.dayflow.copyText(standupText(draft, titles)).then(() => {
-                setCopied(true)
-                setTimeout(() => setCopied(false), 2000)
-              })
-            }
-          >
-            {copied ? 'Copied' : 'Copy standup update'}
-          </button>
-          <button disabled={busy === 'Writing your standup…'} onClick={() => void regenerate()}>
-            Regenerate
-          </button>
-        </div>
+      <div className="standup-head">
+        <h2 className="serif-heading">Standup for {longDate(day, todayKey())}</h2>
+        <button
+          className="btn-glass daily-pill"
+          onClick={() =>
+            void window.dayflow.copyText(standupText(draft, titles)).then(() => {
+              setCopied(true)
+              setTimeout(() => setCopied(false), 2000)
+            })
+          }
+        >
+          <Copy size={15} />
+          {copied ? 'Copied' : 'Copy standup update'}
+        </button>
+        <button className="btn-glass daily-pill" disabled={regenerating} onClick={() => void regenerate()}>
+          <RotateCw size={15} />
+          {regenerating ? 'Regenerating…' : 'Regenerate'}
+        </button>
       </div>
-      {busy && <p className="note">{busy}</p>}
+      {busy && !regenerating && <p className="note">{busy}</p>}
       {!entry && <p className="note">Daily data has not been generated yet. Click Regenerate to write it now, or fill it in yourself.</p>}
       <div className="standup-cards">
-        <ItemList title={titles.highlights} items={draft.highlights} onChange={(highlights) => edit({ ...draft, highlights })} />
-        <div>
+        <div className="standup-card">
+          <ItemList title={titles.highlights} items={draft.highlights} onChange={(highlights) => edit({ ...draft, highlights })} />
+        </div>
+        <div className="standup-card">
           <ItemList title={titles.tasks} items={draft.tasks} onChange={(tasks) => edit({ ...draft, tasks })} />
-          <h4>{titles.blockers}</h4>
-          <textarea
-            rows={3}
-            placeholder="Fill in any blockers you may have"
-            value={draft.blockersBody}
-            onChange={(e) => edit({ ...draft, blockersBody: e.target.value })}
-          />
+          <div className="blockers">
+            <h4>{titles.blockers}</h4>
+            <textarea
+              rows={3}
+              placeholder="Fill in any blockers you may have"
+              value={draft.blockersBody}
+              onChange={(e) => edit({ ...draft, blockersBody: e.target.value })}
+            />
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
-/** Editable bullets: Enter adds an item after the current one, Backspace on an empty item removes it. */
+/**
+ * Editable items without bullets: Enter adds an item after the current one,
+ * Backspace on an empty item removes it, the handle drags it to a new place.
+ */
 function ItemList({ title, items, onChange }: { title: string; items: string[]; onChange: (items: string[]) => void }) {
   const refs = useRef<Array<HTMLInputElement | null>>([])
+  const [dragging, setDragging] = useState<number | null>(null)
   const focus = (i: number) => setTimeout(() => refs.current[i]?.focus(), 0)
+  const move = (from: number, to: number) => {
+    if (from === to) return
+    const next = [...items]
+    const [item] = next.splice(from, 1)
+    next.splice(to, 0, item!)
+    onChange(next)
+  }
   return (
-    <div>
+    <>
       <h4>{title}</h4>
       <ul className="items">
         {items.map((item, i) => (
-          <li key={i}>
+          <li
+            key={i}
+            onDragOver={(e) => dragging !== null && e.preventDefault()}
+            onDrop={() => {
+              if (dragging !== null) move(dragging, i)
+              setDragging(null)
+            }}
+          >
+            <span className="grip" draggable aria-hidden="true" onDragStart={() => setDragging(i)} onDragEnd={() => setDragging(null)}>
+              <GripVertical size={14} />
+            </span>
             <input
               ref={(el) => {
                 refs.current[i] = el
@@ -236,9 +298,10 @@ function ItemList({ title, items, onChange }: { title: string; items: string[]; 
           </li>
         ))}
       </ul>
-      <button className="link" onClick={() => (onChange([...items, '']), focus(items.length))}>
+      <button className="add-item" onClick={() => (onChange([...items, '']), focus(items.length))}>
+        <Plus size={14} />
         Add item
       </button>
-    </div>
+    </>
   )
 }

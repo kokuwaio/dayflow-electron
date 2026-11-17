@@ -1,15 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
+import { Brain, Info, Pencil, Shapes } from 'lucide-react'
 import type { Category } from '@shared/categories'
-import { type GoalPlan, formatMinutes, summarizeDay } from '@shared/day-summary'
-import type { TimelineCard } from '@shared/types'
+import { formatClock, todayKey } from '@shared/day'
+import { type CategoryTotal, type GoalPlan, formatMinutes, summarizeDay } from '@shared/day-summary'
+import type { RecorderState, TimelineCard } from '@shared/types'
 
 const hours = (minutes: number) => {
   const h = minutes / 60
   return Math.abs(h - Math.round(h)) < 0.01 ? String(Math.round(h)) : h.toFixed(1)
 }
+const key = (name: string) => name.trim().toLowerCase()
 
-/** The right panel in day mode (upstream DaySummaryView): targets, donut, longest focus block. */
-export function DaySummary({ day, cards, categories }: { day: string; cards: TimelineCard[]; categories: Category[] }) {
+/**
+ * The inspector in day mode with no card selected (upstream
+ * Components/DaySummaryView.swift, DayGoalHeader.swift,
+ * DayFocusSummarySection.swift, DayDistractionSummarySection.swift).
+ */
+export function DaySummary(props: { day: string; cards: TimelineCard[]; categories: Category[]; recorder: RecorderState | null }) {
+  const { day, cards, categories } = props
   const [plan, setPlan] = useState<GoalPlan | null>(null)
   const [editing, setEditing] = useState(false)
 
@@ -25,133 +33,274 @@ export function DaySummary({ day, cards, categories }: { day: string; cards: Tim
     setPlan(next)
     void window.dayflow.setGoals(day, next)
   }
-  const remaining = Math.max(0, plan.distractionLimitMinutes - s.distractedMinutes)
+  const isToday = day === todayKey()
+  const focusTotals = s.totals.filter((t) => plan.focusCategories.some((n) => key(n) === key(t.category)))
+  const statusLine = plan.skipped
+    ? 'Set your goals for today to activate the progress bars below.'
+    : isToday && props.recorder === 'paused'
+      ? 'Dayflow is paused. Resume to continue tracking your progress.'
+      : isToday && props.recorder === 'stopped'
+        ? 'Start Dayflow to continue tracking your progress.'
+        : 'Tracking progress from your focus and distraction categories.'
 
   return (
-    <div className="summary">
-      <section>
-        <div className="row spread">
-          <h3>Targets</h3>
-          <button className="link" onClick={() => setEditing(!editing)}>
-            {editing ? 'Done' : plan.skipped ? 'Set goals' : 'Edit goals'}
+    <>
+      <section className="targets">
+        <div className="targets-head">
+          <div>
+            <h3>{plan.skipped ? "Set today's goals" : isToday ? "Today's targets" : 'Targets'}</h3>
+            <p className="status">{statusLine}</p>
+          </div>
+          <button className="icon-circle" aria-label="Edit goals" aria-expanded={editing} title="Edit goals" onClick={() => setEditing(!editing)}>
+            <Pencil size={11} />
           </button>
         </div>
         {editing ? (
-          <GoalEditor plan={plan} categories={categories} onChange={savePlan} />
-        ) : plan.skipped ? (
-          <p className="note">No goals for today.</p>
+          <GoalEditor plan={plan} categories={categories} onChange={savePlan} onDone={() => setEditing(false)} />
         ) : (
           <>
-            <Bar
-              label="Focus"
-              value={`${hours(s.focusMinutes)} / ${hours(plan.focusTargetMinutes)} hr fulfilled`}
-              ratio={plan.focusTargetMinutes ? s.focusMinutes / plan.focusTargetMinutes : 1}
-              color="var(--accent)"
-            />
-            <Bar
-              label="Distraction"
-              value={
-                s.distractedMinutes <= plan.distractionLimitMinutes
-                  ? `${formatMinutes(remaining)} left / ${formatMinutes(plan.distractionLimitMinutes)}`
-                  : `${formatMinutes(s.distractedMinutes)} / ${formatMinutes(plan.distractionLimitMinutes)} used`
-              }
-              ratio={plan.distractionLimitMinutes ? remaining / plan.distractionLimitMinutes : 0}
-              color="#FF5950"
-            />
+            <FocusRow plan={plan} focusTotals={focusTotals} focusMinutes={s.focusMinutes} />
+            <DistractionRow plan={plan} distracted={s.distractedMinutes} />
           </>
         )}
       </section>
 
-      <section>
-        <h3>Your day so far</h3>
-        {s.totals.length === 0 ? (
-          <p className="note">No activity data yet</p>
-        ) : (
-          <>
-            <Donut totals={s.totals} total={s.capturedMinutes} />
-            <ul className="legend">
-              {s.totals.map((t) => (
-                <li key={t.category}>
-                  <span className="dot" style={{ background: t.color }} />
-                  {t.category}
-                  <span className="push-right">{formatMinutes(t.minutes)}</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </section>
+      <div className="summary-sections">
+        <section>
+          <h3>Your day so far</h3>
+          {s.totals.length === 0 ? (
+            <div className="donut-wrap">
+              <svg width="140" height="140" viewBox="0 0 140 140" aria-hidden="true">
+                <circle cx="70" cy="70" r="60" fill="none" stroke="var(--track-fill)" strokeWidth="20" />
+              </svg>
+              <p className="note">No activity data yet</p>
+            </div>
+          ) : (
+            <div className="donut-wrap">
+              <Donut totals={s.totals} total={s.capturedMinutes} />
+              <ul className="legend">
+                {s.totals.map((t) => (
+                  <li key={t.category} style={{ '--c': t.color } as React.CSSProperties}>
+                    <span className="swatch" />
+                    <span className="name">{t.category}</span>
+                    <span className="value">{formatMinutes(t.minutes)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
 
-      <section className="stats">
-        <div>
-          <span className="note">Longest focus</span>
-          <b>{formatMinutes(s.longestFocusMinutes)}</b>
-        </div>
-        <div>
-          <span className="note">Distracted</span>
-          <b>{formatMinutes(s.distractedMinutes)}</b>
-        </div>
-      </section>
-    </div>
+        <section>
+          <h3 className="small">
+            Your focus <Info size={14} color="var(--text-muted)" aria-label="From the categories counted as focus in your goals" />
+          </h3>
+          {plan.focusCategories.length === 0 ? (
+            <p className="note">Edit categories to calculate focus.</p>
+          ) : (
+            <div className="summary-card">
+              <span className="k">Total focus time</span>
+              <span className="v">{formatMinutes(s.focusMinutes)}</span>
+              <span className="k" style={{ marginTop: 10 }}>
+                Longest focus duration
+              </span>
+              <span className="v mid">{formatMinutes(s.longestFocusMinutes)}</span>
+              {s.longestFocus && <MiniTimeline cards={cards} block={s.longestFocus} />}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <h3 className="small">Distractions so far</h3>
+          <div className="summary-card distraction-card">
+            <Ring ratio={s.capturedMinutes ? s.distractedMinutes / s.capturedMinutes : 0} />
+            <div className="stats">
+              <div>
+                <div className="k">Total time captured</div>
+                <div className="v">{formatMinutes(s.capturedMinutes)}</div>
+              </div>
+              <div>
+                <div className="k">Total time distracted</div>
+                <div className="v hot">{formatMinutes(s.distractedMinutes)}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </>
   )
 }
 
-function Bar({ label, value, ratio, color }: { label: string; value: string; ratio: number; color: string }) {
+/** Focus progress: a capsule per focus category, scaled to the target. */
+function FocusRow({ plan, focusTotals, focusMinutes }: { plan: GoalPlan; focusTotals: CategoryTotal[]; focusMinutes: number }) {
+  const scale = Math.max(plan.focusTargetMinutes, focusMinutes, 1)
+  const met = !plan.skipped && plan.focusTargetMinutes > 0 && focusMinutes >= plan.focusTargetMinutes
   return (
-    <div className="bar">
-      <div className="row spread">
-        <span>{label}</span>
-        <span className="note">{value}</span>
-      </div>
-      <div className="track">
-        <div className="fill" style={{ width: `${Math.min(1, Math.max(0, ratio)) * 100}%`, background: color }} />
+    <div className="goal-row">
+      <span className="bubble">
+        <Brain size={18} color={plan.skipped ? 'var(--text-muted)' : 'var(--focus)'} />
+      </span>
+      <div className="goal-info">
+        <div className="goal-value">
+          {plan.skipped ? (
+            <span>Focus</span>
+          ) : (
+            <>
+              <b>{hours(focusMinutes)}</b>/ {hours(plan.focusTargetMinutes)} hr fulfilled
+            </>
+          )}
+        </div>
+        <div className={`goal-track ${met ? 'met' : ''}`}>
+          {!plan.skipped &&
+            focusTotals.map((t) => <span key={t.category} className="seg" style={{ width: `${(t.minutes / scale) * 100}%`, background: t.color }} />)}
+        </div>
+        {!plan.skipped && focusTotals.length > 0 && (
+          <div className="goal-legend">
+            {focusTotals.map((t) => (
+              <span key={t.category}>
+                <span className="dot" style={{ background: t.color }} />
+                {t.category}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-function Donut({ totals, total }: { totals: Array<{ category: string; minutes: number; color: string }>; total: number }) {
-  const r = 70
+/** Distraction budget: what is left of it, as a thin red fill. */
+function DistractionRow({ plan, distracted }: { plan: GoalPlan; distracted: number }) {
+  const limit = plan.distractionLimitMinutes
+  const over = distracted > limit
+  const remaining = limit ? Math.max(0, limit - distracted) / limit : 0
+  return (
+    <div className="goal-row right">
+      <span className="bubble">
+        <Shapes size={18} color={plan.skipped ? 'var(--text-muted)' : 'var(--distraction)'} />
+      </span>
+      <div className="goal-info">
+        <div className="goal-value distraction">
+          {plan.skipped ? (
+            <span>Distraction</span>
+          ) : (
+            <>
+              <b>{formatMinutes(distracted)}</b>/ {formatMinutes(limit)}
+              {over ? ' used' : ''}
+            </>
+          )}
+          <span className="budget">Distraction budget</span>
+        </div>
+        <div className="goal-track">{!plan.skipped && <span className="budget-fill" style={{ width: `${remaining * 100}%` }} />}</div>
+      </div>
+    </div>
+  )
+}
+
+/** The category donut: a base disc, sectors with small gaps, and "TOTAL / N hours / M minutes" in the middle. */
+function Donut({ totals, total }: { totals: CategoryTotal[]; total: number }) {
+  const r = 86
   const c = 2 * Math.PI * r
+  const gap = totals.length > 1 ? 2 : 0
   let offset = 0
+  const h = Math.floor(total / 60)
+  const m = total % 60
+  const lines = h ? [`${h} ${h === 1 ? 'hour' : 'hours'}`, `${m} minutes`] : [`${m} minutes`]
   return (
-    <svg className="donut" viewBox="0 0 180 180" role="img" aria-label="Time per category">
+    <svg className="donut" viewBox="0 0 205 205" role="img" aria-label={`Time per category, ${formatMinutes(total)} in total`}>
+      <circle cx="102.5" cy="102.5" r="86.75" fill="none" stroke="var(--donut-ring)" strokeWidth="31.5" />
       {totals.map((t) => {
         const len = (t.minutes / Math.max(1, total)) * c
         const el = (
           <circle
             key={t.category}
-            cx="90"
-            cy="90"
+            cx="102.5"
+            cy="102.5"
             r={r}
             fill="none"
             stroke={t.color}
-            strokeWidth="18"
-            strokeDasharray={`${len} ${c - len}`}
+            strokeWidth="26"
+            strokeDasharray={`${Math.max(0.5, len - gap)} ${c - Math.max(0.5, len - gap)}`}
             strokeDashoffset={-offset}
-            transform="rotate(-90 90 90)"
+            transform="rotate(-90 102.5 102.5)"
           />
         )
         offset += len
         return el
       })}
-      <text x="90" y="84" textAnchor="middle" className="donut-label">
+      <circle cx="102.5" cy="102.5" r="70" fill="var(--donut-center)" />
+      <text x="102.5" y={lines.length > 1 ? 86 : 94} textAnchor="middle" className="donut-total">
         TOTAL
       </text>
-      <text x="90" y="106" textAnchor="middle" className="donut-value">
-        {total >= 60 ? `${hours(total)} hours` : `${total} minutes`}
-      </text>
+      {lines.map((line, i) => (
+        <text key={i} x="102.5" y={(lines.length > 1 ? 108 : 116) + i * 20} textAnchor="middle" className="donut-value">
+          {line}
+        </text>
+      ))}
     </svg>
   )
 }
 
-function GoalEditor({ plan, categories, onChange }: { plan: GoalPlan; categories: Category[]; onChange: (p: GoalPlan) => void }) {
+/** The longest focus block on a line spanning the day's cards. */
+function MiniTimeline({ cards, block }: { cards: TimelineCard[]; block: { start: number; end: number } }) {
+  const from = Math.min(block.start, ...cards.map((c) => c.start))
+  const to = Math.max(block.end, ...cards.map((c) => c.end))
+  const at = (t: number) => `${4 + ((t - from) / Math.max(1, to - from)) * 92}%`
+  return (
+    <div className="mini-timeline" aria-label={`Longest focus from ${formatClock(block.start)} to ${formatClock(block.end)}`}>
+      <span className="base" />
+      <span className="range" style={{ left: at(block.start), width: `calc(${at(block.end)} - ${at(block.start)})`, minWidth: 6 }} />
+      <span className="t" style={{ left: at(block.start) }}>
+        {formatClock(block.start)}
+      </span>
+      <span className="t" style={{ left: at(block.end) }}>
+        {formatClock(block.end)}
+      </span>
+    </div>
+  )
+}
+
+/** Share of captured time spent distracted, as a gradient arc. */
+function Ring({ ratio }: { ratio: number }) {
+  // A plain id, so url(#…) needs no escaping.
+  const id = `ring${useId().replace(/[^\w-]/g, '')}`
+  const r = 38
+  const c = 2 * Math.PI * r
+  return (
+    <svg width="96" height="96" viewBox="0 0 96 96" role="img" aria-label={`${Math.round(ratio * 100)}% distracted`}>
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#FFE3DE" />
+          <stop offset="1" stopColor="#FF694B" />
+        </linearGradient>
+      </defs>
+      <circle cx="48" cy="48" r={r} fill="none" stroke="var(--track-border)" strokeWidth="13" />
+      <circle cx="48" cy="48" r={r} fill="none" stroke="var(--track-fill)" strokeWidth="11" />
+      {ratio > 0 && (
+        <circle
+          cx="48"
+          cy="48"
+          r={r}
+          fill="none"
+          stroke={`url(#${id})`}
+          strokeWidth="11"
+          strokeLinecap="round"
+          strokeDasharray={`${Math.min(1, ratio) * c} ${c}`}
+          transform="rotate(-90 48 48)"
+        />
+      )}
+    </svg>
+  )
+}
+
+function GoalEditor(props: { plan: GoalPlan; categories: Category[]; onChange: (p: GoalPlan) => void; onDone: () => void }) {
+  const { plan, categories, onChange } = props
   const options = Array.from({ length: 12 * 12 + 1 }, (_, i) => i * 5)
   const toggle = (list: string[], name: string) => (list.includes(name) ? list.filter((n) => n !== name) : [...list, name])
   const regular = categories.filter((c) => !c.isIdle)
   return (
     <div className="goal-editor">
-      <label className="field">
+      <label>
         Focus target
         <select value={plan.focusTargetMinutes} onChange={(e) => onChange({ ...plan, focusTargetMinutes: Number(e.target.value), skipped: false })}>
           {options.map((m) => (
@@ -161,7 +310,7 @@ function GoalEditor({ plan, categories, onChange }: { plan: GoalPlan; categories
           ))}
         </select>
       </label>
-      <label className="field">
+      <label>
         Distraction limit
         <select
           value={plan.distractionLimitMinutes}
@@ -176,29 +325,36 @@ function GoalEditor({ plan, categories, onChange }: { plan: GoalPlan; categories
       </label>
       <p className="note">Counts as focus / as distraction:</p>
       {regular.map((c) => (
-        <div key={c.id} className="row">
-          <label className="check">
+        <div key={c.id} className="cat-row">
+          <label>
             <input
               type="checkbox"
+              className="switch"
               checked={plan.focusCategories.includes(c.name)}
               onChange={() => onChange({ ...plan, focusCategories: toggle(plan.focusCategories, c.name), skipped: false })}
             />
             focus
           </label>
-          <label className="check">
+          <label>
             <input
               type="checkbox"
+              className="switch"
               checked={plan.distractionCategories.includes(c.name)}
               onChange={() => onChange({ ...plan, distractionCategories: toggle(plan.distractionCategories, c.name), skipped: false })}
             />
             distraction
           </label>
-          <span className="dot" style={{ background: c.color }} /> {c.name}
+          <span className="dot" style={{ background: c.color, width: 8, height: 8 }} /> {c.name}
         </div>
       ))}
-      <button className="link" onClick={() => onChange({ ...plan, skipped: true })}>
-        No goals today
-      </button>
+      <div className="row spread">
+        <button className="link" onClick={() => onChange({ ...plan, skipped: true })}>
+          No goals today
+        </button>
+        <button className="btn-primary" onClick={props.onDone}>
+          Done
+        </button>
+      </div>
     </div>
   )
 }

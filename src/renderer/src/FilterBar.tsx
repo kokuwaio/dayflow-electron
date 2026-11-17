@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Category } from '@shared/categories'
 
 /** How muted categories are remembered: by name, any case (like upstream). */
@@ -17,6 +17,18 @@ export function FilterBar(props: {
 }) {
   const { categories, muted } = props
   const [dragging, setDragging] = useState<number | null>(null)
+  const bar = useRef<HTMLDivElement>(null)
+  const [overflowing, setOverflowing] = useState(false)
+  // A fade marks chips hidden past the edge, only when there are some.
+  useEffect(() => {
+    const el = bar.current
+    if (!el) return
+    const check = () => setOverflowing(el.scrollWidth > el.clientWidth + 1)
+    const observer = new ResizeObserver(check)
+    observer.observe(el)
+    check()
+    return () => observer.disconnect()
+  }, [categories.length])
   const regular = categories.filter((c) => !c.isIdle)
   const idle = categories.filter((c) => c.isIdle)
 
@@ -29,7 +41,7 @@ export function FilterBar(props: {
   }
 
   return (
-    <div className="filterbar" role="toolbar" aria-label="Categories">
+    <div ref={bar} className={`filterbar ${overflowing ? 'overflowing' : ''}`} role="toolbar" aria-label="Categories">
       {[...regular, ...idle].map((c, i) => (
         <button
           key={c.id}
