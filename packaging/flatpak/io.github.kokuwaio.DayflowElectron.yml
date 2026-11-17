@@ -1,6 +1,5 @@
 # Flatpak from a local build: `make flatpak` packs the app, builds the Go
 # helper and runs flatpak-builder on this manifest; CI does the same.
-# Releases on Flathub use packaging/flatpak/flathub/ instead.
 id: io.github.kokuwaio.DayflowElectron
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'

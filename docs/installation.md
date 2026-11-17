@@ -8,11 +8,8 @@ closing the window keeps it recording; quit from the tray.
 | System | Package | File |
 | --- | --- | --- |
 | Linux x86_64 / ARM64 | Flatpak bundle | `dayflow-electron-<version>-x86_64.flatpak`, `-aarch64.flatpak` |
-| Linux | Flathub | planned, see [below](#flathub) |
-| Linux | Tarball (for packagers) | `dayflow-electron-<version>-linux-x86_64.tar.gz`, `-aarch64.tar.gz` |
 | Windows x64 / ARM64 | Installer | `dayflow-electron-<version>-win-x64.exe`, `-win-arm64.exe` |
 | macOS Apple silicon / Intel | Disk image | `dayflow-electron-<version>-mac-arm64.dmg`, `-mac-x64.dmg` |
-| macOS | Homebrew cask | `brew install --cask kokuwaio/tap/dayflow-electron` |
 
 After installing, [usage.md](usage.md) covers the first start, choosing an AI
 provider and everything else.
@@ -45,22 +42,6 @@ Remove it with
 `flatpak uninstall --user io.github.kokuwaio.DayflowElectron`; add
 `--delete-data` to remove the recordings and database too.
 
-### Flathub
-
-Not published yet. The manifest is ready in `packaging/flatpak/flathub/`; the
-submission needs a public repository and the app's own name and icon
-([release.md](release.md#flathub)). Once it is on Flathub:
-`flatpak install flathub io.github.kokuwaio.DayflowElectron`.
-
-### Tarball
-
-`dayflow-electron-<version>-linux-<arch>.tar.gz` holds the packaged app
-(`linux-unpacked/`), the Go helper, the icon, the desktop file and the
-AppStream metainfo. It is what the Flathub manifest builds from and a
-starting point for other distribution packages. The app expects to run inside
-the Flatpak sandbox (screen capture goes through the desktop portal), so use
-it for packaging, not to run the app directly.
-
 ### From source
 
 Needs Node.js 24, Go 1.27, `flatpak-builder` and the Flatpak SDK
@@ -92,16 +73,6 @@ remove it too.
 
 ## macOS
 
-### Homebrew
-
-```sh
-brew install --cask kokuwaio/tap/dayflow-electron
-```
-
-`brew upgrade --cask dayflow-electron` updates it, `brew uninstall --cask
-dayflow-electron` removes it, and `--zap` also removes your data. The cask
-installs the disk image for your Mac's processor.
-
 ### Disk image
 
 Download `dayflow-electron-<version>-mac-arm64.dmg` (Apple silicon) or
@@ -111,7 +82,7 @@ macOS 12 or later.
 ### First start
 
 The app is not signed with an Apple Developer ID or notarized yet, so macOS
-refuses the first start, whichever way you installed it. Either open it once,
+refuses the first start. Either open it once,
 then click **Open Anyway** under **System Settings → Privacy & Security**, or
 run:
 

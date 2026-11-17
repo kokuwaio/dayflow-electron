@@ -9,7 +9,7 @@ was tested on which Linux desktop.
 ## Install
 
 [installation.md](installation.md) covers every package: the Flatpak on
-Linux, the Windows installer, the macOS disk image and Homebrew cask, and
+Linux, the Windows installer, the macOS disk image, and
 building from source. The app starts with a window and a tray icon. Closing
 the window keeps it recording; quit from the tray.
 
