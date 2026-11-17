@@ -75,6 +75,16 @@ export class Store {
     return new Store(db)
   }
 
+  /**
+   * Opens the app's database for reading only (the CLI and MCP server):
+   * no migrations, no file created, and writes fail at the connection.
+   */
+  static openReadOnly(path: string): Store {
+    const db = new DatabaseSync(path, { readOnly: true })
+    db.exec('PRAGMA query_only = 1; PRAGMA busy_timeout = 2000;')
+    return new Store(db)
+  }
+
   close(): void {
     this.db.close()
   }
@@ -589,6 +599,50 @@ export class Store {
     return this.db
       .prepare('SELECT start_ts AS start, end_ts AS end, observation AS text FROM observations WHERE start_ts >= ? AND start_ts < ? ORDER BY start_ts')
       .all(from, to) as unknown as Observation[]
+  }
+
+  /** One live card. */
+  card(id: number): TimelineCard | undefined {
+    const row = this.db.prepare(`SELECT ${CARD_COLUMNS} FROM timeline_cards WHERE id = ? AND is_deleted = 0`).get(id)
+    return row ? toCard(row as unknown as CardRow) : undefined
+  }
+
+  /** Live cards overlapping [from, to), error cards included, oldest first (upstream CLI range reads). */
+  cardsOverlapping(from: number, to: number): TimelineCard[] {
+    const rows = this.db
+      .prepare(`SELECT ${CARD_COLUMNS} FROM timeline_cards WHERE start_ts < ? AND end_ts > ? AND is_deleted = 0 ORDER BY start_ts, id`)
+      .all(to, from) as unknown as CardRow[]
+    return rows.map(toCard)
+  }
+
+  /** Live cards whose title or summary contains `text` (case-insensitive for ASCII), newest first. */
+  searchCards(text: string, limit: number): TimelineCard[] {
+    const pattern = `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`
+    const rows = this.db
+      .prepare(
+        `SELECT ${CARD_COLUMNS} FROM timeline_cards
+         WHERE (title LIKE ? ESCAPE '\\' OR summary LIKE ? ESCAPE '\\') AND is_deleted = 0
+         ORDER BY start_ts DESC, id DESC LIMIT ?`
+      )
+      .all(pattern, pattern, limit) as unknown as CardRow[]
+    return rows.map(toCard)
+  }
+
+  /** The newest capture and the analysis backlog (upstream CLI fetchStatus). */
+  captureStatus(): { lastCaptureAt: number | null; pendingBatches: number; failedBatches: number } {
+    const last = this.db.prepare('SELECT MAX(captured_at) AS ts FROM screenshots WHERE is_deleted = 0').get() as { ts: number | null }
+    const counts = this.db
+      .prepare(
+        `SELECT COALESCE(SUM(CASE WHEN status IN ('pending', 'processing') THEN 1 ELSE 0 END), 0) AS pending,
+                COALESCE(SUM(CASE WHEN status LIKE 'failed%' THEN 1 ELSE 0 END), 0) AS failed
+         FROM analysis_batches`
+      )
+      .get() as { pending: number; failed: number }
+    return { lastCaptureAt: last.ts ?? null, pendingBatches: counts.pending, failedBatches: counts.failed }
+  }
+
+  countCardsInCategory(name: string): number {
+    return (this.db.prepare('SELECT COUNT(*) AS n FROM timeline_cards WHERE category = ? AND is_deleted = 0').get(name) as { n: number }).n
   }
 
   cardsForDay(day: string): TimelineCard[] {

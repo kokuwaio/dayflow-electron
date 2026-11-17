@@ -21,6 +21,11 @@ export function dayKey(ts: number): string {
   return keyOf(d)
 }
 
+/** True for a real calendar date written as "YYYY-MM-DD". */
+export function isDayKey(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && keyOf(parseKey(value)) === value
+}
+
 export function dayRange(key: string): { start: number; end: number } {
   const d = parseKey(key)
   const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), BOUNDARY_HOUR)
