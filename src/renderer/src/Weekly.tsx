@@ -8,7 +8,7 @@ import { escapeHtml } from '@shared/html'
 import type { TimelineCard } from '@shared/types'
 import type { Week } from '@shared/week'
 import { type FocusHeatmap, WEEKLY_MIN_TRACKED_MINUTES, contextShifts, donutItems, focusHeatmap, heatmapColor, sankeyLinks, trackedMinutes, treemap, workflowHeatmap } from '@shared/weekly'
-import { Chart, useDark } from './Chart'
+import { Chart, cssToken, useDark } from './Chart'
 import { LockedFeature, ProgressBar } from './LockedFeature'
 
 /** "#RRGGBB" at the given alpha, for ECharts (which cannot mix CSS colours). */
@@ -71,7 +71,8 @@ export function Weekly() {
   const isCurrent = data.week.days.includes(todayKey())
   const long = (d: string) => parseKey(d).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
   const total = charts.donut.reduce((sum, d) => sum + d.minutes, 0)
-  const ink = dark ? '#FFFFFF' : '#333333'
+  const ink = cssToken('--text-primary') || (dark ? '#FFFFFF' : '#333333')
+  const titleFont = cssToken('--font-serif')
 
   return (
     <div className="weekly">
@@ -125,8 +126,8 @@ export function Weekly() {
                     left: '35%',
                     top: 'middle',
                     textAlign: 'center',
-                    textStyle: { fontSize: 12, fontWeight: 700, color: '#B1B1B1' },
-                    subtextStyle: { fontSize: 16, fontFamily: 'Instrument Serif, serif' }
+                    textStyle: { fontSize: 12, fontWeight: 700, color: cssToken('--donut-total') },
+                    subtextStyle: { fontSize: 16, fontFamily: titleFont }
                   },
                   series: [
                     {
@@ -218,8 +219,8 @@ export function Weekly() {
                       right: 0,
                       top: 0,
                       bottom: 0,
-                      upperLabel: { show: true, height: 26, fontFamily: 'Instrument Serif, serif', fontSize: 16, color: ink },
-                      label: { fontFamily: 'Instrument Serif, serif', fontSize: 15, color: ink },
+                      upperLabel: { show: true, height: 26, fontFamily: titleFont, fontSize: 16, color: ink },
+                      label: { fontFamily: titleFont, fontSize: 15, color: ink },
                       // Category shells at 25% of their colour, app tiles at 42% (upstream's treemap).
                       levels: [
                         // A parent's background is its border colour in ECharts treemaps.

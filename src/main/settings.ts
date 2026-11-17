@@ -7,6 +7,7 @@ import { dirname } from 'node:path'
 import { safeStorage } from 'electron'
 import { sanitizeCategories } from '../shared/categories'
 import { CAPTURE_INTERVALS, DEFAULT_SETTINGS, type ProviderKind, type Settings, THEMES, type Theme } from '../shared/types'
+import { sanitizeUiStyle } from '../shared/ui-style'
 
 const KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'codex-cli']
 /** Providers that use an API key (the agent CLIs use the user's own login). */
@@ -90,6 +91,7 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
     showAppIcons: r.showAppIcons === true,
     showDailyGoalPopups: r.showDailyGoalPopups !== false,
     theme: (THEMES as readonly string[]).includes(r.theme as string) ? (r.theme as Theme) : DEFAULT_SETTINGS.theme,
+    uiStyle: sanitizeUiStyle(r.uiStyle),
     notified: sanitizeNotified(r),
     standupAttempts: {
       day: typeof r.standupAttempts?.day === 'string' ? r.standupAttempts.day : '',

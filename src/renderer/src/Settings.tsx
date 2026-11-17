@@ -5,9 +5,11 @@ import { todayKey } from '@shared/day'
 import { cliOf, needsApiKey } from '@shared/providers'
 import type { UpdateMode } from '@shared/updates'
 import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings, type Theme } from '@shared/types'
+import type { UiStyle } from '@shared/ui-style'
 import { AgentAccessSettings } from './AgentAccessSettings'
 import { Row, Section, StatusDot } from './SettingsLayout'
 import { PROVIDER_CHOICES } from './providers'
+import { applyUiStyle } from './ui-style'
 
 /** Upstream's Settings tabs that the port has (Settings/SettingsView.swift); "categories" opens Other at the category list. */
 export type SettingsTab = 'providers' | 'storage' | 'privacy' | 'agents' | 'export' | 'other' | 'categories'
@@ -432,6 +434,20 @@ function OtherTab({ settings, save }: { settings: Settings; save: Save }) {
             <option value="dark">Dark</option>
             <option value="light">Light</option>
             <option value="system">System</option>
+          </select>
+        </Row>
+        <Row label="Theme" sub="Dayflow's warm look, or Modern: flat neutral greys with one accent.">
+          <select
+            value={settings.uiStyle}
+            onChange={(e) => {
+              const uiStyle = e.target.value as UiStyle
+              applyUiStyle(uiStyle)
+              save({ uiStyle })
+            }}
+            aria-label="Theme"
+          >
+            <option value="dayflow">Dayflow</option>
+            <option value="modern">Modern</option>
           </select>
         </Row>
         <Row label="Launch Dayflow at login">

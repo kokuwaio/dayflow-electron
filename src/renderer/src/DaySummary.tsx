@@ -336,8 +336,8 @@ function Ring({ ratio }: { ratio: number }) {
     <svg width="96" height="96" viewBox="0 0 96 96" role="img" aria-label={`${Math.round(ratio * 100)}% distracted`}>
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#FFE3DE" />
-          <stop offset="1" stopColor="#FF694B" />
+          <stop offset="0" stopColor="var(--ring-from)" />
+          <stop offset="1" stopColor="var(--ring-to)" />
         </linearGradient>
       </defs>
       <circle cx="48" cy="48" r={r} fill="none" stroke="var(--track-border)" strokeWidth="13" />

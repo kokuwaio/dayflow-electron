@@ -1,10 +1,10 @@
 import type { ChatChart as Spec } from '@shared/chat-content'
 import { escapeHtml } from '@shared/html'
-import { Chart } from './Chart'
+import { Chart, cssToken } from './Chart'
 
-/** Upstream's chat chart palette (Views/UI/ChatCharts.swift). */
+/** Upstream's chat chart palette (Views/UI/ChatCharts.swift); the first colour is the theme's (--chart-1). */
 const PALETTE = ['#F96E00', '#1F6FEB', '#2E7D32', '#8E24AA', '#00897B']
-const color = (c: string | null, i: number) => c ?? PALETTE[i % PALETTE.length]!
+const color = (c: string | null, i: number) => c ?? ((i % PALETTE.length === 0 && cssToken('--chart-1')) || PALETTE[i % PALETTE.length]!)
 const grid = { left: 8, right: 8, top: 8, bottom: 4, containLabel: true }
 
 /** ECharts options for upstream's chart blocks (tooltip formatters return HTML, so labels are escaped): bar, line, stacked_bar, donut, heatmap and gantt. */
@@ -47,7 +47,7 @@ function option(spec: Spec): Record<string, unknown> {
         tooltip: { position: 'top' },
         xAxis: { type: 'category', data: spec.xLabels, splitArea: { show: true } },
         yAxis: { type: 'category', data: spec.yLabels, splitArea: { show: true } },
-        visualMap: { min: 0, max: max || 1, show: false, inRange: { color: ['#FFF4E9', color(spec.color, 0)] } },
+        visualMap: { min: 0, max: max || 1, show: false, inRange: { color: [cssToken('--chart-heat-low') || '#FFF4E9', color(spec.color, 0)] } },
         series: [{ type: 'heatmap', data: spec.values.flatMap((row, y) => row.map((v, x) => [x, y, v])) }]
       }
     }
