@@ -6,15 +6,18 @@ package main
 // unlock, when the monitors come back.
 
 import (
+	"bufio"
 	"errors"
 	"flag"
 	"fmt"
 	"image"
 	"image/jpeg"
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -40,6 +43,23 @@ const (
 	// maxSessionFailures ends the helper after that many unproductive sessions.
 	maxSessionFailures = 3
 )
+
+// blocked is set while the app reports a blocked window (password manager)
+// in front; see readBlockCommands.
+var blocked atomic.Bool
+
+// readBlockCommands reads "block" and "unblock" lines from the app.
+func readBlockCommands(r io.Reader) {
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		switch strings.TrimSpace(scanner.Text()) {
+		case "block":
+			blocked.Store(true)
+		case "unblock":
+			blocked.Store(false)
+		}
+	}
+}
 
 var (
 	errInterrupted = errors.New("interrupted")
@@ -73,6 +93,7 @@ func runCapture(args []string) error {
 	// Lock state: nothing is saved while locked, and a session that lost its
 	// streams (monitors off) restarts after unlock.
 	var locked atomic.Bool
+	go readBlockCommands(os.Stdin)
 	if err := conn.AddMatchSignal(dbus.WithMatchInterface("org.freedesktop.ScreenSaver"), dbus.WithMatchMember("ActiveChanged")); err != nil {
 		return err
 	}
@@ -92,12 +113,12 @@ func runCapture(args []string) error {
 	interrupted := make(chan os.Signal, 1)
 	signal.Notify(interrupted, os.Interrupt, syscall.SIGTERM)
 
-	// Sessions that end without saving a frame while unlocked count as
+	// Sessions that end without handling a frame while unlocked count as
 	// failures; after a few in a row the helper exits so the app backs off.
 	failures := 0
 	for attempt := 1; ; attempt++ {
-		saved := 0
-		err := runPWSession(conn, opts, &locked, interrupted, &saved)
+		framesDue := 0 // frames saved, or skipped because a blocked app was in front
+		err := runPWSession(conn, opts, &locked, interrupted, &framesDue)
 		if errors.Is(err, errInterrupted) {
 			emit("stopped", map[string]any{"reason": "interrupted"})
 			return nil
@@ -105,8 +126,8 @@ func runCapture(args []string) error {
 		if errors.Is(err, errStart) {
 			return err
 		}
-		emit("session-ended", map[string]any{"error": fmt.Sprint(err), "attempt": attempt, "saved": saved})
-		if saved > 0 || locked.Load() {
+		emit("session-ended", map[string]any{"error": fmt.Sprint(err), "attempt": attempt, "framesDue": framesDue})
+		if framesDue > 0 || locked.Load() {
 			failures = 0
 		} else if failures++; failures >= maxSessionFailures {
 			return fmt.Errorf("capture keeps failing: %w", err)
@@ -132,7 +153,7 @@ func runCapture(args []string) error {
 
 // runPWSession runs one portal session until a stream fails or we are
 // interrupted (errInterrupted).
-func runPWSession(conn *dbus.Conn, opts pwOptions, locked *atomic.Bool, interrupted <-chan os.Signal, saved *int) error {
+func runPWSession(conn *dbus.Conn, opts pwOptions, locked *atomic.Bool, interrupted <-chan os.Signal, framesDue *int) error {
 	sc, info, err := portal.StartScreenCast(conn, appID, opts.tokenFile, 4) // cursor as metadata
 	for _, w := range info.Warnings {
 		emit("warning", map[string]any{"message": w})
@@ -207,6 +228,12 @@ func runPWSession(conn *dbus.Conn, opts pwOptions, locked *atomic.Bool, interrup
 			if locked.Load() {
 				continue
 			}
+			if blocked.Load() {
+				// A blocked app is in front: save nothing, only say that a frame was due.
+				*framesDue++
+				emit("frame-skipped", map[string]any{"capturedAt": time.Now().UnixMilli(), "reason": "blocked"})
+				continue
+			}
 			idx := active
 			if idx < 0 {
 				idx = 0
@@ -242,6 +269,12 @@ func runPWSession(conn *dbus.Conn, opts pwOptions, locked *atomic.Bool, interrup
 			if err != nil {
 				return err
 			}
+			// The app may have sent "block" while we waited for the frame.
+			if blocked.Load() {
+				*framesDue++
+				emit("frame-skipped", map[string]any{"capturedAt": time.Now().UnixMilli(), "reason": "blocked"})
+				continue
+			}
 			out := frames.ScaleToHeight(rgba, opts.height)
 			now := time.Now()
 			name := filepath.Join(opts.dir, fmt.Sprintf("%s_s%d.jpg", now.Format("20060102-150405"), idx))
@@ -257,7 +290,7 @@ func runPWSession(conn *dbus.Conn, opts pwOptions, locked *atomic.Bool, interrup
 			info, _ := os.Stat(name)
 			b := out.Bounds()
 			missed = 0
-			*saved++
+			*framesDue++
 			emit("frame", map[string]any{
 				"path": name, "capturedAt": now.UnixMilli(), "stream": idx, "bytes": info.Size(),
 				"width": b.Dx(), "height": b.Dy(), "encodeMs": time.Since(start).Milliseconds(),

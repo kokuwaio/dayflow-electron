@@ -143,6 +143,27 @@ export function SettingsView({ status }: { status: AppStatus | null }) {
       </section>
 
       <section>
+        <h2>Blocked apps</h2>
+        <p className="note">
+          While one of these apps is the focused window, nothing is saved and the time shows as "Private". One rule
+          per line: an app ID (e.g. <code>org.keepassxc.KeePassXC</code>) or <code>title:</code> followed by text
+          in the window title.
+        </p>
+        <textarea
+          rows={6}
+          defaultValue={settings.blockedApps.join('\n')}
+          onBlur={(e) => save({ blockedApps: e.target.value.split('\n') })}
+        />
+        {status?.recorder.windowDetection === 'unavailable' && (
+          <p className="error">
+            Window detection is off, so blocked apps are recorded like any other window.{' '}
+            {status.recorder.windowDetectionError}
+          </p>
+        )}
+        {status?.recorder.windowDetection === 'ok' && <p className="ok">Window detection works.</p>}
+      </section>
+
+      <section>
         <h2>Storage</h2>
         <label className="field">
           Keep at most (GB)

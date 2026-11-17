@@ -5,10 +5,12 @@
 //	capture -dir D [-interval 10] [-height 1080] [-token F]
 //	        ScreenCast portal + PipeWire: one JPEG of the screen under the
 //	        mouse per interval. Pauses while locked, restarts after unlock.
+//	        Reads "block"/"unblock" lines on stdin; while blocked it saves
+//	        nothing and reports "frame-skipped" instead.
 //	watch   [-idle 300]
 //	        screen lock, sleep and idle
-//	window  active window title and app (KDE only, opt-in KWin permission;
-//	        tested in M0, not used by the app yet)
+//	window  active window title and app (KDE only, opt-in KWin permission
+//	        in Flatpak); the app uses it for blocked apps
 //	autostart -enable=true|false [-command C]
 //	        launch at login (Background portal inside Flatpak)
 package main

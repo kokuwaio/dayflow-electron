@@ -130,6 +130,10 @@ every call and has no restore token, so it cannot capture periodically.
   `wlr-foreign-toplevel-management`); without them capture falls back to the
   first screen.
 - X11, Windows and macOS were not tested in M0.
+- Blocked apps rely on the focused window from the KWin script (`window`
+  command), which needs `--talk-name=org.kde.KWin` in the Flatpak (opt-in
+  via `flatpak override`). Without it the app records normally and says so
+  in Settings. Not yet tested on a desktop with the override in place.
 - Lock detection listens to `org.freedesktop.ScreenSaver` (KDE). GNOME
   signals through `org.gnome.ScreenSaver`, which the helper does not watch
   yet.

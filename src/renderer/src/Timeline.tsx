@@ -7,6 +7,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
   Personal: '#6AADFF',
   Distraction: '#FF5950',
   Idle: '#A0AEC0',
+  Private: '#5C6B7A',
   System: '#E0A100'
 }
 

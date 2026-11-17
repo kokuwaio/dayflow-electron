@@ -48,7 +48,10 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
       Number.isFinite(Number(r.storageLimitGb)) && Number(r.storageLimitGb) >= 1
         ? Math.round(Number(r.storageLimitGb))
         : DEFAULT_SETTINGS.storageLimitGb,
-    launchAtLogin: r.launchAtLogin === true
+    launchAtLogin: r.launchAtLogin === true,
+    blockedApps: Array.isArray(r.blockedApps)
+      ? r.blockedApps.filter((x): x is string => typeof x === 'string' && x.trim() !== '').map((x) => x.trim()).slice(0, 100)
+      : [...DEFAULT_SETTINGS.blockedApps]
   }
 }
 

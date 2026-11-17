@@ -209,7 +209,12 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
 
 ### M5 Privacy, polish and release
 
-- Blocked apps (needs the active window; frames replaced by a placeholder).
+- [x] Blocked apps (KDE): while a listed app is the focused window, the
+      helper saves no frame and records a placeholder; fully blocked batches
+      become a "Private" card without a model call, and models never see
+      blocked frames. Defaults cover KeePassXC, KeePass, 1Password, Bitwarden
+      and the Passbolt web app. Needs the opt-in KWin permission in the
+      Flatpak; GNOME needs a Shell extension.
 - Private browser windows: only where the window title reveals it; upstream's
   URL-based rules need accessibility APIs (AT-SPI on Linux) and may stay
   macOS/Windows-only.

@@ -1,3 +1,5 @@
+import { DEFAULT_BLOCKLIST } from './blocklist'
+
 // Types shared by the main process and the renderer.
 
 export interface Distraction {
@@ -47,6 +49,8 @@ export interface Settings {
   captureHeight: 720 | 1080
   storageLimitGb: number
   launchAtLogin: boolean
+  /** Blocklist rules: app IDs, or "title:<text>" for window titles. */
+  blockedApps: string[]
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -58,7 +62,8 @@ export const DEFAULT_SETTINGS: Settings = {
   captureIntervalSec: 10,
   captureHeight: 1080,
   storageLimitGb: 10,
-  launchAtLogin: false
+  launchAtLogin: false,
+  blockedApps: [...DEFAULT_BLOCKLIST]
 }
 
 export const CAPTURE_INTERVALS = [1, 5, 10, 20, 30, 60] as const
@@ -67,7 +72,15 @@ export type RecorderState = 'recording' | 'paused' | 'locked' | 'sleeping' | 'ba
 
 export interface AppStatus {
   platform: string
-  recorder: { state: RecorderState; until: number | null; lastError: string | null }
+  recorder: {
+    state: RecorderState
+    until: number | null
+    lastError: string | null
+    /** The blocklist rule that currently stops frames from being saved. */
+    blockedBy: string | null
+    windowDetection: 'ok' | 'unavailable' | 'starting'
+    windowDetectionError: string | null
+  }
   analysis: { busy: boolean; lastRunAt: number | null; lastError: string | null }
   keys: Record<ProviderKind, boolean>
   framesBytes: number

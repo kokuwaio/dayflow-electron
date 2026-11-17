@@ -52,9 +52,29 @@ async function main(): Promise<void> {
   })
 
   const captureOptions = (s: Settings) => ({ dir: recordingsDir, intervalSec: s.captureIntervalSec, height: s.captureHeight })
-  const recorder = new Recorder(platform, captureOptions(settings.get()), (f) => {
-    store.insertScreenshot(f)
-  })
+  const recorder = new Recorder(
+    platform,
+    captureOptions(settings.get()),
+    (f) => {
+      if (!f.blocked || !f.filePath) {
+        store.insertScreenshot(f)
+        return
+      }
+      // A frame that raced the block: delete it and keep only a placeholder.
+      // If the delete fails, the row keeps the path so the purge removes it.
+      void unlink(f.filePath).then(
+        () => store.insertScreenshot({ ...f, filePath: '' }),
+        (err: NodeJS.ErrnoException) => {
+          if (err.code === 'ENOENT') store.insertScreenshot({ ...f, filePath: '' })
+          else {
+            log(`could not delete blocked frame ${f.filePath}: ${err.message}`)
+            store.insertScreenshot(f)
+          }
+        }
+      )
+    },
+    () => settings.get().blockedApps
+  )
 
   const providerFor = (kind: ProviderKind) => {
     const s = settings.get()
@@ -110,6 +130,7 @@ async function main(): Promise<void> {
     if (saved.captureIntervalSec !== before.captureIntervalSec || saved.captureHeight !== before.captureHeight) {
       recorder.reconfigure(captureOptions(saved))
     }
+    recorder.refreshBlocking()
     if (saved.storageLimitGb < before.storageLimitGb) await purge()
     return saved
   })

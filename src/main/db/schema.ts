@@ -97,5 +97,9 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX idx_observations_batch_id ON observations(batch_id);
   CREATE INDEX idx_observations_time_range ON observations(start_ts, end_ts);
+  `,
+  // 3: placeholders for frames not saved because a blocked app was in front
+  `
+  ALTER TABLE screenshots ADD COLUMN is_blocked INTEGER NOT NULL DEFAULT 0;
   `
 ]

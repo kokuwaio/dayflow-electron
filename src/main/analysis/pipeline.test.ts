@@ -33,9 +33,17 @@ const card = (startTime: string, endTime: string, title: string) =>
 let dir: string
 let store: Store
 
-/** 15 minutes of frames from 2:00 PM, every 10 s, written as files. */
-function recordQuarterHour() {
+/**
+ * 15 minutes of frames from 2:00 PM, every 10 s, written as files. Frames
+ * for which `blockedAt(t)` is true are placeholders, as when a password
+ * manager was in front.
+ */
+function recordQuarterHour(blockedAt: (t: number) => boolean = () => false) {
   for (let t = at(14, 0); t <= at(14, 15); t += 10) {
+    if (blockedAt(t)) {
+      store.insertScreenshot({ capturedAt: t, filePath: '', fileSize: 0, idleSeconds: 0, blocked: true })
+      continue
+    }
     const file = join(dir, `${t}.jpg`)
     writeFileSync(file, 'jpeg')
     store.insertScreenshot({ capturedAt: t, filePath: file, fileSize: 4, idleSeconds: 0 })
@@ -57,7 +65,6 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'], now: at(14, 18) * 1000 })
   dir = mkdtempSync(join(tmpdir(), 'dayflow-pipeline-'))
   store = Store.open(':memory:')
-  recordQuarterHour()
 })
 afterEach(() => {
   vi.useRealTimers()
@@ -66,6 +73,8 @@ afterEach(() => {
 })
 
 describe('Pipeline card generation', () => {
+  beforeEach(() => recordQuarterHour())
+
   it('turns a batch into the cards of a valid one-step reply', async () => {
     const primary = scriptedProvider('anthropic', 'claude', [JSON.stringify([card('2:00 PM', '2:16 PM', 'Wrote the pipeline')])])
 
@@ -145,6 +154,8 @@ const twoStepReplies = {
 }
 
 describe('Pipeline two-step path', () => {
+  beforeEach(() => recordQuarterHour())
+
   it('falls back to two steps when the one-step cards keep failing validation', async () => {
     const { provider, calls } = respondingProvider(false, { ...twoStepReplies, 'one-step': '[]' })
 
@@ -226,5 +237,50 @@ describe('Pipeline two-step path', () => {
     await pipelineWith(provider).tick()
 
     expect(store.cardsForDay('2026-11-17').map((c) => c.title)).toContain('Later work')
+  })
+})
+
+describe('Pipeline with blocked apps', () => {
+  const frameLabels = (request: GenerateRequest) =>
+    request.turns[0]!.parts.flatMap((p) => (p.type === 'text' && p.text.startsWith('Frame at ') ? [p.text] : []))
+
+  it('writes one Private card without asking any model when every frame was blocked', async () => {
+    recordQuarterHour(() => true)
+    const primary = scriptedProvider('anthropic', 'claude', [])
+
+    await pipelineWith(primary.provider).tick()
+
+    expect(primary.requests).toHaveLength(0)
+    expect(store.cardsForDay('2026-11-17')).toMatchObject([
+      { title: 'Private', category: 'Private', startTime: '2:00 PM', endTime: '2:15 PM' }
+    ])
+    expect(store.pendingBatches()).toEqual([])
+  })
+
+  it('sends the model only the frames taken while no blocked app was in front', async () => {
+    recordQuarterHour((t) => t < at(14, 7))
+    const primary = scriptedProvider('anthropic', 'claude', [JSON.stringify([card('2:07 PM', '2:16 PM', 'After the vault')])])
+
+    await pipelineWith(primary.provider).tick()
+
+    const labels = frameLabels(primary.requests[0]!)
+    expect(labels.length).toBeGreaterThan(0)
+    expect(labels.every((l) => l >= 'Frame at 2:07')).toBe(true)
+    expect(store.cardsForDay('2026-11-17')).toMatchObject([
+      { title: 'Private', startTime: '2:00 PM', endTime: '2:07 PM' },
+      { title: 'After the vault', startTime: '2:07 PM' }
+    ])
+  })
+
+  it('shows blocked time at the end of a batch as Private too', async () => {
+    recordQuarterHour((t) => t >= at(14, 10))
+    const primary = scriptedProvider('anthropic', 'claude', [JSON.stringify([card('2:00 PM', '2:10 PM', 'Before the vault')])])
+
+    await pipelineWith(primary.provider).tick()
+
+    expect(store.cardsForDay('2026-11-17')).toMatchObject([
+      { title: 'Before the vault', endTime: '2:10 PM' },
+      { title: 'Private', startTime: '2:10 PM', endTime: '2:15 PM' }
+    ])
   })
 })

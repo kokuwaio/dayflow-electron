@@ -104,6 +104,15 @@ export class Pipeline {
     }
     const span = { start: batch.start, end: batch.end }
 
+    // Placeholders of blocked apps never reach a model.
+    const visible = shots.filter((s) => !s.blocked)
+    if (visible.length === 0) {
+      store.replaceCards(span, batch.id, [privateCard(span)], batch.start)
+      store.finishBatch(batch.id, 'analyzed', 'blocked_app')
+      this.deps.onCardsChanged()
+      return 'analyzed'
+    }
+
     const idle = assessIdleBatch(shots)
     if (idle) {
       store.replaceCards(span, batch.id, [idleCard(span)], batch.start)
@@ -121,7 +130,8 @@ export class Pipeline {
 
     store.startAttempt(batch.id)
     try {
-      await this.generateWithFailover(batch, providers, shots)
+      await this.generateWithFailover(batch, providers, visible)
+      for (const span of blockedEdges(shots, visible)) store.addCards(batch.id, [privateCard(span)])
       store.finishBatch(batch.id, 'completed')
       this.lastError = null
       return 'completed'
@@ -258,6 +268,36 @@ export class Pipeline {
 
 /** The model answered, but its cards broke the timeline rules after every correction. */
 class CardValidationError extends Error {}
+
+/**
+ * Blocked stretches at the start or end of a partly blocked batch, outside the
+ * minutes the model's cards cover. Blocked time in the middle is folded into
+ * the surrounding card (its frames never reach the model).
+ */
+function blockedEdges(shots: Screenshot[], visible: Screenshot[]): Array<{ start: number; end: number }> {
+  const first = shots[0]
+  const last = shots[shots.length - 1]
+  const firstVisible = visible[0]
+  const lastVisible = visible[visible.length - 1]
+  if (!first || !last || !firstVisible || !lastVisible) return []
+  const edges: Array<{ start: number; end: number }> = []
+  if (first.blocked) edges.push({ start: first.capturedAt, end: Math.floor(firstVisible.capturedAt / 60) * 60 })
+  if (last.blocked) edges.push({ start: Math.floor(lastVisible.capturedAt / 60) * 60 + 60, end: last.capturedAt })
+  return edges.filter((e) => e.end - e.start >= 60)
+}
+
+function privateCard(span: { start: number; end: number }): NewCard {
+  return {
+    ...span,
+    title: 'Private',
+    category: 'Private',
+    subcategory: '',
+    summary: 'Not recorded: a blocked app, such as a password manager, was in front.',
+    detailedSummary: '',
+    distractions: [],
+    appSites: {}
+  }
+}
 
 function idleCard(span: { start: number; end: number }): NewCard {
   return {

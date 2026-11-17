@@ -6,9 +6,14 @@ import { type ChildProcess, spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline'
-import type { CaptureHandlers, CaptureOptions, Platform, SessionHandlers, Stoppable } from './types'
+import type { CaptureHandle, CaptureHandlers, CaptureOptions, Platform, SessionHandlers, Stoppable, WindowHandlers } from './types'
 
 type HelperEvent = { type: string; ts: number; [key: string]: unknown }
+
+/** A helper event's capture time in Unix seconds. */
+const eventSeconds = (e: HelperEvent) => Math.floor(Number(e.capturedAt ?? e.ts) / 1000)
+
+const onKde = () => /KDE/i.test(process.env.XDG_CURRENT_DESKTOP ?? '')
 
 function findHelper(appPath: string, resourcesPath: string): string {
   const candidates = [
@@ -33,7 +38,8 @@ function runHelper(
   onEvent: (e: HelperEvent) => void,
   onExit: (code: number | null, lastError: string | null) => void
 ): HelperRun {
-  const child = spawn(helper, args, { stdio: ['ignore', 'pipe', 'pipe'] })
+  const child = spawn(helper, args, { stdio: ['pipe', 'pipe', 'pipe'] })
+  child.stdin!.on('error', () => {}) // the helper may exit before reading
   let lastError: string | null = null
   let stopping = false
   createInterface({ input: child.stdout! }).on('line', (line) => {
@@ -81,21 +87,67 @@ export function linuxPlatform(opts: LinuxOptions): Platform {
   return {
     name: 'linux',
 
-    startCapture(options: CaptureOptions, handlers: CaptureHandlers): Stoppable {
-      return runHelper(
+    startCapture(options: CaptureOptions, handlers: CaptureHandlers): CaptureHandle {
+      const run = runHelper(
         helper,
         ['capture', '-dir', options.dir, '-interval', String(options.intervalSec), '-height', String(options.height), '-token', tokenFile],
         (e) => {
-          if (e.type === 'frame' && typeof e.path === 'string') {
+          if (e.type === 'frame-skipped') {
+            handlers.skipped(eventSeconds(e))
+          } else if (e.type === 'frame' && typeof e.path === 'string') {
             handlers.frame({
               filePath: e.path,
-              capturedAt: Math.floor(Number(e.capturedAt ?? e.ts) / 1000),
+              capturedAt: eventSeconds(e),
               bytes: Number(e.bytes ?? 0)
             })
           }
         },
         (code, lastError) => handlers.failed(lastError ?? `capture helper exited (${code})`)
       )
+      return {
+        stop: () => run.stop(),
+        // The helper reads "block"/"unblock" lines and saves nothing while blocked.
+        setBlocked: (blocked) => {
+          if (run.child.stdin?.writable) run.child.stdin.write(blocked ? 'block\n' : 'unblock\n')
+        }
+      }
+    },
+
+    watchActiveWindow(handlers: WindowHandlers): Stoppable {
+      let run: HelperRun | null = null
+      let stopped = false
+      let retry: ReturnType<typeof setTimeout> | null = null
+      const start = () => {
+        let reported = false
+        run = runHelper(
+          helper,
+          ['window'],
+          (e) => {
+            if (e.type !== 'window') return
+            reported = true
+            handlers.window({ app: String(e.app ?? ''), title: String(e.title ?? '') })
+          },
+          (code, lastError) => {
+            let reason = lastError ?? `window watcher exited (${code})`
+            if (!onKde()) reason = 'Window detection works on KDE Plasma only so far.'
+            else if (process.env.FLATPAK_ID && /KWin/.test(reason)) {
+              reason = `Window detection needs KWin access. Run "flatpak override --user --talk-name=org.kde.KWin ${process.env.FLATPAK_ID}" once, then restart the app.`
+            }
+            handlers.unavailable(reason)
+            // A watcher that worked and crashed comes back soon; a missing
+            // permission only changes with an app restart.
+            if (!stopped) retry = setTimeout(start, reported ? 10_000 : 5 * 60_000)
+          }
+        )
+      }
+      start()
+      return {
+        stop() {
+          stopped = true
+          if (retry) clearTimeout(retry)
+          run?.stop()
+        }
+      }
     },
 
     watchSession({ idleSec }, handlers: SessionHandlers): Stoppable {

@@ -20,6 +20,8 @@ export interface Screenshot {
   filePath: string
   fileSize: number
   idleSeconds: number | null
+  /** A placeholder: a blocked app was in front, so nothing was saved. */
+  blocked: boolean
 }
 
 export interface Batch {
@@ -85,10 +87,12 @@ export class Store {
     }
   }
 
-  insertScreenshot(s: Omit<Screenshot, 'id'>): number {
+  insertScreenshot(s: Omit<Screenshot, 'id' | 'blocked'> & { blocked?: boolean }): number {
     const r = this.db
-      .prepare('INSERT INTO screenshots (captured_at, file_path, file_size, idle_seconds_at_capture) VALUES (?, ?, ?, ?)')
-      .run(s.capturedAt, s.filePath, s.fileSize, s.idleSeconds)
+      .prepare(
+        'INSERT INTO screenshots (captured_at, file_path, file_size, idle_seconds_at_capture, is_blocked) VALUES (?, ?, ?, ?, ?)'
+      )
+      .run(s.capturedAt, s.filePath, s.fileSize, s.idleSeconds, s.blocked ? 1 : 0)
     return Number(r.lastInsertRowid)
   }
 
@@ -101,7 +105,8 @@ export class Store {
            AND id NOT IN (SELECT screenshot_id FROM batch_screenshots)
          ORDER BY captured_at ASC`
       )
-      .all(since) as unknown as Screenshot[]
+      .all(since)
+      .map(toScreenshot)
   }
 
   createBatch(plan: { start: number; end: number; shotIds: number[] }): number {
@@ -131,7 +136,8 @@ export class Store {
          WHERE bs.batch_id = ? AND s.is_deleted = 0
          ORDER BY s.captured_at ASC`
       )
-      .all(batchId) as unknown as Screenshot[]
+      .all(batchId)
+      .map(toScreenshot)
   }
 
   pendingBatches(): Batch[] {
@@ -251,28 +257,37 @@ export class Store {
                       (SELECT id FROM analysis_batches WHERE batch_start_ts > :keepAfter))`
         )
         .run({ from: span.start, to: span.end, batch: batchId, keepAfter: keepAfter ?? Number.MAX_SAFE_INTEGER })
-      const insert = this.db.prepare(
-        `INSERT INTO timeline_cards (batch_id, start, end, start_ts, end_ts, day, title, summary, category,
-           subcategory, detailed_summary, metadata)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-      for (const c of cards) {
-        insert.run(
-          batchId,
-          formatClock(c.start),
-          formatClock(c.end),
-          c.start,
-          c.end,
-          dayKey(c.start),
-          c.title,
-          c.summary,
-          c.category,
-          c.subcategory,
-          c.detailedSummary,
-          JSON.stringify({ distractions: c.distractions, appSites: c.appSites })
-        )
-      }
+      this.insertCards(batchId, cards)
     })
+  }
+
+  /** Adds cards without replacing anything. */
+  addCards(batchId: number, cards: NewCard[]): void {
+    this.tx(() => this.insertCards(batchId, cards))
+  }
+
+  private insertCards(batchId: number, cards: NewCard[]): void {
+    const insert = this.db.prepare(
+      `INSERT INTO timeline_cards (batch_id, start, end, start_ts, end_ts, day, title, summary, category,
+         subcategory, detailed_summary, metadata)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    for (const c of cards) {
+      insert.run(
+        batchId,
+        formatClock(c.start),
+        formatClock(c.end),
+        c.start,
+        c.end,
+        dayKey(c.start),
+        c.title,
+        c.summary,
+        c.category,
+        c.subcategory,
+        c.detailedSummary,
+        JSON.stringify({ distractions: c.distractions, appSites: c.appSites })
+      )
+    }
   }
 
   /** Puts a "Processing failed" card over the batch's time, like upstream. */
@@ -349,7 +364,12 @@ const CARD_COLUMNS = `id, batch_id AS batchId, start AS startTime, end AS endTim
   day, title, summary, category, subcategory, detailed_summary AS detailedSummary, metadata`
 const OVERLAPS = '((start_ts < :to AND end_ts > :from) OR (start_ts >= :from AND start_ts < :to)) AND is_deleted = 0'
 
+const toScreenshot = (row: unknown): Screenshot => {
+  const r = row as Omit<Screenshot, 'blocked'> & { blocked: number }
+  return { ...r, blocked: r.blocked === 1 }
+}
+
 const SHOT_COLUMNS =
-  'id, captured_at AS capturedAt, file_path AS filePath, file_size AS fileSize, idle_seconds_at_capture AS idleSeconds'
+  'id, captured_at AS capturedAt, file_path AS filePath, file_size AS fileSize, idle_seconds_at_capture AS idleSeconds, is_blocked AS blocked'
 const BATCH_COLUMNS =
   'id, batch_start_ts AS start, batch_end_ts AS end, status, reason, attempts'

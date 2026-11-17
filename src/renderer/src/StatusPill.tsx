@@ -10,7 +10,7 @@ export function StatusPill({ status, onChange }: { status: AppStatus; onChange: 
     <div className="status">
       <button className={`pill ${state}`} onClick={() => setOpen(!open)} aria-expanded={open}>
         <span className="dot" />
-        {describeRecorder(state, until)}
+        {status.recorder.blockedBy && state === 'recording' ? 'Hidden: blocked app in front' : describeRecorder(state, until)}
       </button>
       {open && (
         <div className="menu" role="menu">

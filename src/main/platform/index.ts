@@ -7,10 +7,14 @@ function unsupportedPlatform(name: string, message: string): Platform {
     name,
     startCapture(_options, handlers) {
       const timer = setTimeout(() => handlers.failed(message), 0)
-      return { stop: () => clearTimeout(timer) }
+      return { stop: () => clearTimeout(timer), setBlocked() {} }
     },
     watchSession() {
       return { stop() {} }
+    },
+    watchActiveWindow(handlers) {
+      const timer = setTimeout(() => handlers.unavailable(message), 0)
+      return { stop: () => clearTimeout(timer) }
     },
     setAutostart: () => Promise.reject(new Error(message))
   }
