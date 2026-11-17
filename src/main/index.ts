@@ -14,7 +14,9 @@ import { DEEP_LINK_SCHEME, deepLinkAction } from '../shared/deep-link'
 import { isAgentClient } from '../shared/agent-clients'
 import { type StandupDraft, accessProgress } from '../shared/daily'
 import type { FrameRef } from '../shared/media'
-import { type GoalPlan, defaultGoalPlan } from '../shared/day-summary'
+import { type GoalPlan, defaultGoalPlan, summarizeDay } from '../shared/day-summary'
+import { type GoalContext, minutesByCategory } from '../shared/goal-flow'
+import { REVIEW_RATINGS, type ReviewRating, cardsToReviewPrompt, unreviewedCards } from '../shared/review'
 import { exportFileName, rangeMarkdown, timelineText, weekText } from '../shared/export'
 import { weekOf } from '../shared/week'
 import { WEEKLY_MIN_TRACKED_MINUTES, trackedMinutes } from '../shared/weekly'
@@ -331,6 +333,35 @@ async function main(): Promise<void> {
   })
   ipcMain.handle('goals:set', (_e, day: string, plan: GoalPlan) => {
     store.setGoalPlan(day, plan, settings.get().categories)
+  })
+  // What the goal pop-up needs: whether to open, yesterday's review and the reference stats.
+  ipcMain.handle('goals:context', (_e, day: string): GoalContext => {
+    const categories = settings.get().categories
+    const totalsOf = (d: string, plan: GoalPlan) => summarizeDay(store.cardsForDay(d), categories, plan, d)
+    const fallback = defaultGoalPlan(categories)
+    const yesterday = shiftDay(day, -1)
+    const yesterdayPlan = store.hasOwnGoalPlan(yesterday) ? store.goalPlan(yesterday, categories) : null
+    const yesterdayStats = totalsOf(yesterday, yesterdayPlan ?? fallback)
+    const week: Record<string, number> = {}
+    for (let i = 1; i <= 7; i++) for (const t of totalsOf(shiftDay(day, -i), fallback).totals) week[t.category] = (week[t.category] ?? 0) + t.minutes
+    return {
+      activeDays: store.activeCardDays(day),
+      skipStreak: store.goalSkipStreak(day),
+      hasOwnPlan: store.hasOwnGoalPlan(day),
+      yesterday: yesterdayPlan && { plan: yesterdayPlan, focusMinutes: yesterdayStats.focusMinutes, distractedMinutes: yesterdayStats.distractedMinutes, focusTotals: yesterdayStats.totals.filter((t) => yesterdayPlan.focusCategories.some((n) => n.trim().toLowerCase() === t.category.trim().toLowerCase())) },
+      yesterdayMinutes: minutesByCategory(yesterdayStats.totals),
+      weekMinutes: week
+    }
+  })
+  // Timeline review (upstream TimelineReviewOverlay): ratings per time range, and how many cards still need one.
+  ipcMain.handle('review:get', (_e, day: string) => {
+    const segments = store.reviewRatings(dayRange(day))
+    const count = unreviewedCards(store.cardsForDay(day), segments, day).length
+    const recent = store.hasReviewRatingSince(Math.floor(Date.now() / 1000) - 7 * 86400)
+    return { segments, toReview: cardsToReviewPrompt(count, { hasAny: store.hasAnyReviewRating(), hasRecent: recent }) }
+  })
+  ipcMain.handle('review:rate', (_e, span: Span, rating: ReviewRating) => {
+    if (REVIEW_RATINGS.includes(rating)) store.applyReviewRating(span, rating)
   })
   ipcMain.handle('clipboard:write', (_e, text: string) => {
     if (typeof text === 'string') clipboard.writeText(text.slice(0, 100_000))

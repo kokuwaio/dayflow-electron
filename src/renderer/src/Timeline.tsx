@@ -3,11 +3,14 @@ import { Calendar, Check, ChevronLeft, ChevronRight, Copy, Pencil } from 'lucide
 import { dayChanged, weekTrackedMinutes } from '@shared/canvas'
 import { type Category, PRIVATE_CATEGORY, SYSTEM_CATEGORY } from '@shared/categories'
 import { parseKey, shiftDay, todayKey } from '@shared/day'
+import type { ReviewSegment } from '@shared/review'
 import type { AppStatus, Rating, TimelineCard } from '@shared/types'
 import type { DayCards, Week } from '@shared/week'
+import { CalendarPopover } from './CalendarPopover'
 import { CardDetail } from './CardDetail'
 import { DayCanvas } from './DayCanvas'
 import { DaySummary } from './DaySummary'
+import { ReviewOverlay } from './ReviewOverlay'
 import { FilterBar } from './FilterBar'
 import { PausePill } from './PausePill'
 import type { SettingsTab } from './Settings'
@@ -55,8 +58,10 @@ export function Timeline(props: { status: AppStatus | null; onStatusChange: (s: 
   const [now, setNow] = useState(nowSec)
   const [scrollToNow, setScrollToNow] = useState(0)
   const [footerHidden, setFooterHidden] = useState(false)
+  const [review, setReview] = useState<{ segments: ReviewSegment[]; toReview: number } | null>(null)
+  const [reviewing, setReviewing] = useState(false)
   const lastSeenDay = useRef(todayKey())
-  const datePicker = useRef<HTMLInputElement>(null)
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
   const load = useCallback(() => {
     // Only the newest request may update the view, so fast paging cannot show an older week.
@@ -68,6 +73,7 @@ export function Timeline(props: { status: AppStatus | null; onStatusChange: (s: 
     })
     // The week also feeds "N hours tracked this week" in day mode.
     void window.dayflow.getWeek(day).then((w) => id === loadId.current && setWeek(w))
+    void window.dayflow.getReview(day).then((r) => id === loadId.current && setReview(r))
     void window.dayflow.getSettings().then((s) => {
       setCategories(s.categories)
       setShowIcons(s.showAppIcons)
@@ -125,18 +131,28 @@ export function Timeline(props: { status: AppStatus | null; onStatusChange: (s: 
                 <ChevronRight size={24} strokeWidth={1.5} />
               </button>
             </div>
-            <button className="btn-glass cal-pill" aria-label="Pick a date" onClick={() => datePicker.current?.showPicker()}>
-              <Calendar size={16} />
-              <input
-                ref={datePicker}
-                type="date"
-                tabIndex={-1}
-                aria-hidden="true"
-                value={day}
-                max={today}
-                onChange={(e) => e.target.value && goTo(e.target.value)}
-              />
-            </button>
+            <div className="cal-anchor">
+              <button
+                className={`btn-glass cal-pill ${calendarOpen ? 'open' : ''}`}
+                aria-label="Pick a date"
+                aria-expanded={calendarOpen}
+                onClick={() => setCalendarOpen(!calendarOpen)}
+              >
+                <Calendar size={16} />
+              </button>
+              {calendarOpen && (
+                <CalendarPopover
+                  day={day}
+                  today={today}
+                  mode={mode}
+                  onPick={(next) => {
+                    setCalendarOpen(false)
+                    goTo(next)
+                  }}
+                  onClose={() => setCalendarOpen(false)}
+                />
+              )}
+            </div>
             <div className="segment" role="group" aria-label="View">
               <span className={`thumb ${mode}`} />
               {(['day', 'week'] as const).map((m) => (
@@ -204,6 +220,16 @@ export function Timeline(props: { status: AppStatus | null; onStatusChange: (s: 
           />
         )}
 
+        {mode === 'day' && (review?.toReview ?? 0) > 0 && (
+          <button className="review-badge" aria-label={`${review!.toReview} cards to review`} onClick={() => setReviewing(true)}>
+            <span className="review-badge-icon" aria-hidden="true">
+              <span />
+              <span>{review!.toReview}</span>
+            </span>
+            Review cards
+          </button>
+        )}
+
         <footer className="tl-footer">
           <button
             className="copy-btn"
@@ -241,10 +267,28 @@ export function Timeline(props: { status: AppStatus | null; onStatusChange: (s: 
             />
           ) : (
             <div className="inspector-scroll">
-              <DaySummary day={day} cards={cards} categories={categories} recorder={props.status?.recorder.state ?? null} />
+              <DaySummary
+                day={day}
+                cards={cards}
+                categories={categories}
+                recorder={props.status?.recorder.state ?? null}
+                review={review}
+                onReview={() => setReviewing(true)}
+              />
             </div>
           )}
         </aside>
+      )}
+      {reviewing && (
+        <ReviewOverlay
+          day={day}
+          cards={cards}
+          colorOf={colorOf}
+          onClose={() => {
+            setReviewing(false)
+            load()
+          }}
+        />
       )}
     </div>
   )

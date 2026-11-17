@@ -442,6 +442,15 @@ function OtherTab({ settings, save }: { settings: Settings; save: Save }) {
         >
           <input type="checkbox" className="switch" checked={settings.showAppIcons} onChange={(e) => save({ showAppIcons: e.target.checked })} aria-label="Show icons" />
         </Row>
+        <Row label="Show daily goal popups" sub="When off, Dayflow won't automatically open goal setup or yesterday's review after 4am.">
+          <input
+            type="checkbox"
+            className="switch"
+            checked={settings.showDailyGoalPopups}
+            onChange={(e) => save({ showDailyGoalPopups: e.target.checked })}
+            aria-label="Show daily goal popups"
+          />
+        </Row>
       </Section>
       <CategoryEditor categories={settings.categories} save={save} />
     </>

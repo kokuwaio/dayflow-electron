@@ -103,6 +103,8 @@ export interface Settings {
   standupAttempts: { day: string; count: number }
   /** What the chat model remembers about the user ("Profile: …\nStyle: …"), from its memory blocks. */
   chatMemory: string
+  /** Open the goal pop-up by itself on the first visit after 4 AM (upstream "Show daily goal popups"). */
+  showDailyGoalPopups: boolean
   /** AI tools (CLI, MCP) may change categories, activities and goals through the running app. Off by default. */
   allowEdits: boolean
 }
@@ -152,6 +154,7 @@ export const DEFAULT_SETTINGS: Settings = {
   promptOverrides: { title: '', summary: '', detailedSummary: '' },
   theme: 'dark',
   showAppIcons: false,
+  showDailyGoalPopups: true,
   onboarded: false,
   notified: { firstCards: false, weeklyUnlock: false, problemDays: {} },
   standupAttempts: { day: '', count: 0 },

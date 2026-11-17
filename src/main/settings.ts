@@ -88,6 +88,7 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
       detailedSummary: overrideText(r.promptOverrides?.detailedSummary)
     },
     showAppIcons: r.showAppIcons === true,
+    showDailyGoalPopups: r.showDailyGoalPopups !== false,
     theme: (THEMES as readonly string[]).includes(r.theme as string) ? (r.theme as Theme) : DEFAULT_SETTINGS.theme,
     notified: sanitizeNotified(r),
     standupAttempts: {

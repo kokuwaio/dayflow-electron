@@ -4,6 +4,7 @@ import { DatabaseSync, backup } from 'node:sqlite'
 import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from '../../shared/categories'
 import { dayKey, dayRange, formatClock } from '../../shared/day'
 import type { GoalPlan } from '../../shared/day-summary'
+import type { ReviewRating, ReviewSegment } from '../../shared/review'
 import type { AppSites, CardEdit, ChatConversation, ChatRole, ChatStoredMessage, Distraction, Rating, StandupEntry, TimelineCard } from '../../shared/types'
 import type { Observation } from '../analysis/observations'
 import type { StoredFrame } from '../retention'
@@ -310,6 +311,41 @@ export class Store {
   }
 
   /**
+   * Rates a time range distracted, neutral or focused (upstream
+   * applyReviewRating): overlapping ratings keep only their parts outside it.
+   */
+  applyReviewRating(span: Span, rating: ReviewRating): void {
+    if (span.end <= span.start) return
+    this.tx(() => {
+      const overlapping = this.db
+        .prepare('SELECT id, start_ts AS start, end_ts AS end, rating FROM timeline_review_ratings WHERE NOT (end_ts <= ? OR start_ts >= ?)')
+        .all(span.start, span.end) as unknown as Array<ReviewSegment & { id: number }>
+      const insert = this.db.prepare('INSERT INTO timeline_review_ratings (start_ts, end_ts, rating) VALUES (?, ?, ?)')
+      for (const r of overlapping) {
+        this.db.prepare('DELETE FROM timeline_review_ratings WHERE id = ?').run(r.id)
+        if (r.start < span.start) insert.run(r.start, Math.min(span.start, r.end), r.rating)
+        if (r.end > span.end) insert.run(Math.max(span.end, r.start), r.end, r.rating)
+      }
+      insert.run(span.start, span.end, rating)
+    })
+  }
+
+  reviewRatings(span: Span): ReviewSegment[] {
+    return this.db
+      .prepare('SELECT start_ts AS start, end_ts AS end, rating FROM timeline_review_ratings WHERE NOT (end_ts <= ? OR start_ts >= ?) ORDER BY start_ts')
+      .all(span.start, span.end) as unknown as ReviewSegment[]
+  }
+
+  hasAnyReviewRating(): boolean {
+    return this.db.prepare('SELECT 1 FROM timeline_review_ratings LIMIT 1').get() !== undefined
+  }
+
+  /** Whether a rating ends after `since` (upstream hasReviewRatingInRecentTimelineDays). */
+  hasReviewRatingSince(since: number): boolean {
+    return this.db.prepare('SELECT 1 FROM timeline_review_ratings WHERE end_ts > ? LIMIT 1').get(since) !== undefined
+  }
+
+  /**
    * Starts batches over, like upstream's reprocessing: they become pending
    * with no attempts, and their cards and observations go. A batch that is
    * being analyzed right now is left alone. Returns the ids that were reset.
@@ -372,6 +408,22 @@ export class Store {
       distractionCategories: names('distraction'),
       skipped: row.day === day && row.skipped === 1
     }
+  }
+
+  hasOwnGoalPlan(day: string): boolean {
+    return this.db.prepare('SELECT 1 FROM day_goals WHERE day = ?').get(day) !== undefined
+  }
+
+  /** Skipped days in a row before `day`, newest first, at most five (upstream StorageManager+DayGoals). */
+  goalSkipStreak(day: string): number {
+    const rows = this.db.prepare('SELECT is_skipped AS skipped FROM day_goals WHERE day < ? ORDER BY day DESC LIMIT 5').all(day) as Array<{ skipped: number }>
+    const confirmed = rows.findIndex((r) => r.skipped !== 1)
+    return confirmed < 0 ? rows.length : confirmed
+  }
+
+  /** Days with cards, leaving out `day` itself (upstream's active days for the goal pop-up). */
+  activeCardDays(day: string): number {
+    return (this.db.prepare('SELECT COUNT(DISTINCT day) AS n FROM timeline_cards WHERE is_deleted = 0 AND day <> ?').get(day) as { n: number }).n
   }
 
   setGoalPlan(day: string, plan: GoalPlan, categories: Category[]): void {
