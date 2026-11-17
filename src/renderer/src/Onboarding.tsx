@@ -7,8 +7,9 @@ import { useEffect, useState } from 'react'
 import { Check, ChevronLeft, ChevronRight, Shield, Sun } from 'lucide-react'
 import { CATEGORY_PRESETS, presetCategories } from '@shared/categories'
 import { cliOf } from '@shared/providers'
+import { type PermissionRow, type ScreenPermission, type WindowCheck, permissionsView } from '@shared/permissions'
 import { type CliName, DEFAULT_SETTINGS, type ProviderKind, type Settings } from '@shared/types'
-import { CommandBlock } from './SettingsLayout'
+import { CommandBlock, StatusDot } from './SettingsLayout'
 
 type Step = 'intro' | 'role' | 'provider' | 'setup' | 'permissions' | 'done'
 /** Filled ring segments per step (upstream OnboardingFlow: 6 segments; the video, referral and goal steps are not ported). */
@@ -59,7 +60,7 @@ const CLI_INSTALL: Record<CliName, { install: string; login: string; product: st
 }
 
 export function Onboarding({ settings, platform, onDone }: { settings: Settings; platform: string; onDone: () => void }) {
-  const [step, setStep] = useState<Step>('intro')
+  const [step, setStep] = useState<Step>(resumeStep)
   const [role, setRole] = useState<string | null>(null)
   const [draft, setDraft] = useState(settings)
   const [column, setColumn] = useState<Column | null>(null)
@@ -119,7 +120,7 @@ export function Onboarding({ settings, platform, onDone }: { settings: Settings;
         {step === 'setup' && column && (
           <ProviderWizard column={column} draft={draft} save={save} onBack={() => setStep('provider')} onDone={() => setStep('permissions')} />
         )}
-        {step === 'permissions' && <Permissions platform={platform} onBack={() => setStep('setup')} onNext={() => setStep('done')} />}
+        {step === 'permissions' && <Permissions platform={platform} onBack={() => setStep(column ? 'setup' : 'provider')} onNext={() => setStep('done')} />}
         {step === 'done' && (
           <div className="onb-center">
             <span className="onb-logo" aria-hidden="true">
@@ -423,31 +424,72 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
   )
 }
 
-/** "Permissions": what recording needs on this platform (upstream ScreenRecordingPermissionView). */
+/** Set before Quit and Reopen, so the restarted app comes back to the Permissions step (upstream keeps the step too). */
+const RESUME_KEY = 'onboardingResume'
+
+function resumeStep(): Step {
+  try {
+    const step = localStorage.getItem(RESUME_KEY)
+    localStorage.removeItem(RESUME_KEY)
+    return step === 'permissions' ? 'permissions' : 'intro'
+  } catch {
+    return 'intro'
+  }
+}
+
+/**
+ * "Permissions": one row per permission recording needs here, with its live
+ * state and a Grant button (upstream ScreenRecordingPermissionView,
+ * SystemPermissionRow). The rows and whether Next is enabled come from
+ * permissionsView (src/shared/permissions.ts).
+ */
 function Permissions({ platform, onBack, onNext }: { platform: string; onBack: () => void; onNext: () => void }) {
-  const rows: Array<{ title: string; detail: string }> =
-    platform === 'linux'
-      ? [
-          {
-            title: 'Screen sharing',
-            detail:
-              'When you launch, your desktop asks which screens to share. Choose all screens and allow restoring the permission, so it does not ask again. The app keeps only the screen under your mouse.'
-          },
-          {
-            title: 'Window detection (optional)',
-            detail:
-              'Blocked apps such as password managers are left out of recordings only where the app can see the active window: on KDE Plasma, after a one-time command in Settings → Privacy. Elsewhere, pause recording before opening a password manager.'
-          }
-        ]
-      : platform === 'darwin'
-        ? [
-            {
-              title: 'Screen Recording',
-              detail:
-                'Periodic screenshots let Dayflow Electron write your timeline for you. macOS asks for the Screen Recording permission on the first capture: allow it in System Settings → Privacy & Security → Screen Recording, then quit and reopen the app.'
-            }
-          ]
-        : [{ title: 'Nothing to allow', detail: 'Windows needs no permission for screenshots. Recording starts as soon as you launch.' }]
+  const [screen, setScreen] = useState<ScreenPermission | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [windowCheck, setWindowCheck] = useState<WindowCheck>(CHECKING_WINDOW)
+
+  // macOS: re-check twice a second while the user is in System Settings (upstream SystemPermissionsMonitor).
+  useEffect(() => {
+    let live = true
+    const load = () => void window.dayflow.getScreenPermission().then((p) => live && setScreen(p))
+    load()
+    const timer = platform === 'darwin' ? setInterval(load, 500) : undefined
+    return () => {
+      live = false
+      clearInterval(timer)
+    }
+  }, [platform])
+
+  const [windowRun, setWindowRun] = useState(0)
+  useEffect(() => {
+    if (platform !== 'linux') return
+    let live = true
+    setWindowCheck(CHECKING_WINDOW)
+    void window.dayflow.checkWindowDetection().then((c) => live && setWindowCheck(c))
+    return () => {
+      live = false
+    }
+  }, [platform, windowRun])
+
+  const grant = async () => {
+    setBusy(true)
+    setError(null)
+    const result = await window.dayflow.requestScreenPermission()
+    setBusy(false)
+    if (!result.ok) setError(result.message)
+    setScreen(await window.dayflow.getScreenPermission())
+  }
+  const relaunch = () => {
+    try {
+      localStorage.setItem(RESUME_KEY, 'permissions')
+    } catch {
+      // Without storage the app restarts at the beginning of the setup.
+    }
+    void window.dayflow.relaunch()
+  }
+
+  const view = permissionsView({ platform, screen: screen?.screen ?? null, requested: screen?.requested ?? false, busy, error, window: windowCheck })
   return (
     <div className={`onb-perms ${platform === 'darwin' ? '' : 'single'}`}>
       <div className="onb-perms-left">
@@ -461,15 +503,12 @@ function Permissions({ platform, onBack, onNext }: { platform: string; onBack: (
           <p>Dayflow Electron stores all recordings locally on your computer and sends screenshots only to the AI provider you chose.</p>
           <p>You are always in control. You can pause or turn off Dayflow Electron whenever you like.</p>
         </div>
-        {rows.map((r) => (
-          <div key={r.title} className="perm-row">
-            <b>{r.title}</b>
-            <span>{r.detail}</span>
-          </div>
+        {view.rows.map((r) => (
+          <PermissionCard key={r.id} row={r} onGrant={() => void grant()} onRelaunch={relaunch} onRecheck={() => setWindowRun((n) => n + 1)} />
         ))}
       </div>
       {platform === 'darwin' && (
-        // A picture of macOS's Screen Recording list, not controls; other systems ask in their own dialog.
+        // A picture of macOS's Screen Recording list next to the rows, like upstream's; not controls.
         <figure className="onb-perms-mock" aria-hidden="true">
           <div className="mock-window">
             <div className="mock-bar">
@@ -497,13 +536,55 @@ function Permissions({ platform, onBack, onNext }: { platform: string; onBack: (
         </figure>
       )}
       <div className="onb-perms-actions">
+        {view.skippable && (
+          <button className="onb-skip" onClick={onNext}>
+            Skip for now
+          </button>
+        )}
         <button className="onb-secondary" onClick={onBack}>
           Back
         </button>
-        <button className="onb-next static" onClick={onNext}>
+        <button className="onb-next static" disabled={!view.canContinue} onClick={onNext}>
           Next <ChevronRight size={14} />
         </button>
       </div>
+    </div>
+  )
+}
+
+const CHECKING_WINDOW: WindowCheck = { state: 'checking', reason: null, command: null }
+
+/** One permission: title, detail and state, with Grant (and Quit and Reopen) on the right (upstream SystemPermissionRow). */
+function PermissionCard({ row, onGrant, onRelaunch, onRecheck }: { row: PermissionRow; onGrant: () => void; onRelaunch: () => void; onRecheck: () => void }) {
+  const hasControls = !!row.status || row.actions.length > 0
+  return (
+    <div className="perm-row">
+      <div className="perm-text">
+        <b>{row.title}</b>
+        <span>{row.detail}</span>
+        {row.note && <span className="perm-note">{row.note}</span>}
+      </div>
+      {hasControls && (
+        <div className="perm-controls">
+          {row.status && <StatusDot kind={row.status.kind}>{row.status.label}</StatusDot>}
+          {row.actions.includes('grant') && (
+            <button className="perm-grant" disabled={row.busy} onClick={onGrant}>
+              {row.busy ? 'Waiting…' : 'Grant'}
+            </button>
+          )}
+          {row.actions.includes('recheck') && (
+            <button className="perm-grant" onClick={onRecheck}>
+              Check again
+            </button>
+          )}
+          {row.actions.includes('relaunch') && (
+            <button className="perm-link" onClick={onRelaunch}>
+              Quit and Reopen
+            </button>
+          )}
+        </div>
+      )}
+      {row.command && <CommandBlock text={row.command} />}
     </div>
   )
 }

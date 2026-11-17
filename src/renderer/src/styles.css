@@ -1548,6 +1548,7 @@ input[type='range'] { accent-color: var(--accent); }
   --text-primary: #333; --text-secondary: #707070; --text-muted: #979797; --subtle-fill: rgb(255 255 255 / 0.6); --ink: #402b00;
   --secondary-fill: rgb(255 255 255 / 0.4); --secondary-border: #e4d3c2; --secondary-text: #634d42;
   --input-fill: rgb(255 255 255 / 0.6); --input-border: #e4d3c2;
+  --ok: #2e9e5b; --warn: #b8740c;
 }
 .onboarding::after { content: ''; position: fixed; left: 0; right: 0; bottom: 0; height: 23vw; pointer-events: none; background: radial-gradient(ellipse at 55% 80%, rgb(255 214 180 / 0.55), transparent 60%); filter: blur(20px); }
 .onb-step { position: relative; z-index: 1; min-height: 100%; display: grid; animation: onb-fade 0.5s ease-in-out; }
@@ -1618,9 +1619,17 @@ input[type='range'] { accent-color: var(--accent); }
 .onb-perms .muted { font-size: 14px; font-weight: 500; color: #5b5b5b; }
 .privacy-box { max-width: 351px; padding: 16px; display: grid; gap: 8px; border-radius: 5px; background: rgb(255 255 255 / 0.3); border: 1px solid rgb(204 71 0 / 0.15); box-shadow: 0 0 8px rgb(185 155 123 / 0.3); color: #89380e; font-size: 13px; }
 .privacy-box b { display: flex; align-items: center; gap: 6px; }
-.perm-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; background: rgb(255 255 255 / 0.5); border: 1px solid rgb(232 221 213); }
-.perm-row b { font-size: 14px; color: #333; }
-.perm-row span { font-size: 12px; font-weight: 500; color: #5b5b5b; }
+/* A permission card (upstream SystemPermissionRow): text on the left, state and Grant on the right. */
+.perm-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; padding: 12px; border-radius: 8px; background: rgb(255 255 255 / 0.5); border: 1px solid rgb(232 221 213); }
+.perm-text { display: grid; gap: 3px; }
+.perm-text b { font-size: 14px; color: #000; }
+.perm-text > span { font-size: 12px; font-weight: 500; color: #5b5b5b; }
+.perm-text > .perm-note { color: #89380e; }
+.perm-row .command-block { grid-column: 1 / -1; font-size: 12px; }
+.perm-controls { display: grid; justify-items: end; gap: 6px; }
+.perm-grant { height: 30px; padding: 0 14px; border: none; border-radius: 999px; background: #ffc9a8; color: #492304; font-size: 12px; font-weight: 600; letter-spacing: -0.48px; }
+.perm-link { background: none; border: none; padding: 0; font-size: 11px; font-weight: 500; color: rgb(73 35 4 / 0.7); text-decoration: underline; }
+.onb-perms-actions .onb-skip { padding: 0 8px; }
 .onb-perms-mock { display: grid; place-items: center; gap: 10px; margin: 0; cursor: default; }
 .onb-perms-mock figcaption { font-size: 12px; color: #8a7a70; text-align: center; }
 /* Without the macOS picture: one centred column. */
@@ -1706,8 +1715,11 @@ input[type='range'] { accent-color: var(--accent); }
 :root[data-ui-style='modern'] .privacy-box { max-width: none; border-radius: 8px; background: var(--soft-fill); border: 1px solid var(--soft-border); box-shadow: none; color: var(--text-secondary); }
 :root[data-ui-style='modern'] .privacy-box b { color: var(--accent-text); }
 :root[data-ui-style='modern'] .perm-row { background: var(--panel-fill); border: 1px solid var(--panel-border); }
-:root[data-ui-style='modern'] .perm-row b { color: var(--text-primary); }
-:root[data-ui-style='modern'] .perm-row span { color: var(--text-secondary); }
+:root[data-ui-style='modern'] .perm-text b { color: var(--text-primary); }
+:root[data-ui-style='modern'] .perm-text > span { color: var(--text-secondary); }
+:root[data-ui-style='modern'] .perm-text > .perm-note { color: var(--text-primary); }
+:root[data-ui-style='modern'] .perm-grant { border-radius: 6px; background: var(--soft-fill); border: 1px solid var(--soft-border); color: var(--accent-text); letter-spacing: 0; }
+:root[data-ui-style='modern'] .perm-link { color: var(--text-secondary); }
 :root[data-ui-style='modern'] .mock-window { background: var(--panel-fill); border: 1px solid var(--panel-border); box-shadow: var(--popover-shadow); }
 :root[data-ui-style='modern'] .mock-bar span { background: var(--chart-axis); }
 :root[data-ui-style='modern'] .mock-row { color: var(--text-primary); background: var(--subtle-fill); }

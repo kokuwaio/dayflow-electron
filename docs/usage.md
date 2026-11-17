@@ -25,17 +25,30 @@ Electron** starts recording.
 
 ### Allow screen recording
 
-- **Linux:** your desktop asks which screens the app may record. Pick **all
-  screens** and allow **restoring the permission**, so the question does not
-  come back. While it records, KDE shows its "screen is being shared" icon in
-  the tray.
+The setup's last step, **Permissions**, shows one row per permission with
+its state and a **Grant** button.
+
+- **Linux:** **Screen sharing → Grant** opens your desktop's share dialog
+  now. Pick **all screens** and allow **restoring the permission**, so the
+  question does not come back; the row then shows **Allowed**. You can also
+  go on without it: the dialog then comes up when recording starts. While
+  it records, KDE shows its "screen is being shared" icon in the tray.
+  **Window detection (optional)** checks whether the app sees the active
+  window, which it needs to leave out blocked apps (see
+  [Keep password managers out](#keep-password-managers-out)). In the
+  Flatpak on KDE Plasma the row shows the `flatpak override` command to
+  copy; it takes effect after a restart of the app, and **Settings →
+  Privacy** then shows "Window detection works".
 - **Windows:** nothing to allow.
-- **macOS:** macOS asks for the **Screen Recording** permission. Allow
-  dayflow-electron in **System Settings → Privacy & Security → Screen
-  Recording**, then quit the app from the tray and open it again. Until then
-  Settings shows "Screen Recording permission is missing" and the app
-  retries every few minutes. Because the app is not signed with a Developer
-  ID yet, macOS may ask again after each update.
+- **macOS:** **Screen Recording → Grant** asks macOS for the permission and
+  opens **System Settings → Privacy & Security → Screen Recording**. Turn on
+  dayflow-electron there, then click **Quit and Reopen**: macOS applies the
+  permission only to a new start, and the setup continues at this step.
+  **Next** stays off until the permission is granted; **Skip for now**
+  goes on without it. Until it is granted Settings shows "Screen Recording
+  permission is missing" and the app retries every few minutes. Because
+  the app is not signed with a Developer ID yet, macOS may ask again after
+  each update.
 
 The app keeps only the screen under the mouse and pauses while the screen is
 locked or the computer sleeps.
