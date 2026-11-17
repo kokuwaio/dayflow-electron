@@ -337,7 +337,8 @@ blocked apps. It reads the window title, so it also needs window detection.
 
 ## Hide secrets in screenshots
 
-**Hide secrets in screenshots** (Settings → Blocked apps, off by default)
+**Hide secrets in screenshots** (Settings → Privacy, on by default; switch it
+off there if analysis feels slow)
 reads the text on each frame before it goes to the AI provider and blacks out
 secrets it recognizes. The recordings on disk stay as they were taken, so the
 timeline still shows them unmasked. It catches:

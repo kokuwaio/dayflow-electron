@@ -83,7 +83,7 @@ export interface Settings {
   blockedApps: string[]
   /** Chrome incognito and Firefox private windows count as blocked (upstream "Hide private browsing windows"). */
   hidePrivateWindows: boolean
-  /** Black out secrets found by OCR in frames before they go to the AI provider (upstream Privacy Shield, rules only). */
+  /** Black out secrets found by OCR in frames before they go to the AI provider (upstream Privacy Shield, rules only). On by default; it costs a few seconds per frame. */
   hideSecrets: boolean
   /** Optional absolute paths of the agent CLIs on the host; empty means find them. */
   cliPaths: Record<CliName, string>
@@ -142,7 +142,7 @@ export const DEFAULT_SETTINGS: Settings = {
   launchAtLogin: false,
   blockedApps: [...DEFAULT_BLOCKLIST],
   hidePrivateWindows: true,
-  hideSecrets: false,
+  hideSecrets: true,
   cliPaths: { claude: '', codex: '' },
   categories: DEFAULT_CATEGORIES.map((c) => ({ ...c })),
   promptOverrides: { title: '', summary: '', detailedSummary: '' },
