@@ -436,6 +436,17 @@ is retried later.
 The window is dark by default. **Settings → Other → Appearance** switches to
 light, or to **System** to follow your desktop's light or dark setting.
 
+**Settings → Other → Theme** picks the look:
+
+- **Dayflow** (the default): upstream Dayflow's warm look, with gradients,
+  translucent panels and serif titles.
+- **Modern**: flat neutral greys, the Inter font, one indigo accent and crisp
+  borders; calmer and a little denser.
+
+Both themes come in light and dark, so Appearance works with either. Your
+category colours stay the same in both. The first-run setup keeps upstream's
+look.
+
 ## Pause, privacy and storage
 
 - **Pause** from the tray or the Pause button in the timeline: 15, 30 or 60
