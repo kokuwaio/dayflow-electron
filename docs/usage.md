@@ -30,7 +30,7 @@ the screen is locked or the computer sleeps. While it records, KDE shows its
 
 ## Choose an AI model
 
-Open **Settings → AI provider**. Your screenshots go only to the provider you
+Open **Settings → Providers**. Your screenshots go only to the provider you
 choose here. Each one needs a model, and the cloud providers need an API key,
 which is stored in your keyring (KWallet or Secret Service).
 
@@ -42,8 +42,17 @@ which is stored in your keyring (KWallet or Secret Service).
 
 Click **Test connection** after saving. **Fallback provider** takes over a
 batch when the main provider fails (offline, rate limit, bad key).
-**Card language** sets the language of titles and summaries (empty means
-English).
+**Output language override** sets the language of titles and summaries (empty
+means English).
+
+## The window
+
+The icons on the left switch between **Timeline**, **Daily**, **Weekly**,
+**Chat** and **Settings**. The look follows upstream Dayflow: a peach-to-blue
+background, a translucent panel, Figtree for text and Instrument Serif for
+titles. Dark mode follows the system setting. Animations are switched off
+when the system asks for reduced motion. Analysis and capture errors show as
+notes in the bottom right corner; the × hides one until the next error.
 
 The first cards appear about 15 minutes after recording starts. A batch that
 fails shows a "Processing failed" card; it is retried after the next batch
@@ -51,20 +60,34 @@ succeeds.
 
 ## The timeline
 
-- **Day and Week**: switch in the timeline header. The week runs Monday to
-  Sunday; each column covers 4 AM to 4 AM, so late nights stay on the day
-  they started.
+- **Header**: the arrows step a day (or week) back and forward, the calendar
+  button picks a date, **Day / Week** switches the view, and **Today** comes
+  back to today. After 4 AM the timeline moves to the new day by itself.
+- **Day view**: cards sit on a 4 AM to 4 AM time axis, sized by how long
+  they lasted. Today the view opens at the current time, and a card marks
+  the slot where the next card is being made ("Generating your next card").
+  While recording is paused that card says so; click it to resume.
+- **Week view**: seven 4 AM to 4 AM columns, Monday to Sunday, so late
+  nights stay on the day they started. Hover a short card to read its whole
+  title.
+- **Pause** (top right): opens ∞, 1h, 30m and 15m; while paused it turns
+  into **Resume** and shows how long the pause lasts.
 - **Category chips** above the timeline: click one to dim its cards, drag to
-  reorder. **Settings → Categories** edits names, colors and the description
-  the model sees, or applies a preset for your role.
-- **Card actions** in the detail panel: edit the title or category, delete,
-  rate 👍/👎 with an optional note, reanalyze the card's 15 minutes, or retry a
-  "Processing failed" card. **Reprocess day** analyzes a whole day again.
-- **Day summary** (right panel when no card is selected): focus and
-  distraction against your daily goals, time per category, and your longest
-  focus block. Idle, failed and private time is not counted.
-- **Copy** puts the day or week on the clipboard as text; **Settings →
-  Storage → Export timeline** saves a date range as Markdown.
+  reorder. The pencil opens **Settings → Other → Categories**, which edits
+  names, colors and the description the model sees, or applies a preset for
+  your role.
+- **Card details** (right panel): click the title to rename the card, the
+  pencil next to the category to move it to another one, the image to play
+  its screenshots. The footer rates the summary (thumbs up, or thumbs down
+  with an optional note), and **Reanalyze** or **Delete** act after a
+  second click on **Confirm**. A "Processing failed" card has **Retry**.
+- **Day summary** (right panel when no card is selected): today's targets
+  for focus and distraction, time per category, total and longest focus, and
+  time distracted. Idle, failed and private time is not counted. The pencil
+  edits the goals.
+- **Copy timeline** (bottom left) puts the day or week on the clipboard as
+  text, next to the hours tracked this week. **Settings → Export** saves a
+  date range as Markdown and analyzes a whole day again (**Reprocess day**).
 
 ## Daily, Weekly and notifications
 
@@ -72,14 +95,15 @@ The two insight tabs unlock as analyzed data builds up, like upstream: Daily
 after 5 hours, Weekly after 30 hours. Until then each tab shows the progress.
 
 - **Daily** shows your day as a grid of 15-minute cells per category, with a
-  row for distractions, and a standup update with highlights, tasks and
-  blockers.
+  track that marks each distraction, the day's totals per category, and a
+  standup update with highlights, tasks and blockers.
   - After 4 AM the app writes the standup from the most recent of the last
     three days with at least 3 hours of cards. It tries at most 3 times a
     day. **Regenerate** writes it now (2 hours of cards are enough).
   - Edit any line; changes save as you type. Enter adds a line, Backspace on
-    an empty line removes it. You can also fill in the standup yourself
-    before one was written.
+    an empty line removes it, and the handle left of a line drags it to
+    another place. You can also fill in the standup yourself before one was
+    written.
   - **Copy standup update** puts it on the clipboard as plain text.
 - **Weekly** needs no AI. It opens the newest week with at least 15 hours
   tracked and shows time per category, context shifts and distractions per
@@ -109,7 +133,7 @@ answers can include charts.
 - **Suggestions** under an answer fill the input box; edit them or press Enter.
 - **History** (clock icon) lists past conversations; the bin icon deletes one
   right away.
-- **Memory** (✦ icon) shows the short profile and answer style the assistant
+- **Memory** (brain icon) shows the short profile and answer style the assistant
   keeps about you. It updates this itself; you can edit or clear it.
 
 ## Run a local model with Ollama
@@ -217,7 +241,7 @@ read your timeline through a CLI or an MCP server, is planned for M4.
 
 ## Keep password managers out
 
-While one of the apps under **Settings → Blocked apps** is the focused window,
+While one of the apps under **Settings → Privacy → Blocked apps** is the focused window,
 nothing is saved and the time shows as "Private" in the timeline. The list
 starts with KeePassXC, KeePass, 1Password, Bitwarden and the Passbolt web app.
 Add more, one rule per line: an app ID such as `org.keepassxc.KeePassXC`, or
@@ -245,7 +269,7 @@ vault.
 
 ## Pause, privacy and storage
 
-- **Pause** from the tray or the status pill in the window: 15, 30 or 60
+- **Pause** from the tray or the Pause button in the timeline: 15, 30 or 60
   minutes, or until you resume.
 - Recording also pauses while the screen is locked or the computer sleeps.
 - Screenshots, the database and settings live in
@@ -260,7 +284,7 @@ vault.
 
 | Symptom | What to check |
 | --- | --- |
-| No cards after 20 minutes | Settings → AI provider: a key or a reachable local server; **Test connection**. The banner at the top of the window shows the last analysis error. |
+| No cards after 20 minutes | Settings → Providers: a key or a reachable local server; **Test connection**. The note in the bottom right corner of the window shows the last analysis error. |
 | "Ollama/LM Studio at … unreachable" | The local server is not running. Start it (`sudo systemctl start ollama`, see above); the waiting batches are analyzed once it answers. |
 | Daily says "Not enough captured activity" | None of the last three days has enough cards (3 hours for the automatic standup, 2 for Regenerate). |
 | "Processing failed" cards or very slow batches with a local model | Run `ollama ps` while a batch runs: `100% CPU` on a machine with an integrated GPU means `OLLAMA_IGPU_ENABLE=1` is missing. Check the context length setting above, try 720p. |

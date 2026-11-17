@@ -131,7 +131,9 @@ JSON-per-day store for SQLite.
       batches get a "Processing failed" card and are retried after the next
       success (up to 3 times).
 - [x] Timeline day view with date navigation (4 AM day boundary), card detail
-      with title, summary, detailed summary and category.
+      with title, summary, detailed summary and category. The day view is
+      upstream's 4 AM to 4 AM canvas at 168 px per hour, with a status card
+      at the current slot; it moves to the new day after 4 AM.
 - [x] Settings: provider and key, test connection, capture interval and
       resolution, storage limit, launch at login (Background portal in the
       Flatpak).
@@ -233,7 +235,17 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   opt-in. Upstream's ML model is served from its paid backend and is out of
   reach.
 - [ ] Dark mode, app language, show/hide icons, pause presets (all but the
-  app language done; dark mode follows the system).
+  app language done; dark mode follows the system, with upstream's dark
+  palette; no in-app Light/Dark switch yet).
+- [x] Upstream's look: design tokens for light and dark, gradient window and
+  translucent panel, icon sidebar, Figtree and Instrument Serif (bundled with
+  their OFL texts), the 4 AM to 4 AM day canvas with hour axis and status
+  card, the pause pill, the inspector card, Daily, Weekly and Chat surfaces,
+  and Settings with a tab sidebar (upstream `Utilities/DayflowTheme.swift`,
+  `Views/UI/**`). Upstream's artwork is replaced by Lucide icons and CSS.
+- [ ] Look, still open: onboarding (provider table, progress ring), the
+  focus and distraction heat map in Weekly, the "Your review" card, the
+  goal pop-up, the date picker popover (a native date picker for now).
 - [ ] Deep links: `start-recording`, `stop-recording`.
 - [ ] Packages: Flatpak on Linux (own repository first, Flathub once the
   permissions are settled; updates come through Flatpak), NSIS and dmg with
