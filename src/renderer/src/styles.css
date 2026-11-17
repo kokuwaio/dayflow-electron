@@ -927,3 +927,9 @@ input[type='range'] { accent-color: var(--accent); }
 .settings-version { margin-top: auto; padding: 16px 10px 4px; display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--text-muted); }
 .settings-version a { color: var(--text-muted); text-decoration: none; }
 .settings-version a:hover { color: var(--accent-text); }
+
+/* Native dropdown lists: Chromium on Linux draws them light unless told, and
+   the select's own text colour would make them white on white in dark mode. */
+select option { background-color: var(--panel-solid); color: var(--text-primary); }
+@media (prefers-color-scheme: dark) { :root { color-scheme: dark; } }
+@media (prefers-color-scheme: light) { :root { color-scheme: light; } }
