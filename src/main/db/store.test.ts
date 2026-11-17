@@ -116,3 +116,39 @@ describe('Store: batch lifecycle and retention', () => {
     expect(store.unbatchedScreenshots(0).map((s) => s.id)).toEqual([first + 1])
   })
 })
+
+describe('Store: chat history', () => {
+  it('keeps conversations with their messages in order, newest conversation first', () => {
+    const first = store.createConversation({ title: 'What did I do?', provider: 'anthropic', now: 100 })
+    store.addChatMessage(first, { role: 'user', content: 'What did I do?', now: 100 })
+    store.addChatMessage(first, { role: 'assistant', content: 'You coded.', now: 101 })
+    const second = store.createConversation({ title: 'New chat', provider: 'gemini', now: 200 })
+
+    expect(store.conversations().map((c) => c.id)).toEqual([second, first])
+    store.addChatMessage(first, { role: 'user', content: 'More?', now: 300 })
+    expect(store.conversations()[0]).toMatchObject({ id: first, title: 'What did I do?', provider: 'anthropic', updatedAt: 300 })
+    expect(store.chatMessages(first).map((m) => [m.role, m.content])).toEqual([
+      ['user', 'What did I do?'],
+      ['assistant', 'You coded.'],
+      ['user', 'More?']
+    ])
+
+    store.deleteConversation(first)
+    expect(store.conversations().map((c) => c.id)).toEqual([second])
+    expect(store.chatMessages(first)).toEqual([])
+  })
+})
+
+describe('Store: chat tool data', () => {
+  it('lists cards and observations that start in a time range', () => {
+    const batchId = store.createBatch({ start: 1000, end: 1900, shotIds: [shot(1000)] })
+    const card = (start: number, category = 'Work') => ({
+      startTime: '', endTime: '', start, end: start + 300, title: `c${start}`, summary: '', category, subcategory: '', detailedSummary: '', distractions: [], appSites: {}
+    })
+    store.replaceCards({ start: 1000, end: 1900 }, batchId, [card(1000), card(1300, 'System'), card(1600)])
+    store.replaceObservations(batchId, [{ start: 1000, end: 1100, text: 'Editing' }, { start: 2000, end: 2100, text: 'Later' }], 'm')
+
+    expect(store.cardsBetween(1000, 1600).map((c) => c.title)).toEqual(['c1000'])
+    expect(store.observationsBetween(900, 1500)).toEqual([{ start: 1000, end: 1100, text: 'Editing' }])
+  })
+})

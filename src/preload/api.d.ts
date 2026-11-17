@@ -2,7 +2,20 @@ import type { Feature, FeatureAccess, StandupDraft } from '../shared/daily'
 import type { GoalPlan } from '../shared/day-summary'
 import type { FrameRef } from '../shared/media'
 import type { DayCards, Week } from '../shared/week'
-import type { AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings, StandupEntry, Tab, TimelineCard } from '../shared/types'
+import type {
+  AppStatus,
+  CardEdit,
+  ChatConversation,
+  ChatEvent,
+  ChatStoredMessage,
+  CliName,
+  ProviderKind,
+  Rating,
+  Settings,
+  StandupEntry,
+  Tab,
+  TimelineCard
+} from '../shared/types'
 
 /** The API the preload script exposes to the renderer as window.dayflow. */
 export interface DayflowApi {
@@ -20,6 +33,17 @@ export interface DayflowApi {
   saveStandup(day: string, draft: StandupDraft): Promise<void>
   onNavigate(cb: (tab: Tab) => void): () => void
   onDailyChanged(cb: () => void): () => void
+  getConversations(): Promise<ChatConversation[]>
+  getChatMessages(conversationId: string): Promise<ChatStoredMessage[]>
+  deleteConversation(conversationId: string): Promise<void>
+  /** Answers in the given conversation, or a new one for null; progress arrives through onChatEvent. */
+  sendChat(
+    conversationId: string | null,
+    text: string
+  ): Promise<{ ok: true; reply: { conversationId: string; text: string; suggestions: string[]; model: string } } | { ok: false; message: string }>
+  getChatMemory(): Promise<string>
+  saveChatMemory(memory: string): Promise<void>
+  onChatEvent(cb: (event: ChatEvent) => void): () => void
   getWeekly(day: string): Promise<{ week: Week; cards: TimelineCard[]; previous: TimelineCard[] }>
   getWeeklyDefaultDay(): Promise<string>
   getDay(day?: string): Promise<{ day: string; cards: TimelineCard[]; ratings: Rating[] }>

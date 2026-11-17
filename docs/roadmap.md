@@ -189,7 +189,7 @@ each of the three providers.
 - [x] Weekly dashboard (focus heatmap still open): overview, donut, treemap, Sankey, focus heatmap,
   context switches, app interaction graph, highlights. No AI needed; built
   from `timeline_cards` (upstream `Core/Weekly/`).
-- [ ] Chat with your journal: streamed answers, tool calls for timeline and
+- [x] Chat with your journal: streamed answers, tool calls for timeline and
   observations, inline charts from fenced `chart` blocks, history panel,
   memory (upstream `Core/AI/Chat*`, `ChatPromptBuilder.swift`). API providers
   get upstream's `fetchTimeline` and `fetchObservations` tools. CLI providers

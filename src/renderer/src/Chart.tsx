@@ -1,11 +1,24 @@
 import { useEffect, useRef } from 'react'
-import { BarChart, PieChart, SankeyChart, TreemapChart } from 'echarts/charts'
-import { GridComponent, LegendComponent, TitleComponent, TooltipComponent } from 'echarts/components'
+import { BarChart, HeatmapChart, LineChart, PieChart, SankeyChart, TreemapChart } from 'echarts/charts'
+import { GridComponent, LegendComponent, TitleComponent, TooltipComponent, VisualMapComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { SVGRenderer } from 'echarts/renderers'
 
-// Only the charts the Weekly tab uses, so the bundle stays small.
-echarts.use([PieChart, BarChart, TreemapChart, SankeyChart, GridComponent, LegendComponent, TitleComponent, TooltipComponent, SVGRenderer])
+// Only the charts the Weekly tab and chat answers use, so the bundle stays small.
+echarts.use([
+  PieChart,
+  BarChart,
+  LineChart,
+  HeatmapChart,
+  TreemapChart,
+  SankeyChart,
+  GridComponent,
+  LegendComponent,
+  TitleComponent,
+  TooltipComponent,
+  VisualMapComponent,
+  SVGRenderer
+])
 
 type Option = Parameters<echarts.ECharts['setOption']>[0]
 

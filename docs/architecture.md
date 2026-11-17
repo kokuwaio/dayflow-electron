@@ -145,6 +145,12 @@ sequenceDiagram
   best of the last three days with enough activity (`insights/daily.ts`).
 - **Weekly** needs no AI. Every chart is computed from the week's cards in
   `src/shared/weekly.ts`.
+- **Chat** (`src/main/chat/`) streams answers to the window. API providers
+  run a tool loop (up to 20 rounds) with upstream's `fetchTimeline` and
+  `fetchObservations` tools, which read the store. CLI providers get the
+  recent timeline in the prompt and run with their tools off. Each answer's
+  trailing `suggestions` and `memory` blocks are taken out and kept in the
+  settings; conversations live in `chat_conversations` and `chat_messages`.
 - **Unlocks** follow upstream: Daily after 5 hours of analyzed data, Chat
   after 10, Weekly after 30.
 
@@ -172,11 +178,12 @@ sequenceDiagram
 | `src/main/analysis/` | Batching, idle check, prompts, card checks, two-step path, pipeline |
 | `src/main/providers/` | One adapter per provider; `cli/` runs Claude Code and Codex on the host |
 | `src/main/insights/` | Daily standup generation |
+| `src/main/chat/` | Chat: tools, tool loop, system prompts, answering service |
 | `src/main/db/` | Schema migrations and all SQL |
 | `src/main/media.ts` | Serves frames and site icons to the window |
 | `src/main/notifications.ts` | Desktop notifications |
 | `src/preload/` | The `window.dayflow` API |
-| `src/renderer/src/` | React views: Timeline, Daily, Weekly, Settings, Onboarding |
+| `src/renderer/src/` | React views: Timeline, Daily, Weekly, Chat, Settings, Onboarding |
 | `src/shared/` | Pure logic used by both sides: days, categories, Daily and Weekly math, export, failure kinds |
 | `helper/linux/` | Go helper: `portal/`, `pipewire/`, `wayland/`, `frames/`, commands in `cmd/` |
 | `flatpak/` | Flatpak manifest and desktop file |

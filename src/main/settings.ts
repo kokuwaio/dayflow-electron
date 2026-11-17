@@ -38,6 +38,10 @@ function readJson(file: string): Record<string, unknown> {
 
 const overrideText = (v: unknown) => (typeof v === 'string' ? v.slice(0, 4000) : '')
 
+/** Upstream's limits for the chat memory blob and the remembered suggestions. */
+export const CHAT_MEMORY_MAX = 10_000
+export const CHAT_SUGGESTIONS_KEPT = 9
+
 /** Installs from before these notifications existed already have cards, so they skip the one-time ones. */
 function sanitizeNotified(r: Partial<Settings>): Settings['notified'] {
   const existingInstall = r.notified === undefined && typeof r.provider === 'string'
@@ -90,6 +94,8 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
       day: typeof r.standupAttempts?.day === 'string' ? r.standupAttempts.day : '',
       count: Number.isInteger(r.standupAttempts?.count) ? Number(r.standupAttempts?.count) : 0
     },
+    chatMemory: typeof r.chatMemory === 'string' ? r.chatMemory.slice(0, CHAT_MEMORY_MAX) : '',
+    chatSuggestions: Array.isArray(r.chatSuggestions) ? r.chatSuggestions.filter((x): x is string => typeof x === 'string').slice(-CHAT_SUGGESTIONS_KEPT) : [],
     // Existing installs that never saw onboarding count as set up once a provider was chosen.
     onboarded: r.onboarded === true || (r.onboarded === undefined && typeof r.provider === 'string'),
     blockedApps: Array.isArray(r.blockedApps)

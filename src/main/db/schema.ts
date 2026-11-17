@@ -143,5 +143,26 @@ export const MIGRATIONS: string[] = [
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
   CREATE INDEX idx_daily_standup_entries_created_at ON daily_standup_entries(created_at DESC);
+  `,
+  // 7: Chat history (upstream StorageManager: conversations and their messages)
+  `
+  CREATE TABLE chat_conversations (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    cli_session_id TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+  CREATE INDEX idx_chat_conversations_updated ON chat_conversations(updated_at DESC);
+  CREATE TABLE chat_messages (
+    id TEXT NOT NULL PRIMARY KEY,
+    conversation_id TEXT NOT NULL REFERENCES chat_conversations(id) ON DELETE CASCADE,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    sort_order INTEGER NOT NULL
+  );
+  CREATE INDEX idx_chat_messages_conversation ON chat_messages(conversation_id, sort_order);
   `
 ]

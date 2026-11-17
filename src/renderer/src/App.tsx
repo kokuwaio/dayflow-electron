@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { AppStatus, Settings, Tab } from '@shared/types'
+import { Chat } from './Chat'
 import { Daily } from './Daily'
 import { Onboarding } from './Onboarding'
 import { SettingsView } from './Settings'
@@ -11,6 +12,7 @@ const TABS = [
   { id: 'timeline', label: 'Timeline' },
   { id: 'daily', label: 'Daily' },
   { id: 'weekly', label: 'Weekly' },
+  { id: 'chat', label: 'Chat' },
   { id: 'settings', label: 'Settings' }
 ] as const satisfies ReadonlyArray<{ id: Tab; label: string }>
 type View = (typeof TABS)[number]['id']
@@ -67,6 +69,7 @@ export function App() {
         {view === 'timeline' && <Timeline />}
         {view === 'daily' && <Daily />}
         {view === 'weekly' && <Weekly />}
+        {view === 'chat' && <Chat />}
         {view === 'settings' && <SettingsView status={status} />}
       </main>
     </div>

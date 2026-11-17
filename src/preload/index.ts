@@ -19,6 +19,17 @@ const api: DayflowApi = {
     ipcRenderer.on('daily:changed', listener)
     return () => ipcRenderer.off('daily:changed', listener)
   },
+  getConversations: () => ipcRenderer.invoke('chat:conversations'),
+  getChatMessages: (id) => ipcRenderer.invoke('chat:messages', id),
+  deleteConversation: (id) => ipcRenderer.invoke('chat:delete', id),
+  sendChat: (conversationId, text) => ipcRenderer.invoke('chat:send', conversationId, text),
+  getChatMemory: () => ipcRenderer.invoke('chat:memory'),
+  saveChatMemory: (memory) => ipcRenderer.invoke('chat:memory:save', memory),
+  onChatEvent: (cb) => {
+    const listener = (_e: unknown, event: Parameters<typeof cb>[0]) => cb(event)
+    ipcRenderer.on('chat:event', listener)
+    return () => ipcRenderer.off('chat:event', listener)
+  },
   getFrames: (span) => ipcRenderer.invoke('frames:get', span),
   completeOnboarding: () => ipcRenderer.invoke('onboarding:complete'),
   getWeek: (day) => ipcRenderer.invoke('week:get', day),

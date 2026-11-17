@@ -92,6 +92,24 @@ after 5 hours, Weekly after 30 hours. Until then each tab shows the progress.
   the window is in the background. Click a notification to open the matching
   tab.
 
+## Chat
+
+The Chat tab unlocks after 10 hours of analyzed data. Ask about your days in
+plain words ("What did I get done last week?", "When was I most focused?");
+answers can include charts.
+
+- **How it finds the answer:** Anthropic, Gemini and OpenAI-compatible models
+  (Ollama included, if the model supports tools) look up your timeline cards
+  and observations themselves, as often as they need. Claude Code and Codex get
+  the last 7 days of cards and 2 days of observations in the prompt instead,
+  with all their tools switched off, so they cannot run commands on your
+  computer.
+- **Suggestions** under an answer fill the input box; edit them or press Enter.
+- **History** (clock icon) lists past conversations; the bin icon deletes one
+  right away.
+- **Memory** (✦ icon) shows the short profile and answer style the assistant
+  keeps about you. It updates this itself; you can edit or clear it.
+
 ## Run a local model with Ollama
 
 A local model keeps everything on your computer and needs no API key. Ollama

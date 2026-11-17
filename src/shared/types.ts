@@ -95,6 +95,10 @@ export interface Settings {
   notified: { firstCards: boolean; weeklyUnlock: boolean; problemDays: Record<string, string> }
   /** Automatic standup tries on one day (upstream allows 3 a day, across restarts). */
   standupAttempts: { day: string; count: number }
+  /** What the chat model remembers about the user ("Profile: …\nStyle: …"), from its memory blocks. */
+  chatMemory: string
+  /** The latest follow-up suggestions, so the model avoids repeating them (upstream keeps 9). */
+  chatSuggestions: string[]
 }
 
 /** The window's tabs; notifications and the tray open one of them. */
@@ -123,7 +127,9 @@ export const DEFAULT_SETTINGS: Settings = {
   showAppIcons: false,
   onboarded: false,
   notified: { firstCards: false, weeklyUnlock: false, problemDays: {} },
-  standupAttempts: { day: '', count: 0 }
+  standupAttempts: { day: '', count: 0 },
+  chatMemory: '',
+  chatSuggestions: []
 }
 
 export const CAPTURE_INTERVALS = [1, 5, 10, 20, 30, 60] as const
@@ -145,3 +151,29 @@ export interface AppStatus {
   keys: Record<ProviderKind, boolean>
   framesBytes: number
 }
+
+// ---------------------------------------------------------------- chat
+
+/** Upstream's roles; "toolCall" rows record what the assistant looked up. */
+export type ChatRole = 'user' | 'assistant' | 'toolCall'
+
+export interface ChatConversation {
+  id: string
+  title: string
+  provider: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface ChatStoredMessage {
+  id: string
+  role: ChatRole
+  content: string
+  createdAt: number
+}
+
+/** Progress of a chat answer, streamed to the window. */
+export type ChatEvent =
+  | { type: 'text'; delta: string }
+  | { type: 'tool-start'; command: string }
+  | { type: 'tool-end'; summary: string; failed: boolean }

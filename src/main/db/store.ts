@@ -1,9 +1,10 @@
+import { randomUUID } from 'node:crypto'
 import { basename } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from '../../shared/categories'
 import { dayKey, dayRange, formatClock } from '../../shared/day'
 import type { GoalPlan } from '../../shared/day-summary'
-import type { AppSites, CardEdit, Distraction, Rating, StandupEntry, TimelineCard } from '../../shared/types'
+import type { AppSites, CardEdit, ChatConversation, ChatRole, ChatStoredMessage, Distraction, Rating, StandupEntry, TimelineCard } from '../../shared/types'
 import type { Observation } from '../analysis/observations'
 import type { StoredFrame } from '../retention'
 import { MIGRATIONS } from './schema'
@@ -413,6 +414,49 @@ export class Store {
     return days
   }
 
+  // ---------------------------------------------------------------- chat
+
+  /** Starts a conversation; returns its id. */
+  createConversation(c: { title: string; provider: string; now: number }): string {
+    const id = randomUUID()
+    this.db
+      .prepare('INSERT INTO chat_conversations (id, title, provider, created_at, updated_at) VALUES (?, ?, ?, ?, ?)')
+      .run(id, c.title, c.provider, c.now, c.now)
+    return id
+  }
+
+  /** Appends a message and moves the conversation to the top of the history. */
+  addChatMessage(conversationId: string, m: { role: ChatRole; content: string; now: number }): void {
+    this.tx(() => {
+      const next = (
+        this.db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM chat_messages WHERE conversation_id = ?').get(conversationId) as {
+          n: number
+        }
+      ).n
+      this.db
+        .prepare('INSERT INTO chat_messages (id, conversation_id, role, content, created_at, sort_order) VALUES (?, ?, ?, ?, ?, ?)')
+        .run(randomUUID(), conversationId, m.role, m.content, m.now, next)
+      this.db.prepare('UPDATE chat_conversations SET updated_at = ? WHERE id = ?').run(m.now, conversationId)
+    })
+  }
+
+  conversations(): ChatConversation[] {
+    return this.db
+      .prepare('SELECT id, title, provider, created_at AS createdAt, updated_at AS updatedAt FROM chat_conversations ORDER BY updated_at DESC')
+      .all() as unknown as ChatConversation[]
+  }
+
+  chatMessages(conversationId: string): ChatStoredMessage[] {
+    return this.db
+      .prepare('SELECT id, role, content, created_at AS createdAt FROM chat_messages WHERE conversation_id = ? ORDER BY sort_order')
+      .all(conversationId) as unknown as ChatStoredMessage[]
+  }
+
+  /** Deletes a conversation and its messages right away, like upstream. */
+  deleteConversation(id: string): void {
+    this.db.prepare('DELETE FROM chat_conversations WHERE id = ?').run(id)
+  }
+
   /** Batches that produced cards; each stands for 15 minutes (feature unlocks). */
   analyzedBatchCount(): number {
     return (this.db.prepare("SELECT COUNT(*) AS n FROM analysis_batches WHERE status IN ('completed', 'analyzed')").get() as { n: number }).n
@@ -530,6 +574,21 @@ export class Store {
       ],
       span.start
     )
+  }
+
+  /** Cards starting in [from, to), oldest first, without error cards (the chat tools' view). */
+  cardsBetween(from: number, to: number): TimelineCard[] {
+    const rows = this.db
+      .prepare(`SELECT ${CARD_COLUMNS} FROM timeline_cards WHERE start_ts >= ? AND start_ts < ? AND is_deleted = 0 AND category != ? ORDER BY start_ts, id`)
+      .all(from, to, SYSTEM_CATEGORY) as unknown as CardRow[]
+    return rows.map(toCard)
+  }
+
+  /** Observations starting in [from, to), oldest first. */
+  observationsBetween(from: number, to: number): Array<{ start: number; end: number; text: string }> {
+    return this.db
+      .prepare('SELECT start_ts AS start, end_ts AS end, observation AS text FROM observations WHERE start_ts >= ? AND start_ts < ? ORDER BY start_ts')
+      .all(from, to) as unknown as Array<{ start: number; end: number; text: string }>
   }
 
   cardsForDay(day: string): TimelineCard[] {

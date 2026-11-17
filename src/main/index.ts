@@ -20,6 +20,7 @@ import type { Span } from './db/store'
 import { Pipeline } from './analysis/pipeline'
 import { Recorder } from './capture/recorder'
 import { Store } from './db/store'
+import { sendChatMessage } from './chat/service'
 import { frameUrl } from '../shared/media'
 import { AUTO_MIN_MINUTES, MANUAL_MIN_MINUTES, generateStandup, standupSourceDay } from './insights/daily'
 import { handleMedia, registerMediaScheme } from './media'
@@ -28,7 +29,7 @@ import { createPlatform } from './platform'
 import { createProvider } from './providers'
 import { findCli, hostAccess, nodeRunner } from './providers/cli/host'
 import { selectFramesToPurge } from './retention'
-import { SettingsStore } from './settings'
+import { CHAT_MEMORY_MAX, SettingsStore } from './settings'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const startHidden = process.argv.includes('--hidden')
@@ -210,6 +211,33 @@ async function main(): Promise<void> {
       return { ok: false, message: err instanceof Error ? err.message : String(err) }
     }
   })
+  // Chat (upstream ChatService): one answer at a time; its progress streams to the window as chat:event.
+  let chatBusy = false
+  ipcMain.handle('chat:conversations', () => store.conversations())
+  ipcMain.handle('chat:messages', (_e, id: string) => store.chatMessages(id))
+  ipcMain.handle('chat:delete', (_e, id: string) => store.deleteConversation(id))
+  ipcMain.handle('chat:memory', () => settings.get().chatMemory)
+  ipcMain.handle('chat:memory:save', async (_e, memory: string) => {
+    await settings.save({ chatMemory: typeof memory === 'string' ? memory.slice(0, CHAT_MEMORY_MAX) : '' })
+  })
+  ipcMain.handle('chat:send', async (_e, conversationId: string | null, text: string) => {
+    if (chatBusy) return { ok: false, message: 'The assistant is still answering.' }
+    if (!access().chat.unlocked) return { ok: false, message: 'Chat unlocks after 10 hours of timeline data.' }
+    if (typeof text !== 'string' || !text.trim()) return { ok: false, message: 'Type a question first.' }
+    chatBusy = true
+    try {
+      const reply = await sendChatMessage(
+        { store, providers: configuredProviders, settings, categories: () => settings.get().categories },
+        { conversationId, text: text.slice(0, 20_000) },
+        (event) => window?.webContents.send('chat:event', event)
+      )
+      return { ok: true, reply }
+    } catch (err) {
+      return { ok: false, message: err instanceof Error ? err.message : String(err) }
+    } finally {
+      chatBusy = false
+    }
+  })
   ipcMain.handle('daily:save', (_e, day: string, draft: StandupDraft) => {
     // Edits to an unsaved draft create the entry, like upstream's editable placeholder.
     const current = store.standup(day)
@@ -306,7 +334,7 @@ async function main(): Promise<void> {
       await platform.setAutostart(next.launchAtLogin)
     }
     // The window only edits preferences; the app's own bookkeeping is not its to change.
-    const { notified: _n, standupAttempts: _a, onboarded: _o, ...preferences } = next
+    const { notified: _n, standupAttempts: _a, onboarded: _o, chatMemory: _m, chatSuggestions: _s, ...preferences } = next
     const saved = await settings.save(preferences)
     // Cards follow renamed categories (matched by id after the names were cleaned up).
     const renames = renamedCategories(before.categories, saved.categories)
@@ -479,6 +507,12 @@ function showWindow(): void {
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) void shell.openExternal(url)
     return { action: 'deny' }
+  })
+  // The window only ever shows the app: a link that would replace it opens in the browser instead.
+  window.webContents.on('will-navigate', (event, url) => {
+    if (url === window?.webContents.getURL()) return
+    event.preventDefault()
+    if (/^https?:/.test(url)) void shell.openExternal(url)
   })
   if (process.env.ELECTRON_RENDERER_URL) void window.loadURL(process.env.ELECTRON_RENDERER_URL)
   else void window.loadFile(join(here, '../renderer/index.html'))
