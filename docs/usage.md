@@ -247,6 +247,39 @@ vault.
 treats Chrome and Chromium incognito windows and Firefox private windows like
 blocked apps. It reads the window title, so it also needs window detection.
 
+## Hide secrets in screenshots
+
+**Hide secrets in screenshots** (Settings → Blocked apps, off by default)
+reads the text on each frame before it goes to the AI provider and blacks out
+secrets it recognizes. The recordings on disk stay as they were taken, so the
+timeline still shows them unmasked. It catches:
+
+- API keys and tokens with a well-known prefix: `sk-`, `sk-ant-`, `ghp_`,
+  `github_pat_`, `xoxb-`, `AKIA`, `glpat-`, `AIza`, `hf_`, `npm_` and more.
+- Passwords handed to command-line tools (`mysql --password=…`,
+  `redis-cli -a …`, `curl -u user:…`), `user:pass https://…` pairs, a
+  revealed value next to a **Hide** button, and the value after "Password"
+  on a short line.
+- Password-like lines on a password manager screen (Bitwarden, 1Password,
+  KeePass and others).
+- Private key blocks (`BEGIN … PRIVATE KEY`, or base64 lines below a key file
+  name such as `id_ed25519`).
+- Authenticator setup keys, wallet seed phrases (12 to 24 BIP39 words) and
+  recovery or backup codes under their heading.
+
+The rules are upstream's, but upstream also runs a trained model that is only
+available with its paid plan. Without it, far less is caught: card and bank
+numbers, government IDs, emails and most passwords in ordinary text are not
+masked. The text recognition (Tesseract) also misreads some characters, and a
+misread secret no longer matches its pattern. Treat this as a second line of
+defence; blocked apps and pausing are the reliable ways to keep something
+private.
+
+Reading the text takes a few seconds per frame (2 to 6 s for a 1080p frame on
+a laptop CPU), for the up to 15 frames each 15-minute batch sends. It runs on
+your computer; nothing is downloaded. If it fails, the batch is not sent and
+is retried later.
+
 ## Pause, privacy and storage
 
 - **Pause** from the tray or the status pill in the window: 15, 30 or 60
