@@ -759,6 +759,19 @@ input[type='range'] { accent-color: var(--accent); }
 .heat .cell { height: 13px; border-radius: 2px; }
 .heat .row-label { color: var(--text-secondary); padding-right: 8px; text-align: right; }
 .heat .hour { color: var(--text-muted); }
+.focus-heat { gap: 25px; padding: 34px 46px 42px 44px; }
+.focus-heat-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+.focus-heat-legend { display: grid; gap: 4px; width: clamp(200px, 32%, 420px); padding-top: 7px; font-size: 10px; color: var(--text-secondary); }
+.focus-heat-legend .bar { height: 8px; border-radius: 2px; background: linear-gradient(to right, #4276E9, #E3DBFD, #F8D1CA, #FC7645); }
+.focus-heat-legend .labels { display: flex; justify-content: space-between; }
+.focus-heat-body { display: flex; gap: 6px; align-items: flex-start; }
+.focus-heat-days { display: grid; gap: 1px; width: 22px; flex: none; font-size: 10px; color: var(--text-secondary); }
+.focus-heat-days span { height: 12px; line-height: 12px; }
+.focus-heat-scroll { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.focus-heat-grid { display: grid; gap: 1px; min-width: max-content; }
+.focus-heat-grid span { height: 12px; border-radius: 0.5px; background: var(--empty-cell); }
+.focus-heat-axis { position: relative; height: 14px; margin-top: 8px; font-size: 10px; color: var(--text-secondary); }
+.focus-heat-axis span { position: absolute; top: 0; white-space: nowrap; }
 .gate { justify-items: center; text-align: center; padding: 32px; gap: 16px; }
 
 /* ================================================================ Chat (upstream ChatView tokens) */
