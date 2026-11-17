@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { BridgeServer } from '../main/agent/bridge'
 import { AgentWriteError } from '../main/agent/writes'
 import { sendToApp } from './bridge-client'
-import { BridgeError } from './run'
+import { BridgeError } from './bridge-client'
 
 let dir: string
 let server: BridgeServer | null

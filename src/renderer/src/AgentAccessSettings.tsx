@@ -1,3 +1,4 @@
+import { AGENT_CLIENT_NAMES } from '@shared/agent-clients'
 // Settings → "MCP / CLI", after upstream Dayflow
 // (Views/UI/Settings/SettingsAgentAccessTabView.swift): connect AI tools to
 // the bundled `dayflow` CLI, the edits switch, and the terminal command.
@@ -6,8 +7,8 @@ import { useEffect, useState } from 'react'
 import type { AgentAccessInfo, AgentClientState, CliName, Settings } from '@shared/types'
 
 const CLIENTS: Array<{ cli: CliName; name: string; restart: string }> = [
-  { cli: 'codex', name: 'Codex', restart: 'Restart Codex to pick up the connection.' },
-  { cli: 'claude', name: 'Claude Code', restart: 'Restart it to pick up the connection.' }
+  { cli: 'codex', name: AGENT_CLIENT_NAMES.codex, restart: 'Restart Codex to pick up the connection.' },
+  { cli: 'claude', name: AGENT_CLIENT_NAMES.claude, restart: 'Restart it to pick up the connection.' }
 ]
 
 type RowState = AgentClientState | { state: 'checking' | 'connecting' | 'disconnecting' }

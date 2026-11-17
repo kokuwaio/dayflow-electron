@@ -1,5 +1,6 @@
 # Entry point for developing, checking and packaging the app. `make` lists the targets.
-# The npm scripts and helper/linux/Makefile do the work; CI runs the same steps.
+# helper/linux/Makefile builds the Go helper; CI (.github/workflows/build.yaml)
+# runs the same checks and packages with the same electron-builder options.
 
 HELPER = helper/linux
 # 1.2.3 on a release tag, else 0.0.0-<branch>.<sha>; override with make VERSION=...

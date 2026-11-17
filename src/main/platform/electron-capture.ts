@@ -8,6 +8,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { type DisplayInfo, type Point, displayUnderCursor, frameFileName, sourceForDisplay, thumbnailSize } from './frames'
 import type { CaptureHandle, CaptureHandlers, CaptureOptions } from './types'
+import { errorMessage } from '../../shared/errors'
 
 /** JPEG quality, the same as the Linux helper. */
 const JPEG_QUALITY = 75
@@ -76,7 +77,7 @@ export function startElectronCapture(options: CaptureOptions, handlers: CaptureH
     } catch (err) {
       if (stopped) return
       failures++
-      if (failures >= MAX_FAILURES) fail(`Screenshot failed: ${err instanceof Error ? err.message : String(err)}`)
+      if (failures >= MAX_FAILURES) fail(`Screenshot failed: ${errorMessage(err)}`)
     }
   }
 

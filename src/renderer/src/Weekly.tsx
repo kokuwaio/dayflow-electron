@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Category } from '@shared/categories'
 import type { FeatureAccess } from '@shared/daily'
 import { hourLabel, parseKey, shiftDay, todayKey } from '@shared/day'
-import { formatMinutes as hm } from '@shared/day-summary'
+import { formatMinutes } from '@shared/day-summary'
 import type { TimelineCard } from '@shared/types'
 import type { Week } from '@shared/week'
 import { WEEKLY_MIN_TRACKED_MINUTES, contextShifts, donutItems, sankeyLinks, trackedMinutes, treemap, workflowHeatmap } from '@shared/weekly'
@@ -20,7 +20,7 @@ function withAlpha(hex: string, alpha: number): string {
 
 /** "(+30m more than last week)", or nothing when there is no earlier week to compare with. */
 const changeText = (change: number | null | undefined) =>
-  change == null ? '' : change === 0 ? ' (same as last week)' : ` (${change > 0 ? '+' : '−'}${hm(Math.abs(change))} ${change > 0 ? 'more' : 'less'} than last week)`
+  change == null ? '' : change === 0 ? ' (same as last week)' : ` (${change > 0 ? '+' : '−'}${formatMinutes(Math.abs(change))} ${change > 0 ? 'more' : 'less'} than last week)`
 
 /** The Weekly tab (upstream WeeklyView): charts built from the week's cards, no AI. */
 export function Weekly() {
@@ -91,10 +91,10 @@ export function Weekly() {
               Keep recording to unlock this week
             </h2>
             <span className="progress-pill">
-              {hm(charts.tracked)} / {hm(WEEKLY_MIN_TRACKED_MINUTES)}
+              {formatMinutes(charts.tracked)} / {formatMinutes(WEEKLY_MIN_TRACKED_MINUTES)}
             </span>
             <ProgressBar value={charts.tracked / WEEKLY_MIN_TRACKED_MINUTES} />
-            <p className="note">{hm(WEEKLY_MIN_TRACKED_MINUTES - charts.tracked)} more to see this week's charts.</p>
+            <p className="note">{formatMinutes(WEEKLY_MIN_TRACKED_MINUTES - charts.tracked)} more to see this week's charts.</p>
           </section>
         ) : (
           <div className="weekly-grid">
@@ -103,7 +103,7 @@ export function Weekly() {
               <Chart
                 height={300}
                 option={{
-                  tooltip: { trigger: 'item', valueFormatter: (v: unknown) => hm(Number(v)) },
+                  tooltip: { trigger: 'item', valueFormatter: (v: unknown) => formatMinutes(Number(v)) },
                   legend: {
                     orient: 'vertical',
                     right: 0,
@@ -119,7 +119,7 @@ export function Weekly() {
                   },
                   title: {
                     text: 'TOTAL',
-                    subtext: hm(charts.tracked),
+                    subtext: formatMinutes(charts.tracked),
                     left: '35%',
                     top: 'middle',
                     textAlign: 'center',
@@ -201,7 +201,7 @@ export function Weekly() {
                   tooltip: {
                     formatter: (p: unknown) => {
                       const { name, value, data } = p as { name: string; value: number; data: { change?: number | null } }
-                      return `${name}: ${hm(value)}${changeText(data.change)}`
+                      return `${name}: ${formatMinutes(value)}${changeText(data.change)}`
                     }
                   },
                   series: [
@@ -239,7 +239,7 @@ export function Weekly() {
               <Chart
                 height={360}
                 option={{
-                  tooltip: { trigger: 'item', valueFormatter: (v: unknown) => hm(Number(v)) },
+                  tooltip: { trigger: 'item', valueFormatter: (v: unknown) => formatMinutes(Number(v)) },
                   series: [
                     {
                       type: 'sankey',

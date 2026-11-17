@@ -12,6 +12,7 @@ import { assessIdleBatch } from './idle'
 import { type Category, PRIVATE_CATEGORY, idleCategory } from '../../shared/categories'
 import { type PromptFrame, buildCardRequest, sampleEvenly, withCorrection } from './prompt'
 import { cardFromObservations, transcribe } from './two-step'
+import { errorMessage } from '../../shared/errors'
 
 const TICK_MS = 60_000
 /** Screenshots older than this are never batched; failed batches older than this are not retried. */
@@ -154,7 +155,7 @@ export class Pipeline {
       this.lastError = null
       return 'completed'
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
+      const message = errorMessage(err)
       this.lastError = message
       this.deps.log(`batch ${batch.id} failed: ${message}`)
       store.finishBatch(batch.id, 'failed', message)
@@ -175,7 +176,7 @@ export class Pipeline {
         await this.generateCards(batch, provider, frames)
         return
       } catch (err) {
-        errors.push(`${provider.model}: ${err instanceof Error ? err.message : String(err)}`)
+        errors.push(`${provider.model}: ${errorMessage(err)}`)
         this.deps.log(`batch ${batch.id}: ${errors[errors.length - 1]}`)
       }
     }
@@ -214,7 +215,7 @@ export class Pipeline {
       // One at a time: OCR is CPU-heavy and runs on one worker.
       for (const f of frames) prepared.push({ ...f, jpeg: await prepareFrame(f.jpeg) })
     } catch (err) {
-      throw new Error(`Hiding secrets failed: ${err instanceof Error ? err.message : String(err)}`)
+      throw new Error(`Hiding secrets failed: ${errorMessage(err)}`)
     }
     return prepared
   }

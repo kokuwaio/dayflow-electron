@@ -7,8 +7,9 @@
 
 import { dayRange, isDayKey, todayKey } from '../shared/day'
 import * as P from './payloads'
-import { BridgeError } from './run'
+import { BridgeError } from './bridge-client'
 import { NoDataError, type ReadSource } from './source'
+import { errorMessage } from '../shared/errors'
 
 export const MCP_PROTOCOL_VERSION = '2025-06-18'
 export const SERVER_VERSION = '1.0.0'
@@ -226,7 +227,7 @@ export function createMcpServer(deps: McpDeps) {
       }
     } catch (err) {
       if (err instanceof NoDataError) return toolError('No Dayflow data found. The user needs to open Dayflow and record first.')
-      return toolError(`Query failed: ${err instanceof Error ? err.message : String(err)}`)
+      return toolError(`Query failed: ${errorMessage(err)}`)
     }
   }
 
@@ -239,7 +240,7 @@ export function createMcpServer(deps: McpDeps) {
       const data = await deps.send(operation, forwarded)
       return toolResult(Object.keys(data).length ? data : { ok: true })
     } catch (err) {
-      return toolError(err instanceof BridgeError || err instanceof Error ? err.message : String(err))
+      return toolError(errorMessage(err))
     }
   }
 

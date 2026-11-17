@@ -11,6 +11,7 @@ import { PAUSE_PRESETS, describeRecorder } from '../shared/status'
 import { renamedCategories } from '../shared/categories'
 import { PRIVATE_WINDOWS_RULE } from '../shared/blocklist'
 import { DEEP_LINK_SCHEME, deepLinkAction } from '../shared/deep-link'
+import { isAgentClient } from '../shared/agent-clients'
 import { type StandupDraft, accessProgress } from '../shared/daily'
 import type { FrameRef } from '../shared/media'
 import { type GoalPlan, defaultGoalPlan } from '../shared/day-summary'
@@ -39,6 +40,7 @@ import { selectFramesToPurge } from './retention'
 import { secretFilter } from './privacy/masker'
 import { tesseractEngine } from './privacy/tesseract'
 import { SettingsStore } from './settings'
+import { errorMessage } from '../shared/errors'
 
 const here = dirname(fileURLToPath(import.meta.url))
 /** A deep link among the arguments (dayflow-electron://stop-recording), from the desktop or a second launch. */
@@ -259,7 +261,7 @@ async function main(): Promise<void> {
     try {
       return { ok: true, entry: await writeStandup(day, MANUAL_MIN_MINUTES) }
     } catch (err) {
-      return { ok: false, message: err instanceof Error ? err.message : String(err) }
+      return { ok: false, message: errorMessage(err) }
     }
   })
   // Chat (upstream ChatService): one answer at a time; its progress streams to the window as chat:event.
@@ -288,7 +290,7 @@ async function main(): Promise<void> {
     } catch (err) {
       return {
         ok: false,
-        message: err instanceof Error ? err.message : String(err),
+        message: errorMessage(err),
         conversationId: err instanceof ChatError ? err.conversationId : conversationId
       }
     } finally {
@@ -351,7 +353,7 @@ async function main(): Promise<void> {
     try {
       await writeFile(target.filePath, rangeMarkdown(days, { today: todayKey() }), 'utf8')
     } catch (err) {
-      return { ok: false, message: `Couldn't save file: ${err instanceof Error ? err.message : String(err)}` }
+      return { ok: false, message: `Couldn't save file: ${errorMessage(err)}` }
     }
     const activities = days.reduce((n, d) => n + d.cards.length, 0)
     return { ok: true, message: `Saved to ${target.filePath}. Activities: ${activities}; days: ${days.length}.` }
@@ -408,13 +410,12 @@ async function main(): Promise<void> {
     configuredPath: settings.get().cliPaths[cli],
     invocation: agentInvocation()
   })
-  const isClient = (cli: unknown): cli is CliName => cli === 'claude' || cli === 'codex'
   ipcMain.handle('agent:info', (): AgentAccessInfo => {
     const inv = agentInvocation()
     return { command: shellLine([inv.command, ...inv.args]), terminalInstall: terminalInstallCommand(inv), configSnippet: manualConfigSnippet(inv) }
   })
   ipcMain.handle('agent:client', (_e, cli: unknown, action: unknown): Promise<AgentClientState> => {
-    if (!isClient(cli)) return Promise.resolve({ state: 'failed', message: 'Unknown client.' })
+    if (!isAgentClient(cli)) return Promise.resolve({ state: 'failed', message: 'Unknown client.' })
     if (action === 'connect') return connectClient(cli, clientEnv(cli))
     if (action === 'disconnect') return disconnectClient(cli, clientEnv(cli))
     return clientStatus(cli, clientEnv(cli))
@@ -458,7 +459,7 @@ async function main(): Promise<void> {
       })
       return { ok: true, message: `${reply.model} answered: ${reply.text.trim().slice(0, 80)}` }
     } catch (err) {
-      return { ok: false, message: err instanceof Error ? err.message : String(err) }
+      return { ok: false, message: errorMessage(err) }
     }
   })
   ipcMain.handle('capture:pause', (_e, seconds: number | null) => {

@@ -3,7 +3,16 @@
 
 import { connect } from 'node:net'
 import { BRIDGE_PROTOCOL_VERSION, readLine } from '../main/agent/protocol'
-import { BridgeError } from './run'
+
+/** A refusal or failure reported by the app's write bridge (code from its reply). */
+export class BridgeError extends Error {
+  constructor(
+    readonly code: string,
+    message: string
+  ) {
+    super(message)
+  }
+}
 
 const NOT_RUNNING = "Dayflow isn't running. Reads work offline; edits need the app open."
 

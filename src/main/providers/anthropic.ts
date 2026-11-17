@@ -12,6 +12,7 @@ import {
   isRetryableStatus,
   toBase64
 } from './types'
+import { errorMessage } from '../../shared/errors'
 
 const toBlock = (p: Part) =>
   p.type === 'text'
@@ -100,5 +101,5 @@ function toProviderError(err: unknown): ProviderError {
   if (err instanceof Anthropic.APIConnectionError) {
     return new ProviderError(`Anthropic API unreachable: ${err.message}`, true)
   }
-  return new ProviderError(`Anthropic API: ${err instanceof Error ? err.message : String(err)}`, false)
+  return new ProviderError(`Anthropic API: ${errorMessage(err)}`, false)
 }

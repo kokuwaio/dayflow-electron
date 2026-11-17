@@ -11,6 +11,7 @@ import { terminalCommand } from './link'
 import { createMcpServer } from './mcp'
 import { runCli } from './run'
 import { agentPaths, fileSource } from './source'
+import { errorMessage } from '../shared/errors'
 
 const paths = agentPaths(process.env, process.platform, homedir())
 const source = fileSource(paths)
@@ -57,7 +58,7 @@ runCli(process.argv.slice(2), {
     process.exitCode = code
   },
   (err: unknown) => {
-    process.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`)
+    process.stderr.write(`${errorMessage(err)}\n`)
     process.exitCode = 1
   }
 )

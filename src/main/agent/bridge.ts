@@ -9,6 +9,7 @@ import { appendFileSync, chmodSync, lstatSync, unlinkSync } from 'node:fs'
 import { type Server, type Socket, createServer } from 'node:net'
 import { BRIDGE_PROTOCOL_VERSION, type BridgeResponse, WRITE_OPERATIONS, type WriteOperation, readLine } from './protocol'
 import { AgentWriteError } from './writes'
+import { errorMessage } from '../../shared/errors'
 
 export interface BridgeDeps {
   editsEnabled(): boolean
@@ -47,7 +48,7 @@ export async function handleBridgeLine(line: string, deps: BridgeDeps): Promise<
     return { ok: true, data }
   } catch (err) {
     if (err instanceof AgentWriteError) return failure(err.code, err.message)
-    return failure('internal_error', err instanceof Error ? err.message : String(err))
+    return failure('internal_error', errorMessage(err))
   }
 }
 

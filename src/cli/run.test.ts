@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { DEFAULT_CATEGORIES } from '../shared/categories'
 import { todayKey } from '../shared/day'
 import { Store } from '../main/db/store'
-import { BridgeError, type CliContext, runCli } from './run'
+import { BridgeError } from './bridge-client'
+import { type CliContext, runCli } from './run'
 import { NoDataError, type ReadSource } from './source'
 
 const at = (d: number, h: number, m = 0) => new Date(2026, 10, d, h, m).getTime() / 1000

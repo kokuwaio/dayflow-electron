@@ -9,6 +9,7 @@ import type { Store } from '../db/store'
 import { languageForJson } from '../analysis/two-step-prompts'
 import type { Provider } from '../providers/types'
 import { EVIDENCE_RECAP_PROMPT, LOCAL_RECAP_PROMPT, SOL_EVIDENCE_RULES, recapPrompt } from './daily-prompts'
+import { errorMessage } from '../../shared/errors'
 
 /** Minimum minutes of cards on the summarized day: upstream's scheduler and manual thresholds. */
 export const AUTO_MIN_MINUTES = 180
@@ -74,7 +75,7 @@ export async function generateStandup(opts: {
       }
       return { draft, sourceDay: source, provider: provider.kind, model: reply.model, generatedAt: Math.floor(Date.now() / 1000) }
     } catch (err) {
-      errors.push(`${provider.model}: ${err instanceof Error ? err.message : String(err)}`)
+      errors.push(`${provider.model}: ${errorMessage(err)}`)
     }
   }
   throw new Error(errors.join(' · ') || 'No AI provider configured.')

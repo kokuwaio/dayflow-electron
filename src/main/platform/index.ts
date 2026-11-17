@@ -3,6 +3,7 @@ import type { ElectronApis } from './electron-apis'
 import { type LinuxOptions, linuxPlatform } from './linux'
 import type { Platform } from './types'
 import { win32Platform } from './win32'
+import { errorMessage } from '../../shared/errors'
 
 export type { ElectronApis } from './electron-apis'
 
@@ -41,7 +42,7 @@ export function createPlatform(opts: PlatformOptions, os: string = process.platf
       try {
         return linuxPlatform(opts)
       } catch (err) {
-        return unsupportedPlatform('linux', err instanceof Error ? err.message : String(err))
+        return unsupportedPlatform('linux', errorMessage(err))
       }
     default:
       return unsupportedPlatform(os, `Screen capture is not supported on ${os}.`)

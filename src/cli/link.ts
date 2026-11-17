@@ -15,7 +15,7 @@ export interface LinkEnv {
 }
 
 export function terminalCommand(remove: boolean, env: LinkEnv): string[] {
-  const target = join(env.home, '.local', 'bin', 'dayflow')
+  const target = join(env.home, TERMINAL_COMMAND_PATH.replace(/^~\//, ''))
   if (env.inFlatpak) {
     return remove
       ? ['The Flatpak cannot change your home folder. Run this in a terminal to remove the command:', '', `  rm ${TERMINAL_COMMAND_PATH}`]

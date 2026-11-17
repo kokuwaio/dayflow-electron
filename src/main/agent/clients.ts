@@ -8,6 +8,7 @@
 import type { AgentClientState, CliName } from '../../shared/types'
 import { type ProcessRunner, findCli, hostAccess, hostCommand } from '../providers/cli/host'
 import { type Invocation, mcpRegistration, shellLine } from './invocation'
+import { AGENT_CLIENT_NAMES } from '../../shared/agent-clients'
 
 export interface ClientEnv {
   runner: ProcessRunner
@@ -19,7 +20,6 @@ export interface ClientEnv {
   invocation: Invocation
 }
 
-const NAMES: Record<CliName, string> = { claude: 'Claude Code', codex: 'Codex' }
 
 type Run = (args: string[]) => Promise<{ code: number | null; stdout: string; stderr: string }>
 
@@ -68,9 +68,9 @@ export async function connectClient(client: CliName, env: ClientEnv): Promise<Ag
   // Replace only our own "dayflow" entry, so a stale path gets repaired.
   await run(reg.remove)
   const added = await run(reg.add)
-  if (added.code !== 0) return { state: 'failed', message: lastLine(added.stderr) || lastLine(added.stdout) || `${NAMES[client]} could not add the connection.` }
+  if (added.code !== 0) return { state: 'failed', message: lastLine(added.stderr) || lastLine(added.stdout) || `${AGENT_CLIENT_NAMES[client]} could not add the connection.` }
   const after = await check(client, run, env.invocation)
-  return after.state === 'connected' ? after : { state: 'failed', message: `${NAMES[client]} didn't keep the Dayflow connection.` }
+  return after.state === 'connected' ? after : { state: 'failed', message: `${AGENT_CLIENT_NAMES[client]} didn't keep the Dayflow connection.` }
 }
 
 export async function disconnectClient(client: CliName, env: ClientEnv): Promise<AgentClientState> {
@@ -80,7 +80,7 @@ export async function disconnectClient(client: CliName, env: ClientEnv): Promise
   const removed = await run(reg.remove)
   const after = await check(client, run, env.invocation)
   if (after.state === 'connected') {
-    return { state: 'failed', message: lastLine(removed.stderr) || `${NAMES[client]} kept the connection.` }
+    return { state: 'failed', message: lastLine(removed.stderr) || `${AGENT_CLIENT_NAMES[client]} kept the connection.` }
   }
   return after
 }

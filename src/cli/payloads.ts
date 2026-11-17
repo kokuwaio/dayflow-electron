@@ -4,7 +4,7 @@
 // object gets schema_version when it is printed.
 
 import { type Category, SYSTEM_CATEGORY } from '../shared/categories'
-import { dayRange } from '../shared/day'
+import { BOUNDARY_HOUR, dayRange, pad } from '../shared/day'
 import type { StandupEntry, TimelineCard } from '../shared/types'
 import { weekOf } from '../shared/week'
 
@@ -13,7 +13,6 @@ export const SCHEMA_VERSION = 1
 export const MAX_RANGE_DAYS_FOR_ACTIVITIES = 7
 /** Upstream search limit. */
 export const SEARCH_LIMIT = 50
-export const DAY_BOUNDARY_HOUR = 4
 
 export type Json = Record<string, unknown>
 
@@ -21,7 +20,6 @@ export const durationMinutes = (c: { start: number; end: number }) => Math.max(0
 
 export const timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone
 
-const pad = (n: number) => String(n).padStart(2, '0')
 
 /** Local time with its offset, like upstream's "yyyy-MM-dd'T'HH:mm:ssZZZZZ". */
 export function isoLocal(ts: number): string {
@@ -60,7 +58,7 @@ export function timelineEnvelope(day: string, cards: TimelineCard[], detailed: b
   return {
     date: day,
     time_zone: timeZone(),
-    day_boundary_hour: DAY_BOUNDARY_HOUR,
+    day_boundary_hour: BOUNDARY_HOUR,
     cards: cards.map((c) => activityJson(c, detailed)),
     detail_available: !detailed,
     hint: detailed ? '' : 'Summaries are abbreviated. Use `dayflow card <record_id>` for the full write-up of a specific activity.'
@@ -166,7 +164,7 @@ export function status(s: StatusInput): Json {
   const o: Json = {
     today: s.today,
     time_zone: timeZone(),
-    day_boundary_hour: DAY_BOUNDARY_HOUR,
+    day_boundary_hour: BOUNDARY_HOUR,
     pending_batches: s.pendingBatches,
     failed_batches: s.failedBatches,
     edits_enabled: s.editsEnabled,

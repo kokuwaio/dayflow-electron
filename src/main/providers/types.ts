@@ -1,6 +1,7 @@
 import type { CliName, ProviderKind } from '../../shared/types'
 import type { CliEnv } from './cli/cli-providers'
 import type { ProcessRunner } from './cli/host'
+import { errorMessage } from '../../shared/errors'
 
 export type { ProviderKind }
 
@@ -114,7 +115,7 @@ async function post(fetchImpl: typeof fetch, label: string, url: string, headers
       signal: AbortSignal.timeout(10 * 60_000)
     })
   } catch (err) {
-    throw new ProviderError(`${label} unreachable: ${err instanceof Error ? err.message : String(err)}`, true)
+    throw new ProviderError(`${label} unreachable: ${errorMessage(err)}`, true)
   }
   if (res.ok) return res
   const text = await res.text()
@@ -183,7 +184,7 @@ export async function postSse(
     }
   } catch (err) {
     if (err instanceof ProviderError) throw err
-    throw new ProviderError(`${label} stream broke off: ${err instanceof Error ? err.message : String(err)}`, true)
+    throw new ProviderError(`${label} stream broke off: ${errorMessage(err)}`, true)
   }
   flush(buffer)
 }

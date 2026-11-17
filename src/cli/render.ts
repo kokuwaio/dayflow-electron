@@ -17,8 +17,6 @@ export interface Style {
 
 export const style = (color: boolean): Style => (color ? { bold: '\x1b[1m', dim: '\x1b[2m', reset: '\x1b[0m' } : { bold: '', dim: '', reset: '' })
 
-export const padded = (s: string, width: number) => (s.length >= width ? s : s + ' '.repeat(width - s.length))
-
 /** Word wrap per paragraph (upstream wrap). */
 export function wrap(text: string, width: number): string[] {
   const lines: string[] = []
@@ -48,10 +46,10 @@ export function renderTimeline(day: string, cards: TimelineCard[], detail: Timel
   const out = [`${s.bold}${headerDay(parseKey(day).getTime() / 1000)}${s.reset}  ${s.dim}${formatMinutes(tracked)} tracked${s.reset}`, '']
   const idWidth = Math.max(...cards.map((c) => String(c.id).length))
   for (const c of cards) {
-    const id = padded(String(c.id), idWidth)
-    const time = padded(`${formatClock(c.start)} – ${formatClock(c.end)}`, 20)
+    const id = String(c.id).padEnd(idWidth)
+    const time = (`${formatClock(c.start)} – ${formatClock(c.end)}`).padEnd(20)
     if (detail === 'compact') {
-      out.push(`  ${s.dim}${id}${s.reset}  ${time}  ${padded(c.title, 44)}  ${c.category}`)
+      out.push(`  ${s.dim}${id}${s.reset}  ${time}  ${c.title.padEnd(44)}  ${c.category}`)
       continue
     }
     out.push(`  ${s.dim}${id}${s.reset}  ${time}  ${s.bold}${c.title}${s.reset}  ${s.dim}${c.category}${s.reset}`)
@@ -71,7 +69,7 @@ export function renderTimeline(day: string, cards: TimelineCard[], detail: Timel
 
 /** "  2026-11-17 9:00 AM   Title   Category" rows for ranges and search results. */
 function listRow(c: TimelineCard, s: Style, gap: string): string {
-  return `  ${s.dim}${dayKey(c.start)}${gap}${padded(formatClock(c.start), 9)}${s.reset} ${padded(c.title, 44)}  ${c.category}`
+  return `  ${s.dim}${dayKey(c.start)}${gap}${formatClock(c.start).padEnd(9)}${s.reset} ${c.title.padEnd(44)}  ${c.category}`
 }
 
 export function renderRangeListing(from: string, to: string, cards: TimelineCard[], s: Style): string[] {
@@ -84,7 +82,7 @@ function bars(totals: Array<{ name: string; minutes: number }>, tracked: number,
   return totals.map((t) => {
     const bar = '█'.repeat(Math.max(1, Math.floor((t.minutes * 20) / max)))
     const percent = tracked > 0 ? Math.floor((t.minutes * 100) / tracked) : 0
-    return `  ${padded(t.name, nameWidth)}  ${padded(formatMinutes(t.minutes), durationWidth)}  ${s.dim}${bar}${s.reset}  ${percent}%`
+    return `  ${t.name.padEnd(nameWidth)}  ${formatMinutes(t.minutes).padEnd(durationWidth)}  ${s.dim}${bar}${s.reset}  ${percent}%`
   })
 }
 
@@ -148,7 +146,7 @@ export function renderWeekly(days: string[], cards: TimelineCard[], categories: 
 
 export function renderCategories(categories: Category[], s: Style): string[] {
   const width = Math.max(0, ...categories.map((c) => c.name.length))
-  return categories.map((c) => `  ■ ${padded(c.name, width)}  ${s.dim}${c.color}${s.reset}${c.isIdle ? `  ${s.dim}system${s.reset}` : ''}`)
+  return categories.map((c) => `  ■ ${c.name.padEnd(width)}  ${s.dim}${c.color}${s.reset}${c.isIdle ? `  ${s.dim}system${s.reset}` : ''}`)
 }
 
 export function renderSearch(text: string, cards: TimelineCard[], s: Style): string[] {

@@ -1,9 +1,11 @@
 // Days run from 4 AM to 4 AM local time, like upstream, so late nights stay
 // on the day they started. Times are Unix seconds; keys are "YYYY-MM-DD".
 
-const BOUNDARY_HOUR = 4
+/** Days start at this local hour (upstream's 4 AM boundary). */
+export const BOUNDARY_HOUR = 4
 
-const pad = (n: number) => String(n).padStart(2, '0')
+/** Two digits: 4 → "04". */
+export const pad = (n: number) => String(n).padStart(2, '0')
 const keyOf = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
 /** The local midnight Date of a day key. */

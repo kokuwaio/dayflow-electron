@@ -6,20 +6,14 @@
 import { dayRange, isDayKey, shiftDay, todayKey } from '../shared/day'
 import { weekOf } from '../shared/week'
 import { EXIT, parseArgs } from './args'
+import { BridgeError } from './bridge-client'
 import * as P from './payloads'
 import * as R from './render'
 import { NoDataError, type ReadSource } from './source'
+import { errorMessage } from '../shared/errors'
 
 type Exit = (typeof EXIT)[keyof typeof EXIT]
 
-export class BridgeError extends Error {
-  constructor(
-    readonly code: string,
-    message: string
-  ) {
-    super(message)
-  }
-}
 
 export interface CliContext {
   /** Writes one line (or several joined by newlines) to stdout. */
@@ -206,7 +200,7 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
         const exit = err.code === 'app_not_running' ? EXIT.appNotRunning : err.code === 'edits_disabled' ? EXIT.editsDisabled : err.code === 'not_found' ? EXIT.notFound : err.code === 'invalid_argument' || err.code === 'already_exists' || err.code === 'permission_denied' ? EXIT.usage : EXIT.unexpected
         throw new Failure(err.message, exit, err.code)
       }
-      throw new Failure(`Write failed: ${err instanceof Error ? err.message : String(err)}`, EXIT.unexpected, 'write_failed')
+      throw new Failure(`Write failed: ${errorMessage(err)}`, EXIT.unexpected, 'write_failed')
     }
   }
 
@@ -343,7 +337,7 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
         try {
           print(await ctx.terminalCommand(command === 'unlink'))
         } catch (err) {
-          throw new Failure(err instanceof Error ? err.message : String(err), EXIT.unexpected, 'link_failed')
+          throw new Failure(errorMessage(err), EXIT.unexpected, 'link_failed')
         }
         break
       case 'mcp':
@@ -356,7 +350,7 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
   } catch (err) {
     if (err instanceof Failure) return fail(err)
     if (err instanceof NoDataError) return fail(new Failure(err.message, EXIT.noData, 'no_data'))
-    return fail(new Failure(`Query failed: ${err instanceof Error ? err.message : String(err)}`, EXIT.unexpected, 'query_failed'))
+    return fail(new Failure(`Query failed: ${errorMessage(err)}`, EXIT.unexpected, 'query_failed'))
   }
 }
 

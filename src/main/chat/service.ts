@@ -11,6 +11,7 @@ import type { Store } from '../db/store'
 import type { ChatMessage, Provider } from '../providers/types'
 import { runChatLoop } from './loop'
 import { chatContextBlock, chatSystemPrompt } from './prompt'
+import { errorMessage } from '../../shared/errors'
 
 /** Days of timeline a CLI provider sees, and days of observations within them. */
 const CONTEXT_CARD_DAYS = 7
@@ -124,7 +125,7 @@ export async function sendChatMessage(
       deps.suggestions.set(conversationId, remember(deps.suggestions.get(conversationId) ?? [], meta.suggestions))
       return { conversationId, text: meta.text, suggestions: meta.suggestions, model: answer.model }
     } catch (err) {
-      errors.push(`${provider.model}: ${err instanceof Error ? err.message : String(err)}`)
+      errors.push(`${provider.model}: ${errorMessage(err)}`)
     }
   }
   const message = errors.join(' · ')
