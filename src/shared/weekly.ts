@@ -8,16 +8,16 @@ import type { TimelineCard } from './types'
 
 /** Weeks with less tracked time show a gate instead of charts (upstream: 15 h). */
 export const WEEKLY_MIN_TRACKED_MINUTES = 15 * 60
-const OTHER_COLOR = '#BFB6AE'
+export const OTHER_COLOR = '#BFB6AE'
 const DISTRACTION_COLOR = '#FF5950'
 
 /** Whole minutes per card, rounded like upstream. */
-const minutesOf = (c: TimelineCard) => Math.max(0, Math.round((c.end - c.start) / 60))
+export const minutesOf = (c: TimelineCard) => Math.max(0, Math.round((c.end - c.start) / 60))
 /** Category and app names match case-insensitively, like upstream's normalized keys. */
-const normalized = (s: string) => s.trim().toLowerCase()
+export const normalized = (s: string) => s.trim().toLowerCase()
 
 /** Cards that count: everything but Idle and failed ("System") cards. */
-function counted(cards: TimelineCard[], categories: Category[]): TimelineCard[] {
+export function counted(cards: TimelineCard[], categories: Category[]): TimelineCard[] {
   const idle = new Set(categories.filter((c) => c.isIdle).map((c) => normalized(c.name)))
   return cards.filter((c) => {
     const name = normalized(c.category)
@@ -26,11 +26,11 @@ function counted(cards: TimelineCard[], categories: Category[]): TimelineCard[] 
 }
 
 /** The category's name as configured, so "work" and "Work" land in one group. */
-const categoryName = (name: string, categories: Category[]) => categories.find((c) => normalized(c.name) === normalized(name))?.name ?? name.trim()
-const colorOf = (name: string, categories: Category[]) => categories.find((c) => normalized(c.name) === normalized(name))?.color ?? FALLBACK_COLOR
+export const categoryName = (name: string, categories: Category[]) => categories.find((c) => normalized(c.name) === normalized(name))?.name ?? name.trim()
+export const colorOf = (name: string, categories: Category[]) => categories.find((c) => normalized(c.name) === normalized(name))?.color ?? FALLBACK_COLOR
 
 /** Adds `minutes` under `name` to a running total. */
-const add = (m: Map<string, number>, name: string, minutes: number) => m.set(name, (m.get(name) ?? 0) + minutes)
+export const add = (m: Map<string, number>, name: string, minutes: number) => m.set(name, (m.get(name) ?? 0) + minutes)
 
 export function trackedMinutes(cards: TimelineCard[], categories: Category[]): number {
   return counted(cards, categories).reduce((sum, c) => sum + minutesOf(c), 0)
@@ -245,7 +245,7 @@ function activityWindow(facts: Fact[]): { start: number; end: number } {
 }
 
 /** A whole distraction card: its category says so, or it lists no distractions but its texts do. */
-function isFullDistraction(card: TimelineCard): boolean {
+export function isFullDistraction(card: TimelineCard): boolean {
   const text = `${card.category} ${card.subcategory}`.toLowerCase()
   if (text.includes('distraction') || text.includes('distracted')) return true
   return card.distractions.length ? false : isDistraction(card)
