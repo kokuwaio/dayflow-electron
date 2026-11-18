@@ -19,6 +19,11 @@ describe('JSON in model replies', () => {
     expect(jsonArray('Here you go:\n```json\n[{"summary":"a ```json b"}]\n```', 'cards')).toEqual([{ summary: 'a ```json b' }])
   })
 
+  it('reads the last of several objects in prose, braces inside strings included', () => {
+    expect(jsonObject('Example: {"done":[],"next":null}\nAnswer: {"done":["Shipped the fix"],"next":null}')).toEqual({ done: ['Shipped the fix'], next: null })
+    expect(jsonObject('A stray { before {"title":"a } in a string"}')).toEqual({ title: 'a } in a string' })
+  })
+
   it('prefers the requested key of an enclosing object over sibling arrays', () => {
     expect(jsonArray('Result: {"cards":[{"title":"Actual activity"}],"notes":[]}', 'cards')).toEqual([{ title: 'Actual activity' }])
   })

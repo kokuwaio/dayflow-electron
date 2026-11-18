@@ -59,7 +59,10 @@ export function FilterBar(props: {
             requestAnimationFrame(() => bar.current?.querySelectorAll<HTMLButtonElement>('button.chip')[to]?.focus())
           }}
           onDragStart={() => setDragging(i)}
-          onDragOver={(e) => !c.isIdle && e.preventDefault()}
+          // Cancelled with Escape or dropped elsewhere: forget the drag, so a later
+          // drop of text or a file cannot move this category.
+          onDragEnd={() => setDragging(null)}
+          onDragOver={(e) => dragging !== null && !c.isIdle && e.preventDefault()}
           onDrop={() => {
             if (dragging !== null && !c.isIdle) move(dragging, i)
             setDragging(null)

@@ -53,6 +53,11 @@ describe('parseSegments', () => {
     expect(parseSegments(garbled, recording)).toEqual({ ok: true, observations: [{ start, end: start + 900, text: 'Edited pipeline.ts' }] })
   })
 
+  it('drops reversed segments and those left empty after clipping, instead of inventing a second', () => {
+    const reply = JSON.stringify({ segments: [seg('00:00', '15:00', 'Whole recording'), seg('30:00', '00:00', 'Reversed'), seg('15:10', '15:20', 'After the end'), seg('05:00', '05:00', 'Empty')] })
+    expect(parseSegments(reply, recording)).toEqual({ ok: true, observations: [{ start, end: start + 900, text: 'Whole recording' }] })
+  })
+
   it('counts overlapping segments once when checking coverage', () => {
     const seg = (a: string, b: string, d: string) => ({ startTimestamp: a, endTimestamp: b, description: d })
     const reply = JSON.stringify({ segments: [seg('00:00', '06:00', 'Coding'), seg('00:00', '06:00', 'Still coding')] })

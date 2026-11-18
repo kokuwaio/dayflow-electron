@@ -46,7 +46,9 @@ export function parseSegments(reply: string, recording: Recording): SegmentResul
     if (!text || from === null || to === null || from < -SLACK_SEC || to > duration + SLACK_SEC) continue
     const start = Math.min(Math.max(from, 0), duration)
     const end = Math.min(Math.max(to, 0), duration)
-    observations.push({ start: recording.start + start, end: recording.start + Math.max(end, start + 1), text })
+    // A reversed segment, or one left empty by clipping, says nothing about the recording.
+    if (end <= start) continue
+    observations.push({ start: recording.start + start, end: recording.start + end, text })
   }
   if (observations.length === 0) return { ok: false, issue: 'The reply contains no segments within the recording.' }
   if (observations.length > MAX_SEGMENTS) {

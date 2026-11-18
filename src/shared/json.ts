@@ -3,13 +3,13 @@
 // the first one with the shape it expects.
 
 /**
- * Top-level balanced [...] spans, string-aware so brackets inside JSON
- * strings do not count. An unclosed stray '[' in prose is skipped, so it
- * cannot hide a later array.
+ * Top-level balanced spans between `open` and `close` ([...] or {...}),
+ * string-aware so brackets inside JSON strings do not count. An unclosed
+ * stray bracket in prose is skipped, so it cannot hide a later value.
  */
-function arraySpans(text: string): string[] {
+function balancedSpans(text: string, open: '[' | '{', close: ']' | '}'): string[] {
   const spans: string[] = []
-  for (let start = text.indexOf('['); start >= 0; start = text.indexOf('[', start + 1)) {
+  for (let start = text.indexOf(open); start >= 0; start = text.indexOf(open, start + 1)) {
     let depth = 0
     let inString = false
     for (let i = start; i < text.length; i++) {
@@ -18,10 +18,10 @@ function arraySpans(text: string): string[] {
         if (c === '\\') i++
         else if (c === '"') inString = false
       } else if (c === '"') inString = true
-      else if (c === '[') depth++
-      else if (c === ']' && --depth === 0) {
+      else if (c === open) depth++
+      else if (c === close && --depth === 0) {
         spans.push(text.slice(start, i + 1))
-        start = i // continue after this array: nested ones are not candidates of their own
+        start = i // continue after this value: nested ones are not candidates of their own
         break
       }
     }
@@ -41,11 +41,9 @@ export function jsonCandidates(text: string): unknown[] {
   // Only fence lines go, so backticks inside the JSON's own strings stay as written.
   const cleaned = text.replace(/^[ \t]*```[a-z]*[ \t]*$/gim, '').trim()
   tryParse(cleaned)
-  // Arrays, the last one first (models put the answer after their notes).
-  for (const span of arraySpans(cleaned).reverse()) tryParse(span)
-  const a = cleaned.indexOf('{')
-  const b = cleaned.lastIndexOf('}')
-  if (a >= 0 && b > a) tryParse(cleaned.slice(a, b + 1))
+  // Arrays, then objects, the last one first (models put the answer after their notes).
+  for (const span of balancedSpans(cleaned, '[', ']').reverse()) tryParse(span)
+  for (const span of balancedSpans(cleaned, '{', '}').reverse()) tryParse(span)
   return found
 }
 
