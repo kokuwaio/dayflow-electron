@@ -791,5 +791,18 @@
     "comeBack": "タイムラインカードがいくつか表示されたら、もう一度確認してください。",
     "allCaughtUp": "すべて確認しました！",
     "allReviewed": "これまでのすべてのアクティビティを確認しました。<br/>評価はタイムラインの右パネルに反映されます。"
+  },
+  "support": {
+    "title": "サポート",
+    "sub": "バグを見つけた、または質問がありますか？GitHub で Issue を作成し、デバッグログを貼り付けてください。",
+    "debugLogs": "デバッグログ",
+    "debugLogsSub": "バージョン、プラットフォーム、最近の分析バッチ、AI の呼び出しとエラー。最新のカードのタイトルと要約を含みますが、スクリーンショットや API キーは含みません。共有する前に内容を確認してください。",
+    "copyDebugLogs": "デバッグログをコピー",
+    "preparing": "準備中…",
+    "copied": "コピーしました！",
+    "openLogFolder": "ログフォルダを開く",
+    "reportProblem": "問題を報告",
+    "reportProblemSub": "ブラウザで GitHub の Issue トラッカーを開きます。",
+    "openIssues": "GitHub Issues を開く"
   }
 }

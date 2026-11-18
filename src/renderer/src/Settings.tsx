@@ -11,6 +11,7 @@ import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, typ
 import type { UiStyle } from '@shared/ui-style'
 import { AgentAccessSettings } from './AgentAccessSettings'
 import { Row, Section, StatusDot } from './SettingsLayout'
+import { SupportSettings } from './SupportSettings'
 import { providerChoices } from './providers'
 import { applyUiStyle } from './ui-style'
 
@@ -484,6 +485,7 @@ function OtherTab({ settings, save }: { settings: Settings; save: Save }) {
         <UpdatesRow settings={settings} save={save} />
       </Section>
       <CategoryEditor categories={settings.categories} save={save} />
+      <SupportSettings />
     </>
   )
 }

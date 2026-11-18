@@ -791,5 +791,18 @@
     "comeBack": "時間軸中出現幾張卡片後再回來。",
     "allCaughtUp": "已全部處理完畢！",
     "allReviewed": "你已回顧目前為止的所有活動。<br/>時間軸右側面板會根據你的評分更新。"
+  },
+  "support": {
+    "title": "幫助",
+    "sub": "發現錯誤或有疑問？在 GitHub 上提交 issue，並把除錯紀錄貼進去。",
+    "debugLogs": "除錯紀錄",
+    "debugLogsSub": "版本、平台、最近的分析批次、AI 呼叫和錯誤。包含你最新卡片的標題和摘要，但不包含截圖或 API 金鑰。分享前請先閱讀一遍。",
+    "copyDebugLogs": "拷貝偵錯記錄",
+    "preparing": "正在準備…",
+    "copied": "已拷貝！",
+    "openLogFolder": "開啟紀錄資料夾",
+    "reportProblem": "回報問題",
+    "reportProblemSub": "在瀏覽器中開啟 GitHub 上的問題追蹤頁面。",
+    "openIssues": "開啟 GitHub Issues"
   }
 }

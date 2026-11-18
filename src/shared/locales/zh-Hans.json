@@ -791,5 +791,18 @@
     "comeBack": "时间线上出现几张卡片后再回来。",
     "allCaughtUp": "已全部处理完毕！",
     "allReviewed": "你已回顾目前所有的活动。<br/>时间线右侧面板将根据你的评分更新。"
+  },
+  "support": {
+    "title": "帮助",
+    "sub": "发现了错误或有疑问？在 GitHub 上提交 issue，并把调试日志粘贴进去。",
+    "debugLogs": "调试日志",
+    "debugLogsSub": "版本、平台、最近的分析批次、AI 调用和错误。包含你最新卡片的标题和摘要，但不包含截图或 API 密钥。分享前请先阅读一遍。",
+    "copyDebugLogs": "复制调试日志",
+    "preparing": "正在准备…",
+    "copied": "已复制！",
+    "openLogFolder": "打开日志文件夹",
+    "reportProblem": "报告问题",
+    "reportProblemSub": "在浏览器中打开 GitHub 上的问题跟踪页面。",
+    "openIssues": "打开 GitHub Issues"
   }
 }

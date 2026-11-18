@@ -791,5 +791,18 @@
     "comeBack": "타임라인 카드가 몇 개 생성된 후 다시 확인하세요.",
     "allCaughtUp": "모두 확인했습니다!",
     "allReviewed": "지금까지의 모든 활동을 검토했습니다.<br/>평가 내용이 타임라인 오른쪽 패널에 반영됩니다."
+  },
+  "support": {
+    "title": "지원",
+    "sub": "버그를 발견했거나 질문이 있나요? GitHub에 이슈를 열고 디버그 로그를 붙여 넣으세요.",
+    "debugLogs": "디버그 로그",
+    "debugLogsSub": "버전, 플랫폼, 최근 분석 배치, AI 호출과 오류. 최근 카드의 제목과 요약은 포함되지만 스크린샷과 API 키는 포함되지 않습니다. 공유하기 전에 내용을 확인하세요.",
+    "copyDebugLogs": "디버그 로그 복사",
+    "preparing": "준비 중…",
+    "copied": "복사했습니다!",
+    "openLogFolder": "로그 폴더 열기",
+    "reportProblem": "문제 신고",
+    "reportProblemSub": "브라우저에서 GitHub 이슈 트래커를 엽니다.",
+    "openIssues": "GitHub 이슈 열기"
   }
 }

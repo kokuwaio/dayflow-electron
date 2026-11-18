@@ -281,6 +281,11 @@ flowchart LR
 - **Backups**: a daily copy of the database in `backups/` (newest three);
   `src/main/db/backup.ts` restores the newest one when the database is
   damaged at start.
+- **Log**: `logs/dayflow-electron.log` (`src/main/log-file.ts`), rotated to
+  `dayflow-electron.1.log` at 1 MB, with API keys and the home folder
+  hidden. "Copy debug logs" (`src/main/support.ts`) formats it with the latest
+  rows of `timeline_cards`, `llm_calls` and `analysis_batches`
+  (`src/shared/debug-report.ts`).
 - **Frames** are JPEG files in `recordings/`. The retention job deletes the
   oldest ones when the storage limit is reached; cards stay.
 - **Settings** are a JSON file. API keys are encrypted with Electron's

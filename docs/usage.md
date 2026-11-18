@@ -542,3 +542,21 @@ translations waiting for a native speaker's review (listed in
 | macOS: "Screen Recording permission is missing" | Allow dayflow-electron in System Settings → Privacy & Security → Screen Recording, then quit and reopen the app. After an update, remove it from the list with **−** and allow it again. |
 | Windows: "Window detection is off" | The PowerShell window watcher could not start; the message shows why. Company policies that block PowerShell also block it. |
 | Capture failed, retrying | The screen-sharing session ended (for example after a monitor change); the app retries after 1, 2, 5 and then every 10 minutes. |
+
+### Report a problem
+
+**Settings → Other → Support** helps with bug reports:
+
+- **Copy debug logs** puts a text report on the clipboard: the app version,
+  platform, desktop, chosen providers and capture settings, the latest 5
+  cards (title, category and summary), the latest 20 AI calls (provider,
+  model, time taken, success or error, HTTP status), the latest 10 analysis
+  batches with their status and reason, and the errors from the log file.
+  It leaves out screenshots, what was sent to the AI and what it answered,
+  and API keys; your home folder shows as `~`. Read it before you share it:
+  the card titles and summaries describe your screen.
+- **Open log folder** opens `logs/` in the data folder. The app writes
+  `dayflow-electron.log` there; at 1 MB it becomes `dayflow-electron.1.log`
+  and replaces the one before, so the log never takes more than about 2 MB.
+- **Open GitHub issues** opens the issue tracker in your browser. Paste the
+  debug logs into a new issue.

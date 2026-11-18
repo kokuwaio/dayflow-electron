@@ -317,6 +317,13 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
 - [x] Database backups: a daily copy, the newest three kept, a damaged
   database restored from the newest copy on start, WAL checkpoints every 5
   minutes (upstream `StorageManager+Maintenance`).
+- [x] Debug logs (upstream `Views/UI/BugReportView.swift`,
+  `Utilities/DebugLogFormatter.swift`): a log file in `logs/` of the data
+  folder (1 MB, one older file kept, API keys and the home folder hidden),
+  and Settings → Other → Support with "Copy debug logs" (app facts, the
+  latest cards, LLM calls, batches and the errors from the log, without
+  request or response bodies), "Open log folder" and a link to the GitHub
+  issues. Upstream's support chat, email, Discord and call booking stay out.
 - [ ] Packages: Flatpak on Linux (own repository first, Flathub once the
   permissions are settled; updates come through Flatpak), NSIS and dmg with
   `electron-updater` from GitHub Releases; signing for Windows and macOS.

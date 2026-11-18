@@ -4,6 +4,7 @@ import { DatabaseSync, backup } from 'node:sqlite'
 import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from '../../shared/categories'
 import { dayKey, dayRange, formatClock } from '../../shared/day'
 import type { GoalPlan } from '../../shared/day-summary'
+import type { DebugBatch, DebugCard, DebugLlmCall } from '../../shared/debug-report'
 import type { ReviewRating, ReviewSegment } from '../../shared/review'
 import type { AppSites, CardEdit, ChatConversation, ChatRole, ChatStoredMessage, Distraction, Rating, StandupEntry, TimelineCard } from '../../shared/types'
 import type { PreviousCard } from '../analysis/idle'
@@ -760,6 +761,28 @@ export class Store {
       .prepare(`SELECT ${CARD_COLUMNS} FROM timeline_cards WHERE day = ? AND is_deleted = 0 ORDER BY start_ts, id`)
       .all(day) as unknown as CardRow[]
     return rows.map(toCard)
+  }
+
+  /** The newest cards, LLM calls and batches for the debug report (upstream fetch…ForDebug), newest first. */
+  debugSnapshot(limits: { cards: number; llmCalls: number; batches: number }): { cards: DebugCard[]; llmCalls: DebugLlmCall[]; batches: DebugBatch[] } {
+    const created = "CAST(strftime('%s', created_at) AS INTEGER) AS createdAt"
+    const cards = this.db
+      .prepare(
+        `SELECT day, start AS startTime, end AS endTime, title, summary, category, subcategory, ${created}
+         FROM timeline_cards WHERE is_deleted = 0 ORDER BY created_at DESC, id DESC LIMIT ?`
+      )
+      .all(limits.cards) as unknown as DebugCard[]
+    const calls = this.db
+      .prepare(
+        `SELECT ${created}, provider, model, operation, status, latency_ms AS latencyMs, http_status AS httpStatus,
+           batch_id AS batchId, attempt, error_message AS error
+         FROM llm_calls ORDER BY created_at DESC, id DESC LIMIT ?`
+      )
+      .all(limits.llmCalls) as unknown as Array<Omit<DebugLlmCall, 'ok'> & { status: string }>
+    const batches = this.db
+      .prepare(`SELECT ${BATCH_COLUMNS}, ${created} FROM analysis_batches ORDER BY id DESC LIMIT ?`)
+      .all(limits.batches) as unknown as DebugBatch[]
+    return { cards, llmCalls: calls.map(({ status, ...call }) => ({ ...call, ok: status === 'success' })), batches }
   }
 }
 
