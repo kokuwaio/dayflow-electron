@@ -412,16 +412,16 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   permissions are settled; updates come through Flatpak), NSIS and dmg with
   `electron-updater` from GitHub Releases; signing for Windows and macOS.
   Done: Flatpak for x86_64 and aarch64, NSIS installers (x64, arm64) and dmg
-  images (arm64, x64), all built in CI and attached to releases;
+  images (arm64, x64), all built in CI and attached to releases, and a
+  Homebrew cask for our own tap (`packaging/homebrew/`);
   `electron-updater` (check at start and every 6 hours, background download,
   "Install updates automatically" in Settings → Other, restart from the tray
   or a notification; unsigned macOS only notifies; "Check for updates…" in
   the tray and the macOS app menu checks at once and answers with a
-  notification). Open: Windows and macOS
-  signing and notarization (certificates needed, see
-  [release.md](release.md#signing-windows-and-macos); macOS installs updates
-  only once signed), a public repository (the updater downloads without a
-  token), Homebrew and Flathub (prepared in a separate pull request).
+  notification). Open: Windows and macOS signing and notarization
+  (certificates needed, see [release.md](release.md#signing-windows-and-macos);
+  macOS installs updates only once signed), the one-time Homebrew tap and
+  Flathub setup ([release.md](release.md#homebrew-one-time-setup)).
 - [ ] Windows and macOS on real machines: capture, window detection, lock,
   idle, autostart and deep links are implemented and unit tested, not yet
   tried by hand.
