@@ -50,8 +50,8 @@ Remove it with
 ### Flathub
 
 Not published yet. The manifest is ready in `packaging/flatpak/flathub/`; the
-submission needs a public repository and the app's own name and icon
-([release.md](release.md#flathub)). Once it is on Flathub:
+submission needs screenshots in the metainfo and a first release
+([release.md](release.md#flathub-one-time-setup)). Once it is on Flathub:
 `flatpak install flathub io.github.kokuwaio.DayflowElectron`.
 
 ### Tarball

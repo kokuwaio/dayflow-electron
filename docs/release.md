@@ -106,19 +106,20 @@ prereleases never do, and neither does a release that is no longer the latest
 one (re-running an older release keeps the tap on the newest version). Tap
 updates run one at a time.
 
-1. Make this repository public. Homebrew downloads the disk images without
-   logging in, and assets of private releases need a login.
-2. Create the public repository `kokuwaio/homebrew-tap` (the `homebrew-`
+The repository is public, as Homebrew needs (it downloads the disk images
+without logging in). Then:
+
+1. Create the public repository `kokuwaio/homebrew-tap` (the `homebrew-`
    prefix is what makes `kokuwaio/tap` work). An empty README is enough; the
    workflow adds `Casks/dayflow-electron.rb`.
-3. Create a fine-grained personal access token (or a GitHub App token) with
+2. Create a fine-grained personal access token (or a GitHub App token) with
    **Contents: Read and write** on `kokuwaio/homebrew-tap` only.
-4. Store it in this repository as the Actions secret `HOMEBREW_TAP_TOKEN`
+3. Store it in this repository as the Actions secret `HOMEBREW_TAP_TOKEN`
    (Settings → Secrets and variables → Actions).
-5. Publish a release. The "Update the Homebrew tap" job commits the cask to
+4. Publish a release. The "Update the Homebrew tap" job commits the cask to
    the tap; without the secret, for a prerelease or for an older release it
    only attaches the cask to the release.
-6. Check it on a Mac:
+5. Check it on a Mac:
    `brew install --cask kokuwaio/tap/dayflow-electron`, then
    `brew audit --cask --online kokuwaio/tap/dayflow-electron`.
 
@@ -135,18 +136,16 @@ open a PR in the Flathub repository whenever a new release appears.
 
 Before the first submission:
 
-1. Make this repository public, so Flathub can download the release assets.
-2. Give the app its own name and icon. "Dayflow" and upstream's artwork are
-   not covered by the MIT license (see the roadmap's ground rules). Rename it
-   in the desktop file, the metainfo, the window title and `PRODUCT_NAME` in
-   `src/shared/export.ts`; the icon needs at least 256×256 pixels (512 is
-   better). The app ID `io.github.kokuwaio.DayflowElectron` can stay.
-3. Add screenshots to the metainfo (`<screenshots>` with image URLs from this
+The repository is public and the app has its own name ("Dayflow Electron")
+and icon (`resources/icon.svg`, installed as 512×512 PNG and SVG), so what is
+left is:
+
+1. Add screenshots to the metainfo (`<screenshots>` with image URLs from this
    repository, e.g. under `docs/screenshots/`); Flathub requires them.
-4. Publish the first GitHub release, then set both archive sources in
+2. Publish the first GitHub release, then set both archive sources in
    `packaging/flatpak/flathub/io.github.kokuwaio.DayflowElectron.yml` to that release's
    tarballs and their `sha256` lines from `SHA256SUMS`.
-5. Check the manifest and metainfo the way Flathub does:
+3. Check the manifest and metainfo the way Flathub does:
    ```sh
    flatpak install --user flathub org.flatpak.Builder
    flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest packaging/flatpak/flathub/io.github.kokuwaio.DayflowElectron.yml
