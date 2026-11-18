@@ -19,6 +19,8 @@ describe('weekly dashboard (upstream Core/Weekly)', () => {
     expect(appOf(card(16, 9, 10, 'Work', 'docs.google.com'))).toBe('Docs')
     expect(appOf(card(16, 9, 10, 'Work', 'https://github.com/org/repo'))).toBe('GitHub')
     expect(appOf(card(16, 9, 10, 'Work', 'linear.app'))).toBe('Linear')
+    expect(appOf(card(16, 9, 10, 'Work', 'https://x.com/home'))).toBe('X')
+    expect(appOf(card(16, 9, 10, 'Work', 'netflix.com'))).toBe('Netflix')
     expect(appOf(card(16, 9, 10, 'Work', 'konsole'))).toBe('Konsole')
     expect(appOf(card(16, 9, 10, 'Work', undefined, { title: 'Reviewed PRs in GitHub' }))).toBe('GitHub')
     expect(appOf(card(16, 9, 10, 'Work'))).toBe('Other')

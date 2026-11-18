@@ -55,7 +55,9 @@ export function appOf(card: TimelineCard): string {
   const raw = [card.appSites.primary, card.appSites.secondary].map((s) => s?.trim()).find(Boolean)
   const text = `${card.title} ${card.summary}`.toLowerCase()
   const source = raw ?? FALLBACK_APPS.find((a) => text.includes(a.toLowerCase())) ?? 'Other'
-  const needle = APP_NEEDLES.find(([n]) => source.toLowerCase().includes(n))
+  const lower = source.toLowerCase()
+  // "x.com" only as a whole domain, so netflix.com stays Netflix.
+  const needle = APP_NEEDLES.find(([n]) => (n === 'x.com' ? /(^|[^a-z0-9-])x\.com\b/.test(lower) : lower.includes(n)))
   if (needle) return needle[1]
   const cleaned = (source.split(/[,;|\n]/)[0] ?? source)
     .replace('https://', '')
