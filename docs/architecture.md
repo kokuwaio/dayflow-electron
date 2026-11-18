@@ -15,7 +15,12 @@ database and the network.
   `dayflow-media://` scheme. Its look comes from CSS tokens in
   `styles.css`: `data-ui-style` on the root element picks Modern (default)
   or Original, `prefers-color-scheme` light or dark (the main process sets
-  `nativeTheme.themeSource` from Settings → Appearance). Full-window overlays
+  `nativeTheme.themeSource` from Settings → Appearance). Its texts come from
+  i18next (`src/shared/i18n.ts`, one JSON file per language in
+  `src/shared/locales`, English the source and fallback); the main process
+  resolves Settings → Other → App language against the system languages,
+  passes the result in the page URL and on changes, and uses the same files
+  for the tray, notifications and dialogs. Full-window overlays
   (review, goal pop-up) render into `document.body`, outside the panels'
   `backdrop-filter`.
 - **Main process** (Node, Electron): records, stores, analyzes and serves the

@@ -265,10 +265,20 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   Upstream's ML model is served from its paid backend and is out of reach, so
   recall is much lower (no cards, bank details, IDs or unlabeled passwords),
   and Tesseract misreads cost more. OCR takes 2-6 s per 1080p frame.
-- [ ] Dark mode, app language, show/hide icons, pause presets (all but the
-  app language done; dark mode follows the system, with upstream's dark
-  palette; Settings → Other → Appearance picks dark (the default), light or
-  the system setting).
+- [x] Dark mode: upstream's dark palette; Settings → Other → Appearance picks
+  dark (the default), light or the system setting.
+- [x] Show/hide app and site icons (Settings → Other).
+- [x] Pause presets: 15, 30, 60 minutes or until resumed, in the tray and the
+  timeline's Pause pill.
+- [x] App language: Settings → Other → App language (upstream
+  `Utilities/AppLanguagePreferences.swift`), English by default, or the
+  system's language, with upstream's seven languages (de, fr, ru, ja, ko,
+  zh-Hans, zh-Hant). i18next with one JSON file per language in
+  `src/shared/locales`, filled from upstream's `Localizable.xcstrings` by
+  `scripts/import-translations.ts`; the rest is machine-translated and listed
+  for review. Switches live in the window, tray and notifications. Open: the
+  Weekly view and its builders (`Weekly.tsx`, `src/shared/weekly.ts`) are
+  still English.
 - [x] Upstream's look: design tokens for light and dark, gradient window and
   translucent panel, icon sidebar, Figtree and Instrument Serif (bundled with
   their OFL texts), the 4 AM to 4 AM day canvas with hour axis and status

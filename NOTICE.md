@@ -7,7 +7,9 @@ copyright notices are kept here as the MIT license requires.
 
 - Source: https://github.com/JerryZLiu/Dayflow
 - Copyright (c) 2025 Jerry Liu
-- Used: prompts, feature design, data model ideas.
+- Used: prompts, feature design, data model ideas, and the translations of
+  its string catalog (`Localizable.xcstrings`), which the UI translations in
+  `src/shared/locales` start from.
 
 ## dayflow-windows
 

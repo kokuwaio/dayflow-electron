@@ -97,8 +97,15 @@ export interface StandupTitles {
 /** Section titles for the current date, so "Yesterday" never goes stale (upstream standupSectionTitles). */
 export function standupTitles(target: string, sourceDay: string | null, today: string): StandupTitles {
   return {
-    highlights: sourceDay ? t('daily.highlightsFrom', { day: dayLabel(sourceDay, today) }) : t('daily.recentHighlights'),
-    tasks: t('daily.tasksFor', { day: dayLabel(target, today) }),
+    highlights: !sourceDay
+      ? t('daily.recentHighlights')
+      : sourceDay === today
+        ? t('daily.highlightsFromToday')
+        : sourceDay === shiftDay(today, -1)
+          ? t('daily.highlightsFromYesterday')
+          : t('daily.highlightsFrom', { day: dayLabel(sourceDay, today) }),
+    // Today and yesterday have texts of their own: other languages inflect or lowercase them there.
+    tasks: target === today ? t('daily.tasksForToday') : target === shiftDay(today, -1) ? t('daily.tasksForYesterday') : t('daily.tasksFor', { day: dayLabel(target, today) }),
     blockers: t('daily.blockers')
   }
 }

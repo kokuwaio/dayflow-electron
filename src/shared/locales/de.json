@@ -22,7 +22,7 @@
     "tabs": {
       "timeline": "Zeitleiste",
       "daily": "Täglich",
-      "weekly": "Wochenrückblick",
+      "weekly": "Wöchentlich",
       "chat": "Chat",
       "settings": "Einstellungen"
     },
@@ -173,8 +173,12 @@
     "today": "Heute",
     "yesterday": "Gestern",
     "highlightsFrom": "Highlights von {{day}}",
+    "highlightsFromToday": "Highlights von heute",
+    "highlightsFromYesterday": "Highlights von gestern",
     "recentHighlights": "Neueste Highlights",
     "tasksFor": "Aufgaben für {{day}}",
+    "tasksForToday": "Aufgaben für heute",
+    "tasksForYesterday": "Aufgaben für gestern",
     "blockers": "Hindernisse",
     "yesterdaysHighlights": "Highlights von gestern",
     "todaysTasks": "Heutige Aufgaben",
@@ -578,7 +582,7 @@
     "table": {
       "title": "Wähle, wie Dayflow Electron ausgeführt werden soll",
       "accuracy": "Modellgenauigkeit",
-      "subscription": "Abonnementvoraussetzungen",
+      "subscription": "Benötigtes Abo",
       "ease": "Einrichtungsaufwand",
       "notes": "Zusätzliche Hinweise",
       "select": "Auswählen",

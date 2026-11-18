@@ -79,6 +79,11 @@ export function monthLabel(year: number, month: number): string {
   return new Date(year, month, 1).toLocaleDateString(intlLocale(), { month: 'long', year: 'numeric' })
 }
 
+/** A number with up to `digits` decimals in the current language ("10.9", "10,9"). */
+export function numberLabel(value: number, digits: number): string {
+  return value.toLocaleString(intlLocale(), { minimumFractionDigits: digits, maximumFractionDigits: digits })
+}
+
 /** A duration like "2h 15m", "2h" or "45m" in the current language (upstream's short durations). */
 export function durationLabel(total: number): string {
   const h = Math.floor(total / 60)

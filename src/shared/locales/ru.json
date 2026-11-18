@@ -22,7 +22,7 @@
     "tabs": {
       "timeline": "Хронология",
       "daily": "За день",
-      "weekly": "Недельный обзор",
+      "weekly": "За неделю",
       "chat": "Чат",
       "settings": "Настройки"
     },
@@ -193,8 +193,12 @@
     "today": "Сегодня",
     "yesterday": "Вчера",
     "highlightsFrom": "Основные моменты за {{day}}",
+    "highlightsFromToday": "Основные моменты за сегодня",
+    "highlightsFromYesterday": "Основные моменты за вчера",
     "recentHighlights": "Недавние ключевые моменты",
     "tasksFor": "Задачи на {{day}}",
+    "tasksForToday": "Задачи на сегодня",
+    "tasksForYesterday": "Задачи на вчера",
     "blockers": "Препятствия",
     "yesterdaysHighlights": "Главное за вчера",
     "todaysTasks": "Задачи на сегодня",

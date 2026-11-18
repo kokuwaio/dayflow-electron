@@ -4,7 +4,7 @@ import { Brain, Info, Pencil, Shapes } from 'lucide-react'
 import type { Category } from '@shared/categories'
 import { todayKey } from '@shared/day'
 import { type CategoryTotal, type GoalPlan, summarizeDay } from '@shared/day-summary'
-import { clockLabel, durationLabel } from '@shared/i18n'
+import { clockLabel, durationLabel, numberLabel } from '@shared/i18n'
 import { type GoalContext, goalFlowStart } from '@shared/goal-flow'
 import { REVIEW_RATINGS, type ReviewSegment, reviewSummary } from '@shared/review'
 import type { RecorderState, TimelineCard } from '@shared/types'
@@ -15,7 +15,7 @@ import { categoryKey } from '@shared/categories'
 
 const hours = (minutes: number) => {
   const h = minutes / 60
-  return Math.abs(h - Math.round(h)) < 0.01 ? String(Math.round(h)) : h.toFixed(1)
+  return Math.abs(h - Math.round(h)) < 0.01 ? String(Math.round(h)) : numberLabel(h, 1)
 }
 
 /**

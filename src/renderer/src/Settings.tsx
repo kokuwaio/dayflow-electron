@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
+import { numberLabel } from '@shared/i18n'
 import { ArrowRight, Download, FolderOpen, RotateCw } from 'lucide-react'
 import { CATEGORY_PRESETS, type Category, presetCategories } from '@shared/categories'
 import { todayKey } from '@shared/day'
@@ -30,7 +31,7 @@ const ROLE_KEYS: Record<string, string> = {
 
 /** Upstream's sidebar footer links its release notes; ours are the GitHub releases. */
 const RELEASE_NOTES_URL = 'https://github.com/kokuwaio/dayflow-electron/releases'
-const gb = (bytes: number) => (bytes / 1024 ** 3).toFixed(2)
+const gb = (bytes: number) => numberLabel(bytes / 1024 ** 3, 2)
 type Save = (next: Partial<Settings>) => void
 
 export function SettingsView({ status, tab, onTab }: { status: AppStatus | null; tab: SettingsTab; onTab: (tab: SettingsTab) => void }) {
