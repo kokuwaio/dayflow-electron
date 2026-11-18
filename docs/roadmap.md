@@ -313,13 +313,19 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   signing and notarization (certificates needed, see
   [release.md](release.md#signing-windows-and-macos); macOS installs updates
   only once signed), a public repository (the updater downloads without a
-  token), Homebrew and Flathub (prepared in a separate pull request), a macOS
-  icon (needs 512 px artwork).
+  token), Homebrew and Flathub (prepared in a separate pull request).
 - [ ] Windows and macOS on real machines: capture, window detection, lock,
   idle, autostart and deep links are implemented and unit tested, not yet
   tried by hand.
 - [x] Name: "Dayflow Electron"; CLI and MCP server `dayflow-electron`.
-- [ ] Own icon and artwork. Bundled fonts only with their OFL license files.
+- [x] Own icon: a sun rising over a row of time blocks on an indigo tile
+      (`resources/icon.svg`; `make icons` renders the PNGs: 512 px for the
+      window, Windows, macOS and Flatpak, which also installs the SVG), a
+      coloured tray tile for Linux and Windows and a template image for the
+      macOS menu bar. No other artwork is needed: upstream's illustrations are
+      replaced by Lucide icons and CSS; the onboarding's last step and the
+      unlock knob show Lucide's sun, which matches the mark. Bundled fonts
+      only with their OFL license files.
 
 ### Later or never
 
