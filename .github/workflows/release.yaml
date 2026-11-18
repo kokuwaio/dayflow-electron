@@ -78,15 +78,38 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  homebrew:
+    name: Update the Homebrew tap
+    needs:
+      - assets
+    # Prereleases keep their cask as a release file; the tap gets stable releases only.
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    # One tap update at a time, so overlapping releases cannot push out of order.
+    concurrency:
+      group: homebrew-tap
+      cancel-in-progress: false
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
       - name: Update the Homebrew tap
         # Needs the kokuwaio/homebrew-tap repository and a token that may push to it (docs/release.md).
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           if [ -z "$TAP_TOKEN" ]; then
             echo "::notice::HOMEBREW_TAP_TOKEN is not set; the cask is attached to the release only."
             exit 0
           fi
+          # Only the latest stable release goes to the tap: re-running an older
+          # release must not take new installs back to its version.
+          latest=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          if [ "$latest" != "$TAG" ]; then
+            echo "::notice::$TAG is not the latest release ($latest); the tap keeps its cask."
+            exit 0
+          fi
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern dayflow-electron.rb
           git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/kokuwaio/homebrew-tap.git" tap
           mkdir -p tap/Casks
           cp dayflow-electron.rb tap/Casks/dayflow-electron.rb
