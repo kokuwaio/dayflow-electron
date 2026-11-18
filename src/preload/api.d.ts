@@ -88,6 +88,10 @@ export interface DayflowApi {
   pause(seconds: number | null): Promise<void>
   resume(): Promise<void>
   openRecordings(): Promise<string>
+  /** Copies the debug report (Settings → Other → Support) to the clipboard. */
+  copyDebugLogs(): Promise<void>
+  /** Opens logs/ in the data folder; resolves to an error message, or '' on success. */
+  openLogFolder(): Promise<string>
   runAnalysis(): Promise<void>
   checkCli(cli: CliName): Promise<{ ok: boolean; message: string }>
   /** How AI tools and terminals start the bundled CLI. */

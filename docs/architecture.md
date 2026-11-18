@@ -281,6 +281,11 @@ flowchart LR
 - **Backups**: a daily copy of the database in `backups/` (newest three);
   `src/main/db/backup.ts` restores the newest one when the database is
   damaged at start.
+- **Log**: `logs/dayflow-electron.log` (`src/main/log-file.ts`), rotated to
+  `dayflow-electron.1.log` at 1 MB, with API keys and the home folder
+  hidden. "Copy debug logs" (`src/main/support.ts`) formats it with the latest
+  rows of `timeline_cards`, `llm_calls` and `analysis_batches`
+  (`src/shared/debug-report.ts`).
 - **Frames** are JPEG files in `recordings/`. The retention job deletes the
   oldest ones when the storage limit is reached; cards stay.
 - **Settings** are a JSON file. API keys are encrypted with Electron's
@@ -308,6 +313,7 @@ flowchart LR
 | `src/renderer/src/` | React views: Timeline, Daily, Weekly, Chat, Settings, Onboarding |
 | `src/shared/` | Pure logic used by both sides: days, categories, day canvas geometry (`canvas.ts`), Daily and Weekly math, export, failure kinds |
 | `helper/linux/` | Go helper: `portal/`, `pipewire/`, `wayland/`, `frames/`, commands in `cmd/` |
+| `plugins/dayflow-electron/` | Agent plugin for Codex and Claude Code: MCP launcher and skills (marketplaces in `.agents/plugins/` and `.claude-plugin/`) |
 | `packaging/` | Flatpak manifest, desktop file and metainfo (`flatpak/`) |
 | `scripts/` | Build version, metainfo release entry, merging the Windows update feeds |
 

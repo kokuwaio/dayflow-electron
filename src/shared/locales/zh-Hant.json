@@ -881,5 +881,18 @@
       "empty": "本週尚未記錄任何 App 互動。",
       "coverage": "已記錄的 App 時間中約 {{percent}}% 用在這些 App 上。"
     }
+  },
+  "support": {
+    "title": "幫助",
+    "sub": "發現錯誤或有疑問？在 GitHub 上提交 issue，並把除錯紀錄貼進去。",
+    "debugLogs": "除錯紀錄",
+    "debugLogsSub": "版本、平台、最近的分析批次、AI 呼叫和錯誤。包含你最新卡片的標題和摘要，但不包含截圖或 API 金鑰。分享前請先閱讀一遍。",
+    "copyDebugLogs": "拷貝偵錯記錄",
+    "preparing": "正在準備…",
+    "copied": "已拷貝！",
+    "openLogFolder": "開啟紀錄資料夾",
+    "reportProblem": "回報問題",
+    "reportProblemSub": "在瀏覽器中開啟 GitHub 上的問題追蹤頁面。",
+    "openIssues": "開啟 GitHub Issues"
   }
 }

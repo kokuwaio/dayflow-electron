@@ -927,5 +927,18 @@
       "empty": "Aucune interaction avec des applications enregistrée pour cette semaine pour le moment.",
       "coverage": "Environ {{percent}} % du temps d’app enregistré a été passé dans ces applications."
     }
+  },
+  "support": {
+    "title": "Assistance",
+    "sub": "Vous avez trouvé un bug ou avez une question ? Ouvrez un ticket sur GitHub et collez-y les journaux de débogage.",
+    "debugLogs": "Journaux de débogage",
+    "debugLogsSub": "Version, plateforme, derniers lots d'analyse, appels à l'IA et erreurs. Ils contiennent les titres et résumés de vos dernières cartes, mais aucune capture d'écran ni clé d'API. Relisez-les avant de les partager.",
+    "copyDebugLogs": "Copier les journaux de débogage",
+    "preparing": "Préparation…",
+    "copied": "Copié !",
+    "openLogFolder": "Ouvrir le dossier des journaux",
+    "reportProblem": "Signaler un problème",
+    "reportProblemSub": "Ouvre le suivi des tickets sur GitHub dans votre navigateur.",
+    "openIssues": "Ouvrir les tickets GitHub"
   }
 }

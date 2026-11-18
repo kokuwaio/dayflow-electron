@@ -881,5 +881,18 @@
       "empty": "이번 주에 기록된 앱 상호작용이 아직 없습니다.",
       "coverage": "기록된 앱 사용 시간의 약 {{percent}}%가 이 앱들에서 사용되었습니다."
     }
+  },
+  "support": {
+    "title": "지원",
+    "sub": "버그를 발견했거나 질문이 있나요? GitHub에 이슈를 열고 디버그 로그를 붙여 넣으세요.",
+    "debugLogs": "디버그 로그",
+    "debugLogsSub": "버전, 플랫폼, 최근 분석 배치, AI 호출과 오류. 최근 카드의 제목과 요약은 포함되지만 스크린샷과 API 키는 포함되지 않습니다. 공유하기 전에 내용을 확인하세요.",
+    "copyDebugLogs": "디버그 로그 복사",
+    "preparing": "준비 중…",
+    "copied": "복사했습니다!",
+    "openLogFolder": "로그 폴더 열기",
+    "reportProblem": "문제 신고",
+    "reportProblemSub": "브라우저에서 GitHub 이슈 트래커를 엽니다.",
+    "openIssues": "GitHub 이슈 열기"
   }
 }

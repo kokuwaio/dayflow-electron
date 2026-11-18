@@ -166,3 +166,33 @@ describe('Store: card feedback storage', () => {
     expect(db.prepare('SELECT * FROM timeline_review_ratings').all()).toEqual([])
   })
 })
+
+describe('Store: debug snapshot', () => {
+  it('returns the newest cards, LLM calls and batches without request or response bodies', () => {
+    const first = store.createBatch({ start: 1000, end: 1900, shotIds: [shot(1000)] })
+    const second = store.createBatch({ start: 2000, end: 2900, shotIds: [shot(2000)] })
+    store.startAttempt(second)
+    store.finishBatch(second, 'failed', 'HTTP 503')
+    const card = (start: number, title: string) => ({
+      startTime: '9:00 AM', endTime: '9:15 AM', start, end: start + 300, title, summary: 's', category: 'Work', subcategory: '', detailedSummary: 'long', distractions: [], appSites: {}
+    })
+    store.replaceCards({ start: 1000, end: 1900 }, first, [card(1000, 'older'), card(1300, 'newer')])
+    store.logLlmCall({ batchId: second, attempt: 1, provider: 'gemini', model: 'm', operation: 'generate', ok: false, latencyMs: 40, httpStatus: 503, error: 'unavailable' })
+    store.logLlmCall({ batchId: first, attempt: 2, provider: 'gemini', model: 'm', operation: 'generate', ok: true, latencyMs: 900, responseBody: '[{"title":"secret"}]' })
+
+    const snap = store.debugSnapshot({ cards: 1, llmCalls: 5, batches: 5 })
+
+    expect(snap.cards).toEqual([
+      { day: '1969-12-31', startTime: '1:21 AM', endTime: '1:26 AM', title: 'newer', summary: 's', category: 'Work', subcategory: '', createdAt: expect.any(Number) }
+    ])
+    expect(snap.llmCalls).toEqual([
+      { createdAt: expect.any(Number), provider: 'gemini', model: 'm', operation: 'generate', ok: true, latencyMs: 900, httpStatus: null, batchId: first, attempt: 2, error: null },
+      { createdAt: expect.any(Number), provider: 'gemini', model: 'm', operation: 'generate', ok: false, latencyMs: 40, httpStatus: 503, batchId: second, attempt: 1, error: 'unavailable' }
+    ])
+    expect(snap.batches.map((b) => [b.id, b.status, b.reason, b.attempts])).toEqual([
+      [second, 'failed', 'HTTP 503', 1],
+      [first, 'pending', null, 0]
+    ])
+    expect(Math.abs(snap.batches[0]!.createdAt! - Date.now() / 1000)).toBeLessThan(60)
+  })
+})

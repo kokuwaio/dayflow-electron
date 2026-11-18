@@ -44,6 +44,8 @@ import { findCli, hostAccess, nodeRunner } from './providers/cli/host'
 import { selectFramesToPurge } from './retention'
 import { secretFilter } from './privacy/masker'
 import { tesseractEngine } from './privacy/tesseract'
+import { LogFile } from './log-file'
+import { debugReport } from './support'
 import { SettingsStore } from './settings'
 import { type Updater, startUpdater } from './updater'
 import { type UpdateMode, parseCodesign, updateMode, isDevVersion } from '../shared/updates'
@@ -67,6 +69,8 @@ registerMediaScheme()
 // Separate data for development and tests. Otherwise a fixed folder name:
 // Electron would derive it from productName ("Dayflow Electron", with a space).
 app.setPath('userData', process.env.DAYFLOW_DATA_DIR || join(app.getPath('appData'), 'dayflow-electron'))
+/** logs/ in the data folder, for "Copy debug logs" (Settings → Other → Support). */
+const logFile = new LogFile(join(app.getPath('userData'), 'logs'), { home: homedir() })
 
 if (!app.requestSingleInstanceLock()) {
   app.quit()
@@ -85,6 +89,7 @@ if (!app.requestSingleInstanceLock()) {
   })
   app.whenReady().then(main).catch((err) => {
     console.error('startup failed', err)
+    logFile.write(`startup failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
     app.exit(1)
   })
 }
@@ -98,7 +103,10 @@ let tray: Tray | null = null
 let updater: Updater | null = null
 let quitting = false
 
-const log = (message: string) => console.log(`[dayflow-electron] ${message}`)
+const log = (message: string) => {
+  console.log(`[dayflow-electron] ${message}`)
+  logFile.write(message)
+}
 
 async function main(): Promise<void> {
   // Windows shows notifications only for an app ID that matches the installer's shortcut.
@@ -553,6 +561,15 @@ async function main(): Promise<void> {
     updateTray()
   })
   ipcMain.handle('recordings:open', () => shell.openPath(recordingsDir))
+  ipcMain.handle('support:copyDebugLogs', () => {
+    const build = inFlatpak ? 'flatpak' : app.isPackaged ? 'packaged' : 'development'
+    const sources = { store, logFile, settings: settings.get(), status: status(), version: app.getVersion(), build, language: currentLanguage(), home: homedir() }
+    clipboard.writeText(debugReport(sources))
+  })
+  ipcMain.handle('support:openLogs', () => {
+    mkdirSync(logFile.dir, { recursive: true })
+    return shell.openPath(logFile.dir)
+  })
   ipcMain.handle('cli:check', async (_e, cli: CliName) => {
     const access = await hostAccess(nodeRunner, inFlatpak, cliEnv.appId)
     if (!access.ok) return { ok: false, message: access.reason }

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Dayflow Electron app icon: the sun rising over a row of time blocks,
+       a day on the timeline. Edges sit on a 32-unit grid so the blocks stay
+       sharp at 16 and 32 px. Re-render the PNGs with `make icons`. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="1" stop-color="#fbbf24"/>
+    </linearGradient>
+  </defs>
+  <rect x="32" y="32" width="448" height="448" rx="96" fill="url(#bg)"/>
+  <path d="M160 288a96 96 0 0 1 192 0z" fill="url(#sun)"/>
+  <g stroke="#fde68a" stroke-width="32" stroke-linecap="round">
+    <path d="M256 144v-24"/>
+    <path d="M154.2 186.2l-17-17"/>
+    <path d="M357.8 186.2l17-17"/>
+  </g>
+  <rect x="96" y="320" width="96" height="64" rx="16" fill="#fff"/>
+  <rect x="224" y="320" width="128" height="64" rx="16" fill="#fff" fill-opacity=".6"/>
+  <rect x="384" y="320" width="32" height="64" rx="16" fill="#fff"/>
+</svg>

@@ -904,5 +904,18 @@
       "empty": "Für diese Woche wurden noch keine App-Interaktionen aufgezeichnet.",
       "coverage": "Etwa {{percent}} % der aufgezeichneten App-Zeit entfielen auf diese Apps."
     }
+  },
+  "support": {
+    "title": "Support",
+    "sub": "Einen Fehler gefunden oder eine Frage? Eröffne ein Issue auf GitHub und füge die Debug-Protokolle ein.",
+    "debugLogs": "Debug-Protokolle",
+    "debugLogsSub": "Version, Plattform, die letzten Analyse-Batches, KI-Aufrufe und Fehler. Enthält die Titel und Zusammenfassungen deiner neuesten Karten, aber keine Screenshots und keine API-Schlüssel. Lies es, bevor du es teilst.",
+    "copyDebugLogs": "Debug-Protokolle kopieren",
+    "preparing": "Wird vorbereitet…",
+    "copied": "Kopiert!",
+    "openLogFolder": "Protokollordner öffnen",
+    "reportProblem": "Problem melden",
+    "reportProblemSub": "Öffnet den Issue-Tracker auf GitHub in deinem Browser.",
+    "openIssues": "GitHub-Issues öffnen"
   }
 }

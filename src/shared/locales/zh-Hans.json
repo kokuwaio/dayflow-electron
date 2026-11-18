@@ -881,5 +881,18 @@
       "empty": "本周尚未记录任何应用交互。",
       "coverage": "已记录的应用时间中约 {{percent}}% 用在这些应用上。"
     }
+  },
+  "support": {
+    "title": "帮助",
+    "sub": "发现了错误或有疑问？在 GitHub 上提交 issue，并把调试日志粘贴进去。",
+    "debugLogs": "调试日志",
+    "debugLogsSub": "版本、平台、最近的分析批次、AI 调用和错误。包含你最新卡片的标题和摘要，但不包含截图或 API 密钥。分享前请先阅读一遍。",
+    "copyDebugLogs": "复制调试日志",
+    "preparing": "正在准备…",
+    "copied": "已复制！",
+    "openLogFolder": "打开日志文件夹",
+    "reportProblem": "报告问题",
+    "reportProblemSub": "在浏览器中打开 GitHub 上的问题跟踪页面。",
+    "openIssues": "打开 GitHub Issues"
   }
 }

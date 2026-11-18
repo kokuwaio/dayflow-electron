@@ -904,5 +904,18 @@
       "empty": "No recorded app interactions for this week yet.",
       "coverage": "About {{percent}}% of recorded app time was spent using these applications."
     }
+  },
+  "support": {
+    "title": "Support",
+    "sub": "Found a bug or have a question? Open an issue on GitHub and paste the debug logs into it.",
+    "debugLogs": "Debug logs",
+    "debugLogsSub": "Version, platform, recent analysis batches, AI calls and errors. It includes the titles and summaries of your latest cards, but no screenshots or API keys. Read it before you share it.",
+    "copyDebugLogs": "Copy debug logs",
+    "preparing": "Preparing…",
+    "copied": "Copied!",
+    "openLogFolder": "Open log folder",
+    "reportProblem": "Report a problem",
+    "reportProblemSub": "Opens the issue tracker on GitHub in your browser.",
+    "openIssues": "Open GitHub issues"
   }
 }
