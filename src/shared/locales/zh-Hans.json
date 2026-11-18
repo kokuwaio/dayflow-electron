@@ -791,5 +791,95 @@
     "comeBack": "时间线上出现几张卡片后再回来。",
     "allCaughtUp": "已全部处理完毕！",
     "allReviewed": "你已回顾目前所有的活动。<br/>时间线右侧面板将根据你的评分更新。"
+  },
+  "weekly": {
+    "locked": {
+      "title": "解锁每周回顾",
+      "body": "时间线数据记录满 30 小时后即可解锁周报。"
+    },
+    "previousWeek": "上一周",
+    "nextWeek": "下一周",
+    "gate": {
+      "title": "继续录制以解锁本周回顾",
+      "progressLabel": "周报解锁进度",
+      "progressText": "{{done}} / {{total}}",
+      "more": "再记录 {{duration}} 即可查看本周图表。"
+    },
+    "change": {
+      "same": "（与上周相同）",
+      "more": "（比上周多 {{duration}}）",
+      "less": "（比上周少 {{duration}}）"
+    },
+    "distribution": "每周分布",
+    "total": "总计",
+    "other": "其他",
+    "otherCategories": "其他类别",
+    "otherApps": "其他应用",
+    "uncategorized": "未分类",
+    "times_other": "{{count}} 次",
+    "shifts": {
+      "title": "上下文切换与分心情况对比",
+      "distracted": "分心次数",
+      "shifts": "上下文切换次数",
+      "none": "本周未检测到上下文切换或分心模式。",
+      "busiest": "{{day}}的中断最多：{{shifts}}，{{distractions}}。",
+      "shiftCount_other": "{{count}} 次情境切换",
+      "distractionCount_other": "{{count}} 次分心"
+    },
+    "workflow": "你本周的工作流程",
+    "mostUsed": "各类别最常用",
+    "breakdown": "每周明细",
+    "focusHeat": {
+      "title": "专注与分心热力图",
+      "focused": "专注工作",
+      "distracted": "分心",
+      "aria": "每天每 5 分钟的专注（蓝色）和分心（桃色）"
+    },
+    "overview": {
+      "title": "时间分布",
+      "tabsLabel": "突出显示的日期",
+      "tabs": {
+        "all": "全部",
+        "longest": "最长专注时段",
+        "least": "上下文切换最少",
+        "most": "上下文切换最多"
+      },
+      "longestTitle": "最长专注：{{duration}}",
+      "switch": "上下文切换",
+      "total": "总计",
+      "average": "平均值",
+      "perDay_other": "每天 {{count}} 次",
+      "focus": "专注",
+      "totalLength": "总时长",
+      "longestDuration": "持续时间最长",
+      "primaryFocus": "主要专注领域",
+      "durationOnDay": "{{duration}}, {{day}}",
+      "categoryDuration": "{{name}}, {{duration}}",
+      "noFocus": "暂无专注活动"
+    },
+    "highlights": {
+      "title": "本周亮点",
+      "empty": "本周暂无亮点。",
+      "noSummary": "暂无摘要。",
+      "untitled": "未命名"
+    },
+    "interactions": {
+      "title": "常用应用之间的交互",
+      "aria": "应用显示为圆圈，应用之间的切换显示为线条",
+      "nodeTitle_other": "{{name}}：{{count}} 张卡片，共 {{duration}}",
+      "kinds": {
+        "work": "工作",
+        "personal": "个人",
+        "distraction": "分心"
+      },
+      "patterns": "最常见的工作模式",
+      "noPatterns": "本周没有在工作应用之间切换。",
+      "rabbitHoles": "分心事项和无谓深究",
+      "noRabbitHoles": "本周没有分心应用。",
+      "average": "平均 {{duration}}",
+      "pattern_other": "每个活跃日平均从 {{from}} 切换到 {{to}} {{count}} 次。",
+      "empty": "本周尚未记录任何应用交互。",
+      "coverage": "已记录的应用时间中约 {{percent}}% 用在这些应用上。"
+    }
   }
 }

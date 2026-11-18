@@ -791,5 +791,95 @@
     "comeBack": "タイムラインカードがいくつか表示されたら、もう一度確認してください。",
     "allCaughtUp": "すべて確認しました！",
     "allReviewed": "これまでのすべてのアクティビティを確認しました。<br/>評価はタイムラインの右パネルに反映されます。"
+  },
+  "weekly": {
+    "locked": {
+      "title": "週間レポートを利用可能にする",
+      "body": "週間レポートは、タイムラインの記録が30時間に達すると利用できます。"
+    },
+    "previousWeek": "前の週",
+    "nextWeek": "次の週",
+    "gate": {
+      "title": "録画を続けて今週の週間レポートをアンロック",
+      "progressLabel": "週間レポートの解除までの進捗",
+      "progressText": "{{done}} / {{total}}",
+      "more": "あと{{duration}}で今週のグラフを表示できます。"
+    },
+    "change": {
+      "same": "（先週と同じ）",
+      "more": "（先週より+{{duration}}）",
+      "less": "（先週より−{{duration}}）"
+    },
+    "distribution": "週間の分布",
+    "total": "合計",
+    "other": "その他",
+    "otherCategories": "その他のカテゴリー",
+    "otherApps": "その他のアプリ",
+    "uncategorized": "未分類",
+    "times_other": "{{count}}回",
+    "shifts": {
+      "title": "コンテキスト切り替えと注意散漫の比較",
+      "distracted": "注意散漫になった回数",
+      "shifts": "コンテキスト切り替え回数",
+      "none": "今週はコンテキスト切り替えや注意散漫のパターンは検出されませんでした。",
+      "busiest": "中断が最も多かったのは{{day}}で、{{shifts}}、{{distractions}}でした。",
+      "shiftCount_other": "コンテキストの切り替え{{count}}回",
+      "distractionCount_other": "注意散漫{{count}}回"
+    },
+    "workflow": "今週のワークフロー",
+    "mostUsed": "カテゴリ別の最多使用",
+    "breakdown": "週間の内訳",
+    "focusHeat": {
+      "title": "集中と注意散漫のヒートマップ",
+      "focused": "集中作業",
+      "distracted": "注意散漫",
+      "aria": "5分ごと・日ごとの集中（青）と注意散漫（ピーチ）"
+    },
+    "overview": {
+      "title": "時間配分",
+      "tabsLabel": "強調する日",
+      "tabs": {
+        "all": "すべて",
+        "longest": "最長集中区間",
+        "least": "コンテキスト切り替え最少",
+        "most": "コンテキスト切り替え最多"
+      },
+      "longestTitle": "最長の集中：{{duration}}",
+      "switch": "コンテキスト切り替え",
+      "total": "合計",
+      "average": "平均",
+      "perDay_other": "1日{{count}}回",
+      "focus": "集中",
+      "totalLength": "合計時間",
+      "longestDuration": "最長時間",
+      "primaryFocus": "メインの集中対象",
+      "durationOnDay": "{{duration}}, {{day}}",
+      "categoryDuration": "{{name}}, {{duration}}",
+      "noFocus": "まだ集中した時間はありません"
+    },
+    "highlights": {
+      "title": "トップハイライト",
+      "empty": "今週のハイライトはまだありません。",
+      "noSummary": "概要はありません。",
+      "untitled": "名称未設定"
+    },
+    "interactions": {
+      "title": "よく使うアプリ間のやり取り",
+      "aria": "アプリを円で、アプリ間の切り替えを線で表示",
+      "nodeTitle_other": "{{name}}：{{count}}件のカードで{{duration}}",
+      "kinds": {
+        "work": "仕事",
+        "personal": "個人",
+        "distraction": "注意散漫"
+      },
+      "patterns": "最も多い作業パターン",
+      "noPatterns": "今週は仕事用アプリ間の切り替えはありません。",
+      "rabbitHoles": "注意散漫と脱線",
+      "noRabbitHoles": "今週は気が散るアプリはありません。",
+      "average": "平均 {{duration}}",
+      "pattern_other": "活動日1日あたり平均{{count}}回、{{from}}から{{to}}に移動しています。",
+      "empty": "今週はまだアプリの操作が記録されていません。",
+      "coverage": "記録されたアプリ時間の約{{percent}}%がこれらのアプリで使われました。"
+    }
   }
 }

@@ -5,6 +5,7 @@
 
 import { type Category, SYSTEM_CATEGORY } from './categories'
 import { DAY_END_MINUTE, DAY_START_MINUTE, clockMinutes } from './day'
+import { t } from './i18n'
 import type { TimelineCard } from './types'
 import { OTHER_COLOR, add, appOf, categoryName, colorOf, contextShifts, counted, isFullDistraction, minutesOf, normalized } from './weekly'
 
@@ -16,7 +17,7 @@ const clockRange = (c: TimelineCard) => {
 const isSystem = (c: TimelineCard) => normalized(c.category) === normalized(SYSTEM_CATEGORY)
 const isIdle = (c: TimelineCard, categories: Category[]) =>
   normalized(c.category) === 'idle' || categories.some((k) => k.isIdle && normalized(k.name) === normalized(c.category))
-const nameOf = (c: TimelineCard, categories: Category[]) => categoryName(c.category, categories) || 'Uncategorized'
+const nameOf = (c: TimelineCard, categories: Category[]) => categoryName(c.category, categories) || t('weekly.uncategorized')
 
 // ---- Overview ("Time distribution", upstream WeeklyOverviewBuilder and WeeklyOverviewSection)
 
@@ -87,7 +88,8 @@ export function weeklyOverview(cards: TimelineCard[], categories: Category[], da
   const legend = [...visible]
     .sort((a, b) => order(a) - order(b) || a.localeCompare(b))
     .map((name) => ({ name, color: colorOf(name, categories) }))
-  if (byUsage.length > MAX_LEGEND) legend.push({ name: 'Other', color: OTHER_COLOR })
+  const other = t('weekly.other')
+  if (byUsage.length > MAX_LEGEND) legend.push({ name: other, color: OTHER_COLOR })
 
   const window = overviewWindow(inWeek.map(clockRange))
   const shifts = contextShifts(cards, categories, days).days
@@ -102,10 +104,10 @@ export function weeklyOverview(cards: TimelineCard[], categories: Category[], da
       const end = Math.min(x.end, window.end)
       if (end <= start) continue
       const name = nameOf(x.c, categories)
-      const category = visible.has(name) ? name : 'Other'
+      const category = visible.has(name) ? name : other
       const last = segments.at(-1)
       if (last && last.category === category && start - last.end <= SEGMENT_MERGE_GAP) last.end = Math.max(last.end, end)
-      else segments.push({ category, color: category === 'Other' ? OTHER_COLOR : colorOf(name, categories), start, end })
+      else segments.push({ category, color: !visible.has(name) ? OTHER_COLOR : colorOf(name, categories), start, end })
     }
     const stretches = mergeRanges(focusCards.filter((c) => c.day === day).map(clockRange), FOCUS_MERGE_GAP)
     let best = 0
@@ -170,16 +172,17 @@ const plain = (text: string) => text.replace(/\*\*|__|`/g, '').replace(/\s+/g, '
 /** The first sentence of the first non-empty text, ending at ". ", "! " or "? " so "v2.9" stays whole. */
 function firstSentence(values: string[]): string {
   const text = values.map(plain).find(Boolean)
-  if (!text) return 'No summary available.'
+  if (!text) return t('weekly.highlights.noSummary')
   return /^.*?[.!?](?=\s|$)/.exec(text)?.[0] ?? `${text}.`
 }
 
 /** "Title: first sentence.", or the sentence alone when it already names the title (upstream cardNarrative). */
 function narrative(card: TimelineCard, max: number): string {
-  const title = shortened(card.title.trim() || 'Untitled', 54)
+  const untitled = t('weekly.highlights.untitled')
+  const title = shortened(card.title.trim() || untitled, 54)
   // Upstream reads the detailed summary first; ours is a minute-by-minute log, so the summary leads.
   const body = firstSentence([card.summary, card.detailedSummary, card.title])
-  if (title === 'Untitled' || body.toLowerCase().includes(title.toLowerCase())) return shortened(body, max)
+  if (title === untitled || body.toLowerCase().includes(title.toLowerCase())) return shortened(body, max)
   return shortened(`${title}: ${body}`, max)
 }
 
@@ -309,7 +312,7 @@ export function appInteractions(cards: TimelineCard[], categories: Category[]): 
   const facts = counted(cards, categories)
     .map((c) => ({ c, app: appOf(c) }))
     .filter((f) => f.app !== 'Other' && minutesOf(f.c) > 0)
-  if (!facts.length) return { subtitle: 'No recorded app interactions for this week yet.', nodes: [], edges: [], patterns: [], rabbitHole: null }
+  if (!facts.length) return { subtitle: t('weekly.interactions.empty'), nodes: [], edges: [], patterns: [], rabbitHole: null }
 
   const apps = new Map<string, AppTotal & { byKind: Map<AppKind, number> }>()
   for (const { c, app } of facts) {
@@ -376,11 +379,11 @@ export function appInteractions(cards: TimelineCard[], categories: Category[]): 
   const patterns = transitions
     .filter((t) => byId.get(t.from)!.kind !== 'distraction' && byId.get(t.to)!.kind !== 'distraction')
     .slice(0, 2)
-    .map((t) => {
-      const from = byId.get(t.from)!
-      const to = byId.get(t.to)!
-      const perDay = Math.max(1, Math.round(t.count / days.length))
-      return { from: patternApp(from), to: patternApp(to), perDay, text: `Moves from ${from.name} to ${to.name} an average of ${perDay} ${perDay === 1 ? 'time' : 'times'} per active day.` }
+    .map((tr) => {
+      const from = byId.get(tr.from)!
+      const to = byId.get(tr.to)!
+      const perDay = Math.max(1, Math.round(tr.count / days.length))
+      return { from: patternApp(from), to: patternApp(to), perDay, text: t('weekly.interactions.pattern', { from: from.name, to: to.name, count: perDay }) }
     })
 
   const detours = transitions.filter((t) => byId.get(t.from)!.kind !== 'distraction' && byId.get(t.to)!.kind === 'distraction')
@@ -395,5 +398,5 @@ export function appInteractions(cards: TimelineCard[], categories: Category[]): 
 
   const total = facts.reduce((n, f) => n + minutesOf(f.c), 0)
   const coverage = Math.round((shown.reduce((n, a) => n + a.minutes, 0) / Math.max(total, 1)) * 100)
-  return { subtitle: `About ${coverage}% of recorded app time was spent using these applications.`, nodes, edges, patterns, rabbitHole }
+  return { subtitle: t('weekly.interactions.coverage', { percent: coverage }), nodes, edges, patterns, rabbitHole }
 }

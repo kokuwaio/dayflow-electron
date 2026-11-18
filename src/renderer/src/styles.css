@@ -1153,6 +1153,10 @@ input[type='range'] { accent-color: var(--accent); }
   flex: none; display: flex; align-items: center; gap: 8px; padding: 3px 12px; min-height: 32px; font-size: 12px; font-weight: 500;
   background: var(--rate-fill); border-top: 1px solid var(--rate-border); box-shadow: var(--rate-shadow); color: var(--rate-text);
 }
+/* The buttons keep one line; the label gives way, down to an ellipsis, when a language's texts are long. */
+.rate-bar > * { flex: none; white-space: nowrap; }
+.rate-bar > .rate-label { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.rate-bar > .push-right { flex: 1 1 0; }
 .rate-thumb { width: 22px; height: 22px; padding: 0; border-radius: 50%; border: none; background: transparent; color: inherit; }
 .rate-thumb.on { background: var(--rate-thumb-fill); box-shadow: 0 3px 12px rgb(0 0 0 / 0.08); color: var(--accent); }
 .rate-bar .text-btn { background: none; border: none; padding: 0 2px; color: var(--danger); font-size: 12px; font-weight: 500; }

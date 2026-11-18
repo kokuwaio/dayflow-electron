@@ -791,5 +791,95 @@
     "comeBack": "타임라인 카드가 몇 개 생성된 후 다시 확인하세요.",
     "allCaughtUp": "모두 확인했습니다!",
     "allReviewed": "지금까지의 모든 활동을 검토했습니다.<br/>평가 내용이 타임라인 오른쪽 패널에 반영됩니다."
+  },
+  "weekly": {
+    "locked": {
+      "title": "주간 요약 잠금 해제",
+      "body": "주간 보기는 타임라인 데이터가 30시간 기록되면 잠금 해제됩니다."
+    },
+    "previousWeek": "이전 주",
+    "nextWeek": "다음 주",
+    "gate": {
+      "title": "이번 주 요약을 잠금 해제하려면 계속 녹화하세요",
+      "progressLabel": "주간 잠금 해제 진행률",
+      "progressText": "{{total}} 중 {{done}}",
+      "more": "{{duration}} 더 기록하면 이번 주 차트를 볼 수 있습니다."
+    },
+    "change": {
+      "same": " (지난주와 같음)",
+      "more": " (지난주보다 +{{duration}})",
+      "less": " (지난주보다 −{{duration}})"
+    },
+    "distribution": "주간 분포",
+    "total": "합계",
+    "other": "기타",
+    "otherCategories": "기타 카테고리",
+    "otherApps": "기타 앱",
+    "uncategorized": "미분류",
+    "times_other": "{{count}}회",
+    "shifts": {
+      "title": "컨텍스트 전환 및 방해 요소 비교",
+      "distracted": "주의 분산 횟수",
+      "shifts": "컨텍스트 전환 횟수",
+      "none": "이번 주에는 컨텍스트 전환이나 주의 분산 패턴이 감지되지 않았습니다.",
+      "busiest": "{{day}}에 방해가 가장 많았습니다: {{shifts}}, {{distractions}}.",
+      "shiftCount_other": "컨텍스트 전환 {{count}}회",
+      "distractionCount_other": "주의 분산 {{count}}회"
+    },
+    "workflow": "이번 주의 작업 흐름",
+    "mostUsed": "카테고리별 최다 사용",
+    "breakdown": "주간 내역",
+    "focusHeat": {
+      "title": "집중 및 주의 분산 히트맵",
+      "focused": "집중 작업",
+      "distracted": "주의 분산",
+      "aria": "5분 단위, 요일별 집중(파란색)과 주의 분산(피치색)"
+    },
+    "overview": {
+      "title": "시간 분포",
+      "tabsLabel": "강조할 요일",
+      "tabs": {
+        "all": "전체",
+        "longest": "최장 집중 구간",
+        "least": "컨텍스트 전환이 가장 적음",
+        "most": "컨텍스트 전환이 가장 많음"
+      },
+      "longestTitle": "최장 집중: {{duration}}",
+      "switch": "컨텍스트 전환",
+      "total": "합계",
+      "average": "평균",
+      "perDay_other": "하루 {{count}}회",
+      "focus": "집중",
+      "totalLength": "총 길이",
+      "longestDuration": "가장 긴 시간",
+      "primaryFocus": "주요 집중 분야",
+      "durationOnDay": "{{duration}}, {{day}}",
+      "categoryDuration": "{{name}}, {{duration}}",
+      "noFocus": "아직 집중한 시간이 없습니다"
+    },
+    "highlights": {
+      "title": "주요 하이라이트",
+      "empty": "이번 주에는 아직 하이라이트가 없습니다.",
+      "noSummary": "요약이 없습니다.",
+      "untitled": "제목 없음"
+    },
+    "interactions": {
+      "title": "가장 많이 사용하는 앱 간의 상호 작용",
+      "aria": "앱은 원으로, 앱 간 전환은 선으로 표시",
+      "nodeTitle_other": "{{name}}: 카드 {{count}}개에서 {{duration}}",
+      "kinds": {
+        "work": "업무",
+        "personal": "개인",
+        "distraction": "주의 분산"
+      },
+      "patterns": "가장 일반적인 작업 패턴",
+      "noPatterns": "이번 주에는 업무 앱 간 전환이 없습니다.",
+      "rabbitHoles": "주의 분산과 끝없는 탐색",
+      "noRabbitHoles": "이번 주에는 주의를 분산시킨 앱이 없습니다.",
+      "average": "평균 {{duration}}",
+      "pattern_other": "활동한 날마다 평균 {{count}}회 {{from}}에서 {{to}}(으)로 이동합니다.",
+      "empty": "이번 주에 기록된 앱 상호작용이 아직 없습니다.",
+      "coverage": "기록된 앱 사용 시간의 약 {{percent}}%가 이 앱들에서 사용되었습니다."
+    }
   }
 }

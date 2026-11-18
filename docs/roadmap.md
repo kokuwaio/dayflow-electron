@@ -284,9 +284,7 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   zh-Hans, zh-Hant). i18next with one JSON file per language in
   `src/shared/locales`, filled from upstream's `Localizable.xcstrings` by
   `scripts/import-translations.ts`; the rest is machine-translated and listed
-  for review. Switches live in the window, tray and notifications. Open: the
-  Weekly view and its builders (`Weekly.tsx`, `src/shared/weekly.ts`) are
-  still English.
+  for review. Switches live in the window, tray and notifications.
 - [x] Upstream's look: design tokens for light and dark, gradient window and
   translucent panel, icon sidebar, Figtree and Instrument Serif (bundled with
   their OFL texts), the 4 AM to 4 AM day canvas with hour axis and status

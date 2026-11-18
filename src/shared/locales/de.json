@@ -771,7 +771,7 @@
     "yourNote": "Deine Notiz: {{note}}",
     "whatWasWrong": "Was war falsch?",
     "send": "Senden",
-    "rateSummary": "Diese Zusammenfassung bewerten",
+    "rateSummary": "Bewerten",
     "goodCard": "Gute Karte",
     "badCard": "Schlechte Karte",
     "reanalyze": "Neu analysieren"
@@ -808,5 +808,101 @@
     "comeBack": "Komm wieder, sobald einige Zeitleistenkarten angezeigt werden.",
     "allCaughtUp": "Alles erledigt!",
     "allReviewed": "Du hast alle bisherigen Aktivitäten überprüft.<br/>Deine Bewertung wird im rechten Bereich der Zeitleiste übernommen."
+  },
+  "weekly": {
+    "locked": {
+      "title": "Wochenrückblick freischalten",
+      "body": "Wöchentlich wird nach 30 Stunden aufgezeichneter Zeitleiste freigeschaltet."
+    },
+    "previousWeek": "Vorherige Woche",
+    "nextWeek": "Nächste Woche",
+    "gate": {
+      "title": "Weiter aufzeichnen, um diese Woche freizuschalten",
+      "progressLabel": "Fortschritt bis zur Wochenansicht",
+      "progressText": "{{done}} von {{total}}",
+      "more": "Noch {{duration}}, um die Diagramme dieser Woche zu sehen."
+    },
+    "change": {
+      "same": " (wie letzte Woche)",
+      "more": " (+{{duration}} mehr als letzte Woche)",
+      "less": " (−{{duration}} weniger als letzte Woche)"
+    },
+    "distribution": "Wochenverteilung",
+    "total": "GESAMT",
+    "other": "Sonstiges",
+    "otherCategories": "Andere Kategorien",
+    "otherApps": "Andere Apps",
+    "uncategorized": "Nicht kategorisiert",
+    "times_one": "{{count}} Mal",
+    "times_other": "{{count}} Mal",
+    "shifts": {
+      "title": "Vergleich von Kontextwechseln und Ablenkungen",
+      "distracted": "Anzahl der Ablenkungen",
+      "shifts": "Anzahl der Kontextwechsel",
+      "none": "In dieser Woche wurde kein Kontextwechsel- oder Ablenkungsmuster erkannt.",
+      "busiest": "Am {{day}} gab es die meisten Unterbrechungen: {{shifts}} und {{distractions}}.",
+      "shiftCount_one": "{{count}} Kontextwechsel",
+      "shiftCount_other": "{{count}} Kontextwechsel",
+      "distractionCount_one": "{{count}} Ablenkung",
+      "distractionCount_other": "{{count}} Ablenkungen"
+    },
+    "workflow": "Dein Arbeitsablauf diese Woche",
+    "mostUsed": "Meistgenutzt nach Kategorie",
+    "breakdown": "Wochenaufschlüsselung",
+    "focusHeat": {
+      "title": "Heatmap für Fokus und Ablenkung",
+      "focused": "Konzentriertes Arbeiten",
+      "distracted": "Abgelenkt",
+      "aria": "Fokus (blau) und Ablenkung (pfirsich) pro 5 Minuten und Tag"
+    },
+    "overview": {
+      "title": "Zeitverteilung",
+      "tabsLabel": "Tage hervorheben",
+      "tabs": {
+        "all": "Alle",
+        "longest": "Längste Fokusphase",
+        "least": "Wenigste Kontextwechsel",
+        "most": "Meiste Kontextwechsel"
+      },
+      "longestTitle": "Längster Fokus: {{duration}}",
+      "switch": "Kontextwechsel",
+      "total": "Gesamt",
+      "average": "Durchschnitt",
+      "perDay_one": "{{count}} Mal / Tag",
+      "perDay_other": "{{count}} Mal / Tag",
+      "focus": "Fokus",
+      "totalLength": "Gesamtlänge",
+      "longestDuration": "Längste Dauer",
+      "primaryFocus": "Hauptfokus",
+      "durationOnDay": "{{duration}}, {{day}}",
+      "categoryDuration": "{{name}}, {{duration}}",
+      "noFocus": "Noch keine konzentrierte Arbeit"
+    },
+    "highlights": {
+      "title": "Top-Highlights",
+      "empty": "Diese Woche noch keine Highlights.",
+      "noSummary": "Keine Zusammenfassung verfügbar.",
+      "untitled": "Ohne Titel"
+    },
+    "interactions": {
+      "title": "Interaktionen zwischen den meistgenutzten Apps",
+      "aria": "Apps als Kreise, Linien für Wechsel zwischen ihnen",
+      "nodeTitle_one": "{{name}}: {{duration}} in {{count}} Karte",
+      "nodeTitle_other": "{{name}}: {{duration}} in {{count}} Karten",
+      "kinds": {
+        "work": "Arbeit",
+        "personal": "Persönlich",
+        "distraction": "Ablenkung"
+      },
+      "patterns": "Häufigste Arbeitsmuster",
+      "noPatterns": "Diese Woche keine Wechsel zwischen Arbeits-Apps.",
+      "rabbitHoles": "Ablenkungen und Zeitfresser",
+      "noRabbitHoles": "Diese Woche keine ablenkenden Apps.",
+      "average": "Ø {{duration}}",
+      "pattern_one": "Wechselt im Schnitt {{count}} Mal pro aktivem Tag von {{from}} zu {{to}}.",
+      "pattern_other": "Wechselt im Schnitt {{count}} Mal pro aktivem Tag von {{from}} zu {{to}}.",
+      "empty": "Für diese Woche wurden noch keine App-Interaktionen aufgezeichnet.",
+      "coverage": "Etwa {{percent}} % der aufgezeichneten App-Zeit entfielen auf diese Apps."
+    }
   }
 }

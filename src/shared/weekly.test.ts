@@ -47,7 +47,7 @@ describe('weekly dashboard (upstream Core/Weekly)', () => {
     ]
     const result = contextShifts(cards, DEFAULT_CATEGORIES, ['2026-11-16', '2026-11-17'])
     expect(result.days).toEqual([{ day: '2026-11-16', shifts: 2, distractions: 1 }, { day: '2026-11-17', shifts: 0, distractions: 1 }])
-    expect(result.insight).toMatch(/^Monday had the most interruptions, with 2 context shifts and 1 distractions\.$/)
+    expect(result.insight).toMatch(/^Monday had the most interruptions, with 2 context shifts and 1 distraction\.$/)
     expect(contextShifts([], DEFAULT_CATEGORIES, ['2026-11-16']).insight).toBe('No context shift or distraction pattern was detected in this week.')
   })
 

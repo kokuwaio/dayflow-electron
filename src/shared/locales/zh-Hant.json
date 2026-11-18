@@ -791,5 +791,95 @@
     "comeBack": "時間軸中出現幾張卡片後再回來。",
     "allCaughtUp": "已全部處理完畢！",
     "allReviewed": "你已回顧目前為止的所有活動。<br/>時間軸右側面板會根據你的評分更新。"
+  },
+  "weekly": {
+    "locked": {
+      "title": "解鎖每週回顧",
+      "body": "時間軸資料記錄滿 30 小時後即可解鎖週報。"
+    },
+    "previousWeek": "上一週",
+    "nextWeek": "下一週",
+    "gate": {
+      "title": "繼續錄製以解鎖本週回顧",
+      "progressLabel": "週報解鎖進度",
+      "progressText": "{{done}} / {{total}}",
+      "more": "再記錄 {{duration}} 即可查看本週圖表。"
+    },
+    "change": {
+      "same": "（與上週相同）",
+      "more": "（比上週多 {{duration}}）",
+      "less": "（比上週少 {{duration}}）"
+    },
+    "distribution": "每週分布",
+    "total": "總計",
+    "other": "其他",
+    "otherCategories": "其他類別",
+    "otherApps": "其他 App",
+    "uncategorized": "未分類",
+    "times_other": "{{count}} 次",
+    "shifts": {
+      "title": "情境切換與分心情況比較",
+      "distracted": "分心次數",
+      "shifts": "情境切換次數",
+      "none": "本週未偵測到情境切換或分心模式。",
+      "busiest": "{{day}}的中斷最多：{{shifts}}，{{distractions}}。",
+      "shiftCount_other": "{{count}} 次情境切換",
+      "distractionCount_other": "{{count}} 次分心"
+    },
+    "workflow": "你本週的工作流程",
+    "mostUsed": "各類別最常用",
+    "breakdown": "每週明細",
+    "focusHeat": {
+      "title": "專注與分心熱圖",
+      "focused": "專注工作",
+      "distracted": "分心",
+      "aria": "每天每 5 分鐘的專注（藍色）與分心（桃色）"
+    },
+    "overview": {
+      "title": "時間分布",
+      "tabsLabel": "醒目顯示的日期",
+      "tabs": {
+        "all": "全部",
+        "longest": "最長專注時段",
+        "least": "情境切換最少",
+        "most": "情境切換最多"
+      },
+      "longestTitle": "最長專注：{{duration}}",
+      "switch": "情境切換",
+      "total": "總計",
+      "average": "平均值",
+      "perDay_other": "每天 {{count}} 次",
+      "focus": "專注",
+      "totalLength": "總時長",
+      "longestDuration": "持續時間最長",
+      "primaryFocus": "主要專注事項",
+      "durationOnDay": "{{duration}}, {{day}}",
+      "categoryDuration": "{{name}}, {{duration}}",
+      "noFocus": "尚無專注活動"
+    },
+    "highlights": {
+      "title": "本週亮點",
+      "empty": "本週尚無亮點。",
+      "noSummary": "尚無摘要。",
+      "untitled": "未命名"
+    },
+    "interactions": {
+      "title": "常用 App 之間的互動",
+      "aria": "App 以圓圈顯示，App 之間的切換以線條顯示",
+      "nodeTitle_other": "{{name}}：{{count}} 張卡片，共 {{duration}}",
+      "kinds": {
+        "work": "工作",
+        "personal": "個人",
+        "distraction": "分心"
+      },
+      "patterns": "最常見的工作模式",
+      "noPatterns": "本週沒有在工作 App 之間切換。",
+      "rabbitHoles": "分心與鑽牛角尖",
+      "noRabbitHoles": "本週沒有讓你分心的 App。",
+      "average": "平均 {{duration}}",
+      "pattern_other": "每個活躍日平均從 {{from}} 切換到 {{to}} {{count}} 次。",
+      "empty": "本週尚未記錄任何 App 互動。",
+      "coverage": "已記錄的 App 時間中約 {{percent}}% 用在這些 App 上。"
+    }
   }
 }

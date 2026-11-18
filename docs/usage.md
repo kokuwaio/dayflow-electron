@@ -497,7 +497,6 @@ Dates, times and durations follow the chosen language too.
 Some texts stay English: the card titles and summaries (set their language
 with **Output language override** under Providers), category names, the
 terminal command and MCP tools, and error messages from the AI providers.
-The Weekly view is translated in a later version.
 
 Many translations come from upstream Dayflow; the others are machine
 translations waiting for a native speaker's review (listed in

@@ -22,7 +22,7 @@
     "tabs": {
       "timeline": "Chronologie",
       "daily": "Quotidien",
-      "weekly": "Hebdomadaire",
+      "weekly": "Hebdo",
       "chat": "Chat",
       "settings": "Réglages"
     },
@@ -825,5 +825,107 @@
     "comeBack": "Revenez lorsque quelques cartes apparaîtront dans la chronologie.",
     "allCaughtUp": "Vous êtes à jour !",
     "allReviewed": "Vous avez examiné toutes vos activités jusqu’ici.<br/>Le panneau droit de la chronologie sera mis à jour avec votre évaluation."
+  },
+  "weekly": {
+    "locked": {
+      "title": "Débloquer le Récap hebdomadaire",
+      "body": "L’hebdomadaire se débloque après 30 heures de chronologie enregistrée."
+    },
+    "previousWeek": "Semaine précédente",
+    "nextWeek": "Semaine suivante",
+    "gate": {
+      "title": "Continuez à enregistrer pour débloquer la semaine en cours",
+      "progressLabel": "Progression du déblocage hebdomadaire",
+      "progressText": "{{done}} sur {{total}}",
+      "more": "Encore {{duration}} pour voir les graphiques de cette semaine."
+    },
+    "change": {
+      "same": " (comme la semaine dernière)",
+      "more": " (+{{duration}} de plus que la semaine dernière)",
+      "less": " (−{{duration}} de moins que la semaine dernière)"
+    },
+    "distribution": "Répartition hebdomadaire",
+    "total": "TOTAL",
+    "other": "Autre",
+    "otherCategories": "Autres catégories",
+    "otherApps": "Autres apps",
+    "uncategorized": "Non classé",
+    "times_one": "{{count}} fois",
+    "times_many": "{{count}} fois",
+    "times_other": "{{count}} fois",
+    "shifts": {
+      "title": "Comparaison des changements de contexte et des distractions",
+      "distracted": "Nombre de distractions",
+      "shifts": "Nombre de changements de contexte",
+      "none": "Aucun schéma de changement de contexte ou de distraction n’a été détecté cette semaine.",
+      "busiest": "{{day}} a compté le plus d’interruptions : {{shifts}} et {{distractions}}.",
+      "shiftCount_one": "{{count}} changement de contexte",
+      "shiftCount_many": "{{count}} changements de contexte",
+      "shiftCount_other": "{{count}} changements de contexte",
+      "distractionCount_one": "{{count}} distraction",
+      "distractionCount_many": "{{count}} distractions",
+      "distractionCount_other": "{{count}} distractions"
+    },
+    "workflow": "Votre flux de travail cette semaine",
+    "mostUsed": "Plus utilisés par catégorie",
+    "breakdown": "Détail hebdomadaire",
+    "focusHeat": {
+      "title": "Carte thermique de la concentration et des distractions",
+      "focused": "Travail concentré",
+      "distracted": "Distrait",
+      "aria": "Concentration (bleu) et distraction (pêche) par tranche de 5 minutes et par jour"
+    },
+    "overview": {
+      "title": "Répartition du temps",
+      "tabsLabel": "Jours à mettre en évidence",
+      "tabs": {
+        "all": "Tout",
+        "longest": "Plus longue période de concentration",
+        "least": "Le moins de changements de contexte",
+        "most": "Le plus de changements de contexte"
+      },
+      "longestTitle": "Concentration la plus longue : {{duration}}",
+      "switch": "Changement de contexte",
+      "total": "Total",
+      "average": "Moyenne",
+      "perDay_one": "{{count}} fois / jour",
+      "perDay_many": "{{count}} fois / jour",
+      "perDay_other": "{{count}} fois / jour",
+      "focus": "Concentration",
+      "totalLength": "Durée totale",
+      "longestDuration": "Durée la plus longue",
+      "primaryFocus": "Concentration principale",
+      "durationOnDay": "{{duration}}, {{day}}",
+      "categoryDuration": "{{name}}, {{duration}}",
+      "noFocus": "Pas encore de concentration"
+    },
+    "highlights": {
+      "title": "Temps forts",
+      "empty": "Aucun temps fort cette semaine pour l’instant.",
+      "noSummary": "Aucun résumé disponible.",
+      "untitled": "Sans titre"
+    },
+    "interactions": {
+      "title": "Interactions entre les applications les plus utilisées",
+      "aria": "Les apps en cercles, des lignes pour les passages de l’une à l’autre",
+      "nodeTitle_one": "{{name}} : {{duration}} dans {{count}} carte",
+      "nodeTitle_many": "{{name}} : {{duration}} dans {{count}} cartes",
+      "nodeTitle_other": "{{name}} : {{duration}} dans {{count}} cartes",
+      "kinds": {
+        "work": "Travail",
+        "personal": "Personnel",
+        "distraction": "Distraction"
+      },
+      "patterns": "Habitudes de travail les plus courantes",
+      "noPatterns": "Aucun passage entre apps de travail cette semaine.",
+      "rabbitHoles": "Distractions et digressions",
+      "noRabbitHoles": "Aucune app de distraction cette semaine.",
+      "average": "Moy. {{duration}}",
+      "pattern_one": "Passe de {{from}} à {{to}} en moyenne {{count}} fois par jour actif.",
+      "pattern_many": "Passe de {{from}} à {{to}} en moyenne {{count}} fois par jour actif.",
+      "pattern_other": "Passe de {{from}} à {{to}} en moyenne {{count}} fois par jour actif.",
+      "empty": "Aucune interaction avec des applications enregistrée pour cette semaine pour le moment.",
+      "coverage": "Environ {{percent}} % du temps d’app enregistré a été passé dans ces applications."
+    }
   }
 }

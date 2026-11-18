@@ -2,8 +2,9 @@
 // everything comes from the week's timeline cards.
 
 import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from './categories'
-import { DAY_END_MINUTE, DAY_START_MINUTE, clockMinutes, parseKey, slotOverlap } from './day'
+import { DAY_END_MINUTE, DAY_START_MINUTE, clockMinutes, slotOverlap } from './day'
 import { parseClockLabel } from './daily'
+import { dateLabel, t } from './i18n'
 import type { TimelineCard } from './types'
 
 /** Weeks with less tracked time show a gate instead of charts (upstream: 15 h). */
@@ -95,7 +96,7 @@ export function donutItems(cards: TimelineCard[], categories: Category[]): Donut
     .sort((a, b) => b.minutes - a.minutes || order(a.name) - order(b.name) || a.name.localeCompare(b.name))
   if (sorted.length <= 5) return sorted
   const rest = sorted.slice(4).reduce((sum, i) => sum + i.minutes, 0)
-  return [...sorted.slice(0, 4), { name: 'Other', minutes: rest, color: OTHER_COLOR }]
+  return [...sorted.slice(0, 4), { name: t('weekly.other'), minutes: rest, color: OTHER_COLOR }]
 }
 
 /** Upstream isDistractionCard: the card lists distractions, or its texts talk about being distracted. */
@@ -122,8 +123,13 @@ export function contextShifts(cards: TimelineCard[], categories: Category[], day
   const busiest = [...perDay].sort((a, b) => b.shifts + b.distractions - (a.shifts + a.distractions))[0]
   const insight =
     !busiest || busiest.shifts + busiest.distractions === 0
-      ? 'No context shift or distraction pattern was detected in this week.'
-      : `${parseKey(busiest.day).toLocaleDateString('en-US', { weekday: 'long' })} had the most interruptions, with ${busiest.shifts} context shifts and ${busiest.distractions} distractions.`
+      ? t('weekly.shifts.none')
+      : // The counts are phrases of their own, so each takes its language's plural form.
+        t('weekly.shifts.busiest', {
+          day: dateLabel(busiest.day, { weekday: 'long' }),
+          shifts: t('weekly.shifts.shiftCount', { count: busiest.shifts }),
+          distractions: t('weekly.shifts.distractionCount', { count: busiest.distractions })
+        })
   return { days: perDay, insight }
 }
 
@@ -214,8 +220,8 @@ export function sankeyLinks(cards: TimelineCard[], categories: Category[]): Arra
   const shownApps = visibleNames(byApp, 10)
   const links = new Map<string, { source: string; target: string; minutes: number }>()
   for (const x of list) {
-    const source = !shownCategories || shownCategories.has(x.category) ? x.category : 'Other categories'
-    const target = !shownApps || shownApps.has(x.app) ? x.app : 'Other apps'
+    const source = !shownCategories || shownCategories.has(x.category) ? x.category : t('weekly.otherCategories')
+    const target = !shownApps || shownApps.has(x.app) ? x.app : t('weekly.otherApps')
     const link = links.get(`${source}\u0000${target}`) ?? { source, target, minutes: 0 }
     link.minutes += x.minutes
     links.set(`${source}\u0000${target}`, link)

@@ -237,7 +237,9 @@ export function CardDetail(props: {
       <div className="rate-bar">
         {!isFailed && (
           <>
-            {t('card.rateSummary')}
+            <span className="rate-label" title={t('card.rateSummary')}>
+              {t('card.rateSummary')}
+            </span>
             <button
               className={`rate-thumb ${rating?.rating === 'up' ? 'on' : ''}`}
               aria-label={t('card.goodCard')}

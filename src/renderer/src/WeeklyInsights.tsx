@@ -3,22 +3,18 @@
 // The numbers come from src/shared/weekly-insights.ts.
 
 import { useState } from 'react'
-import { hourLabel, parseKey } from '@shared/day'
-import { formatMinutes } from '@shared/day-summary'
+import { useTranslation } from 'react-i18next'
+import { clockLabel, dateLabel, durationLabel, hourAxisLabel, t } from '@shared/i18n'
 import { type AppInteractions, type AppKind, type OverviewTab, type PatternApp, type WeeklyHighlight, type WeeklyOverview, overviewFocusDays } from '@shared/weekly-insights'
 
-const weekday = (day: string, style: 'short' | 'long' = 'short') => parseKey(day).toLocaleDateString(style === 'long' ? 'en-US' : [], { weekday: style })
-const times = (n: number) => `${n} ${n === 1 ? 'time' : 'times'}`
+const weekday = (day: string, style: 'short' | 'long' = 'short') => dateLabel(day, { weekday: style })
+const times = (count: number) => t('weekly.times', { count })
 
-const TABS: Array<[OverviewTab, string]> = [
-  ['all', 'All'],
-  ['longest', 'Longest focus period'],
-  ['least', 'Least context shifts'],
-  ['most', 'Most context shifts']
-]
+const TABS: OverviewTab[] = ['all', 'longest', 'least', 'most']
 
 /** "Time distribution": each day's cards as bars, with context switch and focus totals below. */
 export function OverviewCard({ overview }: { overview: WeeklyOverview }) {
+  const { t } = useTranslation()
   const [tab, setTab] = useState<OverviewTab>('all')
   const focus = overviewFocusDays(overview, tab)
   const span = Math.max(1, overview.endMinute - overview.startMinute)
@@ -30,11 +26,11 @@ export function OverviewCard({ overview }: { overview: WeeklyOverview }) {
   return (
     <section className="w-card wide overview">
       <div className="overview-head">
-        <h3>Time distribution</h3>
-        <div className="overview-tabs" role="tablist" aria-label="Highlight days">
-          {TABS.map(([id, label]) => (
+        <h3>{t('weekly.overview.title')}</h3>
+        <div className="overview-tabs" role="tablist" aria-label={t('weekly.overview.tabsLabel')}>
+          {TABS.map((id) => (
             <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>
-              {label}
+              {t(`weekly.overview.tabs.${id}`)}
             </button>
           ))}
         </div>
@@ -55,7 +51,7 @@ export function OverviewCard({ overview }: { overview: WeeklyOverview }) {
               {tab === 'longest' && longest?.day === row.day && (
                 <span
                   className="longest"
-                  title={`Longest focus: ${formatMinutes(longest.minutes)}`}
+                  title={t('weekly.overview.longestTitle', { duration: durationLabel(longest.minutes) })}
                   style={{ left: `${pct(Math.max(longest.start, overview.startMinute))}%`, width: `${pct(Math.min(longest.end, overview.endMinute)) - pct(Math.max(longest.start, overview.startMinute))}%` }}
                 />
               )}
@@ -67,7 +63,7 @@ export function OverviewCard({ overview }: { overview: WeeklyOverview }) {
             const at = pct(m)
             return (
               <span key={m} style={{ left: `${at}%`, transform: at <= 0 ? 'none' : at >= 100 ? 'translateX(-100%)' : 'translateX(-50%)' }}>
-                {hourLabel(m)}
+                {hourAxisLabel(m)}
               </span>
             )
           })}
@@ -85,18 +81,26 @@ export function OverviewCard({ overview }: { overview: WeeklyOverview }) {
       )}
       <div className="overview-foot">
         <SummaryGroup
-          title="Context switch"
+          title={t('weekly.overview.switch')}
           metrics={[
-            ['Total', times(overview.switchTotal)],
-            ['Average', `${times(overview.switchAverage)} / day`]
+            [t('weekly.overview.total'), times(overview.switchTotal)],
+            [t('weekly.overview.average'), t('weekly.overview.perDay', { count: overview.switchAverage })]
           ]}
         />
         <SummaryGroup
-          title="Focus"
+          title={t('weekly.overview.focus')}
           metrics={[
-            ['Total length', formatMinutes(overview.focusMinutes)],
-            ['Longest duration', longest ? `${formatMinutes(longest.minutes)}, ${weekday(longest.day, 'long')}` : 'No focus yet'],
-            ['Primary focus', overview.primaryFocus ? `${overview.primaryFocus.name}, ${formatMinutes(overview.primaryFocus.minutes)}` : 'No focus yet']
+            [t('weekly.overview.totalLength'), durationLabel(overview.focusMinutes)],
+            [
+              t('weekly.overview.longestDuration'),
+              longest ? t('weekly.overview.durationOnDay', { duration: durationLabel(longest.minutes), day: weekday(longest.day, 'long') }) : t('weekly.overview.noFocus')
+            ],
+            [
+              t('weekly.overview.primaryFocus'),
+              overview.primaryFocus
+                ? t('weekly.overview.categoryDuration', { name: overview.primaryFocus.name, duration: durationLabel(overview.primaryFocus.minutes) })
+                : t('weekly.overview.noFocus')
+            ]
           ]}
         />
       </div>
@@ -104,11 +108,10 @@ export function OverviewCard({ overview }: { overview: WeeklyOverview }) {
   )
 }
 
-/** "9:15 AM" for a clock minute (24:00-28:00 after midnight). */
+/** "9:15 AM" (or the language's clock) for a clock minute (24:00-28:00 after midnight). */
 function hourText(minute: number): string {
   const m = Math.round(minute) % 1440
-  const h = Math.floor(m / 60)
-  return `${h % 12 === 0 ? 12 : h % 12}:${String(m % 60).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`
+  return clockLabel(new Date(2000, 0, 1, Math.floor(m / 60), m % 60).getTime() / 1000)
 }
 
 function SummaryGroup({ title, metrics }: { title: string; metrics: Array<[string, string]> }) {
@@ -129,9 +132,10 @@ function SummaryGroup({ title, metrics }: { title: string; metrics: Array<[strin
 
 /** "Top highlights": the week's three longest cards. */
 export function HighlightsCard({ highlights }: { highlights: WeeklyHighlight[] }) {
+  const { t } = useTranslation()
   return (
     <section className="w-card wide highlights">
-      <h3>Top highlights</h3>
+      <h3>{t('weekly.highlights.title')}</h3>
       {highlights.length ? (
         <ol>
           {highlights.map((h) => (
@@ -141,23 +145,19 @@ export function HighlightsCard({ highlights }: { highlights: WeeklyHighlight[] }
               </span>
               <p>{h.text}</p>
               <span className="meta">
-                {weekday(h.day)} · {formatMinutes(h.minutes)}
+                {weekday(h.day)} · {durationLabel(h.minutes)}
               </span>
             </li>
           ))}
         </ol>
       ) : (
-        <p className="note">No highlights this week yet.</p>
+        <p className="note">{t('weekly.highlights.empty')}</p>
       )}
     </section>
   )
 }
 
-const KIND_LABELS: Array<[AppKind, string]> = [
-  ['work', 'Work'],
-  ['personal', 'Personal'],
-  ['distraction', 'Distraction']
-]
+const KINDS: AppKind[] = ['work', 'personal', 'distraction']
 /** Upstream's edge opacity and width per kind, from the switch's weight (0-1). */
 const EDGE_STYLE: Record<AppKind, (w: number) => { opacity: number; width: number }> = {
   work: (w) => ({ opacity: 0.24 + w * 0.24, width: 0.9 + w * 0.95 }),
@@ -168,15 +168,16 @@ const shortName = (name: string) => (name.length > 14 ? `${name.slice(0, 13)}…
 
 /** "Interactions between most used applications", with the week's work patterns and rabbit holes beside it. */
 export function InteractionsCard({ data }: { data: AppInteractions }) {
+  const { t } = useTranslation()
   const byId = new Map(data.nodes.map((n) => [n.id, n]))
   return (
     <section className="w-card wide interactions">
       <div className="interactions-graph">
-        <h3>Interactions between most used applications</h3>
+        <h3>{t('weekly.interactions.title')}</h3>
         <p className="sub">{data.subtitle}</p>
         {data.nodes.length > 0 && (
           <>
-            <svg viewBox="20 64 525 400" role="img" aria-label="Apps as circles, lines for switches between them">
+            <svg viewBox="20 64 525 400" role="img" aria-label={t('weekly.interactions.aria')}>
               {data.edges.map((e) => {
                 const a = byId.get(e.from)!
                 const b = byId.get(e.to)!
@@ -195,7 +196,7 @@ export function InteractionsCard({ data }: { data: AppInteractions }) {
               })}
               {data.nodes.map((n) => (
                 <g key={n.id} className={`app-node ${n.kind}${n.muted ? ' muted' : ''}`}>
-                  <title>{`${n.name}: ${formatMinutes(n.minutes)} in ${n.visits} ${n.visits === 1 ? 'card' : 'cards'}`}</title>
+                  <title>{t('weekly.interactions.nodeTitle', { name: n.name, duration: durationLabel(n.minutes), count: n.visits })}</title>
                   <circle cx={n.x} cy={n.y} r={n.size / 2 + (n.primary ? 7 : 1)} className="base" />
                   {n.primary && <circle cx={n.x} cy={n.y} r={n.size / 2 + 5} className="halo" />}
                   <circle cx={n.x} cy={n.y} r={n.size / 2} strokeWidth={n.primary ? 3 : 2.5} />
@@ -209,10 +210,10 @@ export function InteractionsCard({ data }: { data: AppInteractions }) {
               ))}
             </svg>
             <ul className="kind-legend">
-              {KIND_LABELS.map(([kind, label]) => (
+              {KINDS.map((kind) => (
                 <li key={kind}>
                   <span className={`swatch ${kind}`} />
-                  {label}
+                  {t(`weekly.interactions.kinds.${kind}`)}
                 </li>
               ))}
             </ul>
@@ -221,7 +222,7 @@ export function InteractionsCard({ data }: { data: AppInteractions }) {
       </div>
       {data.nodes.length > 0 && (
         <div className="interactions-side">
-          <h3>Most common work patterns</h3>
+          <h3>{t('weekly.interactions.patterns')}</h3>
           {data.patterns.length ? (
             data.patterns.map((p) => (
               <div key={`${p.from.id}-${p.to.id}`} className="pattern">
@@ -230,9 +231,9 @@ export function InteractionsCard({ data }: { data: AppInteractions }) {
               </div>
             ))
           ) : (
-            <p className="note">No app switches between work apps this week.</p>
+            <p className="note">{t('weekly.interactions.noPatterns')}</p>
           )}
-          <h3>Distractions and rabbit holes</h3>
+          <h3>{t('weekly.interactions.rabbitHoles')}</h3>
           {data.rabbitHole ? (
             <div className="rabbit-hole">
               <Flow
@@ -245,7 +246,7 @@ export function InteractionsCard({ data }: { data: AppInteractions }) {
               />
             </div>
           ) : (
-            <p className="note">No distracting apps this week.</p>
+            <p className="note">{t('weekly.interactions.noRabbitHoles')}</p>
           )}
         </div>
       )}
@@ -282,7 +283,7 @@ function Flow(props: { from: PatternApp[]; to: PatternApp[]; fromAverage: number
         {props.from.map((a) => (
           <AppName key={a.id} app={a} />
         ))}
-        <span className="avg">{formatMinutes(props.fromAverage)} avg</span>
+        <span className="avg">{t('weekly.interactions.average', { duration: durationLabel(props.fromAverage) })}</span>
       </div>
       <span className="count">
         <b>{props.count}</b>
@@ -293,7 +294,7 @@ function Flow(props: { from: PatternApp[]; to: PatternApp[]; fromAverage: number
             <AppName key={a.id} app={a} />
           ))}
         </div>
-        <span className="avg">{formatMinutes(props.toAverage)} avg</span>
+        <span className="avg">{t('weekly.interactions.average', { duration: durationLabel(props.toAverage) })}</span>
       </div>
     </div>
   )

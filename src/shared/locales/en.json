@@ -808,5 +808,101 @@
     "comeBack": "Come back after a few timeline cards appear.",
     "allCaughtUp": "All caught up!",
     "allReviewed": "You've reviewed all your activities so far.<br/>The Timeline right panel will be updated with your rating."
+  },
+  "weekly": {
+    "locked": {
+      "title": "Unlock Weekly",
+      "body": "Weekly unlocks after 30 hours of recorded timeline data."
+    },
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "gate": {
+      "title": "Keep recording to unlock this week",
+      "progressLabel": "Weekly unlock progress",
+      "progressText": "{{done}} of {{total}}",
+      "more": "{{duration}} more to see this week's charts."
+    },
+    "change": {
+      "same": " (same as last week)",
+      "more": " (+{{duration}} more than last week)",
+      "less": " (−{{duration}} less than last week)"
+    },
+    "distribution": "Weekly distribution",
+    "total": "TOTAL",
+    "other": "Other",
+    "otherCategories": "Other categories",
+    "otherApps": "Other apps",
+    "uncategorized": "Uncategorized",
+    "times_one": "{{count}} time",
+    "times_other": "{{count}} times",
+    "shifts": {
+      "title": "Context shift and distractions comparison",
+      "distracted": "Number of times distracted",
+      "shifts": "Number of context shifts",
+      "none": "No context shift or distraction pattern was detected in this week.",
+      "busiest": "{{day}} had the most interruptions, with {{shifts}} and {{distractions}}.",
+      "shiftCount_one": "{{count}} context shift",
+      "shiftCount_other": "{{count}} context shifts",
+      "distractionCount_one": "{{count}} distraction",
+      "distractionCount_other": "{{count}} distractions"
+    },
+    "workflow": "Your workflow this week",
+    "mostUsed": "Most used per category",
+    "breakdown": "Weekly breakdown",
+    "focusHeat": {
+      "title": "Focus and distraction heat map",
+      "focused": "Focused work",
+      "distracted": "Distracted",
+      "aria": "Focus (blue) and distraction (peach) per 5 minutes and day"
+    },
+    "overview": {
+      "title": "Time distribution",
+      "tabsLabel": "Highlight days",
+      "tabs": {
+        "all": "All",
+        "longest": "Longest focus period",
+        "least": "Least context shifts",
+        "most": "Most context shifts"
+      },
+      "longestTitle": "Longest focus: {{duration}}",
+      "switch": "Context switch",
+      "total": "Total",
+      "average": "Average",
+      "perDay_one": "{{count}} time / day",
+      "perDay_other": "{{count}} times / day",
+      "focus": "Focus",
+      "totalLength": "Total length",
+      "longestDuration": "Longest duration",
+      "primaryFocus": "Primary focus",
+      "durationOnDay": "{{duration}}, {{day}}",
+      "categoryDuration": "{{name}}, {{duration}}",
+      "noFocus": "No focus yet"
+    },
+    "highlights": {
+      "title": "Top highlights",
+      "empty": "No highlights this week yet.",
+      "noSummary": "No summary available.",
+      "untitled": "Untitled"
+    },
+    "interactions": {
+      "title": "Interactions between most used applications",
+      "aria": "Apps as circles, lines for switches between them",
+      "nodeTitle_one": "{{name}}: {{duration}} in {{count}} card",
+      "nodeTitle_other": "{{name}}: {{duration}} in {{count}} cards",
+      "kinds": {
+        "work": "Work",
+        "personal": "Personal",
+        "distraction": "Distraction"
+      },
+      "patterns": "Most common work patterns",
+      "noPatterns": "No app switches between work apps this week.",
+      "rabbitHoles": "Distractions and rabbit holes",
+      "noRabbitHoles": "No distracting apps this week.",
+      "average": "{{duration}} avg",
+      "pattern_one": "Moves from {{from}} to {{to}} an average of {{count}} time per active day.",
+      "pattern_other": "Moves from {{from}} to {{to}} an average of {{count}} times per active day.",
+      "empty": "No recorded app interactions for this week yet.",
+      "coverage": "About {{percent}}% of recorded app time was spent using these applications."
+    }
   }
 }
