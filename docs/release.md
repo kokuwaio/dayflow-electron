@@ -100,8 +100,11 @@ That needs our own tap, because Homebrew's main cask repository only takes
 signed and notarized apps. Everything else is prepared:
 `packaging/homebrew/dayflow-electron.rb.in` is the cask,
 `scripts/homebrew-cask.sh` fills in version and checksums, and every
-published release attaches `dayflow-electron.rb` and pushes it to the tap
-once the token below exists.
+published release attaches `dayflow-electron.rb`. Once the token below
+exists, stable releases also push it to the tap, in a job of its own:
+prereleases never do, and neither does a release that is no longer the latest
+one (re-running an older release keeps the tap on the newest version). Tap
+updates run one at a time.
 
 1. Make this repository public. Homebrew downloads the disk images without
    logging in, and assets of private releases need a login.
@@ -112,8 +115,9 @@ once the token below exists.
    **Contents: Read and write** on `kokuwaio/homebrew-tap` only.
 4. Store it in this repository as the Actions secret `HOMEBREW_TAP_TOKEN`
    (Settings → Secrets and variables → Actions).
-5. Publish a release. The "Update the Homebrew tap" step commits the cask to
-   the tap; without the secret it only attaches the cask to the release.
+5. Publish a release. The "Update the Homebrew tap" job commits the cask to
+   the tap; without the secret, for a prerelease or for an older release it
+   only attaches the cask to the release.
 6. Check it on a Mac:
    `brew install --cask kokuwaio/tap/dayflow-electron`, then
    `brew audit --cask --online kokuwaio/tap/dayflow-electron`.
