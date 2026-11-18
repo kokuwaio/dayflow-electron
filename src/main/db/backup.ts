@@ -4,11 +4,11 @@
 
 import { copyFileSync, existsSync, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
+import { pad } from '../../shared/day'
 import { Store } from './store'
 
 const KEEP = 3
 const PREFIX = 'dayflow-'
-const pad = (n: number) => String(n).padStart(2, '0')
 const stamp = (d: Date) =>
   `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Play } from 'lucide-react'
+import { pad } from '@shared/day'
 import { PAUSE_PRESETS, describeRecorder } from '@shared/status'
 import type { AppStatus } from '@shared/types'
 
@@ -10,7 +11,6 @@ const CHIPS = [...PAUSE_PRESETS].reverse().map((p) => ({
   title: `Pause ${p.label.toLowerCase()}`
 }))
 
-const pad = (n: number) => String(n).padStart(2, '0')
 /** "14:59", or "1:02:05" for an hour or more. */
 function countdown(seconds: number): string {
   const s = Math.max(0, Math.round(seconds))

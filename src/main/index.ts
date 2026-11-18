@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { writeFile } from 'node:fs/promises'
 import { BrowserWindow, Menu, Tray, app, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, nativeTheme, powerMonitor, screen, shell, systemPreferences } from 'electron'
-import { dayKey, dayRange, shiftDay, todayKey } from '../shared/day'
+import { beforeBoundary, dayCount, dayKey, dayRange, daysOf, shiftDay, todayKey } from '../shared/day'
 import { needsApiKey } from '../shared/providers'
 import { PAUSE_PRESETS, describeRecorder } from '../shared/status'
 import { renamedCategories } from '../shared/categories'
@@ -210,15 +210,10 @@ async function main(): Promise<void> {
 
   // ---- IPC (see src/preload/index.ts)
   ipcMain.handle('day:get', (_e, day?: string) => {
-    const key = day ?? dayKey(Math.floor(Date.now() / 1000))
+    const key = day ?? todayKey()
     return { day: key, cards: store.cardsForDay(key), ratings: store.ratings(dayRange(key)) }
   })
   const daysWithCards = (days: string[]) => days.map((day) => ({ day, cards: store.cardsForDay(day) }))
-  const daysBetween = (from: string, to: string) => {
-    const days: string[] = []
-    for (let d = from; d <= to; d = shiftDay(d, 1)) days.push(d)
-    return days
-  }
   const notifier = createNotifier({
     open: (tab: Tab) => {
       showWindow()
@@ -253,7 +248,7 @@ async function main(): Promise<void> {
   // summarizing, at most 3 tries a day, counted across restarts.
   const scheduleStandup = async () => {
     const day = todayKey()
-    if (!access().daily.unlocked || new Date().getHours() < 4 || store.standup(day) || standupRuns.has(day)) return
+    if (!access().daily.unlocked || beforeBoundary(new Date()) || store.standup(day) || standupRuns.has(day)) return
     if (configuredProviders().length === 0 || !standupSourceDay(store, day, AUTO_MIN_MINUTES)) return
     const attempts = settings.get().standupAttempts
     const tries = attempts.day === day ? attempts.count : 0
@@ -386,13 +381,13 @@ async function main(): Promise<void> {
   })
   ipcMain.handle('timeline:export', async (_e, from: string, to: string) => {
     if (from > to) return { ok: false, message: 'Start must be on or before end.' }
-    if (daysBetween(from, to).length > 3660) return { ok: false, message: 'Choose at most ten years.' }
+    if (dayCount(from, to) > 3660) return { ok: false, message: 'Choose at most ten years.' }
     const target = await dialog.showSaveDialog({
       defaultPath: join(app.getPath('documents'), exportFileName(from, to)),
       filters: [{ name: 'Markdown', extensions: ['md'] }]
     })
     if (target.canceled || !target.filePath) return { ok: false, message: 'Export canceled' }
-    const days = daysWithCards(daysBetween(from, to))
+    const days = daysWithCards(daysOf(from, to))
     try {
       await writeFile(target.filePath, rangeMarkdown(days, { today: todayKey() }), 'utf8')
     } catch (err) {

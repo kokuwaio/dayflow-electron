@@ -3,7 +3,7 @@
 // work with the app closed and go straight to the database; writes go to the
 // running app over the bridge and need "Allow edits".
 
-import { dayRange, isDayKey, shiftDay, todayKey } from '../shared/day'
+import { dayCount, dayRange, isDayKey, shiftDay, todayKey } from '../shared/day'
 import { weekOf } from '../shared/week'
 import { EXIT, parseArgs } from './args'
 import { BridgeError } from './bridge-client'
@@ -125,7 +125,7 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
       throw usage('Ranges need --from and --to as YYYY-MM-DD, with --from first.')
     }
     const cards = store().cardsOverlapping(dayRange(from).start, dayRange(to).end)
-    const days = P.rangeDays(from, to)
+    const days = dayCount(from, to)
     // Long ranges aggregate instead of listing; --force overrides for humans.
     if (days > P.MAX_RANGE_DAYS_FOR_ACTIVITIES && !switches.has('--force')) {
       if (json) printJSON(P.rangeAggregate(from, to, cards))

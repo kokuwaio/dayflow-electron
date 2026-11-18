@@ -2,7 +2,7 @@
 // (Views/UI/MainView/WeekTimelineGridView.swift, TimelineShellModels.swift).
 
 import { SYSTEM_CATEGORY } from './categories'
-import { parseKey, shiftDay } from './day'
+import { DAY_START_MINUTE, calendarKey, parseKey, shiftDay } from './day'
 import type { TimelineCard } from './types'
 
 /** A day column of the week view. */
@@ -32,8 +32,8 @@ export function weekOf(day: string, locale?: string): Week {
 /** Wall-clock minutes of `ts` after 4 AM on `day` (a time on the next calendar day counts on). */
 function wallMinutes(ts: number, day: string): number {
   const d = new Date(ts * 1000)
-  const dayNumber = Math.round((parseKey(dayKeyOf(d)).getTime() - parseKey(day).getTime()) / 86_400_000)
-  return (d.getHours() + dayNumber * 24) * 60 + d.getMinutes() + d.getSeconds() / 60 - 4 * 60
+  const dayNumber = Math.round((parseKey(calendarKey(d)).getTime() - parseKey(day).getTime()) / 86_400_000)
+  return (d.getHours() + dayNumber * 24) * 60 + d.getMinutes() + d.getSeconds() / 60 - DAY_START_MINUTE
 }
 
 /** Vertical position and height of a card in its day column (the column starts at 4 AM). */
@@ -78,11 +78,6 @@ export function resolveOverlaps<T extends { start: number; end: number }>(cards:
     if (!changed) break
   }
   return list.sort((a, b) => a.start - b.start)
-}
-
-/** The calendar date (not the 4 AM day) of a moment, as a key. */
-function dayKeyOf(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 /** Joins "Processing failed" cards less than a minute apart into one (upstream resolveDisplaySegments). */

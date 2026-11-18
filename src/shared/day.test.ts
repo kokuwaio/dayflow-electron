@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dayKey, dayRange, isDayKey, shiftDay } from './day'
+import { beforeBoundary, dayCount, dayKey, dayRange, daysOf, isDayKey, shiftDay } from './day'
 
 const at = (y: number, mo: number, d: number, h: number, m = 0) => new Date(y, mo - 1, d, h, m).getTime() / 1000
 
@@ -27,5 +27,20 @@ describe('isDayKey', () => {
     for (const bad of ['2026-02-30', '2026-13-01', '2026-1-1', '17.11.2026', '', ' 2026-11-17', '2026-11-17T00:00']) {
       expect(isDayKey(bad), bad).toBe(false)
     }
+  })
+})
+
+describe('day ranges and the boundary hour', () => {
+  it('lists and counts the days of an inclusive range, across the clock change', () => {
+    expect(daysOf('2026-10-24', '2026-10-26')).toEqual(['2026-10-24', '2026-10-25', '2026-10-26'])
+    expect(daysOf('2026-11-17', '2026-11-17')).toEqual(['2026-11-17'])
+    expect(daysOf('2026-11-18', '2026-11-17')).toEqual([])
+    expect(dayCount('2026-10-24', '2026-10-26')).toBe(3)
+    expect(dayCount('2026-01-01', '2026-12-31')).toBe(365)
+  })
+
+  it('knows when a calendar day has not reached the 4 AM boundary yet', () => {
+    expect(beforeBoundary(new Date(2026, 10, 17, 3, 59))).toBe(true)
+    expect(beforeBoundary(new Date(2026, 10, 17, 4, 0))).toBe(false)
   })
 })

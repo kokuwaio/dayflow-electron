@@ -4,9 +4,14 @@
 /** Days start at this local hour (upstream's 4 AM boundary). */
 export const BOUNDARY_HOUR = 4
 
-/** Two digits: 4 → "04". */
-export const pad = (n: number) => String(n).padStart(2, '0')
-const keyOf = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+/** Minutes after midnight where a day starts and ends (4 AM, 4 AM the next day). */
+export const DAY_START_MINUTE = BOUNDARY_HOUR * 60
+export const DAY_END_MINUTE = DAY_START_MINUTE + 24 * 60
+
+/** Zero-padded, two digits by default: 4 → "04". */
+export const pad = (n: number, width = 2) => String(n).padStart(width, '0')
+/** The calendar date of a Date as a key ("YYYY-MM-DD"), not its 4 AM day. */
+export const calendarKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
 /** The local midnight Date of a day key. */
 export function parseKey(key: string): Date {
@@ -20,12 +25,12 @@ export const todayKey = (): string => dayKey(Math.floor(Date.now() / 1000))
 export function dayKey(ts: number): string {
   const d = new Date(ts * 1000)
   if (d.getHours() < BOUNDARY_HOUR) d.setDate(d.getDate() - 1)
-  return keyOf(d)
+  return calendarKey(d)
 }
 
 /** True for a real calendar date written as "YYYY-MM-DD". */
 export function isDayKey(value: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && keyOf(parseKey(value)) === value
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && calendarKey(parseKey(value)) === value
 }
 
 export function dayRange(key: string): { start: number; end: number } {
@@ -38,8 +43,23 @@ export function dayRange(key: string): { start: number; end: number } {
 export function shiftDay(key: string, days: number): string {
   const d = parseKey(key)
   d.setDate(d.getDate() + days)
-  return keyOf(d)
+  return calendarKey(d)
 }
+
+/** The day keys from `from` to `to`, both included; empty when `from` is later. */
+export function daysOf(from: string, to: string): string[] {
+  const days: string[] = []
+  for (let d = from; d <= to; d = shiftDay(d, 1)) days.push(d)
+  return days
+}
+
+/** How many days an inclusive range of day keys spans (23- and 25-hour days count once). */
+export function dayCount(from: string, to: string): number {
+  return Math.round((dayRange(to).end - dayRange(from).start) / 86_400)
+}
+
+/** Whether `date`'s calendar day has not reached the boundary hour yet (before 4 AM). */
+export const beforeBoundary = (date: Date): boolean => date.getHours() < BOUNDARY_HOUR
 
 /** "2:30 PM" in local time, like upstream's "h:mm a". */
 export function formatClock(ts: number): string {

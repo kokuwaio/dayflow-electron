@@ -4,7 +4,7 @@
 // object gets schema_version when it is printed.
 
 import { type Category, SYSTEM_CATEGORY } from '../shared/categories'
-import { BOUNDARY_HOUR, dayRange, pad } from '../shared/day'
+import { BOUNDARY_HOUR, dayCount, dayRange, pad } from '../shared/day'
 import type { StandupEntry, TimelineCard } from '../shared/types'
 import { weekOf } from '../shared/week'
 
@@ -79,11 +79,6 @@ const sum = (list: Array<{ minutes: number }>) => list.reduce((n, t) => n + t.mi
 const shares = (totals: Array<{ name: string; minutes: number }>, tracked: number) =>
   totals.map((t) => ({ name: t.name, minutes: t.minutes, share: tracked > 0 ? t.minutes / tracked : 0 }))
 
-/** Days in an inclusive range of day keys. */
-export function rangeDays(from: string, to: string): number {
-  return Math.round((dayRange(to).end - dayRange(from).start) / 86_400)
-}
-
 export function rangeListing(from: string, to: string, cards: TimelineCard[], detailed: boolean): Json {
   return { from, to, cards: cards.map((c) => activityJson(c, detailed)) }
 }
@@ -92,7 +87,7 @@ export function rangeAggregate(from: string, to: string, cards: TimelineCard[]):
   const totals = categoryTotals(cards)
   const tracked = sum(totals)
   return {
-    range: { from, to, days: rangeDays(from, to) },
+    range: { from, to, days: dayCount(from, to) },
     granularity: 'aggregate',
     cards_omitted: cards.length,
     reason: `Range exceeds ${MAX_RANGE_DAYS_FOR_ACTIVITIES} days. Returning totals instead of individual activities.`,

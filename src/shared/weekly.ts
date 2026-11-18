@@ -2,7 +2,7 @@
 // everything comes from the week's timeline cards.
 
 import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY } from './categories'
-import { clockMinutes, parseKey, slotOverlap } from './day'
+import { DAY_END_MINUTE, DAY_START_MINUTE, clockMinutes, parseKey, slotOverlap } from './day'
 import { parseClockLabel } from './daily'
 import type { TimelineCard } from './types'
 
@@ -136,7 +136,7 @@ const SLOT = 15
 /** The week's 15-minute slots per day, colored by the dominant category (upstream Weekly workflow). */
 export function workflowHeatmap(cards: TimelineCard[], categories: Category[], days: string[]) {
   const list = counted(cards, categories).map((c) => ({ c, start: clockMinutes(c.start), end: clockMinutes(c.start) + (c.end - c.start) / 60 }))
-  const clamp = (m: number) => Math.min(28 * 60, Math.max(4 * 60, m))
+  const clamp = (m: number) => Math.min(DAY_END_MINUTE, Math.max(DAY_START_MINUTE, m))
   const startMinute = list.length ? clamp(Math.floor((Math.min(...list.map((x) => x.start)) - 30) / SLOT) * SLOT) : 9 * 60
   const endMinute = list.length ? clamp(Math.ceil((Math.max(...list.map((x) => x.end)) + 30) / SLOT) * SLOT) : 22 * 60
   const slots = Math.max(1, Math.round((endMinute - startMinute) / SLOT))
@@ -236,9 +236,9 @@ interface Fact {
 /** The week's activity, padded by 30 minutes and snapped to 15 (upstream weeklyActivityWindow). */
 function activityWindow(facts: Fact[]): { start: number; end: number } {
   if (!facts.length) return { start: 9 * 60, end: 22 * 60 }
-  const start = Math.floor(Math.max(4 * 60, Math.min(...facts.map((f) => f.start)) - 30) / 15) * 15
-  let end = Math.ceil(Math.min(28 * 60, Math.max(...facts.map((f) => f.end)) + 30) / 15) * 15
-  if (end === 24 * 60) end = 28 * 60
+  const start = Math.floor(Math.max(DAY_START_MINUTE, Math.min(...facts.map((f) => f.start)) - 30) / 15) * 15
+  let end = Math.ceil(Math.min(DAY_END_MINUTE, Math.max(...facts.map((f) => f.end)) + 30) / 15) * 15
+  if (end === 24 * 60) end = DAY_END_MINUTE
   return end > start ? { start, end } : { start: 9 * 60, end: 22 * 60 }
 }
 

@@ -4,7 +4,7 @@
 // recordingProjectionWindow, MainView/Lifecycle.swift, MainView/Support.swift).
 
 import { SYSTEM_CATEGORY } from './categories'
-import { clockMinutes, dayKey, dayRange } from './day'
+import { DAY_START_MINUTE, clockMinutes, dayKey, dayRange } from './day'
 
 /** Upstream's TimelineScale.hourHeight. */
 export const HOUR_HEIGHT = 168
@@ -13,7 +13,7 @@ export const DAY_PX_PER_MIN = HOUR_HEIGHT / 60
 export const TIME_COLUMN_WIDTH = 60
 export const DAY_HEIGHT = 24 * HOUR_HEIGHT
 
-const START_MINUTE = 4 * 60
+const START_MINUTE = DAY_START_MINUTE
 /** The recording slot shown as "Generating your next card". */
 const CYCLE_SECONDS = 15 * 60
 const HARD_CAP_SECONDS = 40 * 60

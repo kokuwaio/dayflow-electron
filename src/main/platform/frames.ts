@@ -4,6 +4,8 @@
 // (helper/linux/frames, cmd/dayflow-linux-helper/capture.go), which follows
 // upstream's ActiveDisplayTracker.swift.
 
+import { pad } from '../../shared/day'
+
 export interface Point {
   x: number
   y: number
@@ -24,7 +26,6 @@ export interface DisplayInfo {
   scaleFactor: number
 }
 
-const pad = (n: number, width = 2) => String(n).padStart(width, '0')
 
 /**
  * "20261117-090507.042+0100_s1.jpg": local capture time to the millisecond,
