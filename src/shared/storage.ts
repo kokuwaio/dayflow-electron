@@ -81,3 +81,6 @@ export function sizeLabel(bytes: number): string {
 
 /** Used share of the limit, 0 to 1; null for "Unlimited". */
 export const usedShare = (bytes: number, limitGb: number): number | null => (limitGb === UNLIMITED ? null : Math.min(1, bytes / limitBytes(limitGb)))
+
+/** Bytes of the stored frames together. */
+export const totalBytes = (frames: ReadonlyArray<{ bytes: number }>): number => frames.reduce((sum, f) => sum + f.bytes, 0)

@@ -58,6 +58,12 @@ describe('reads for the CLI and MCP server', () => {
     expect(store.captureStatus()).toEqual({ lastCaptureAt: at(17, 9, 5), pendingBatches: 1, failedBatches: 1 })
   })
 
+  it('counts batches waiting for a provider as still to analyze', () => {
+    const waiting = store.createBatch({ start: at(9, 0), end: at(9, 15), shotIds: [] })
+    store.holdBatch(waiting, 'Waiting for Gemini', true)
+    expect(store.captureStatus()).toMatchObject({ pendingBatches: 1, failedBatches: 0 })
+  })
+
   it('counts live cards in a category', () => {
     const b = store.createBatch({ start: at(17, 9), end: at(17, 12), shotIds: [] })
     store.addCards(b, [card(at(17, 9), at(17, 10), 'a'), card(at(17, 10), at(17, 11), 'b'), card(at(17, 11), at(17, 12), 'c', 'Personal')])

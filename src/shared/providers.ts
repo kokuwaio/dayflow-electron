@@ -1,5 +1,8 @@
 import { type CliName, DEFAULT_SETTINGS, type ProviderKind, type Settings } from './types'
 
+/** Every provider kind, in the order Settings lists them. */
+export const PROVIDER_KINDS: readonly ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'codex-cli']
+
 const CLI_OF: Partial<Record<ProviderKind, CliName>> = { 'claude-cli': 'claude', 'codex-cli': 'codex' }
 
 /** The agent CLI behind a provider kind, or null for API providers. */

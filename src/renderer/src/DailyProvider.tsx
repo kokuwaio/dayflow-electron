@@ -63,7 +63,7 @@ export function DailyProviderButton({ choice, onPick, disabled }: { choice: Dail
   const detail = (o: DailyProviderOption) => (o.available ? o.model : cliOf(o.kind) ? t('daily.provider.cliMissing') : t('daily.provider.notSetUp'))
   const rows: Array<{ value: DailyProviderChoice; name: string; sub: string; available: boolean }> = [
     { value: 'auto', name: t('daily.provider.auto'), sub: t('daily.provider.autoSub'), available: true },
-    ...(options ?? []).map((o) => ({ value: o.kind, name: providerLabel(o.kind), sub: detail(o), available: o.available })),
+    ...(options ?? []).map((o) => ({ value: o.kind, name: o.label, sub: detail(o), available: o.available })),
     { value: 'none', name: t('daily.provider.none'), sub: t('daily.provider.noneSub'), available: true }
   ]
 

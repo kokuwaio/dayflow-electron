@@ -15,7 +15,7 @@ export interface InactivityState {
 
 export const startInactivity = (now: number): InactivityState => ({ lastInteractionAt: now, lastResetAt: null })
 
-export const interacted = (_state: InactivityState, now: number): InactivityState => ({ lastInteractionAt: now, lastResetAt: null })
+export const interacted = (now: number): InactivityState => ({ lastInteractionAt: now, lastResetAt: null })
 
 /** Whether to reset now; at most once per threshold while the user stays away. */
 export function idleCheck(state: InactivityState, now: number, thresholdMs = IDLE_RESET_MS): { reset: boolean; state: InactivityState } {

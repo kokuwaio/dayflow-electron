@@ -17,7 +17,7 @@ import { type PromptFrame, buildCardRequest, sampleEvenly, withCorrection } from
 import { cardFromObservations, transcribe } from './two-step'
 import { errorMessage } from '../../shared/errors'
 import { type FailureKind, needsUser } from '../../shared/failures'
-import { providerLabel, waitingCardTexts } from '../../shared/provider-problem'
+import { waitingCardTexts } from '../../shared/provider-problem'
 import type { ProviderKind } from '../../shared/types'
 import { type BatchOutcome, type ProviderFailure, ProviderHolds, batchOutcome, classifyFailure, waits } from './availability'
 
@@ -47,7 +47,7 @@ export interface PipelineDeps {
   /** False while the computer has no network; batches for cloud providers wait then. */
   online?(): boolean
   /** A provider's name on waiting cards, e.g. "Claude Code". */
-  providerLabel?(kind: ProviderKind): string
+  providerLabel(kind: ProviderKind): string
 }
 
 /** A provider problem the user can fix, before the app adds what it can offer. */
@@ -275,7 +275,7 @@ export class Pipeline {
   /** Marks a batch as waiting, with a card that says for what; a started attempt does not count. */
   private wait(batch: Batch, span: { start: number; end: number }, outcome: Wait, attempted: boolean): void {
     const { store } = this.deps
-    const label = this.deps.providerLabel?.(outcome.provider) ?? providerLabel(outcome.provider, '')
+    const label = this.deps.providerLabel(outcome.provider)
     const texts = waitingCardTexts(outcome.reason, outcome.kind, label)
     const what = outcome.reason === 'offline' ? 'offline' : `${outcome.provider} ${outcome.kind}`
     this.deps.log(`batch ${batch.id} waits: ${what}`)

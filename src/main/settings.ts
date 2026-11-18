@@ -1,6 +1,7 @@
 // Settings live in settings.json; API keys are encrypted with Electron's
 // safeStorage (KWallet or Secret Service on Linux) in keys.json.
 
+import { PROVIDER_KINDS } from '../shared/providers'
 import { readFileSync } from 'node:fs'
 import { mkdir, rename, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
@@ -14,7 +15,6 @@ import { sanitizeDailyProvider } from '../shared/daily-provider'
 import { sanitizePauseMinutes } from '../shared/status'
 import { snapStorageLimit } from '../shared/storage'
 
-const KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'codex-cli']
 /** Providers that use an API key (the agent CLIs use the user's own login). */
 const KEY_KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai']
 
@@ -62,12 +62,12 @@ function sanitizeNotified(r: Partial<Settings>): Settings['notified'] {
 export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown>): Settings {
   const r = raw as Partial<Settings>
   const models = { ...DEFAULT_SETTINGS.models }
-  for (const k of KINDS) {
+  for (const k of PROVIDER_KINDS) {
     const m = r.models?.[k]
     if (typeof m === 'string' && m.trim()) models[k] = m.trim()
   }
-  const provider = KINDS.includes(r.provider as ProviderKind) ? (r.provider as ProviderKind) : DEFAULT_SETTINGS.provider
-  const secondary = KINDS.includes(r.fallbackProvider as ProviderKind) ? (r.fallbackProvider as ProviderKind) : null
+  const provider = PROVIDER_KINDS.includes(r.provider as ProviderKind) ? (r.provider as ProviderKind) : DEFAULT_SETTINGS.provider
+  const secondary = PROVIDER_KINDS.includes(r.fallbackProvider as ProviderKind) ? (r.fallbackProvider as ProviderKind) : null
   return {
     provider,
     fallbackProvider: secondary === provider ? null : secondary,
@@ -159,7 +159,7 @@ export class SettingsStore {
   }
 
   hasKeys(): Record<ProviderKind, boolean> {
-    return Object.fromEntries(KINDS.map((k) => [k, !!this.keys[k]])) as Record<ProviderKind, boolean>
+    return Object.fromEntries(PROVIDER_KINDS.map((k) => [k, !!this.keys[k]])) as Record<ProviderKind, boolean>
   }
 
 

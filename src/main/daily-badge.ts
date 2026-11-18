@@ -29,7 +29,7 @@ export function createDailyBadge(opts: {
   }
   opts.setCount(badgeCount(opts.unseen()))
   return {
-    recapReady: (day) => apply(badgeOnRecap(opts.unseen(), day, view)),
+    recapReady: (day) => apply(badgeOnRecap(day, view)),
     view(change) {
       view = { ...view, ...change }
       apply(badgeOnView(opts.unseen(), view))

@@ -63,7 +63,8 @@ export function CardDetail(props: {
   const span = { start: card.start, end: card.end }
   const isFailed = card.category === SYSTEM_CATEGORY
   const isWaiting = isFailed && card.subcategory === WAITING_SUBCATEGORY
-  const problem = isFailed ? (props.status?.analysis.problem ?? null) : null
+  // Only a card waiting for a provider shows the provider's fix; other failed cards had other causes.
+  const problem = isWaiting ? (props.status?.analysis.problem ?? null) : null
   const isPrivate = card.category === PRIVATE_CATEGORY
 
   useEffect(() => {

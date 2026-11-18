@@ -4,14 +4,13 @@
 // local); here the choices are "the timeline's providers" (the default), one
 // of the configured provider kinds, or none, which turns generation off.
 
+import { PROVIDER_KINDS } from './providers'
 import type { ProviderKind } from './types'
 
 export type DailyProviderChoice = 'auto' | 'none' | ProviderKind
 
-const KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'codex-cli']
-
 export const sanitizeDailyProvider = (raw: unknown): DailyProviderChoice =>
-  raw === 'none' || KINDS.includes(raw as ProviderKind) ? (raw as DailyProviderChoice) : 'auto'
+  raw === 'none' || PROVIDER_KINDS.includes(raw as ProviderKind) ? (raw as DailyProviderChoice) : 'auto'
 
 export type StandupPlan = { kind: 'ok'; providers: ProviderKind[] } | { kind: 'off' } | { kind: 'unavailable'; provider: ProviderKind }
 
@@ -33,6 +32,8 @@ export function standupPlan(
 /** A row of Daily's provider picker: the provider kind, its model, and whether it can run now. */
 export interface DailyProviderOption {
   kind: ProviderKind
+  /** The name to show, local OpenAI-compatible servers as "Ollama/LM Studio". */
+  label: string
   model: string
   available: boolean
 }

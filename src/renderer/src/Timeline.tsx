@@ -56,6 +56,8 @@ export function Timeline(props: {
   onStatusChange: (s: AppStatus) => void
   onOpenSettings: (tab: SettingsTab) => void
   /** The day the app wants the daily goal pop-up on: shown in day mode, nothing selected. */
+  /** The OpenAI-compatible base URL, so a local server is named as such. */
+  baseUrl: string
   goalPromptDay: string | null
   onGoalPromptShown: () => void
   /** Bumped after 15 minutes away: back to today, card closed, scrolled to now (upstream performIdleResetAndScroll). */
@@ -305,6 +307,7 @@ export function Timeline(props: {
               onDeleted={() => setSelected(null)}
               onEditCategories={() => props.onOpenSettings('categories')}
               status={props.status}
+              baseUrl={props.baseUrl}
               onOpenProviders={() => props.onOpenSettings('providers')}
             />
           ) : (

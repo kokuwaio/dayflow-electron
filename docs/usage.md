@@ -11,7 +11,9 @@ was tested on which Linux desktop.
 [installation.md](installation.md) covers every package: the Flatpak on
 Linux, the Windows installer, the macOS disk image, and
 building from source. The app starts with a window and a tray icon. Closing
-the window keeps it recording; quit from the tray.
+the window keeps it recording; quit from the tray. The tray menu also pauses
+and resumes recording, and in the Windows and macOS installers it has
+**Check for updates…** (see [installation.md](installation.md#updates)).
 
 ## First start
 

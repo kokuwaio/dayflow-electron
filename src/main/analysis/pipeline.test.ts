@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Store } from '../db/store'
 import { type GenerateRequest, type Provider, ProviderError, type ProviderKind } from '../providers/types'
 import { Pipeline, type PipelineDeps } from './pipeline'
+import { providerLabel } from '../../shared/provider-problem'
 import { DEFAULT_CATEGORIES } from '../../shared/categories'
 import jpeg from 'jpeg-js'
 import { type OcrEngine, secretFilter } from '../privacy/masker'
@@ -66,6 +67,7 @@ function pipelineWithDeps(extra: Partial<PipelineDeps>, ...providers: Provider[]
     ...extra,
     providers: () => providers,
     categories: () => DEFAULT_CATEGORIES,
+    providerLabel: (kind) => providerLabel(kind),
     language: () => '',
     overrides: () => ({ title: '', summary: '', detailedSummary: '' }),
     onCardsChanged: () => {},

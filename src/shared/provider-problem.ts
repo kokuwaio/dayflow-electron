@@ -7,7 +7,7 @@
 import type { FailureKind } from './failures'
 import { t } from './i18n'
 import { cliOf, isLocalUrl } from './providers'
-import type { CliName, ProviderKind } from './types'
+import type { CliName, ProviderKind, ProviderProblem } from './types'
 
 /** "25 min", "3 hrs", "1 day"; null when nothing is waiting. */
 export function waitingLabel(minutes: number): string | null {
@@ -87,3 +87,10 @@ export function waitingCardTexts(reason: 'offline' | 'provider', kind: FailureKi
 
 /** The subcategory that tells a waiting batch's card from a "Processing failed" one (both are System cards). */
 export const WAITING_SUBCATEGORY = 'Waiting'
+
+/** One problem per kind and provider: the toast, tray and notifications show each once. */
+export const problemKey = (problem: Pick<ProviderProblem, 'kind' | 'provider'>): string => `${problem.kind}:${problem.provider}`
+
+/** The problem's title and body, with the provider named as the user knows it. */
+export const problemTextsFor = (problem: Pick<ProviderProblem, 'kind' | 'provider' | 'message'>, openaiBaseUrl: string) =>
+  problemTexts(problem.kind, providerLabel(problem.provider, openaiBaseUrl), problem.message)

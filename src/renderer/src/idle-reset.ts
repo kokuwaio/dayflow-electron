@@ -13,7 +13,7 @@ export function useIdleReset(onReset: () => void): void {
   useEffect(() => {
     let state = startInactivity(Date.now())
     const input = () => {
-      state = interacted(state, Date.now())
+      state = interacted(Date.now())
     }
     const check = () => {
       const result = idleCheck(state, Date.now())

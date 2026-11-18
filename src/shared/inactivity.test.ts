@@ -15,7 +15,7 @@ describe('back to today after 15 minutes away', () => {
 
   it('counts every click, key or scroll as using the app', () => {
     // 9:00 start, 9:10 a click, 9:20 focus comes back: only 10 minutes since the click.
-    const state = interacted(startInactivity(t0), t0 + 10 * min)
+    const state = interacted(t0 + 10 * min)
     expect(idleCheck(state, t0 + 20 * min).reset).toBe(false)
     expect(idleCheck(state, t0 + 25 * min).reset).toBe(true)
   })
@@ -30,7 +30,7 @@ describe('back to today after 15 minutes away', () => {
 
   it('starts counting afresh after input that follows a reset', () => {
     const reset = idleCheck(startInactivity(t0), t0 + 15 * min).state
-    const back = interacted(reset, t0 + 16 * min)
+    const back = interacted(t0 + 16 * min)
     expect(back).toEqual({ lastInteractionAt: t0 + 16 * min, lastResetAt: null })
     expect(idleCheck(back, t0 + 30 * min).reset).toBe(false)
     expect(idleCheck(back, t0 + 31 * min).reset).toBe(true)

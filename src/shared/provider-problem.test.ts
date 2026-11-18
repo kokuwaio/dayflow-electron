@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { problemActions, problemTexts, providerLabel, waitingCardTexts, waitingLabel } from './provider-problem'
+import { problemActions, problemKey, problemTexts, problemTextsFor, providerLabel, waitingCardTexts, waitingLabel } from './provider-problem'
 
 describe('how long recording has been waiting (upstream waitingText)', () => {
   it('reads in minutes, then hours, then one day', () => {
@@ -86,5 +86,16 @@ describe('provider names', () => {
     expect(providerLabel('claude-cli', '')).toBe('Claude Code')
     expect(providerLabel('openai', 'http://localhost:11434/v1')).toBe('Ollama/LM Studio')
     expect(providerLabel('openai', 'https://api.openai.com/v1')).toBe('OpenAI-compatible')
+  })
+})
+
+describe('one problem, one key and one wording for tray, toast and notification', () => {
+  const problem = { kind: 'provider_login_expired' as const, provider: 'claude-cli' as const, message: 'not logged in', waiting: true, signIn: 'claude' as const, backup: null }
+  it('keys a problem by its kind and provider', () => {
+    expect(problemKey(problem)).toBe('provider_login_expired:claude-cli')
+    expect(problemKey({ ...problem, provider: 'codex-cli' })).not.toBe(problemKey(problem))
+  })
+  it('words it with the provider named as the user knows it', () => {
+    expect(problemTextsFor(problem, '')).toEqual(problemTexts('provider_login_expired', 'Claude Code', 'not logged in'))
   })
 })

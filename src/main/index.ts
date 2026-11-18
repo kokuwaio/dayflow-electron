@@ -6,11 +6,11 @@ import { fileURLToPath } from 'node:url'
 import { writeFile } from 'node:fs/promises'
 import { BrowserWindow, Menu, Tray, app, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, nativeTheme, net, powerMonitor, screen, shell, systemPreferences } from 'electron'
 import { beforeBoundary, dayCount, dayRange, daysOf, shiftDay, todayKey } from '../shared/day'
-import { cliOf, needsApiKey } from '../shared/providers'
+import { PROVIDER_KINDS, cliOf, needsApiKey } from '../shared/providers'
 import { describeRecorder, pauseLabel, pausePresets } from '../shared/status'
-import { limitBytes, limitChange, observedBytesPerHour } from '../shared/storage'
+import { limitBytes, limitChange, observedBytesPerHour, totalBytes } from '../shared/storage'
 import type { RecordingCheck } from '../shared/recording-status'
-import { problemActions, problemTexts, providerLabel, waitingLabel } from '../shared/provider-problem'
+import { problemActions, problemKey, problemTextsFor, providerLabel, waitingLabel } from '../shared/provider-problem'
 import { GeminiCooldowns } from '../shared/gemini-models'
 import { currentLanguage, setLanguage, t } from '../shared/i18n'
 import { resolveLanguage } from '../shared/languages'
@@ -242,11 +242,13 @@ async function main(): Promise<void> {
     for (const cli of ['claude', 'codex'] as const) cliReady[cli] = await signIn.isReady(cli).catch(() => false)
   }
   /** Providers that could take over: API providers with a key (or a local server), CLIs that are signed in. */
-  const configuredKinds = (): ProviderKind[] =>
-    (['gemini', 'anthropic', 'openai', 'claude-cli', 'codex-cli'] as const).filter((k) => {
-      const cli = cliOf(k)
-      return cli ? cliReady[cli] : usable(k)
-    })
+  /** Whether a provider can run now: API providers with a key (or a local server), CLIs that are signed in. */
+  const providerReady = (kind: ProviderKind): boolean => {
+    const cli = cliOf(kind)
+    return cli ? cliReady[cli] : usable(kind)
+  }
+  /** Providers that could take over. */
+  const configuredKinds = (): ProviderKind[] => PROVIDER_KINDS.filter(providerReady)
   const currentProblem = (): ProviderProblem | null => {
     const p = pipeline.status().problem
     if (!p) return null
@@ -267,7 +269,7 @@ async function main(): Promise<void> {
     recorder: recorder.status(),
     analysis: { ...pipeline.status(), waiting: store.waitingSummary(), problem: currentProblem(), signIn: signIn.state() },
     keys: settings.hasKeys(),
-    framesBytes: store.storedFrames().reduce((sum, f) => sum + f.bytes, 0)
+    framesBytes: totalBytes(store.storedFrames())
   })
 
   // ---- IPC (see src/preload/index.ts)
@@ -349,15 +351,9 @@ async function main(): Promise<void> {
   // The providers Daily's picker offers, and whether each can run now.
   ipcMain.handle('daily:providers', async (): Promise<DailyProviderOption[]> => {
     const s = settings.get()
-    const host = await hostAccess(nodeRunner, inFlatpak, cliEnv.appId)
-    const kinds: ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'codex-cli']
-    return Promise.all(
-      kinds.map(async (kind) => {
-        const cli = cliOf(kind)
-        const found = cli && host.ok && (await findCli(nodeRunner, cli, { ...cliEnv, ...(s.cliPaths[cli] ? { configuredPath: s.cliPaths[cli] } : {}) }))
-        return { kind, model: s.models[kind], available: cli ? !!found : usable(kind) }
-      })
-    )
+    // The same check as the backup offer: a CLI counts once it is signed in, not just installed.
+    await checkCliReady()
+    return PROVIDER_KINDS.map((kind) => ({ kind, label: providerLabel(kind, s.openaiBaseUrl), model: s.models[kind], available: providerReady(kind) }))
   })
 
   ipcMain.handle('access:get', () => access())
@@ -689,7 +685,7 @@ async function main(): Promise<void> {
       captureRunning: recorder.captureRunning(),
       checkedAt: now
     }
-    return { check, framesBytes: frames.reduce((sum, f) => sum + f.bytes, 0), observedBytesPerHour: observedBytesPerHour(frames, now) }
+    return { check, framesBytes: totalBytes(frames), observedBytesPerHour: observedBytesPerHour(frames, now) }
   })
   // Settings → Privacy: installed apps to block (src/main/platform/installed-apps.ts).
   ipcMain.handle('apps:installed', () =>
@@ -722,8 +718,7 @@ async function main(): Promise<void> {
   }
   /** "Claude Code is signed out · 3 hrs waiting · Click to sign in" (upstream problemItem). */
   const problemLine = (problem: ProviderProblem) => {
-    const label = providerLabel(problem.provider, settings.get().openaiBaseUrl)
-    const parts = [problemTexts(problem.kind, label, problem.message).title]
+    const parts = [problemTextsFor(problem, settings.get().openaiBaseUrl).title]
     const time = waitingLabel(store.waitingSummary().minutes)
     if (time) parts.push(t('waiting.tray.time', { time }))
     parts.push(problem.signIn ? t('waiting.tray.clickToSignIn') : t('waiting.tray.clickToFix'))
@@ -845,11 +840,11 @@ async function main(): Promise<void> {
       void settings.save({ notified: { ...settings.get().notified, weeklyUnlock: true } })
     }
     const problem = currentProblem()
-    const key = problem && `${problem.kind}:${problem.provider}`
+    const key = problem && problemKey(problem)
     if (problem && key !== lastProblem) {
       // A new problem: see which other providers could be the backup, and say it once a day.
       void checkCliReady().then(() => pushStatus())
-      const texts = problemTexts(problem.kind, providerLabel(problem.provider, settings.get().openaiBaseUrl), problem.message)
+      const texts = problemTextsFor(problem, settings.get().openaiBaseUrl)
       notifier.providerProblem({ kind: problem.kind, ...texts }, store.waitingSummary().minutes)
       signIn.clearFailure()
     }

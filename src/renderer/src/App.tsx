@@ -1,3 +1,4 @@
+import { problemKey } from '@shared/provider-problem'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CalendarRange, ChartPie, ListTree, type LucideIcon, MessagesSquare, Settings as SettingsIcon, X } from 'lucide-react'
@@ -115,8 +116,8 @@ export function App() {
     setView('settings')
   }
   const problem = status?.analysis.problem ?? null
-  const problemKey = problem && `${problem.kind}:${problem.provider}`
-  const showProblem = !!problem && problemKey !== problemDismissed
+  const currentProblemKey = problem && problemKey(problem)
+  const showProblem = !!problem && currentProblemKey !== problemDismissed
   const toasts = [
     // The problem card says it better when there is one.
     !problem && status?.analysis.lastError && { key: `analysis:${status.analysis.lastError}`, title: t('app.analysisFailed'), body: status.analysis.lastError, settings: true },
@@ -157,6 +158,7 @@ export function App() {
             status={status}
             onStatusChange={setStatus}
             onOpenSettings={openSettings}
+            baseUrl={settings?.openaiBaseUrl ?? ''}
             goalPromptDay={goalPromptDay}
             onGoalPromptShown={() => setGoalPromptDay(null)}
             resetTick={resetTick}
@@ -175,7 +177,7 @@ export function App() {
               status={status}
               baseUrl={settings?.openaiBaseUrl ?? ''}
               onOpenSettings={() => openSettings('providers')}
-              onDismiss={() => setProblemDismissed(problemKey)}
+              onDismiss={() => setProblemDismissed(currentProblemKey)}
             />
           )}
           {toasts.map((toast) => (

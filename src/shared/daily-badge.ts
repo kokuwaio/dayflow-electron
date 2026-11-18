@@ -15,7 +15,7 @@ export interface WindowView {
 const seesDaily = (view: WindowView) => view.focused && view.tab === 'daily'
 
 /** After the scheduler wrote the recap for `day`. Manual regenerations happen on Daily and set no badge. */
-export const badgeOnRecap = (_unseen: string, day: string, view: WindowView): string => (seesDaily(view) ? '' : day)
+export const badgeOnRecap = (day: string, view: WindowView): string => (seesDaily(view) ? '' : day)
 
 /** After the window changed tab or focus: Daily on screen clears it (upstream handleTabSelectionChange). */
 export const badgeOnView = (unseen: string, view: WindowView): string => (seesDaily(view) ? '' : unseen)

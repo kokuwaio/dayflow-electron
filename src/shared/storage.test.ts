@@ -9,8 +9,7 @@ import {
   observedBytesPerHour,
   sizeLabel,
   snapStorageLimit,
-  usedShare
-} from './storage'
+  usedShare, totalBytes } from './storage'
 
 describe('storage limit presets', () => {
   it('offers upstream 1, 2, 3, 5, 10 and 20 GB and Unlimited', () => {
@@ -99,5 +98,12 @@ describe('labels', () => {
     expect(usedShare(5 * 1024 ** 3, 10)).toBe(0.5)
     expect(usedShare(15 * 1024 ** 3, 10)).toBe(1)
     expect(usedShare(15 * 1024 ** 3, 0)).toBeNull()
+  })
+})
+
+describe('totalBytes', () => {
+  it('adds up the stored frames', () => {
+    expect(totalBytes([{ bytes: 1200 }, { bytes: 300 }])).toBe(1500)
+    expect(totalBytes([])).toBe(0)
   })
 })

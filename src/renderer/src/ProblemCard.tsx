@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Copy, X } from 'lucide-react'
-import { problemTexts, providerLabel, waitingLabel } from '@shared/provider-problem'
+import { problemTextsFor, providerLabel, waitingLabel } from '@shared/provider-problem'
 import type { AppStatus, CliName, ProviderProblem, SignInState } from '@shared/types'
 
 const LOGIN_COMMAND: Record<CliName, string> = { claude: 'claude auth login', codex: 'codex login' }
@@ -84,7 +84,7 @@ export function ProblemToast(props: { status: AppStatus; baseUrl: string; onOpen
   const { problem, signIn, waiting } = props.status.analysis
   if (!problem) return null
   const label = providerLabel(problem.provider, props.baseUrl)
-  const texts = problemTexts(problem.kind, label, problem.message)
+  const texts = problemTextsFor(problem, props.baseUrl)
   const signingIn = problem.signIn && signIn.state === 'waiting' && signIn.cli === problem.signIn
   const signInFailed = problem.signIn && signIn.state === 'failed' && signIn.cli === problem.signIn
   const title = signingIn ? t('waiting.signIn.finishTitle') : texts.title

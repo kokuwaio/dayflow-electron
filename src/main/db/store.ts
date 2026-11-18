@@ -774,12 +774,12 @@ export class Store {
     return rows.map(toCard)
   }
 
-  /** The newest capture and the analysis backlog (upstream CLI fetchStatus). */
+  /** The newest capture and the analysis backlog, batches waiting for a provider included (upstream CLI fetchStatus). */
   captureStatus(): { lastCaptureAt: number | null; pendingBatches: number; failedBatches: number } {
     const last = this.db.prepare('SELECT MAX(captured_at) AS ts FROM screenshots WHERE is_deleted = 0').get() as { ts: number | null }
     const counts = this.db
       .prepare(
-        `SELECT COALESCE(SUM(CASE WHEN status IN ('pending', 'processing') THEN 1 ELSE 0 END), 0) AS pending,
+        `SELECT COALESCE(SUM(CASE WHEN status IN ('pending', 'processing', 'waiting') THEN 1 ELSE 0 END), 0) AS pending,
                 COALESCE(SUM(CASE WHEN status LIKE 'failed%' THEN 1 ELSE 0 END), 0) AS failed
          FROM analysis_batches`
       )
