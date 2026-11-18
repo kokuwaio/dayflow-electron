@@ -16,16 +16,18 @@ a small MIT-licensed Electron port whose analysis loop and providers we reuse
 
 ## Ground rules
 
-- **Feature parity with upstream's local features**, not with its hosted
-  business. No account, billing, hosted AI, Flow, surveys or PostHog.
+- **The first version reached parity with upstream's local features**, not
+  with its hosted business (no account, billing, hosted AI, Flow, surveys or
+  PostHog). New work follows the app's own decisions; upstream is a source of
+  ideas, not the spec.
 - **No telemetry by default.** Crash reporting, if added, is opt-in.
 - **Named "Dayflow Electron", with artwork of its own.** The upstream code is
   MIT; its logo, icons, videos and illustrations stay out. The app credits
   upstream Dayflow and does not present itself as it. Identifiers use
   `dayflow-electron` (CLI, MCP server, data folder, file names).
-- **Keep upstream's data model.** Use the same table and column names
-  (`timeline_cards`, `analysis_batches`, `screenshots`, ...) so prompts, the
-  CLI and the MCP tools port with few changes.
+- **Keep the data model.** The table and column names came from upstream
+  (`timeline_cards`, `analysis_batches`, `screenshots`, ...); the CLI and the
+  MCP tools read them, so schema changes are migrations, not renames.
 - **Every OS-specific piece sits behind one interface** with an implementation
   per platform (`capture`, `activeWindow`, `idle`, `session`, `autostart`).
 

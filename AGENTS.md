@@ -6,21 +6,20 @@ macOS) to Electron and TypeScript, Linux first. How it fits together:
 [docs/roadmap.md](docs/roadmap.md). Linux desktop findings and rejected
 approaches: [docs/platform-notes.md](docs/platform-notes.md).
 
-## Upstream parity
+## Origin
 
-Upstream is the spec. Before building or changing a feature, read the matching
-upstream Swift code (paths in the roadmap are relative to `Dayflow/Dayflow/` in
-the upstream repo) and port its behaviour, thresholds and texts.
+The first version ported upstream's features (the roadmap records that work,
+with upstream paths relative to `Dayflow/Dayflow/`). From here on the app
+follows its own decisions; upstream's code is a source of ideas, not the spec.
 
-- Copy prompts verbatim (`prompt-template.ts`, `two-step-prompts.ts`,
-  `daily-prompts.ts` hold upstream's text) and cite the upstream file in a
-  comment at the top of each module.
-- Keep upstream's table and column names; schema changes are new numbered
-  migrations in `src/main/db/schema.ts` (`PRAGMA user_version`).
-- Port the look too, but not upstream's artwork: its logo, icons,
-  illustrations and videos stay out. The app is "Dayflow Electron" in user
-  texts; prompts keep upstream's wording apart from that name. Upstream's fonts are
-  OFL and may be bundled with their license files.
+- The prompts started as upstream's text and their modules cite the upstream
+  file they came from; change them like any other code.
+- Schema changes are new numbered migrations in `src/main/db/schema.ts`
+  (`PRAGMA user_version`). Keep the existing table and column names: the CLI
+  and the MCP tools read them.
+- Upstream's artwork (logo, icons, illustrations, videos) stays out; it is not
+  MIT-licensed. The app is "Dayflow Electron" in user texts. Bundled fonts
+  ship with their OFL license files.
 - The roadmap's "Later or never" table lists what stays out (account, billing,
   hosted AI, telemetry, ...).
 
