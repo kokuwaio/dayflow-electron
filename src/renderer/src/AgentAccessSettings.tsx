@@ -53,7 +53,7 @@ export function AgentAccessSettings({ settings, save }: { settings: Settings; sa
 
       <Section
         title={t('agents.terminal.title')}
-        sub={t('agents.terminal.sub')}
+        sub={t('agents.terminal.sub', { dir: info?.terminal?.dir ?? '~/.local/bin' })}
       >
         {info?.terminal ? (
           <>

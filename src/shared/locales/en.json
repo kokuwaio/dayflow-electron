@@ -617,7 +617,7 @@
     },
     "terminal": {
       "title": "Terminal command",
-      "sub": "Adds a dayflow-electron command to ~/.local/bin so you can see your timeline from any terminal. It starts the CLI already inside Dayflow Electron, so it always matches the app. Nothing is downloaded and your shell configuration isn't touched.",
+      "sub": "Adds a dayflow-electron command to {{dir}} so you can see your timeline from any terminal. It starts the CLI already inside Dayflow Electron, so it always matches the app. Nothing is downloaded and your shell configuration isn't touched.",
       "install": "Install",
       "installSub": "Run this once in a terminal, then try dayflow-electron timeline.",
       "remove": "Remove",

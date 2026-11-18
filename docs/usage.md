@@ -430,10 +430,12 @@ want an agent to delete anything.
 ### The terminal command
 
 **Settings → MCP / CLI → Terminal command** shows a command that adds a small
-`dayflow-electron` script to `~/.local/bin` on Linux and macOS (Windows has no
-terminal command yet; connect AI tools above). Paste it into a terminal once. Without
-it, run `flatpak run --command=dayflow-electron-cli io.github.kokuwaio.DayflowElectron`
-instead of `dayflow-electron`.
+`dayflow-electron` script to `~/.local/bin` on Linux, and to `/usr/local/bin`
+on macOS, which has no user folder on the `PATH` (the command asks for your
+password through `sudo` once). Paste it into a terminal once. Without it, run
+`flatpak run --command=dayflow-electron-cli io.github.kokuwaio.DayflowElectron`
+instead of `dayflow-electron`. Windows has no terminal command yet; connect
+your AI tools above instead.
 
 ```sh
 dayflow-electron today

@@ -14,8 +14,16 @@ import type { CliName } from '../../shared/types'
 export const FLATPAK_CLI_COMMAND = 'dayflow-electron-cli'
 /** The MCP server's name in client configs (upstream: "dayflow"). */
 export const MCP_SERVER_NAME = 'dayflow-electron'
-/** Where the terminal command goes; ~/.local/bin is on PATH on most Linux desktops and needs no sudo. */
-export const TERMINAL_COMMAND_PATH = '~/.local/bin/dayflow-electron'
+/**
+ * Where the terminal command goes: ~/.local/bin is on PATH on most Linux
+ * desktops and needs no sudo; macOS has no user folder on PATH by default, so
+ * there it goes to /usr/local/bin (in /etc/paths, like upstream) through sudo.
+ */
+export function terminalTarget(platform: NodeJS.Platform): { dir: string; sudo: boolean } {
+  return platform === 'darwin' ? { dir: '/usr/local/bin', sudo: true } : { dir: '~/.local/bin', sudo: false }
+}
+/** The terminal command's path, "~" unexpanded where the target is in the home folder. */
+export const terminalCommandPath = (platform: NodeJS.Platform): string => `${terminalTarget(platform).dir}/dayflow-electron`
 /** Marks wrapper scripts the app wrote, so `dayflow-electron unlink` removes only its own. */
 export const WRAPPER_MARKER = '# dayflow-electron CLI wrapper'
 
@@ -55,12 +63,18 @@ export function wrapperScript(inv: Invocation): string {
 }
 
 /** Removes what terminalInstallCommand put in place (upstream's tab offers install and remove). */
-export const terminalRemoveCommand = (): string => `rm -f ${TERMINAL_COMMAND_PATH}`
+export function terminalRemoveCommand(platform: NodeJS.Platform = process.platform): string {
+  return `${terminalTarget(platform).sudo ? 'sudo ' : ''}rm -f ${terminalCommandPath(platform)}`
+}
 
-/** A command to paste into a terminal that installs `dayflow-electron` into ~/.local/bin. */
-export function terminalInstallCommand(inv: Invocation): string {
-  const lines = wrapperScript(inv).trimEnd().split('\n')
-  return `mkdir -p ~/.local/bin && printf '%s\\n' ${lines.map(shQuote).join(' ')} > ${TERMINAL_COMMAND_PATH} && chmod +x ${TERMINAL_COMMAND_PATH}`
+/** A command to paste into a terminal that installs `dayflow-electron` (sudo on macOS asks for the password once). */
+export function terminalInstallCommand(inv: Invocation, platform: NodeJS.Platform = process.platform): string {
+  const { dir, sudo } = terminalTarget(platform)
+  const path = terminalCommandPath(platform)
+  const lines = `printf '%s\\n' ${wrapperScript(inv).trimEnd().split('\n').map(shQuote).join(' ')}`
+  return sudo
+    ? `sudo mkdir -p ${dir} && ${lines} | sudo tee ${path} >/dev/null && sudo chmod 755 ${path}`
+    : `mkdir -p ${dir} && ${lines} > ${path} && chmod +x ${path}`
 }
 
 /** The JSON snippet for MCP clients without a registration command (upstream manualConfigSnippet). */

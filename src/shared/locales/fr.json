@@ -631,7 +631,7 @@
     },
     "terminal": {
       "title": "Commande de terminal",
-      "sub": "Ajoute une commande dayflow-electron dans ~/.local/bin pour que vous puissiez voir votre chronologie depuis n’importe quel terminal. Elle lance la CLI intégrée à Dayflow Electron et correspond donc toujours à l’app. Rien n’est téléchargé et la configuration de votre shell n’est pas modifiée.",
+      "sub": "Ajoute une commande dayflow-electron dans {{dir}} pour que vous puissiez voir votre chronologie depuis n’importe quel terminal. Elle lance la CLI intégrée à Dayflow Electron et correspond donc toujours à l’app. Rien n’est téléchargé et la configuration de votre shell n’est pas modifiée.",
       "install": "Installer",
       "installSub": "Exécutez ceci une fois dans un terminal, puis essayez dayflow-electron timeline.",
       "remove": "Supprimer",

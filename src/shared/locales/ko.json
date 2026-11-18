@@ -603,7 +603,7 @@
     },
     "terminal": {
       "title": "터미널 명령어",
-      "sub": "~/.local/bin에 dayflow-electron 명령어를 추가하여 어느 터미널에서든 타임라인을 볼 수 있게 합니다. Dayflow Electron에 포함된 CLI를 실행하므로 항상 앱과 일치합니다. 아무것도 다운로드하지 않으며 셸 구성도 변경하지 않습니다.",
+      "sub": "{{dir}}에 dayflow-electron 명령어를 추가하여 어느 터미널에서든 타임라인을 볼 수 있게 합니다. Dayflow Electron에 포함된 CLI를 실행하므로 항상 앱과 일치합니다. 아무것도 다운로드하지 않으며 셸 구성도 변경하지 않습니다.",
       "install": "설치",
       "installSub": "터미널에서 이 명령을 한 번 실행한 다음 dayflow-electron timeline을 실행해 보세요.",
       "remove": "제거",

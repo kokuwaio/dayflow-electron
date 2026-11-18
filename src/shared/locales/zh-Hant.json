@@ -603,7 +603,7 @@
     },
     "terminal": {
       "title": "終端機指令",
-      "sub": "在 ~/.local/bin 中加入 dayflow-electron 指令，讓你能從任何終端機查看時間軸。它會啟動 Dayflow Electron 內建的 CLI，因此始終與 App 一致。不會下載任何內容，也不會更動你的 shell 設定。",
+      "sub": "在 {{dir}} 中加入 dayflow-electron 指令，讓你能從任何終端機查看時間軸。它會啟動 Dayflow Electron 內建的 CLI，因此始終與 App 一致。不會下載任何內容，也不會更動你的 shell 設定。",
       "install": "安裝",
       "installSub": "在終端機中執行一次此指令，然後試試 dayflow-electron timeline。",
       "remove": "移除",

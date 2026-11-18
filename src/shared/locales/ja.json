@@ -603,7 +603,7 @@
     },
     "terminal": {
       "title": "ターミナルコマンド",
-      "sub": "~/.local/binにdayflow-electronコマンドを追加し、任意のターミナルからタイムラインを確認できるようにします。Dayflow Electronに内蔵されたCLIを起動するため、常にアプリと一致します。何もダウンロードされず、シェルの設定も変更されません。",
+      "sub": "{{dir}}にdayflow-electronコマンドを追加し、任意のターミナルからタイムラインを確認できるようにします。Dayflow Electronに内蔵されたCLIを起動するため、常にアプリと一致します。何もダウンロードされず、シェルの設定も変更されません。",
       "install": "インストール",
       "installSub": "ターミナルでこれを一度実行してから、dayflow-electron timeline を試してください。",
       "remove": "削除",

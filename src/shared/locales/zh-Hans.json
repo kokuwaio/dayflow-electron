@@ -603,7 +603,7 @@
     },
     "terminal": {
       "title": "终端命令",
-      "sub": "在 ~/.local/bin 中添加 dayflow-electron 命令，让你可从任意终端查看时间线。它会启动 Dayflow Electron 内置的 CLI，因此始终与应用保持一致。此过程不会下载任何内容，也不会修改你的 shell 配置。",
+      "sub": "在 {{dir}} 中添加 dayflow-electron 命令，让你可从任意终端查看时间线。它会启动 Dayflow Electron 内置的 CLI，因此始终与应用保持一致。此过程不会下载任何内容，也不会修改你的 shell 配置。",
       "install": "安装",
       "installSub": "在终端中运行一次以下命令，然后试试 dayflow-electron timeline。",
       "remove": "移除",

@@ -121,7 +121,7 @@ for updates** is on, and not in the Flatpak. Builds from a branch
 
 Agent access (the `dayflow-electron` CLI and its MCP server) ships inside every
 package. **Settings → MCP / CLI** shows the command that adds `dayflow-electron` to
-`~/.local/bin` on Linux and macOS, and connects Claude Code, Codex, Claude
+`~/.local/bin` on Linux and to `/usr/local/bin` on macOS, and connects Claude Code, Codex, Claude
 Desktop, Cursor, VS Code or other MCP clients; [usage.md](usage.md) explains
 the commands.
 

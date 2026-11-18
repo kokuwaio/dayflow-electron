@@ -617,7 +617,7 @@
     },
     "terminal": {
       "title": "Terminalbefehl",
-      "sub": "Fügt den Befehl dayflow-electron zu ~/.local/bin hinzu, damit du deine Zeitleiste in jedem Terminal ansehen kannst. Er startet die CLI, die bereits in Dayflow Electron steckt, und passt daher immer zur App. Nichts wird heruntergeladen und deine Shell-Konfiguration bleibt unberührt.",
+      "sub": "Fügt den Befehl dayflow-electron zu {{dir}} hinzu, damit du deine Zeitleiste in jedem Terminal ansehen kannst. Er startet die CLI, die bereits in Dayflow Electron steckt, und passt daher immer zur App. Nichts wird heruntergeladen und deine Shell-Konfiguration bleibt unberührt.",
       "install": "Installieren",
       "installSub": "Führe dies einmal in einem Terminal aus und probiere dann dayflow-electron timeline.",
       "remove": "Entfernen",

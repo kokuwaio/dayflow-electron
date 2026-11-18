@@ -30,7 +30,7 @@ import type { AgentAccessInfo, AgentClient, AgentClientState, AppStatus, CardEdi
 import type { Span } from './db/store'
 import { BridgeServer, agentSocketPath } from './agent/bridge'
 import { type ClientEnv, clientStatus, connectClient, disconnectClient, repairStaleRegistrations } from './agent/clients'
-import { cliInvocation, manualConfigSnippet, posixArgv, shellLine, terminalInstallCommand, terminalRemoveCommand } from './agent/invocation'
+import { cliInvocation, manualConfigSnippet, posixArgv, shellLine, terminalInstallCommand, terminalRemoveCommand, terminalTarget } from './agent/invocation'
 import { WRITE_LOG } from './agent/protocol'
 import { createWriteHandlers } from './agent/writes'
 import { Pipeline } from './analysis/pipeline'
@@ -569,7 +569,10 @@ async function main(): Promise<void> {
     const inv = agentInvocation()
     return {
       command: shellLine(posixArgv(inv)),
-      terminal: process.platform === 'win32' ? null : { install: terminalInstallCommand(inv), remove: terminalRemoveCommand() },
+      terminal:
+        process.platform === 'win32'
+          ? null
+          : { install: terminalInstallCommand(inv), remove: terminalRemoveCommand(), dir: terminalTarget(process.platform).dir },
       configSnippet: manualConfigSnippet(inv)
     }
   })
