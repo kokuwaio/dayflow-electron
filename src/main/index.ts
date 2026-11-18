@@ -585,7 +585,10 @@ async function main(): Promise<void> {
       ])
     )
   }
-  tray = new Tray(nativeImage.createFromPath(join(app.getAppPath(), 'resources/tray.png')))
+  // macOS tints a "…Template" image for light and dark menu bars; other panels get the coloured tile.
+  // createFromPath also loads the @2x variant next to the file.
+  const trayIcon = process.platform === 'darwin' ? 'resources/trayTemplate.png' : 'resources/tray.png'
+  tray = new Tray(nativeImage.createFromPath(join(app.getAppPath(), trayIcon)))
   tray.on('click', () => showWindow())
 
   // ---- updates (src/main/updater.ts): Windows and macOS packages only
