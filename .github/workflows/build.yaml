@@ -170,6 +170,16 @@ jobs:
       - name: Add the release to the metainfo
         run: scripts/metainfo-release.sh "$VERSION"
 
+      - name: Make the preinstalled runtimes updatable
+        # The image's runtimes lie in a lower overlay layer, where flatpak
+        # cannot move directories ("Invalid cross-device link") once Flathub
+        # has a newer SDK. A copy in the container's writable layer can, and
+        # flatpak-builder updates that copy.
+        run: |
+          cp -a "$(flatpak --installations | head -n 1)" /flatpak-system
+          echo "FLATPAK_SYSTEM_DIR=/flatpak-system" >> "$GITHUB_ENV"
+          FLATPAK_SYSTEM_DIR=/flatpak-system flatpak list --runtime --columns=application,branch
+
       - name: Build Flatpak
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
