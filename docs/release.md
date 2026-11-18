@@ -23,6 +23,8 @@
      from these) and a `.blockmap` per installer, dmg and zip (differential
      downloads)
    - `SHA256SUMS` over all of them
+   - `dayflow-electron.rb`, the Homebrew cask for both disk images, which the
+     workflow also pushes to the tap ([below](#homebrew-one-time-setup))
 
    The feeds are uploaded last, so an installed app never sees a version
    whose files are still missing.

@@ -52,7 +52,7 @@ jobs:
             mkdir -p "$dir"
             tar -C "$dir" -xzf "artifacts/app-$arch/app-$arch.tar.gz"
             install -m755 "artifacts/helper-$arch/dayflow-linux-helper" "$dir/dayflow-linux-helper"
-            cp resources/icon.png packaging/flatpak/io.github.kokuwaio.DayflowElectron.desktop packaging/flatpak/io.github.kokuwaio.DayflowElectron.metainfo.xml "$dir/"
+            cp resources/icon.png resources/icon.svg packaging/flatpak/io.github.kokuwaio.DayflowElectron.desktop packaging/flatpak/io.github.kokuwaio.DayflowElectron.metainfo.xml "$dir/"
             tar -C "release/$arch" -czf "dayflow-electron-$TAG-linux-$arch.tar.gz" dayflow-electron
             cp "artifacts/dayflow-electron-flatpak-$arch/dayflow-electron.flatpak" "dayflow-electron-$TAG-$arch.flatpak"
           done

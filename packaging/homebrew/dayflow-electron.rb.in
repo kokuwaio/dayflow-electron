@@ -9,7 +9,7 @@ cask "dayflow-electron" do
          intel: "@SHA256_X64@"
 
   url "https://github.com/kokuwaio/dayflow-electron/releases/download/v#{version}/dayflow-electron-v#{version}-mac-#{arch}.dmg"
-  name "dayflow-electron"
+  name "Dayflow Electron"
   desc "Timeline of your day from periodic screenshots, written by an AI model you choose"
   homepage "https://github.com/kokuwaio/dayflow-electron"
 
@@ -21,7 +21,7 @@ cask "dayflow-electron" do
   # Electron 45 needs macOS 12 or later.
   depends_on macos: ">= :monterey"
 
-  app "dayflow-electron.app"
+  app "Dayflow Electron.app"
 
   zap trash: [
     "~/Library/Application Support/dayflow-electron",
@@ -31,8 +31,8 @@ cask "dayflow-electron" do
   ]
 
   caveats <<~EOS
-    dayflow-electron is not notarized by Apple yet. Before the first start, run:
-      xattr -dr com.apple.quarantine "#{appdir}/dayflow-electron.app"
+    Dayflow Electron is not notarized by Apple yet. Before the first start, run:
+      xattr -dr com.apple.quarantine "#{appdir}/Dayflow Electron.app"
     Then allow it under System Settings → Privacy & Security → Screen Recording.
   EOS
 end
