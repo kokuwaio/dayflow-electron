@@ -1063,5 +1063,59 @@
     "play": "Abspielen",
     "speed": "Wiedergabegeschwindigkeit",
     "range": "{{start}} bis {{end}}"
+  },
+  "waiting": {
+    "card": {
+      "titleProvider": "Wartet auf {{provider}}",
+      "titleInternet": "Wartet auf Internet",
+      "offline": "Aufgezeichnet und gespeichert. Dieser Computer war offline, deshalb erstellt Dayflow Electron diese Karten, sobald das Internet wieder da ist.",
+      "transient": "Aufgezeichnet und gespeichert. {{provider}} war ausgelastet oder nicht erreichbar, deshalb versucht Dayflow Electron es von selbst erneut.",
+      "loginExpired": "Aufgezeichnet und gespeichert. {{provider}} ist abgemeldet. Melde dich wieder an, dann holt Dayflow Electron alles von selbst nach.",
+      "usageLimit": "Aufgezeichnet und gespeichert. Das Kontingent deines {{provider}}-Tarifs ist vorerst aufgebraucht. Dayflow Electron holt alles automatisch nach, sobald dein Limit zurückgesetzt ist.",
+      "localOffline": "Aufgezeichnet und gespeichert. Dayflow Electron konnte Ollama oder LM Studio auf diesem Computer nicht erreichen. Öffne es, dann folgen die Karten von selbst.",
+      "tryNow": "Jetzt versuchen"
+    },
+    "problem": {
+      "loginTitle": "{{provider}} ist abgemeldet",
+      "loginBody": "Deine Anmeldung bei {{provider}} ist abgelaufen, deshalb wurde die letzte Aktivität noch nicht in Karten umgewandelt.",
+      "usageTitle": "Du hast das Nutzungslimit von {{provider}} erreicht",
+      "usageBody": "Dayflow Electron holt alles von selbst nach, sobald dein Limit zurückgesetzt ist. Um jetzt weiterzumachen, füge einen Ersatzanbieter hinzu.",
+      "localTitle": "Ollama oder LM Studio läuft nicht",
+      "localBody": "Dayflow Electron erreicht dein lokales Modell nicht.",
+      "keyTitle": "Dein API-Schlüssel für {{provider}} funktioniert nicht",
+      "keyBody": "Er fehlt, ist abgelaufen oder gesperrt. Füge in den Anbieter-Einstellungen einen neuen Schlüssel hinzu.",
+      "creditsTitle": "{{provider}} hat kein Guthaben mehr",
+      "creditsBody": "Lade dein Konto auf oder wechsle zu einem anderen Anbieter."
+    },
+    "signIn": {
+      "button": "Bei {{provider}} anmelden",
+      "finishTitle": "Anmeldung abschließen",
+      "finishBody": "Dein Browser hat sich gerade geöffnet. Melde dich dort bei {{provider}} an und komm zurück. Dayflow Electron macht dort weiter, wo es aufgehört hat.",
+      "waiting": "Warte auf die Anmeldung…",
+      "tryAgain": "Browser nicht geöffnet? Erneut versuchen",
+      "openPage": "Anmeldeseite öffnen",
+      "failed": "Die Anmeldung wurde nicht abgeschlossen. Versuche es erneut oder melde dich stattdessen in einem Terminal an.",
+      "command": "Führe dies in einem Terminal aus:"
+    },
+    "backup": "{{provider}} als Ersatz verwenden",
+    "notNow": "Nicht jetzt",
+    "footer": {
+      "time": "{{time}} warten auf die Verarbeitung",
+      "catchesUp": "Dayflow Electron holt automatisch auf",
+      "afterSignIn": "Holt nach der Anmeldung auf",
+      "onItsOwn": "Versucht es von selbst erneut",
+      "rightAway": "Startet sofort"
+    },
+    "tray": {
+      "time": "{{time}} warten",
+      "clickToFix": "Zum Beheben klicken",
+      "clickToSignIn": "Zum Anmelden klicken"
+    }
+  },
+  "geminiModels": {
+    "custom": "Eigenes Modell…",
+    "customId": "Modell-ID",
+    "chain": "Wenn {{model}} ausgelastet ist oder kein Kontingent mehr hat, versucht Dayflow Electron {{models}} und dann {{gemma}} mit demselben Schlüssel.",
+    "chainLast": "Wenn {{model}} ausgelastet ist oder kein Kontingent mehr hat, versucht Dayflow Electron {{gemma}} mit demselben Schlüssel."
   }
 }

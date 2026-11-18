@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createProvider } from './index'
 import { fakeFetch } from './fake-fetch'
 import type { GenerateRequest } from './types'
+import { GEMMA_BACKUP_MODEL, GeminiCooldowns } from '../../shared/gemini-models'
 
 const img = (s: string) => ({ type: 'image' as const, mediaType: 'image/jpeg' as const, data: Buffer.from(s) })
 const b64 = (s: string) => Buffer.from(s).toString('base64')
@@ -114,19 +115,60 @@ describe('Gemini provider', () => {
   })
 
   it('maps HTTP errors and blocked replies to ProviderError', async () => {
+    // Flash-Lite is the end of the chain: after it only Gemma is left.
+    const lite = (fetch: typeof globalThis.fetch) => createProvider({ kind: 'gemini', model: 'gemini-3.5-flash-lite' }, 'g-key', { fetch, geminiCooldowns: new GeminiCooldowns() })
     const http = (status: number) => ({ status, json: { error: { code: status, message: 'nope', status: 'X' } } })
     const bad = fakeFetch(http(400))
-    await expect(gemini(bad.fetch).generate(request)).rejects.toMatchObject({
+    await expect(lite(bad.fetch).generate(request)).rejects.toMatchObject({
       status: 400, retryable: false, message: expect.stringContaining('nope')
     })
+    expect(bad.requests).toHaveLength(1)
     for (const status of [429, 503]) {
-      const { fetch } = fakeFetch(http(status))
-      await expect(gemini(fetch).generate(request)).rejects.toMatchObject({ status, retryable: true })
+      // Gemma gets the request on the same key and is busy too: Gemini's error is the one reported.
+      const { fetch, requests } = fakeFetch(http(status), http(429))
+      await expect(lite(fetch).generate(request)).rejects.toMatchObject({ status, retryable: true, message: expect.stringContaining('Gemini API') })
+      expect(requests.map((r) => r.url.split('/').pop())).toEqual(['gemini-3.5-flash-lite:generateContent', `${GEMMA_BACKUP_MODEL}:generateContent`])
     }
-    const blocked = fakeFetch({ json: { promptFeedback: { blockReason: 'SAFETY' }, candidates: [] } })
-    await expect(gemini(blocked.fetch).generate(request)).rejects.toMatchObject({
+    const blocked = fakeFetch({ json: { promptFeedback: { blockReason: 'SAFETY' }, candidates: [] } }, { json: { promptFeedback: { blockReason: 'SAFETY' }, candidates: [] } })
+    await expect(lite(blocked.fetch).generate(request)).rejects.toMatchObject({
       retryable: false, message: expect.stringContaining('SAFETY')
     })
+  })
+
+  it('steps down the model chain on capacity errors and ends on Gemma with the same key', async () => {
+    const http = (status: number) => ({ status, json: { error: { code: status, message: 'busy', status: 'X' } } })
+    const { fetch, requests } = fakeFetch(http(429), http(503), http(429), reply('[]'))
+    const provider = createProvider({ kind: 'gemini', model: 'gemini-3.6-flash' }, 'g-key', { fetch, geminiCooldowns: new GeminiCooldowns() })
+
+    const result = await provider.generate({ ...request, json: true })
+
+    expect(result).toEqual({ text: '[]', model: GEMMA_BACKUP_MODEL })
+    expect(requests.map((r) => r.url.split('/').pop())).toEqual([
+      'gemini-3.6-flash:generateContent',
+      'gemini-3.5-flash:generateContent',
+      'gemini-3.5-flash-lite:generateContent',
+      `${GEMMA_BACKUP_MODEL}:generateContent`
+    ])
+    // Gemma takes no system instruction and no JSON mode: the instruction leads the first turn.
+    const gemma = requests[3]!
+    expect(gemma.headers['x-goog-api-key']).toBe('g-key')
+    expect(gemma.body.systemInstruction).toBeUndefined()
+    expect(gemma.body.generationConfig.responseMimeType).toBeUndefined()
+    expect(gemma.body.contents[0].parts[0]).toEqual({ text: 'You write cards.' })
+  })
+
+  it('starts the next request on a model that is not cooling down', async () => {
+    const cooldowns = new GeminiCooldowns()
+    const { fetch, requests } = fakeFetch({ status: 429, json: { error: { message: 'quota' } } }, reply('a'), reply('b'))
+    const provider = createProvider({ kind: 'gemini', model: 'gemini-3.5-flash' }, 'g-key', { fetch, geminiCooldowns: cooldowns })
+
+    await provider.generate(request)
+    expect((await provider.generate(request)).model).toBe('gemini-3.5-flash-lite')
+    expect(requests.map((r) => r.url.split('/').pop())).toEqual([
+      'gemini-3.5-flash:generateContent',
+      'gemini-3.5-flash-lite:generateContent',
+      'gemini-3.5-flash-lite:generateContent'
+    ])
   })
 })
 

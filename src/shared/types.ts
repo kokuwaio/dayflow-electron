@@ -1,4 +1,5 @@
 import { DEFAULT_BLOCKLIST } from './blocklist'
+import type { FailureKind } from './failures'
 import { type Category, DEFAULT_CATEGORIES } from './categories'
 import type { StandupDraft } from './daily'
 import type { DailyProviderChoice } from './daily-provider'
@@ -203,7 +204,24 @@ export type Theme = (typeof THEMES)[number]
 
 export const CAPTURE_INTERVALS = [1, 5, 10, 20, 30, 60] as const
 
-export type RecorderState = 'recording' | 'paused' | 'locked' | 'sleeping' | 'backoff' | 'stopped'
+/** A provider problem only the user can fix (upstream ProviderProblemCenter). */
+export interface ProviderProblem {
+  kind: FailureKind
+  provider: ProviderKind
+  /** The provider's own error, for details. */
+  message: string
+  /** Batches wait for it (true) or failed (false). */
+  waiting: boolean
+  /** The CLI the card can sign back in. */
+  signIn: CliName | null
+  /** Another provider that is set up and could be the backup. */
+  backup: ProviderKind | null
+}
+
+/** A sign-in started from the app (upstream ProviderSignIn.State); url: the page the CLI printed. */
+export type SignInState = { state: 'idle' } | { state: 'waiting' | 'failed'; cli: CliName; url: string | null }
+
+export type RecorderState ='recording' | 'paused' | 'locked' | 'sleeping' | 'backoff' | 'stopped'
 
 export interface AppStatus {
   platform: string
@@ -216,7 +234,16 @@ export interface AppStatus {
     windowDetection: 'ok' | 'unavailable' | 'starting'
     windowDetectionError: string | null
   }
-  analysis: { busy: boolean; lastRunAt: number | null; lastError: string | null }
+  analysis: {
+    busy: boolean
+    lastRunAt: number | null
+    lastError: string | null
+    /** Batches waiting for the internet or a provider, and the recorded minutes in them. */
+    waiting: { batches: number; minutes: number }
+    /** A provider problem the user can fix, for the toast and the tray. */
+    problem: ProviderProblem | null
+    signIn: SignInState
+  }
   keys: Record<ProviderKind, boolean>
   framesBytes: number
 }

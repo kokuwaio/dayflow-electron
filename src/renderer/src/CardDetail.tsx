@@ -4,8 +4,10 @@ import Markdown from 'react-markdown'
 import { Image, Maximize2, Pencil, Play, RotateCw, ThumbsDown, ThumbsUp, X } from 'lucide-react'
 import { type Category, PRIVATE_CATEGORY, SYSTEM_CATEGORY } from '@shared/categories'
 import { clockLabel } from '@shared/i18n'
-import type { Rating, TimelineCard } from '@shared/types'
+import { WAITING_SUBCATEGORY } from '@shared/provider-problem'
+import type { AppStatus, Rating, TimelineCard } from '@shared/types'
 import { FramePlayer, type PlayerPosition } from './FramePlayer'
+import { ProblemActions } from './ProblemCard'
 import { TimelapseOverlay } from './TimelapseOverlay'
 
 /** A button that asks "Confirm" on the first click and acts on the second; it resets after 3 s. */
@@ -41,6 +43,10 @@ export function CardDetail(props: {
   onClose: () => void
   onDeleted: () => void
   onEditCategories: () => void
+  /** For a waiting or failed card: the provider problem behind it and what fixes it. */
+  status?: AppStatus | null
+  baseUrl?: string
+  onOpenProviders?: () => void
 }) {
   const { t } = useTranslation()
   const { card, color, categories, rating } = props
@@ -56,6 +62,8 @@ export function CardDetail(props: {
   const cancelled = useRef(false)
   const span = { start: card.start, end: card.end }
   const isFailed = card.category === SYSTEM_CATEGORY
+  const isWaiting = isFailed && card.subcategory === WAITING_SUBCATEGORY
+  const problem = isFailed ? (props.status?.analysis.problem ?? null) : null
   const isPrivate = card.category === PRIVATE_CATEGORY
 
   useEffect(() => {
@@ -159,10 +167,13 @@ export function CardDetail(props: {
             )}
           </div>
 
+          {problem && props.status && (
+            <ProblemActions problem={problem} signIn={props.status.analysis.signIn} baseUrl={props.baseUrl ?? ''} onOpenSettings={() => props.onOpenProviders?.()} />
+          )}
           {isFailed && card.batchId !== null && (
-            <button className="btn-primary" style={{ alignSelf: 'flex-start', padding: '8px 12px' }} onClick={reprocess}>
+            <button className={problem ? 'btn-subtle' : 'btn-primary'} style={{ alignSelf: 'flex-start', padding: '8px 12px' }} onClick={reprocess}>
               <RotateCw size={13} />
-              {t('card.retry')}
+              {isWaiting ? t('waiting.card.tryNow') : t('card.retry')}
             </button>
           )}
           {busy && <p className="note">{busy}</p>}

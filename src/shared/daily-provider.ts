@@ -4,7 +4,6 @@
 // local); here the choices are "the timeline's providers" (the default), one
 // of the configured provider kinds, or none, which turns generation off.
 
-import { t } from './i18n'
 import type { ProviderKind } from './types'
 
 export type DailyProviderChoice = 'auto' | 'none' | ProviderKind
@@ -38,8 +37,3 @@ export interface DailyProviderOption {
   available: boolean
 }
 
-/** The provider's name as Settings shows it. */
-export function providerLabel(kind: ProviderKind): string {
-  const names: Record<ProviderKind, string> = { anthropic: 'Anthropic', gemini: 'Gemini', openai: t('providers.openai.label'), 'claude-cli': 'Claude Code', 'codex-cli': 'Codex' }
-  return names[kind]
-}

@@ -196,6 +196,32 @@ each of the three providers.
       permission; the settings page detects whether it is granted and otherwise
       shows the one-time opt-in command
       (`flatpak override --user --talk-name=org.freedesktop.Flatpak <app-id>`).
+- [x] Batches wait instead of failing (upstream
+      `Core/AI/ProviderAvailability.swift`, `LLMService.swift`): offline, a
+      busy, rate-limited or unreachable provider, a used-up plan or a signed
+      out CLI give a "Waiting for …" card instead of "Processing failed",
+      use up no retry, and go out again by themselves: the provider is held
+      back 1, 2, 5, 10, then 15 min (account problems 15, 30, 60 min), and
+      batches go out right away when the network comes back, after a wake,
+      when the window comes to the front, after a sign-in or a settings
+      change. Bad replies after the corrections and bad keys still fail.
+      The classifier and the decision are pure functions
+      (`src/main/analysis/availability.ts`).
+- [x] Fixing provider problems in the app (upstream
+      `System/ProviderSignIn.swift`, `TimelineFailureToast.swift`,
+      `StatusBarController.swift`): a problem card with **Sign in** for
+      Claude Code and Codex (runs `claude auth login` or `codex login` on the
+      host, through `flatpak-spawn --host` in the Flatpak, and watches their
+      status for up to 10 min), **Use X as backup** when another provider is
+      set up, and how much recording waits; the waiting and failed cards
+      offer the same. The tray icon gets an orange dot and a "Click to fix"
+      item. Notifications stay at most one a day per kind.
+- [x] Gemini model picker with upstream's list (`GeminiModelPreference.swift`)
+      and a custom model ID; busy, out-of-quota or unavailable models
+      (403, 404, 429, 503) and refusals step down the list to 3.5 Flash-Lite,
+      then to Gemma 4 31B on the same key (`GemmaBackupProvider.swift`);
+      models that refused are skipped for 10 to 60 min
+      (`src/shared/gemini-models.ts`).
 - [x] Prompt overrides (title, summary, detailed blocks; one set for all
       providers).
 - [x] Output-language setting for card text.

@@ -304,6 +304,8 @@ export function Timeline(props: {
               onClose={() => setSelected(null)}
               onDeleted={() => setSelected(null)}
               onEditCategories={() => props.onOpenSettings('categories')}
+              status={props.status}
+              onOpenProviders={() => props.onOpenSettings('providers')}
             />
           ) : (
             <div className="inspector-scroll">

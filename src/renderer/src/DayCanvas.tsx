@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pause, Play } from 'lucide-react'
+import { Hourglass, Pause, Play } from 'lucide-react'
 import { DAY_HEIGHT, HOUR_HEIGHT, cardTextMode, dayCardBox, hourMarks, nowScrollTop, recordingProjection } from '@shared/canvas'
 import { SYSTEM_CATEGORY } from '@shared/categories'
 import { clockLabel } from '@shared/i18n'
+import { WAITING_SUBCATEGORY } from '@shared/provider-problem'
 import type { RecorderState, TimelineCard } from '@shared/types'
 import { mergeFailed, resolveOverlaps } from '@shared/week'
 import { AppIcon } from './AppIcon'
@@ -79,13 +80,15 @@ export function DayCanvas(props: {
           const minutes = (c.end - c.start) / 60
           const mode = cardTextMode(minutes)
           const failed = c.category === SYSTEM_CATEGORY
+          // Recorded but waiting for the internet or the provider: not a failure, shown apart.
+          const waiting = failed && c.subcategory === WAITING_SUBCATEGORY
           const count = failed ? failedCount(c) : 0
           // From the shown span: merged and trimmed cards no longer match their stored labels.
           const time = t('card.timeRange', { start: clockLabel(c.start), end: clockLabel(c.end) })
           return (
             <button
               key={c.id}
-              className={`day-card ${mode} ${failed ? 'failed' : ''} ${c.id === props.selected ? 'selected' : ''} ${
+              className={`day-card ${mode} ${failed ? 'failed' : ''} ${waiting ? 'waiting' : ''} ${c.id === props.selected ? 'selected' : ''} ${
                 props.muted.has(muteKey(c.category)) ? 'muted' : ''
               }`}
               style={{ top: box.top, height: box.height, '--cat': props.colorOf(c.category), animationDelay: `${i * 30}ms` } as React.CSSProperties}
@@ -96,7 +99,13 @@ export function DayCanvas(props: {
               }}
             >
               {mode !== 'hidden' &&
-                (failed ? (
+                (waiting ? (
+                  <span className="head">
+                    <Hourglass size={12} className="waiting-icon" />
+                    <span className="title">{c.title}</span>
+                    <span className="time">{time}</span>
+                  </span>
+                ) : failed ? (
                   <span className="head">
                     <span className="title">{count > 1 ? t('card.processingFailedIntervals', { count }) : t('card.processingFailed')}</span>
                     <span className="time">{time}</span>

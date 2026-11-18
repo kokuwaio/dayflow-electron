@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Store } from '../db/store'
 import { type GenerateRequest, type Provider, ProviderError, type ProviderKind } from '../providers/types'
-import { Pipeline } from './pipeline'
+import { Pipeline, type PipelineDeps } from './pipeline'
 import { DEFAULT_CATEGORIES } from '../../shared/categories'
 import jpeg from 'jpeg-js'
 import { type OcrEngine, secretFilter } from '../privacy/masker'
@@ -57,9 +57,13 @@ function pipelineWith(...providers: Provider[]) {
 }
 
 function pipelineWithFilter(prepareFrame: ((frame: Uint8Array) => Promise<Uint8Array>) | undefined, ...providers: Provider[]) {
+  return pipelineWithDeps(prepareFrame ? { prepareFrame } : {}, ...providers)
+}
+
+function pipelineWithDeps(extra: Partial<PipelineDeps>, ...providers: Provider[]) {
   return new Pipeline({
     store,
-    ...(prepareFrame ? { prepareFrame } : {}),
+    ...extra,
     providers: () => providers,
     categories: () => DEFAULT_CATEGORIES,
     language: () => '',
@@ -103,17 +107,113 @@ describe('Pipeline card generation', () => {
     expect(store.retryableBatches(0, 3)).toEqual([])
   })
 
-  it('leaves one error card naming every provider when all of them fail', async () => {
-    const primary = scriptedProvider('openai', 'qwen3-vl', [new ProviderError('unreachable', true)])
-    const secondary = scriptedProvider('gemini', 'gemini', [new ProviderError('Gemini API 429: quota', true, 429)])
+  it('leaves one error card naming every provider when all of them fail for good', async () => {
+    const primary = scriptedProvider('openai', 'gpt-x', [new ProviderError('OpenAI-compatible API 401: invalid api key', false, 401)])
+    const secondary = scriptedProvider('gemini', 'gemini', [new ProviderError('Gemini API 400: API key not valid.', false, 400)])
 
     await pipelineWith(primary.provider, secondary.provider).tick()
 
     const cards = store.cardsForDay('2026-11-17')
     expect(cards).toHaveLength(1)
-    expect(cards[0]).toMatchObject({ title: 'Processing failed', category: 'System', start: at(14, 0), end: at(14, 15) })
-    expect(cards[0]!.summary).toMatch(/qwen3-vl: unreachable.*gemini: Gemini API 429: quota/)
+    expect(cards[0]).toMatchObject({ title: 'Processing failed', category: 'System', subcategory: 'Error', start: at(14, 0), end: at(14, 15) })
+    expect(cards[0]!.summary).toMatch(/gpt-x: OpenAI-compatible API 401: invalid api key.*gemini: Gemini API 400: API key not valid/)
     expect(store.retryableBatches(0, 3)).toHaveLength(1)
+    expect(store.waitingBatches()).toEqual([])
+  })
+})
+
+describe('Pipeline waiting for a provider (upstream ProviderAvailability)', () => {
+  beforeEach(() => recordQuarterHour())
+  const reply = JSON.stringify([card('2:00 PM', '2:16 PM', 'Caught up')])
+
+  it('waits instead of failing when the provider is busy, and uses up no retry', async () => {
+    const primary = scriptedProvider('anthropic', 'claude', [new ProviderError('Anthropic API 529: Overloaded', true, 529)])
+
+    await pipelineWith(primary.provider).tick()
+
+    const cards = store.cardsForDay('2026-11-17')
+    expect(cards).toMatchObject([{ title: 'Waiting for Anthropic', category: 'System', subcategory: 'Waiting', start: at(14, 0), end: at(14, 15) }])
+    expect(cards[0]!.summary).toBe('Recorded and saved. Anthropic was busy or out of reach, so Dayflow Electron will try again on its own.')
+    expect(store.waitingBatches()).toMatchObject([{ status: 'waiting', attempts: 0 }])
+    expect(store.retryableBatches(0, 3)).toEqual([])
+    expect(store.waitingSummary()).toEqual({ batches: 1, minutes: 15 })
+  })
+
+  it('sends nothing to a held provider: the next batch waits without a request, and both catch up once the hold is over', async () => {
+    const limit = new ProviderError("Anthropic API 429: You've hit your usage limit", true, 429)
+    const primary = scriptedProvider('anthropic', 'claude', [limit, reply, JSON.stringify([card('2:00 PM', '2:16 PM', 'Caught up'), card('2:16 PM', '2:32 PM', 'Second')])])
+    const pipeline = pipelineWith(primary.provider)
+    await pipeline.tick()
+
+    for (let t = at(14, 16); t <= at(14, 31); t += 10) store.insertScreenshot({ capturedAt: t, filePath: join(dir, `${at(14, 0)}.jpg`), fileSize: 4, idleSeconds: 0 })
+    vi.setSystemTime(at(14, 32, 30) * 1000)
+    await pipeline.tick()
+    expect(primary.requests).toHaveLength(1)
+    expect(store.waitingSummary().batches).toBe(2)
+    expect(store.cardsForDay('2026-11-17').map((c) => c.title)).toEqual(['Waiting for Anthropic', 'Waiting for Anthropic'])
+
+    // A usage limit holds the provider for 15 minutes; then the waiting batches go out, oldest first.
+    vi.setSystemTime(at(14, 34) * 1000)
+    await pipeline.tick()
+    expect(primary.requests).toHaveLength(3)
+    expect(store.waitingBatches()).toEqual([])
+    expect(store.cardsForDay('2026-11-17').map((c) => c.title)).toEqual(['Caught up', 'Second'])
+  })
+
+  it('waits for the internet while offline and asks no cloud provider', async () => {
+    const primary = scriptedProvider('anthropic', 'claude', [reply])
+    let online = false
+    const pipeline = pipelineWithDeps({ online: () => online }, primary.provider)
+
+    await pipeline.tick()
+    expect(primary.requests).toHaveLength(0)
+    expect(store.cardsForDay('2026-11-17')).toMatchObject([{ title: 'Waiting for internet', subcategory: 'Waiting' }])
+
+    online = true
+    await pipeline.resume()
+    expect(primary.requests).toHaveLength(1)
+    expect(store.cardsForDay('2026-11-17').map((c) => c.title)).toEqual(['Caught up'])
+  })
+
+  it('lets held batches go out right away on resume (back online, awake, signed in)', async () => {
+    const primary = scriptedProvider('claude-cli', 'haiku', [
+      new ProviderError('Claude Code needs you to log in again: run "claude" in a terminal and type /login. (Not logged in)', false),
+      reply
+    ])
+    const pipeline = pipelineWith(primary.provider)
+    await pipeline.tick()
+    expect(store.cardsForDay('2026-11-17')).toMatchObject([{ title: 'Waiting for Claude Code' }])
+    expect(pipeline.status().problem).toMatchObject({ kind: 'provider_login_expired', provider: 'claude-cli', waiting: true })
+
+    await pipeline.tick()
+    expect(primary.requests).toHaveLength(1)
+
+    await pipeline.resume()
+    expect(primary.requests).toHaveLength(2)
+    expect(store.cardsForDay('2026-11-17').map((c) => c.title)).toEqual(['Caught up'])
+    expect(pipeline.status().problem).toBeNull()
+  })
+
+  it('keeps the primary\'s problem when the backup did the work', async () => {
+    const primary = scriptedProvider('codex-cli', 'gpt', [new ProviderError("Codex usage limit reached: You've hit your usage limit.", false)])
+    const secondary = scriptedProvider('gemini', 'gemini', [reply])
+
+    const pipeline = pipelineWith(primary.provider, secondary.provider)
+    await pipeline.tick()
+
+    expect(store.cardsForDay('2026-11-17').map((c) => c.title)).toEqual(['Caught up'])
+    expect(pipeline.status().problem).toMatchObject({ kind: 'usage_limit_hit', provider: 'codex-cli', waiting: false })
+  })
+
+  it('still fails a batch whose replies stay invalid', async () => {
+    const { provider } = respondingProvider(false, { 'one-step': '[]', describe: 'x', segments: 'not json', summary: 'x', title: 'x' })
+
+    const pipeline = pipelineWith(provider)
+    await pipeline.tick()
+
+    expect(store.cardsForDay('2026-11-17')).toMatchObject([{ title: 'Processing failed', subcategory: 'Error' }])
+    expect(store.waitingBatches()).toEqual([])
+    expect(pipeline.status().problem).toBeNull()
   })
 })
 

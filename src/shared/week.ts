@@ -81,12 +81,15 @@ export function resolveOverlaps<T extends { start: number; end: number }>(cards:
   return list.sort((a, b) => a.start - b.start)
 }
 
-/** Joins "Processing failed" cards less than a minute apart into one (upstream resolveDisplaySegments). */
-export function mergeFailed<T extends { start: number; end: number; category: string }>(cards: T[]): T[] {
+/**
+ * Joins "Processing failed" cards less than a minute apart into one (upstream
+ * resolveDisplaySegments); waiting cards join only other waiting cards.
+ */
+export function mergeFailed<T extends { start: number; end: number; category: string; subcategory?: string }>(cards: T[]): T[] {
   const out: T[] = []
   for (const c of [...cards].sort((a, b) => a.start - b.start)) {
     const prev = out[out.length - 1]
-    if (prev && prev.category === SYSTEM_CATEGORY && c.category === SYSTEM_CATEGORY && c.start - prev.end < 60) {
+    if (prev && prev.category === SYSTEM_CATEGORY && c.category === SYSTEM_CATEGORY && prev.subcategory === c.subcategory && c.start - prev.end < 60) {
       out[out.length - 1] = { ...prev, end: Math.max(prev.end, c.end) }
     } else out.push(c)
   }

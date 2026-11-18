@@ -125,6 +125,13 @@ flowchart LR
      previous card.
    - When the main provider fails, the fallback provider takes over.
      Failed batches get a "Processing failed" card and are retried later.
+   - Offline, a busy or signed-out provider, or a used-up plan make a batch
+     wait (`analysis/availability.ts`): status `waiting`, a "Waiting for …"
+     card, no retry used. The provider is held back for a while, and the
+     batch goes out again after the hold, when the network or the computer
+     is back, or after a sign-in (`providers/cli/sign-in.ts`). Gemini steps
+     down its model list and then to Gemma on the same key
+     (`shared/gemini-models.ts`).
 6. **Store and show.** Cards replace the batch's old cards in
    `timeline_cards`. The main process tells the window, which reloads the day.
 

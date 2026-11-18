@@ -3,24 +3,22 @@
 // window on the matching tab.
 
 import { Notification } from 'electron'
-import { failureKind, needsUser } from '../shared/failures'
+import { type FailureKind, needsUser } from '../shared/failures'
 import { t } from '../shared/i18n'
+import { waitingLabel } from '../shared/provider-problem'
 import type { Tab } from '../shared/types'
 
 export interface Notifier {
   standupReady(day: string): void
   firstCards(): void
   weeklyUnlocked(): void
-  /** Only problems the user has to fix, at most once per day and kind, and only while the window is not focused. */
-  providerProblem(message: string, waitingMinutes: number): void
+  /**
+   * Only problems the user has to fix, at most once per day and kind, and only
+   * while the window is not focused (upstream notifyProviderProblem). Clicking
+   * it opens the window with the problem's card.
+   */
+  providerProblem(problem: { kind: FailureKind; title: string; body: string }, waitingMinutes: number): void
 }
-
-const waiting = (minutes: number) =>
-  minutes < 60
-    ? t('notifications.waitingMinutes', { count: minutes })
-    : minutes < 1440
-      ? t('notifications.waitingHours', { count: Math.floor(minutes / 60) })
-      : t('notifications.waitingDay')
 
 export function createNotifier(opts: {
   open: (tab: Tab) => void
@@ -40,13 +38,13 @@ export function createNotifier(opts: {
     standupReady: () => show(t('notifications.standupReady.title'), t('notifications.standupReady.body'), 'daily'),
     firstCards: () => show(t('notifications.firstCards.title'), t('notifications.firstCards.body'), 'timeline'),
     weeklyUnlocked: () => show(t('notifications.weeklyUnlocked.title'), t('notifications.weeklyUnlocked.body'), 'weekly'),
-    providerProblem(message, waitingMinutes) {
-      const kind = failureKind(message)
+    providerProblem({ kind, title, body }, waitingMinutes) {
       if (opts.windowFocused() || !needsUser(kind)) return
       const days = opts.problemDays()
       if (days[kind] === opts.today()) return
       opts.saveProblemDays({ ...days, [kind]: opts.today() })
-      show(t('notifications.problem.title'), `${message.slice(0, 200)} ${t('notifications.problem.waiting', { time: waiting(waitingMinutes) })}`, 'timeline')
+      const time = waitingLabel(waitingMinutes)
+      show(title, `${body.slice(0, 200)}${time ? ` ${t('notifications.problem.waiting', { time })}` : ''}`, 'timeline')
     }
   }
 }

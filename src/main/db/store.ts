@@ -11,6 +11,7 @@ import type { PreviousCard } from '../analysis/idle'
 import type { Observation } from '../analysis/observations'
 import type { StoredFrame } from '../retention'
 import { MIGRATIONS } from './schema'
+import { WAITING_SUBCATEGORY } from '../../shared/provider-problem'
 
 export type BatchStatus =
   | 'pending'
@@ -18,6 +19,8 @@ export type BatchStatus =
   | 'analyzed'
   | 'completed'
   | 'failed'
+  /** Held back for the internet or a provider; goes out again by itself (upstream's waiting batches). */
+  | 'waiting'
   | 'failed_empty'
   | 'skipped_short'
 
@@ -214,6 +217,28 @@ export class Store {
       .all(since, maxAttempts) as unknown as Batch[]
   }
 
+  /** Batches waiting for the internet or a provider, oldest first. */
+  waitingBatches(): Batch[] {
+    return this.db
+      .prepare(`SELECT ${BATCH_COLUMNS} FROM analysis_batches WHERE status = 'waiting' ORDER BY batch_start_ts`)
+      .all() as unknown as Batch[]
+  }
+
+  /** How many batches wait and how many recorded minutes they hold. */
+  waitingSummary(): { batches: number; minutes: number } {
+    const row = this.db
+      .prepare("SELECT COUNT(*) AS n, COALESCE(SUM(batch_end_ts - batch_start_ts), 0) AS secs FROM analysis_batches WHERE status = 'waiting'")
+      .get() as { n: number; secs: number }
+    return { batches: Number(row.n), minutes: Math.round(Number(row.secs) / 60) }
+  }
+
+  /** Marks a batch as waiting; an attempt it started does not count, so waiting uses up no retry. */
+  holdBatch(id: number, reason: string, refundAttempt: boolean): void {
+    this.db
+      .prepare(`UPDATE analysis_batches SET status = 'waiting', reason = ?, attempts = MAX(0, attempts - ?) WHERE id = ?`)
+      .run(reason, refundAttempt ? 1 : 0, id)
+  }
+
   startAttempt(id: number): void {
     this.db.prepare("UPDATE analysis_batches SET status = 'processing', attempts = attempts + 1 WHERE id = ?").run(id)
   }
@@ -356,7 +381,7 @@ export class Store {
     return this.tx(() => {
       const ids = (
         this.db
-          .prepare(`SELECT id FROM analysis_batches WHERE ${where} AND status IN ('completed', 'failed', 'analyzed')`)
+          .prepare(`SELECT id FROM analysis_batches WHERE ${where} AND status IN ('completed', 'failed', 'analyzed', 'waiting')`)
           .all(...params) as Array<{ id: number }>
       ).map((r) => r.id)
       for (const id of ids) {
@@ -693,6 +718,16 @@ export class Store {
           appSites: {}
         }
       ],
+      span.start
+    )
+  }
+
+  /** Puts a "Waiting for …" card over the batch's time: recorded, not analyzed yet. */
+  writeWaitingCard(batchId: number, span: Span, title: string, summary: string): void {
+    this.replaceCards(
+      span,
+      batchId,
+      [{ ...span, title, category: SYSTEM_CATEGORY, subcategory: WAITING_SUBCATEGORY, summary, detailedSummary: '', distractions: [], appSites: {} }],
       span.start
     )
   }

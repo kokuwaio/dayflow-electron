@@ -1038,5 +1038,59 @@
     "play": "播放",
     "speed": "播放速度",
     "range": "{{start}} 至 {{end}}"
+  },
+  "waiting": {
+    "card": {
+      "titleProvider": "正在等待 {{provider}}",
+      "titleInternet": "正在等待网络连接",
+      "offline": "已录制并保存。这台电脑处于离线状态，网络恢复后 Dayflow Electron 会生成这些卡片。",
+      "transient": "已录制并保存。{{provider}} 繁忙或无法连接，Dayflow Electron 会自动重试。",
+      "loginExpired": "已录制并保存。{{provider}} 已退出登录。重新登录后，Dayflow Electron 会自动补上。",
+      "usageLimit": "已录制并保存。你的 {{provider}} 套餐用量暂时已用完。限额重置后，Dayflow Electron 会自动补上。",
+      "localOffline": "已录制并保存。Dayflow Electron 无法连接到这台电脑上的 Ollama 或 LM Studio。打开它后，卡片会自动生成。",
+      "tryNow": "立即尝试"
+    },
+    "problem": {
+      "loginTitle": "{{provider}} 已退出登录",
+      "loginBody": "你的 {{provider}} 登录已过期，最近的活动尚未转换成卡片。",
+      "usageTitle": "你已达到 {{provider}} 的用量上限",
+      "usageBody": "限额重置后，Dayflow Electron 会自动补上。如需现在继续，请添加一个备用服务商。",
+      "localTitle": "Ollama 或 LM Studio 未运行",
+      "localBody": "Dayflow Electron 无法连接到你的本地模型。",
+      "keyTitle": "你的 {{provider}} API 密钥无效",
+      "keyBody": "密钥可能缺失、过期或已被停用。请在服务商设置中添加新密钥。",
+      "creditsTitle": "{{provider}} 余额已用完",
+      "creditsBody": "请为账户充值，或改用其他服务商。"
+    },
+    "signIn": {
+      "button": "登录 {{provider}}",
+      "finishTitle": "完成登录",
+      "finishBody": "浏览器刚刚已打开。请在其中登录 {{provider}}，然后回到这里。Dayflow Electron 会从中断处继续。",
+      "waiting": "正在等待登录…",
+      "tryAgain": "浏览器没有打开？重试",
+      "openPage": "打开登录页面",
+      "failed": "登录未完成。请重试，或改为在终端中登录。",
+      "command": "在终端中运行："
+    },
+    "backup": "使用 {{provider}} 作为备用",
+    "notNow": "以后再说",
+    "footer": {
+      "time": "{{time}} 等待处理",
+      "catchesUp": "Dayflow Electron 会自动补上",
+      "afterSignIn": "登录后自动补上",
+      "onItsOwn": "会自动重试",
+      "rightAway": "立即开始"
+    },
+    "tray": {
+      "time": "{{time}} 等待中",
+      "clickToFix": "点击修复",
+      "clickToSignIn": "点击登录"
+    }
+  },
+  "geminiModels": {
+    "custom": "自定义模型…",
+    "customId": "模型 ID",
+    "chain": "当 {{model}} 繁忙或配额用尽时，Dayflow Electron 会尝试 {{models}}，然后用同一密钥尝试 {{gemma}}。",
+    "chainLast": "当 {{model}} 繁忙或配额用尽时，Dayflow Electron 会用同一密钥尝试 {{gemma}}。"
   }
 }

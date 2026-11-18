@@ -5,7 +5,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, Circle, Settings as Gear } from 'lucide-react'
-import { type DailyProviderChoice, type DailyProviderOption, providerLabel } from '@shared/daily-provider'
+import { type DailyProviderChoice, type DailyProviderOption } from '@shared/daily-provider'
+import { providerLabel } from '@shared/provider-problem'
 import { cliOf } from '@shared/providers'
 import './daily-provider.css'
 

@@ -4,12 +4,14 @@ import { unlink } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { writeFile } from 'node:fs/promises'
-import { BrowserWindow, Menu, Tray, app, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, nativeTheme, powerMonitor, screen, shell, systemPreferences } from 'electron'
+import { BrowserWindow, Menu, Tray, app, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, nativeTheme, net, powerMonitor, screen, shell, systemPreferences } from 'electron'
 import { beforeBoundary, dayCount, dayRange, daysOf, shiftDay, todayKey } from '../shared/day'
 import { cliOf, needsApiKey } from '../shared/providers'
 import { describeRecorder, pauseLabel, pausePresets } from '../shared/status'
 import { limitBytes, limitChange, observedBytesPerHour } from '../shared/storage'
 import type { RecordingCheck } from '../shared/recording-status'
+import { problemActions, problemTexts, providerLabel, waitingLabel } from '../shared/provider-problem'
+import { GeminiCooldowns } from '../shared/gemini-models'
 import { currentLanguage, setLanguage, t } from '../shared/i18n'
 import { resolveLanguage } from '../shared/languages'
 import { renamedCategories } from '../shared/categories'
@@ -24,7 +26,7 @@ import { REVIEW_RATINGS, type ReviewRating, cardsToReviewPrompt, unreviewedCards
 import { exportFileName, rangeMarkdown, timelineText, weekText } from '../shared/export'
 import { weekOf } from '../shared/week'
 import { WEEKLY_MIN_TRACKED_MINUTES, trackedMinutes } from '../shared/weekly'
-import type { AgentAccessInfo, AgentClient, AgentClientState, AppStatus, CardEdit, CliName, ProviderKind, Rating, Settings, StandupEntry, Tab } from '../shared/types'
+import type { AgentAccessInfo, AgentClient, AgentClientState, AppStatus, CardEdit, CliName, ProviderKind, ProviderProblem, Rating, Settings, StandupEntry, Tab } from '../shared/types'
 import type { Span } from './db/store'
 import { BridgeServer, agentSocketPath } from './agent/bridge'
 import { type ClientEnv, clientStatus, connectClient, disconnectClient, repairStaleRegistrations } from './agent/clients'
@@ -44,6 +46,8 @@ import { listInstalledApps } from './platform/installed-apps'
 import { probeWindowDetection } from './platform/window-probe'
 import { createProvider } from './providers'
 import { findCli, hostAccess, nodeRunner } from './providers/cli/host'
+import { CliSignIn } from './providers/cli/sign-in'
+import { withDot } from './tray-dot'
 import { selectFramesToPurge } from './retention'
 import { secretFilter } from './privacy/masker'
 import { tesseractEngine } from './privacy/tesseract'
@@ -56,7 +60,7 @@ import { errorMessage } from '../shared/errors'
 import { type ScreenPermission, type WindowCheck, liveWindowCheck, windowFixCommand } from '../shared/permissions'
 import { type UiStyle, windowBackground } from '../shared/ui-style'
 import { beginGuide } from '../shared/getting-started'
-import { type DailyProviderOption, providerLabel, standupPlan } from '../shared/daily-provider'
+import { type DailyProviderOption, standupPlan } from '../shared/daily-provider'
 import { createDailyBadge } from './daily-badge'
 import { registerGettingStarted } from './getting-started'
 
@@ -185,10 +189,13 @@ async function main(): Promise<void> {
 
   const inFlatpak = !!process.env.FLATPAK_ID
   const cliEnv = { inFlatpak, home: homedir(), scratchDir: join(dataDir, 'cli-frames'), appId: process.env.FLATPAK_ID ?? '' }
+  // Which Gemini models refused the key lately, for every request (upstream GeminiModelCooldowns).
+  const geminiCooldowns = new GeminiCooldowns()
   const providerFor = (kind: ProviderKind) => {
     const s = settings.get()
     return createProvider({ kind, model: s.models[kind], baseUrl: s.openaiBaseUrl }, settings.apiKey(kind), {
-      cli: { ...cliEnv, runner: nodeRunner, paths: s.cliPaths }
+      cli: { ...cliEnv, runner: nodeRunner, paths: s.cliPaths },
+      geminiCooldowns
     })
   }
   const currentProvider = () => providerFor(settings.get().provider)
@@ -212,8 +219,40 @@ async function main(): Promise<void> {
     overrides: () => settings.get().promptOverrides,
     categories: () => settings.get().categories,
     onCardsChanged: () => changed(),
+    online: () => net.isOnline(),
+    providerLabel: (kind) => providerLabel(kind, settings.get().openaiBaseUrl),
     log
   })
+
+  // ---- provider problems: sign-in from the app, backup offers (upstream ProviderSignIn, ProviderProblemCenter)
+  const signIn = new CliSignIn({
+    runner: nodeRunner,
+    env: cliEnv,
+    configuredPath: (cli) => settings.get().cliPaths[cli],
+    changed: () => pushStatus(),
+    signedIn: (cli) => {
+      log(`signed in to ${cli}; catching up`)
+      void pipeline.resume(true)
+    },
+    log
+  })
+  /** The agent CLIs that are installed and signed in, checked when a problem comes up (they can be the backup). */
+  const cliReady: Record<CliName, boolean> = { claude: false, codex: false }
+  const checkCliReady = async () => {
+    for (const cli of ['claude', 'codex'] as const) cliReady[cli] = await signIn.isReady(cli).catch(() => false)
+  }
+  /** Providers that could take over: API providers with a key (or a local server), CLIs that are signed in. */
+  const configuredKinds = (): ProviderKind[] =>
+    (['gemini', 'anthropic', 'openai', 'claude-cli', 'codex-cli'] as const).filter((k) => {
+      const cli = cliOf(k)
+      return cli ? cliReady[cli] : usable(k)
+    })
+  const currentProblem = (): ProviderProblem | null => {
+    const p = pipeline.status().problem
+    if (!p) return null
+    const s = settings.get()
+    return { ...p, ...problemActions(p, { primary: s.provider, fallback: s.fallbackProvider, configured: configuredKinds() }) }
+  }
 
   const purge = async () => {
     const limit = limitBytes(settings.get().storageLimitGb)
@@ -226,7 +265,7 @@ async function main(): Promise<void> {
   const status = (): AppStatus => ({
     platform: platform.name,
     recorder: recorder.status(),
-    analysis: pipeline.status(),
+    analysis: { ...pipeline.status(), waiting: store.waitingSummary(), problem: currentProblem(), signIn: signIn.state() },
     keys: settings.hasKeys(),
     framesBytes: store.storedFrames().reduce((sum, f) => sum + f.bytes, 0)
   })
@@ -256,7 +295,7 @@ async function main(): Promise<void> {
   const standupProviders = () => {
     const plan = standupPlan(settings.get().dailyProvider, settings.get(), usable)
     if (plan.kind === 'off') return t('daily.provider.off')
-    if (plan.kind === 'unavailable') return t('daily.provider.unavailable', { name: providerLabel(plan.provider) })
+    if (plan.kind === 'unavailable') return t('daily.provider.unavailable', { name: providerLabel(plan.provider, settings.get().openaiBaseUrl) })
     return plan.providers.map(providerFor)
   }
   /** One standup run per day at a time, shared by the scheduler and the Regenerate button (upstream isRunningCheck). */
@@ -469,7 +508,8 @@ async function main(): Promise<void> {
   ipcMain.handle('batch:reprocess', (_e, batchId: number) => {
     const reset = store.reprocessBatch(batchId)
     changed()
-    void pipeline.tick()
+    // A waiting batch's "Try now" also lets held providers try again.
+    void pipeline.resume()
     return reset
   })
   ipcMain.handle('day:reprocess', (_e, day: string) => {
@@ -576,6 +616,9 @@ async function main(): Promise<void> {
     // The tray offers the pause lengths and "Check for updates…" only while that is on.
     if (String(saved.pauseMinutes) !== String(before.pauseMinutes) || saved.checkForUpdates !== before.checkForUpdates) updateTray()
     if (saved.autoInstallUpdates !== before.autoInstallUpdates) updater?.setAutoInstall(saved.autoInstallUpdates)
+    // New provider settings may fix what batches wait for: try them now (upstream's setup signature).
+    const routing = (x: Settings) => JSON.stringify([x.provider, x.fallbackProvider, x.models, x.openaiBaseUrl, x.cliPaths])
+    if (routing(saved) !== routing(before)) void pipeline.resume(true)
     return saved
   }
 
@@ -586,7 +629,21 @@ async function main(): Promise<void> {
     const { notified: _n, standupAttempts: _a, onboarded: _o, chatMemory: _m, gettingStarted: _g, dailyRecapUnseen: _d, ...preferences } = next
     return savePreferences(preferences)
   })
-  ipcMain.handle('key:set', (_e, kind: ProviderKind, key: string) => settings.setApiKey(kind, key))
+  ipcMain.handle('key:set', async (_e, kind: ProviderKind, key: string) => {
+    await settings.setApiKey(kind, key)
+    void pipeline.resume(true)
+  })
+  ipcMain.handle('provider:signIn', (_e, cli: CliName) => {
+    if (cli === 'claude' || cli === 'codex') void signIn.start(cli)
+  })
+  ipcMain.handle('provider:signInCancel', () => signIn.cancel())
+  // "Use X as backup" (upstream acceptBackupOffer): X becomes the fallback and what waits goes out.
+  ipcMain.handle('provider:useBackup', async (_e, kind: ProviderKind) => {
+    const s = settings.get()
+    if (kind === s.provider || !configuredKinds().includes(kind)) return
+    await savePreferences({ fallbackProvider: kind })
+    void pipeline.resume(true)
+  })
   ipcMain.handle('provider:test', async () => {
     try {
       const provider = currentProvider()
@@ -657,6 +714,21 @@ async function main(): Promise<void> {
   ipcMain.handle('analysis:run', () => pipeline.tick())
 
   // ---- tray
+  /** Shows the window and asks it to show the problem's card again (upstream showCardAgain). */
+  const showProblem = () => {
+    showWindow()
+    window?.webContents.send('navigate', 'timeline')
+    window?.webContents.send('problem:show')
+  }
+  /** "Claude Code is signed out · 3 hrs waiting · Click to sign in" (upstream problemItem). */
+  const problemLine = (problem: ProviderProblem) => {
+    const label = providerLabel(problem.provider, settings.get().openaiBaseUrl)
+    const parts = [problemTexts(problem.kind, label, problem.message).title]
+    const time = waitingLabel(store.waitingSummary().minutes)
+    if (time) parts.push(t('waiting.tray.time', { time }))
+    parts.push(problem.signIn ? t('waiting.tray.clickToSignIn') : t('waiting.tray.clickToFix'))
+    return parts.join(' · ')
+  }
   const updateTray = () => {
     if (!tray) return
     const r = recorder.status()
@@ -665,9 +737,12 @@ async function main(): Promise<void> {
     const updateItem = updater?.menuItem()
     const checkItem = updater?.checkItem()
     updateAppMenu()
-    tray.setToolTip(t('tray.tooltip', { status: description }))
+    const problem = currentProblem()
+    tray.setImage(problem ? trayImages.attention : trayImages.normal)
+    tray.setToolTip(t('tray.tooltip', { status: problem ? problemLine(problem) : description }))
     tray.setContextMenu(
       Menu.buildFromTemplate([
+        ...(problem ? [{ label: problemLine(problem), click: showProblem }, { type: 'separator' as const }] : []),
         { label: description, enabled: false },
         ...(updateItem ? [{ ...updateItem, enabled: !!updateItem.click }] : []),
         ...(checkItem ? [checkItem] : []),
@@ -725,8 +800,9 @@ async function main(): Promise<void> {
   // macOS tints a "…Template" image for light and dark menu bars; other panels get the coloured tile.
   // createFromPath also loads the @2x variant next to the file.
   const trayIcon = process.platform === 'darwin' ? 'resources/trayTemplate.png' : 'resources/tray.png'
-  tray = new Tray(nativeImage.createFromPath(join(app.getAppPath(), trayIcon)))
-  tray.on('click', () => showWindow())
+  const trayImages = trayIconSet(nativeImage.createFromPath(join(app.getAppPath(), trayIcon)))
+  tray = new Tray(trayImages.normal)
+  tray.on('click', () => (currentProblem() ? showProblem() : showWindow()))
 
   // ---- updates (src/main/updater.ts): Windows and macOS packages only
   const updates: Promise<UpdateMode> = (async () => {
@@ -768,21 +844,46 @@ async function main(): Promise<void> {
       notifier.weeklyUnlocked()
       void settings.save({ notified: { ...settings.get().notified, weeklyUnlock: true } })
     }
-    const problem = pipeline.status().lastError
-    if (problem && problem !== lastProblem) {
-      const waiting = (store.pendingBatches().length + store.retryableBatches(0, 3).length) * 15
-      notifier.providerProblem(problem, waiting)
+    const problem = currentProblem()
+    const key = problem && `${problem.kind}:${problem.provider}`
+    if (problem && key !== lastProblem) {
+      // A new problem: see which other providers could be the backup, and say it once a day.
+      void checkCliReady().then(() => pushStatus())
+      const texts = problemTexts(problem.kind, providerLabel(problem.provider, settings.get().openaiBaseUrl), problem.message)
+      notifier.providerProblem({ kind: problem.kind, ...texts }, store.waitingSummary().minutes)
+      signIn.clearFailure()
     }
-    lastProblem = problem
+    if (!problem && lastProblem) signIn.cancel()
+    lastProblem = key
   }
-  setInterval(() => {
-    checkNotifications()
+  // Back online: give the network a moment to settle, then send what waits (upstream ConnectivityMonitor).
+  let wasOnline = net.isOnline()
+  const watchNetwork = () => {
+    const online = net.isOnline()
+    if (online && !wasOnline) {
+      log('back online')
+      setTimeout(() => net.isOnline() && void pipeline.resume(), 5_000)
+    }
+    wasOnline = online
+  }
+  // After a wake the network takes a few seconds; a local model does not need it.
+  powerMonitor.on('resume', () => setTimeout(() => void pipeline.resume(), 10_000))
+  // Coming back to the window may mean the problem was fixed elsewhere (upstream allowNextAttemptNow).
+  app.on('browser-window-focus', () => {
+    if (store.waitingSummary().batches > 0) void pipeline.resume()
+  })
+  const pushStatus = () => {
     const s = status()
     const key = JSON.stringify([s.recorder, s.analysis])
     if (key === lastStatus) return
     lastStatus = key
     updateTray()
     window?.webContents.send('status:changed', s)
+  }
+  setInterval(() => {
+    watchNetwork()
+    checkNotifications()
+    pushStatus()
   }, 2_000)
 
   handleMedia({
@@ -867,6 +968,7 @@ async function main(): Promise<void> {
 
   app.on('before-quit', () => {
     quitting = true
+    signIn.cancel()
     void bridge.stop()
     recorder.stop()
     pipeline.stop()
@@ -879,6 +981,21 @@ async function main(): Promise<void> {
   app.on('activate', () => showWindow())
 
   if (!startHidden) showWindow()
+}
+
+/** The tray icon, and the same with an orange dot for a problem that needs the user. */
+function trayIconSet(normal: Electron.NativeImage): { normal: Electron.NativeImage; attention: Electron.NativeImage } {
+  const attention = nativeImage.createEmpty()
+  for (const scaleFactor of normal.getScaleFactors()) {
+    const bitmap = normal.toBitmap({ scaleFactor })
+    // Tray icons are square.
+    const side = Math.sqrt(bitmap.length / 4)
+    if (!Number.isInteger(side) || side === 0) continue
+    const dotted = nativeImage.createFromBitmap(withDot(bitmap, side, side), { width: side, height: side, scaleFactor })
+    attention.addRepresentation({ scaleFactor, buffer: dotted.toPNG() })
+  }
+  if (normal.isTemplateImage()) attention.setTemplateImage(true)
+  return { normal, attention: attention.isEmpty() ? normal : attention }
 }
 
 function showWindow(): void {

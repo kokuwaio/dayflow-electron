@@ -10,6 +10,7 @@ import { cliOf, needsApiKey } from '@shared/providers'
 import { recordingStatusRows } from '@shared/recording-status'
 import { PAUSE_MINUTE_OPTIONS, pauseChipLabel } from '@shared/status'
 import { STORAGE_LIMIT_PRESETS, estimatedBytesPerHour, estimatedBytesPerMonth, limitChange, limitLabel, sizeLabel, usedShare } from '@shared/storage'
+import { GEMINI_MODELS, GEMMA_BACKUP_LABEL, geminiChain, geminiLabel, isGeminiPreset } from '@shared/gemini-models'
 import type { UpdateMode } from '@shared/updates'
 import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings, type Theme } from '@shared/types'
 import type { UiStyle } from '@shared/ui-style'
@@ -136,9 +137,13 @@ function ProvidersTab({ settings, status, save }: { settings: Settings; status: 
             </label>
           ))}
         </div>
-        <Row label={t('settings.providers.model')} grow>
-          <input key={provider} defaultValue={settings.models[provider]} onBlur={(e) => save({ models: { ...settings.models, [provider]: e.target.value } })} />
-        </Row>
+        {provider === 'gemini' ? (
+          <GeminiModelRow settings={settings} save={save} />
+        ) : (
+          <Row label={t('settings.providers.model')} grow>
+            <input key={provider} defaultValue={settings.models[provider]} onBlur={(e) => save({ models: { ...settings.models, [provider]: e.target.value } })} />
+          </Row>
+        )}
         {provider === 'openai' && (
           <Row label={t('settings.providers.baseUrl')} sub={t('settings.providers.baseUrlSub')} grow>
             <input defaultValue={settings.openaiBaseUrl} onBlur={(e) => save({ openaiBaseUrl: e.target.value })} />
@@ -215,6 +220,53 @@ function ProvidersTab({ settings, status, save }: { settings: Settings; status: 
         ))}
       </Section>
     </>
+  )
+}
+
+const CUSTOM_MODEL = '__custom'
+
+/**
+ * Gemini's model, picked from upstream's list (GeminiModelPreference) or typed
+ * in; the line below says what a busy model steps down to.
+ */
+function GeminiModelRow({ settings, save }: { settings: Settings; save: Save }) {
+  const { t } = useTranslation()
+  const model = settings.models.gemini
+  const [custom, setCustom] = useState(!isGeminiPreset(model))
+  const short = (id: string) => geminiLabel(id).replace(/^Gemini /, '')
+  const chain = geminiChain(model)
+  const sub =
+    chain.length > 1
+      ? t('geminiModels.chain', { model: short(model), models: chain.slice(1).map(short).join(' → '), gemma: GEMMA_BACKUP_LABEL })
+      : t('geminiModels.chainLast', { model: model.trim() ? short(model) : '…', gemma: GEMMA_BACKUP_LABEL })
+  const saveModel = (id: string) => save({ models: { ...settings.models, gemini: id } })
+  return (
+    <Row label={t('settings.providers.model')} sub={sub} grow>
+      <select
+        aria-label={t('settings.providers.model')}
+        value={custom ? CUSTOM_MODEL : model}
+        onChange={(e) => {
+          const next = e.target.value
+          setCustom(next === CUSTOM_MODEL)
+          if (next !== CUSTOM_MODEL) saveModel(next)
+        }}
+      >
+        {GEMINI_MODELS.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.label}
+          </option>
+        ))}
+        <option value={CUSTOM_MODEL}>{t('geminiModels.custom')}</option>
+      </select>
+      {custom && (
+        <input
+          aria-label={t('geminiModels.customId')}
+          placeholder={t('geminiModels.customId')}
+          defaultValue={isGeminiPreset(model) ? '' : model}
+          onBlur={(e) => e.target.value.trim() && saveModel(e.target.value.trim())}
+        />
+      )}
+    </Row>
   )
 }
 
