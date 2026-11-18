@@ -72,7 +72,7 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
     captureIntervalSec: (CAPTURE_INTERVALS as readonly number[]).includes(Number(r.captureIntervalSec))
       ? Number(r.captureIntervalSec)
       : DEFAULT_SETTINGS.captureIntervalSec,
-    captureHeight: r.captureHeight === 720 ? 720 : 1080,
+    captureHeight: r.captureHeight === 1080 ? 1080 : 720,
     storageLimitGb:
       Number.isFinite(Number(r.storageLimitGb)) && Number(r.storageLimitGb) >= 1
         ? Math.round(Number(r.storageLimitGb))

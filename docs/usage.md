@@ -235,8 +235,8 @@ In **Settings**:
 2. Model: `qwen3-vl:8b-instruct`.
 3. Base URL: `http://localhost:11434/v1`.
 4. Leave the API key empty and click **Test connection**.
-5. Recording → Resolution: **720p**. Smaller screenshots make every request
-   faster on a local model.
+5. Keep Recording → Resolution at **720p** (the default). Smaller
+   screenshots make every request faster on a local model.
 
 Each 15-minute batch then takes the local model a few minutes. To compare
 backends or models, `ollama run <model> --verbose "<prompt>" <image.jpg>`

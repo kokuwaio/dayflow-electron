@@ -280,9 +280,9 @@ function StorageTab({ settings, status, save }: { settings: Settings; status: Ap
           </select>
         </Row>
         <Row label="Resolution">
-          <select value={settings.captureHeight} onChange={(e) => save({ captureHeight: Number(e.target.value) === 720 ? 720 : 1080 })}>
-            <option value={1080}>1080p</option>
+          <select value={settings.captureHeight} onChange={(e) => save({ captureHeight: Number(e.target.value) === 1080 ? 1080 : 720 })}>
             <option value={720}>720p</option>
+            <option value={1080}>1080p</option>
           </select>
         </Row>
       </Section>

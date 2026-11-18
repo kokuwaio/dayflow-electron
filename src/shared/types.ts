@@ -155,7 +155,8 @@ export const DEFAULT_SETTINGS: Settings = {
   openaiBaseUrl: 'https://api.openai.com/v1',
   outputLanguage: '',
   captureIntervalSec: 10,
-  captureHeight: 1080,
+  // Upstream records at 1080p; 720p keeps requests and local models faster.
+  captureHeight: 720,
   storageLimitGb: 10,
   launchAtLogin: false,
   blockedApps: [...DEFAULT_BLOCKLIST],

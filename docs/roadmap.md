@@ -109,7 +109,7 @@ JSON-per-day store for SQLite.
       open window, open recordings folder, quit. Closing the window keeps the
       app running.
 - [x] Capture through the platform interface; interval 1/5/10/20/30/60 s
-      (default 10 s), 720p or 1080p, display under the cursor
+      (default 10 s), 720p (default, upstream: 1080p) or 1080p, display under the cursor
       (upstream `Core/Recording/ScreenRecorder.swift`, `ActiveDisplayTracker.swift`).
       Linux: `helper/linux` (portal + PipeWire); Windows and macOS:
       `desktopCapturer` (`src/main/platform/electron-capture.ts`).
