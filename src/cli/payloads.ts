@@ -3,7 +3,7 @@
 // MCPServer.swift). Keys are snake_case like upstream; every top-level
 // object gets schema_version when it is printed.
 
-import { type Category, SYSTEM_CATEGORY } from '../shared/categories'
+import { type Category, SYSTEM_CATEGORY, isIdleName } from '../shared/categories'
 import { BOUNDARY_HOUR, dayCount, dayRange, pad } from '../shared/day'
 import type { StandupEntry, TimelineCard } from '../shared/types'
 import { weekOf } from '../shared/week'
@@ -114,9 +114,6 @@ export function weekSpan(day: string): { start: number; end: number } {
   return { start: dayRange(days[0]!).start, end: dayRange(days[6]!).end }
 }
 
-const isIdle = (name: string, categories: Category[]) =>
-  name.toLowerCase() === 'idle' || categories.some((c) => c.isIdle && c.name.toLowerCase() === name.toLowerCase())
-
 export function weekly(day: string, cards: TimelineCard[], categories: Category[]): Json {
   const span = weekSpan(day)
   const totals = categoryTotals(cards)
@@ -125,7 +122,7 @@ export function weekly(day: string, cards: TimelineCard[], categories: Category[
     week_start: isoLocal(span.start),
     week_end: isoLocal(span.end),
     tracked_minutes: tracked,
-    focus_minutes: sum(totals.filter((t) => !isIdle(t.name, categories))),
+    focus_minutes: sum(totals.filter((t) => !isIdleName(t.name, categories))),
     categories: shares(totals, tracked)
   }
 }

@@ -2,7 +2,7 @@
 // (tools/dayflow-cli/Sources/dayflow/Render.swift, main.swift). ANSI styling
 // only when stdout is a terminal, so piped output stays clean.
 
-import type { Category } from '../shared/categories'
+import { type Category, isIdleName } from '../shared/categories'
 import { dayKey, formatClock, parseKey } from '../shared/day'
 import { formatMinutes } from '../shared/day-summary'
 import { standupTitles } from '../shared/daily'
@@ -134,7 +134,7 @@ export function renderWeekly(days: string[], cards: TimelineCard[], categories: 
   const label = (d: string) => parseKey(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).replace(',', '')
   const totals = categoryTotals(cards)
   const tracked = totals.reduce((n, t) => n + t.minutes, 0)
-  const idle = (name: string) => name.toLowerCase() === 'idle' || categories.some((c) => c.isIdle && c.name.toLowerCase() === name.toLowerCase())
+  const idle = (name: string) => isIdleName(name, categories)
   const focus = totals.filter((t) => !idle(t.name)).reduce((n, t) => n + t.minutes, 0)
   const out = [
     `${s.bold}${label(days[0]!)} – ${label(days[6]!)}${s.reset}  ${s.dim}Tracked ${formatMinutes(tracked)} · Focus ${formatMinutes(focus)}${s.reset}`,

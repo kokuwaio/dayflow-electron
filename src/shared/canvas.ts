@@ -13,13 +13,12 @@ export const DAY_PX_PER_MIN = HOUR_HEIGHT / 60
 export const TIME_COLUMN_WIDTH = 60
 export const DAY_HEIGHT = 24 * HOUR_HEIGHT
 
-const START_MINUTE = DAY_START_MINUTE
 /** The recording slot shown as "Generating your next card". */
 const CYCLE_SECONDS = 15 * 60
 const HARD_CAP_SECONDS = 40 * 60
 
 /** Minutes since 4 AM by the wall clock, so DST nights keep times on their hour lines. */
-const minutesFrom4am = (ts: number) => clockMinutes(ts) - START_MINUTE
+const minutesFrom4am = (ts: number) => clockMinutes(ts) - DAY_START_MINUTE
 
 /** Whole hours since 4 AM of the clock hour `ts` falls in. */
 const hourIndex = (ts: number) => Math.floor(minutesFrom4am(ts) / 60)

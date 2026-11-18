@@ -134,10 +134,16 @@ export class Pipeline {
 
     const idle = assessIdleBatch(shots)
     // Like upstream: extend an Idle card that just ended, else a new one in whole minutes.
-    const idleSpan = idle ? idleCardSpan(shots, store.cardEndingLastBefore(shots[0]!.capturedAt, batch.id)) : null
+    const categories = this.deps.categories()
+    const firstShot = Math.min(...shots.map((s) => s.capturedAt))
+    const idleSpan = idle ? idleCardSpan(shots, store.cardEndingLastBefore(firstShot, batch.id), categories) : null
     if (idleSpan) {
-      if (idleSpan.extend !== null) store.extendCard(idleSpan.extend, idleSpan.end, batch.id)
-      else store.replaceCards(idleSpan, batch.id, [idleCard(idleSpan, idleCategory(this.deps.categories())?.name ?? 'Idle')], batch.start)
+      const { start, end, extend } = idleSpan
+      if (extend === null || !store.extendCard(extend, end, batch.id)) {
+        // A card that is gone by now cannot be extended: a new one from this batch's own start.
+        const own = extend === null ? { start, end } : idleCardSpan(shots, null)
+        if (own) store.replaceBatchCards(batch.id, [idleCard({ start: own.start, end: own.end }, idleCategory(categories)?.name ?? 'Idle')])
+      }
       store.finishBatch(batch.id, 'analyzed', 'idle_shortcut_applied')
       this.deps.onCardsChanged()
       return 'analyzed'

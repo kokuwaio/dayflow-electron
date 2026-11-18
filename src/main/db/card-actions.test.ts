@@ -76,3 +76,29 @@ describe('card actions', () => {
     expect(store.cardsForDay('2026-11-17')).toEqual([])
   })
 })
+
+describe('idle card writes (upstream saveIdleBatchCard)', () => {
+  it('replaces only the batch\'s own cards; other batches\' cards stay', () => {
+    const older = store.createBatch({ start: at(9, 0), end: at(9, 15), shotIds: [] })
+    const idle = store.createBatch({ start: at(9, 15), end: at(9, 30), shotIds: [] })
+    store.addCards(older, [card(at(9, 0), at(9, 20), 'Ran late')])
+    store.addCards(idle, [card(at(9, 15), at(9, 30), 'Earlier attempt')])
+
+    store.replaceBatchCards(idle, [card(at(9, 20), at(9, 30), 'Idle', 'Idle')])
+
+    expect(store.cardsForDay('2026-11-17').map((c) => c.title)).toEqual(['Ran late', 'Idle'])
+  })
+
+  it('extends a live card only, and says whether it did', () => {
+    const b = store.createBatch({ start: at(9, 0), end: at(9, 15), shotIds: [] })
+    const next = store.createBatch({ start: at(9, 15), end: at(9, 30), shotIds: [] })
+    store.addCards(b, [card(at(9, 0), at(9, 15), 'Idle', 'Idle')])
+    const [idleCard] = store.cardsForDay('2026-11-17')
+
+    expect(store.extendCard(idleCard!.id, at(9, 30), next)).toBe(true)
+    expect(store.cardsForDay('2026-11-17')).toMatchObject([{ title: 'Idle', endTime: '9:30 AM' }])
+
+    store.deleteCard(idleCard!.id)
+    expect(store.extendCard(idleCard!.id, at(9, 45), next)).toBe(false)
+  })
+})

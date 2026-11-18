@@ -2,7 +2,7 @@
 // (Views/UI/MainView/WeekTimelineGridView.swift, TimelineShellModels.swift).
 
 import { SYSTEM_CATEGORY } from './categories'
-import { DAY_START_MINUTE, calendarKey, parseKey, shiftDay } from './day'
+import { DAY_START_MINUTE, calendarKey, dayCount, parseKey, shiftDay } from './day'
 import type { TimelineCard } from './types'
 
 /** A day column of the week view. */
@@ -32,7 +32,8 @@ export function weekOf(day: string, locale?: string): Week {
 /** Wall-clock minutes of `ts` after 4 AM on `day` (a time on the next calendar day counts on). */
 function wallMinutes(ts: number, day: string): number {
   const d = new Date(ts * 1000)
-  const dayNumber = Math.round((parseKey(calendarKey(d)).getTime() - parseKey(day).getTime()) / 86_400_000)
+  // 0 on `day`'s calendar date, 1 on the next (after midnight, before 4 AM).
+  const dayNumber = dayCount(day, calendarKey(d)) - 1
   return (d.getHours() + dayNumber * 24) * 60 + d.getMinutes() + d.getSeconds() / 60 - DAY_START_MINUTE
 }
 

@@ -6,6 +6,7 @@ import { dayKey, dayRange, formatClock } from '../../shared/day'
 import type { GoalPlan } from '../../shared/day-summary'
 import type { ReviewRating, ReviewSegment } from '../../shared/review'
 import type { AppSites, CardEdit, ChatConversation, ChatRole, ChatStoredMessage, Distraction, Rating, StandupEntry, TimelineCard } from '../../shared/types'
+import type { PreviousCard } from '../analysis/idle'
 import type { Observation } from '../analysis/observations'
 import type { StoredFrame } from '../retention'
 import { MIGRATIONS } from './schema'
@@ -612,21 +613,36 @@ export class Store {
   }
 
   /** The live card that ends last among those starting before `start`, other than `batchId`'s (upstream fetchTimelineCardEndingLast). */
-  cardEndingLastBefore(start: number, batchId: number): { id: number; start: number; end: number; title: string; category: string } | null {
+  cardEndingLastBefore(start: number, batchId: number): PreviousCard | null {
     const row = this.db
       .prepare(
         `SELECT id, start_ts AS start, end_ts AS end, title, category FROM timeline_cards
          WHERE is_deleted = 0 AND start_ts < ? AND COALESCE(batch_id, -1) != ? ORDER BY end_ts DESC, id DESC LIMIT 1`
       )
-      .get(start, batchId) as { id: number; start: number; end: number; title: string; category: string } | undefined
+      .get(start, batchId) as PreviousCard | undefined
     return row ?? null
   }
 
-  /** Moves a card's end, and drops `batchId`'s own earlier cards (upstream saveIdleBatchCard with extendingCardId). */
-  extendCard(cardId: number, end: number, batchId: number): void {
+  /** Replaces `batchId`'s own cards only; other batches' cards stay (upstream saveIdleBatchCard). */
+  replaceBatchCards(batchId: number, cards: NewCard[]): void {
     this.tx(() => {
+      this.db.prepare(`UPDATE timeline_cards SET is_deleted = 1 WHERE batch_id = ? AND is_deleted = 0`).run(batchId)
+      this.insertCards(batchId, cards)
+    })
+  }
+
+  /**
+   * Moves a live card's end and drops `batchId`'s own earlier cards (upstream
+   * saveIdleBatchCard with extendingCardId); false when the card is gone.
+   * Like upstream the end is set, not only raised: re-analyzing an earlier
+   * batch moves it back.
+   */
+  extendCard(cardId: number, end: number, batchId: number): boolean {
+    return this.tx(() => {
+      const moved = this.db.prepare(`UPDATE timeline_cards SET end_ts = ?, end = ? WHERE id = ? AND is_deleted = 0`).run(end, formatClock(end), cardId)
+      if (Number(moved.changes) === 0) return false
       this.db.prepare(`UPDATE timeline_cards SET is_deleted = 1 WHERE batch_id = ? AND id != ? AND is_deleted = 0`).run(batchId, cardId)
-      this.db.prepare(`UPDATE timeline_cards SET end_ts = ?, end = ? WHERE id = ?`).run(end, formatClock(end), cardId)
+      return true
     })
   }
 

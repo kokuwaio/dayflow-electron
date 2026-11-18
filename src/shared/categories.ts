@@ -152,6 +152,12 @@ export function renamedCategories(before: Category[], after: Category[]): Array<
 /** The category for time away; found by its flag, whatever it is called. */
 export const idleCategory = (categories: Category[]): Category | undefined => categories.find((c) => c.isIdle)
 
+/** Whether a card's category or title means Idle: "Idle", or the name the user gave the idle category. */
+export function isIdleName(name: string, categories: readonly Category[]): boolean {
+  const key = name.trim().toLowerCase()
+  return key === 'idle' || categories.some((c) => c.isIdle && c.name.trim().toLowerCase() === key)
+}
+
 /** Categories the app writes itself, outside the user's list. */
 export const SYSTEM_CATEGORY = 'System'
 export const PRIVATE_CATEGORY = 'Private'

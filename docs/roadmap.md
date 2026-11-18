@@ -127,7 +127,9 @@ JSON-per-day store for SQLite.
       newest batch is also released once 2 min pass without a frame, instead
       of waiting for the next frame.
 - [x] Idle shortcut: write an "Idle" card without a model call when most of a
-      batch was idle (upstream `Core/Analysis/IdleBatchClassifier.swift`).
+      batch was idle, extending the previous Idle card when it ended less than
+      5 min before on the same day, in whole minutes (upstream
+      `Core/Analysis/IdleBatchClassifier.swift`, `AnalysisManager.swift`).
 - [x] Provider interface and three API providers, the defaults. They need only
       network access, so they work in the Flatpak sandbox as is:
   - Anthropic API through the official SDK, default `claude-opus-5-5` with

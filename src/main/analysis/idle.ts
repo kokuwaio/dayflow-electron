@@ -2,6 +2,7 @@
 // Idle card directly. Port of upstream Core/Analysis/IdleBatchClassifier.swift
 // and the idle shortcut of AnalysisManager.swift.
 
+import { type Category, isIdleName } from '../../shared/categories'
 import { dayKey } from '../../shared/day'
 
 export const IDLE_RULES = {
@@ -97,7 +98,6 @@ export interface PreviousCard {
 }
 
 const floorToMinute = (t: number) => t - (t % 60)
-const isIdle = (value: string) => value.trim().toLowerCase() === 'idle'
 
 /**
  * Where the Idle card of an idle batch goes, like upstream: it extends the
@@ -107,7 +107,8 @@ const isIdle = (value: string) => value.trim().toLowerCase() === 'idle'
  */
 export function idleCardSpan(
   shots: readonly { capturedAt: number }[],
-  previous: PreviousCard | null
+  previous: PreviousCard | null,
+  categories: readonly Category[] = []
 ): { start: number; end: number; extend: number | null } | null {
   const ordered = [...shots].sort((a, b) => a.capturedAt - b.capturedAt)
   const first = ordered[0]
@@ -117,8 +118,8 @@ export function idleCardSpan(
     previous &&
     first.capturedAt - previous.end < IDLE_RULES.mergeGapSec &&
     dayKey(previous.start) === dayKey(first.capturedAt) &&
-    isIdle(previous.title) &&
-    isIdle(previous.category)
+    isIdleName(previous.title, categories) &&
+    isIdleName(previous.category, categories)
       ? previous
       : null
   const end = floorToMinute(last.capturedAt)

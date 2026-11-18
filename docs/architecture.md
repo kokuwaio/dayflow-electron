@@ -103,8 +103,10 @@ flowchart LR
    `analysis_batches` like upstream: about 15 minutes each, split at gaps of
    more than 2 minutes, and at least 5 minutes long.
 4. **Shortcuts.** A batch that is all blocked frames becomes a "Private" card.
-   A batch where the idle check sees no activity becomes an Idle card. Neither
-   needs a model call.
+   A batch where the idle check sees no activity becomes an Idle card, or
+   extends the Idle card before it when that ended less than 5 minutes
+   earlier on the same day, so a long break stays one card. Neither needs a
+   model call.
 5. **Analyze.**
    - With **Hide secrets in screenshots** on, each sampled frame is masked
      before any provider sees it (see [Secret masking](#secret-masking)).

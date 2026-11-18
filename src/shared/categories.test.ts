@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CATEGORY_PRESETS, DEFAULT_CATEGORIES, idleCategory, presetCategories, renamedCategories, sanitizeCategories } from './categories'
+import { CATEGORY_PRESETS, DEFAULT_CATEGORIES, idleCategory, isIdleName, presetCategories, renamedCategories, sanitizeCategories } from './categories'
 
 describe('categories', () => {
   it('starts with upstream\'s defaults: Work, Personal, Distraction and Idle', () => {
@@ -50,5 +50,14 @@ describe('categories', () => {
     expect(after.map((c) => c.id).slice(0, 3)).toEqual(before.map((c) => c.id).slice(0, 3))
     expect(renamedCategories(before, after)).toEqual([{ from: 'Idle', to: 'Away' }])
     expect(idleCategory(after)?.name).toBe('Away')
+  })
+})
+
+describe('isIdleName', () => {
+  it('knows "Idle" and the name the user gave the idle category', () => {
+    const renamed = [{ id: 'w', name: 'Work', color: '#000', description: '' }, { id: 'i', name: 'Away', color: '#000', description: '', isIdle: true }]
+    expect(isIdleName('idle', renamed)).toBe(true)
+    expect(isIdleName(' Away ', renamed)).toBe(true)
+    expect(isIdleName('Work', renamed)).toBe(false)
   })
 })

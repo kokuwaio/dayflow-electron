@@ -48,6 +48,12 @@ describe('idleCardSpan (upstream AnalysisManager idle shortcut)', () => {
     expect(idleCardSpan(shots(t(4, 0, 30), t(4, 14)), night)).toMatchObject({ start: t(4, 0), extend: null })
   })
 
+  it('extends an Idle card filed under a renamed idle category', () => {
+    const away = { ...idlePrev, category: 'Away' }
+    const categories = [{ id: 'i', name: 'Away', color: '#000', description: '', isIdle: true }]
+    expect(idleCardSpan(shots(t(10, 15, 20), t(10, 29, 50)), away, categories)).toMatchObject({ start: t(10, 0), extend: 7 })
+  })
+
   it('writes nothing when no whole minute is left', () => {
     expect(idleCardSpan(shots(t(10, 15, 20), t(10, 15, 50)), null)).toBeNull()
   })
