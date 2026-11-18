@@ -208,7 +208,23 @@
     "notGenerated": "Die Daten für den Tagesrückblick wurden noch nicht erstellt. Klicke auf „Neu generieren“, um sie jetzt zu erstellen, oder trage sie selbst ein.",
     "blockersPlaceholder": "Trage mögliche Blocker ein",
     "itemLabel": "{{title}}, Element {{number}}",
-    "addItem": "Element hinzufügen"
+    "addItem": "Element hinzufügen",
+    "provider": {
+      "button": "Anbieter für den Tagesrückblick auswählen",
+      "current": "Anbieter für den Tagesrückblick: {{name}}",
+      "title": "Anbieter für den Tagesrückblick",
+      "sub": "Wähle, wie dieser Tagesrückblick erstellt wird, oder deaktiviere die Erstellung.",
+      "auto": "Wie die Zeitleiste",
+      "autoSub": "Dein Anbieter für die Zeitleiste, dann sein Ersatzanbieter.",
+      "none": "Kein Anbieter",
+      "noneSub": "Deaktiviert die Erstellung des Tagesrückblicks, bis du einen anderen Anbieter auswählst.",
+      "notSetUp": "Noch nicht eingerichtet. Füge ihn unter Einstellungen → Anbieter hinzu.",
+      "cliMissing": "Auf diesem Computer nicht gefunden.",
+      "checking": "Anbieter werden geprüft…",
+      "off": "Kein Anbieter für den Tagesrückblick ausgewählt. Klicke oben auf das Zahnrad und wähle einen Anbieter, um die Erstellung wieder einzuschalten.",
+      "unavailable": "{{name}} ist nicht eingerichtet. Wähle mit dem Zahnrad einen anderen Anbieter für den Tagesrückblick oder füge ihn unter Einstellungen → Anbieter hinzu."
+    },
+    "badge": "Neuer Tagesrückblick"
   },
   "chat": {
     "errors": {
@@ -917,5 +933,67 @@
     "reportProblem": "Problem melden",
     "reportProblemSub": "Öffnet den Issue-Tracker auf GitHub in deinem Browser.",
     "openIssues": "GitHub-Issues öffnen"
+  },
+  "gettingStarted": {
+    "of": "{{current}} von {{total}}",
+    "checklist": {
+      "title": "Dein erster Tag mit Dayflow Electron",
+      "collapse": "Einklappen",
+      "expand": "Erweitern",
+      "firstCards": "Erste Karten auf deiner Zeitleiste",
+      "firstCardsDone": "Dayflow Electron macht aus deiner Bildschirmzeit Karten",
+      "firstCardsWorking": "Meist etwa 15 Minuten nach Beginn der Aufzeichnung bereit",
+      "firstCardsPaused": "Die Aufzeichnung ist pausiert. Schalte sie ein, um deine ersten Karten zu erhalten.",
+      "openCard": "Eine Karte öffnen",
+      "openCardSub": "Klicke auf eine Karte, um Zusammenfassung und Zeitraffer zu sehen",
+      "unlockDaily": "Tagesrückblick freischalten",
+      "unlockChat": "Chat freischalten",
+      "readyToOpen": "Bereit zum Öffnen",
+      "recorded": "{{progress}} aufgezeichnet",
+      "allDone": "Alles bereit",
+      "allDoneSub": "Du hast alles freigeschaltet, was Dayflow Electron kann. Viel Freude mit deiner Zeitleiste.",
+      "done": "Fertig"
+    },
+    "tour": {
+      "label": "Willkommenstour",
+      "skip": "Tour überspringen",
+      "gotIt": "Verstanden",
+      "recordingTitle": "Dayflow Electron läuft im Hintergrund",
+      "recordingBodyMac": "Es zeichnet während der Arbeit unauffällig deinen Bildschirm auf und speichert die Aufnahmen auf diesem Mac. Über das Dayflow Electron-Symbol in der Menüleiste kannst du jederzeit pausieren oder fortsetzen.",
+      "recordingBody": "Es zeichnet während der Arbeit unauffällig deinen Bildschirm auf und speichert die Aufnahmen auf diesem Computer. Über das Dayflow Electron-Symbol im Systembereich der Taskleiste kannst du jederzeit pausieren oder fortsetzen.",
+      "cardsTitle": "Alle 15 Minuten schreibt sich dein Tag von selbst",
+      "cardsBody": "Deine KI macht aus jedem Abschnitt Bildschirmzeit Zeitleistenkarten: woran du gearbeitet hast, welche Apps du genutzt hast und wann du abgelenkt wurdest. Klicke auf eine Karte, um die vollständige Zusammenfassung und einen Zeitraffer zu sehen oder ihre Kategorie zu korrigieren.",
+      "unlocksTitle": "Je länger es läuft, desto mehr kann es dir sagen",
+      "unlocksBody": "Manche Ansichten brauchen genug von deinem Tag, um etwas Nützliches zu zeigen, und werden daher freigeschaltet, während Dayflow Electron aufzeichnet. Das erwartet dich.",
+      "closeTitle": "Du kannst dieses Fenster jetzt schließen",
+      "closeBodyMac": "Dayflow Electron arbeitet in deiner Menüleiste weiter. Deine ersten Karten erscheinen meist etwa 15 Minuten nach Beginn der Aufzeichnung, und wir können dich benachrichtigen, sobald sie bereit sind.",
+      "closeBody": "Dayflow Electron arbeitet im Systembereich der Taskleiste weiter. Deine ersten Karten erscheinen meist etwa 15 Minuten nach Beginn der Aufzeichnung, und du wirst benachrichtigt, sobald sie bereit sind.",
+      "recording": "Aufzeichnung",
+      "now": "jetzt",
+      "reviewing": "Pull-Requests prüfen",
+      "planning": "Woche planen",
+      "youtube": "Von YouTube abgelenkt",
+      "distraction": "Ablenkung · 6 Min.",
+      "firstCardsTime": "~15 Min.",
+      "hours_one": "{{count}} Stunde",
+      "hours_other": "{{count}} Stunden",
+      "dailyMilestone": "Tagesrückblick und Stand-up-Notizen",
+      "chatMilestone": "Chat: Frag alles über deinen Tag",
+      "weeklyMilestone": "Wochenrückblick"
+    },
+    "settings": {
+      "guide": "Einführung",
+      "guideSub": "Zeigt die Willkommenstour noch einmal und holt die Checkliste für den ersten Tag zurück auf deine Zeitleiste.",
+      "showAgain": "Erneut zeigen",
+      "reset": "Einrichtung zurücksetzen",
+      "resetSub": "Die Einrichtung noch einmal durchlaufen (Anbieter, Berechtigungen, Kategorien). Die Aufzeichnung pausiert, bis du fertig bist; Zeitleiste, Aufnahmen und Einstellungen bleiben erhalten."
+    }
+  },
+  "player": {
+    "label": "Zeitraffer-Player",
+    "expand": "Im ganzen Fenster abspielen",
+    "play": "Abspielen",
+    "speed": "Wiedergabegeschwindigkeit",
+    "range": "{{start}} bis {{end}}"
   }
 }

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Markdown from 'react-markdown'
-import { Image, Pencil, Play, RotateCw, ThumbsDown, ThumbsUp, X } from 'lucide-react'
+import { Image, Maximize2, Pencil, Play, RotateCw, ThumbsDown, ThumbsUp, X } from 'lucide-react'
 import { type Category, PRIVATE_CATEGORY, SYSTEM_CATEGORY } from '@shared/categories'
 import { clockLabel } from '@shared/i18n'
 import type { Rating, TimelineCard } from '@shared/types'
-import { FramePlayer } from './FramePlayer'
+import { FramePlayer, type PlayerPosition } from './FramePlayer'
+import { TimelapseOverlay } from './TimelapseOverlay'
 
 /** A button that asks "Confirm" on the first click and acts on the second; it resets after 3 s. */
 function ConfirmButton({ label, className, onConfirm }: { label: string; className?: string; onConfirm: () => void }) {
@@ -48,6 +49,8 @@ export function CardDetail(props: {
   const [picker, setPicker] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
+  /** The full-window player, opened at the inline player's frame (or the start). */
+  const [expanded, setExpanded] = useState<PlayerPosition | 'start' | null>(null)
   const [poster, setPoster] = useState<string | null | undefined>(undefined)
   const [busy, setBusy] = useState<string | null>(null)
   const cancelled = useRef(false)
@@ -166,25 +169,41 @@ export function CardDetail(props: {
 
           {!isPrivate &&
             (playing ? (
-              <FramePlayer start={card.start} end={card.end} />
+              <FramePlayer start={card.start} end={card.end} onExpand={setExpanded} />
             ) : poster === null ? (
               <p className="note">{t('frames.none')}</p>
             ) : (
-              <button
-                className="timelapse"
-                style={poster ? { backgroundImage: `url("${poster}")` } : undefined}
-                aria-label={t('card.playTimelapse')}
-                onClick={() => setPlaying(true)}
-              >
-                {poster === undefined ? (
-                  <Image size={28} />
-                ) : (
-                  <span className="play">
-                    <Play size={24} fill="currentColor" strokeWidth={0} />
-                  </span>
+              <div className="player-frame">
+                <button
+                  className="timelapse"
+                  style={poster ? { backgroundImage: `url("${poster}")` } : undefined}
+                  aria-label={t('card.playTimelapse')}
+                  onClick={() => setPlaying(true)}
+                >
+                  {poster === undefined ? (
+                    <Image size={28} />
+                  ) : (
+                    <span className="play">
+                      <Play size={24} fill="currentColor" strokeWidth={0} />
+                    </span>
+                  )}
+                </button>
+                {poster && (
+                  <button className="player-expand" aria-label={t('player.expand')} title={t('player.expand')} onClick={() => setExpanded('start')}>
+                    <Maximize2 size={14} />
+                  </button>
                 )}
-              </button>
+              </div>
             ))}
+          {expanded && (
+            <TimelapseOverlay
+              title={card.title}
+              start={card.start}
+              end={card.end}
+              {...(expanded === 'start' ? {} : { at: expanded })}
+              onClose={() => setExpanded(null)}
+            />
+          )}
 
           {card.summary && (
             <div>

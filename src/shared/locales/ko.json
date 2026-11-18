@@ -198,7 +198,23 @@
     "notGenerated": "일일 데이터가 아직 생성되지 않았습니다. 지금 작성하려면 다시 생성을 클릭하거나 직접 입력하세요.",
     "blockersPlaceholder": "진행을 막는 문제를 입력하십시오",
     "itemLabel": "{{title}} 항목 {{number}}",
-    "addItem": "항목 추가"
+    "addItem": "항목 추가",
+    "provider": {
+      "button": "일일 요약 제공업체 선택",
+      "current": "일일 요약 제공업체: {{name}}",
+      "title": "일일 요약 제공업체",
+      "sub": "일일 요약 생성 방식을 선택하거나 생성을 끄세요.",
+      "auto": "타임라인과 동일",
+      "autoSub": "타임라인 제공업체, 그다음 대체 제공업체.",
+      "none": "제공업체 없음",
+      "noneSub": "다른 제공업체를 선택할 때까지 일일 요약 생성을 끕니다.",
+      "notSetUp": "아직 설정되지 않았습니다. 설정 → 제공업체에서 추가하세요.",
+      "cliMissing": "이 컴퓨터에서 찾을 수 없습니다.",
+      "checking": "제공업체 확인 중…",
+      "off": "선택된 일일 제공업체가 없습니다. 위의 톱니바퀴 버튼을 클릭한 다음 제공업체를 선택하면 요약 생성이 다시 켜집니다.",
+      "unavailable": "{{name}}이(가) 설정되지 않았습니다. 톱니바퀴 버튼으로 다른 일일 제공업체를 선택하거나 설정 → 제공업체에서 추가하세요."
+    },
+    "badge": "새 일일 요약"
   },
   "chat": {
     "errors": {
@@ -894,5 +910,66 @@
     "reportProblem": "문제 신고",
     "reportProblemSub": "브라우저에서 GitHub 이슈 트래커를 엽니다.",
     "openIssues": "GitHub 이슈 열기"
+  },
+  "gettingStarted": {
+    "of": "{{current}}/{{total}}",
+    "checklist": {
+      "title": "Dayflow Electron과 함께하는 첫날",
+      "collapse": "접기",
+      "expand": "펼치기",
+      "firstCards": "타임라인의 첫 카드",
+      "firstCardsDone": "Dayflow Electron이 화면 사용 시간을 카드로 바꾸고 있습니다",
+      "firstCardsWorking": "보통 기록 시작 약 15분 후에 준비됩니다",
+      "firstCardsPaused": "기록이 일시 정지되었습니다. 켜면 첫 카드를 받을 수 있습니다.",
+      "openCard": "카드 열기",
+      "openCardSub": "카드를 클릭하면 요약과 타임랩스를 볼 수 있습니다",
+      "unlockDaily": "일일 요약 잠금 해제",
+      "unlockChat": "채팅 잠금 해제",
+      "readyToOpen": "열 준비 완료",
+      "recorded": "{{progress}} 기록됨",
+      "allDone": "모든 준비가 끝났습니다",
+      "allDoneSub": "Dayflow Electron의 모든 기능을 잠금 해제했습니다. 타임라인을 즐겨 보세요.",
+      "done": "완료"
+    },
+    "tour": {
+      "label": "환영 투어",
+      "skip": "둘러보기 건너뛰기",
+      "gotIt": "확인",
+      "recordingTitle": "Dayflow Electron이 백그라운드에서 실행 중입니다",
+      "recordingBodyMac": "작업하는 동안 화면을 조용히 기록하고, 기록은 이 Mac에 보관합니다. 메뉴 막대의 Dayflow Electron 아이콘에서 언제든 일시 정지하거나 재개할 수 있습니다.",
+      "recordingBody": "작업하는 동안 화면을 조용히 기록하고 녹화본은 이 컴퓨터에 보관합니다. 시스템 트레이의 Dayflow Electron 아이콘에서 언제든지 일시 정지하거나 다시 시작할 수 있습니다.",
+      "cardsTitle": "15분마다 하루가 저절로 기록됩니다",
+      "cardsBody": "AI가 화면 사용 시간의 각 구간을 타임라인 카드로 바꿉니다. 무엇을 작업했는지, 어떤 앱을 썼는지, 언제 주의가 흐트러졌는지 보여 줍니다. 카드를 클릭하면 전체 요약과 타임랩스를 보거나 카테고리를 수정할 수 있습니다.",
+      "unlocksTitle": "오래 실행할수록 더 많은 것을 알려 줍니다",
+      "unlocksBody": "일부 보기는 유용한 내용을 보여 주려면 하루의 기록이 충분히 쌓여야 하므로, Dayflow Electron이 기록하는 동안 차례로 잠금 해제됩니다. 앞으로 열릴 기능은 다음과 같습니다.",
+      "closeTitle": "이제 이 윈도우를 닫아도 됩니다",
+      "closeBodyMac": "Dayflow Electron은 메뉴 막대에서 계속 작동합니다. 첫 카드는 보통 기록을 시작한 지 약 15분 후에 나타나며, 준비되면 알림을 보내 드릴 수 있습니다.",
+      "closeBody": "Dayflow Electron은 시스템 트레이에서 계속 작동합니다. 첫 카드는 보통 기록을 시작하고 약 15분 후에 나타나며, 준비되면 알림을 받게 됩니다.",
+      "recording": "기록",
+      "now": "지금",
+      "reviewing": "풀 리퀘스트 리뷰",
+      "planning": "주간 계획 세우기",
+      "youtube": "YouTube에 빠짐",
+      "distraction": "주의 분산 · 6분",
+      "firstCardsTime": "약 15분",
+      "hours_other": "{{count}}시간",
+      "dailyMilestone": "일일 요약 및 스탠드업 노트",
+      "chatMilestone": "채팅: 하루에 대해 무엇이든 물어보세요",
+      "weeklyMilestone": "주간 리뷰"
+    },
+    "settings": {
+      "guide": "시작 가이드",
+      "guideSub": "환영 투어를 다시 보고 첫날 체크리스트를 타임라인에 다시 표시합니다.",
+      "showAgain": "다시 보기",
+      "reset": "온보딩 초기화",
+      "resetSub": "설정(제공업체, 권한, 카테고리)을 다시 진행합니다. 완료할 때까지 기록이 중지되며, 타임라인, 녹화본, 설정은 그대로 유지됩니다."
+    }
+  },
+  "player": {
+    "label": "타임랩스 플레이어",
+    "expand": "전체 창 플레이어 열기",
+    "play": "재생",
+    "speed": "재생 속도",
+    "range": "{{start}}~{{end}}"
   }
 }

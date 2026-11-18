@@ -1,84 +1,75 @@
-import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Maximize2 } from 'lucide-react'
 import { currentLanguage } from '@shared/i18n'
-import type { FrameRef } from '@shared/media'
+import { type FrameRef, TIMELAPSE_SPEEDS, type TimelapseSpeed } from '@shared/media'
+import { useFrames, useTimelapse } from './timelapse'
 
-const SPEEDS = [20, 40, 60] as const
-const clock = (ts: number) =>
+export const frameClock = (ts: number) =>
   new Date(ts * 1000).toLocaleTimeString(currentLanguage() === 'en' ? 'en-US' : currentLanguage(), { hour: 'numeric', minute: '2-digit', second: '2-digit' })
+
+/** Where the inline player was when it handed over to the full-window player. */
+export interface PlayerPosition {
+  index: number
+  speed: TimelapseSpeed
+  playing: boolean
+}
 
 /**
  * A card's screenshots: step through them, or play them as a timelapse at
  * 20x/40x/60x (upstream renders a video with ffmpeg; playing the frames needs
- * none).
+ * none). The expand button opens the full-window player at the same frame.
  */
-export function FramePlayer({ start, end }: { start: number; end: number }) {
+export function FramePlayer({ start, end, onExpand }: { start: number; end: number; onExpand?: (at: PlayerPosition) => void }) {
   const { t } = useTranslation()
-  const [frames, setFrames] = useState<FrameRef[]>([])
-  const [index, setIndex] = useState(0)
-  const [speed, setSpeed] = useState<(typeof SPEEDS)[number] | null>(null)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    let current = true
-    void window.dayflow.getFrames({ start, end }).then((f) => {
-      if (!current) return // a newer card was opened meanwhile
-      setFrames(f)
-      setIndex(0)
-    })
-    return () => {
-      current = false
-    }
-  }, [start, end])
-
-  // Timelapse: wait the real gap between frames divided by the speed.
-  useEffect(() => {
-    if (speed === null) return
-    const current = frames[index]
-    const next = frames[index + 1]
-    if (!current || !next) {
-      setSpeed(null)
-      return
-    }
-    // Long pauses (lock, idle) are shortened to 2 s so the timelapse keeps moving.
-    timer.current = setTimeout(() => setIndex(index + 1), Math.min(2000, Math.max(50, ((next.capturedAt - current.capturedAt) * 1000) / speed)))
-    return () => {
-      if (timer.current) clearTimeout(timer.current)
-    }
-  }, [speed, index, frames])
-
+  const frames = useFrames(start, end)
+  if (frames === null) return null
   if (frames.length === 0) return <p className="note">{t('frames.none')}</p>
-  const frame = frames[Math.min(index, frames.length - 1)]!
+  return <Frames key={`${start}-${end}`} frames={frames} onExpand={onExpand} />
+}
+
+function Frames({ frames, onExpand }: { frames: FrameRef[]; onExpand: ((at: PlayerPosition) => void) | undefined }) {
+  const { t } = useTranslation()
+  const player = useTimelapse(frames)
+  const { index } = player
+  const frame = frames[index]!
 
   return (
     <div className="player">
-      <img src={frame.url} alt={t('frames.screenshotAt', { time: clock(frame.capturedAt) })} />
-      <input
-        type="range"
-        min={0}
-        max={frames.length - 1}
-        value={index}
-        aria-label={t('frames.position')}
-        onChange={(e) => setIndex(Number(e.target.value))}
-      />
+      <div className="player-frame">
+        <img src={frame.url} alt={t('frames.screenshotAt', { time: frameClock(frame.capturedAt) })} />
+        {onExpand && (
+          <button
+            className="player-expand"
+            aria-label={t('player.expand')}
+            title={t('player.expand')}
+            onClick={() => {
+              player.pause()
+              onExpand({ index, speed: player.speed, playing: player.playing })
+            }}
+          >
+            <Maximize2 size={14} />
+          </button>
+        )}
+      </div>
+      <input type="range" min={0} max={frames.length - 1} value={index} aria-label={t('frames.position')} onChange={(e) => player.setIndex(Number(e.target.value))} />
       <div className="row">
-        <button aria-label={t('frames.previous')} disabled={index === 0} onClick={() => setIndex(index - 1)}>
+        <button aria-label={t('frames.previous')} disabled={index === 0} onClick={() => player.setIndex(index - 1)}>
           ‹
         </button>
-        <button aria-label={t('frames.next')} disabled={index >= frames.length - 1} onClick={() => setIndex(index + 1)}>
+        <button aria-label={t('frames.next')} disabled={index >= frames.length - 1} onClick={() => player.setIndex(index + 1)}>
           ›
         </button>
-        {speed === null ? (
-          SPEEDS.map((s) => (
-            <button key={s} onClick={() => (index >= frames.length - 1 && setIndex(0), setSpeed(s))}>
+        {player.playing ? (
+          <button onClick={player.pause}>❚❚ {t('frames.pause')}</button>
+        ) : (
+          TIMELAPSE_SPEEDS.map((s) => (
+            <button key={s} onClick={() => player.play(s)}>
               ▶ {s}x
             </button>
           ))
-        ) : (
-          <button onClick={() => setSpeed(null)}>❚❚ {t('frames.pause')}</button>
         )}
         <span className="note push-right">
-          {clock(frame.capturedAt)} · {index + 1}/{frames.length}
+          {frameClock(frame.capturedAt)} · {index + 1}/{frames.length}
         </span>
       </div>
     </div>

@@ -6,7 +6,7 @@ import { type Category, PRIVATE_CATEGORY, SYSTEM_CATEGORY, categoryKey } from '@
 import { shiftDay, todayKey } from '@shared/day'
 import { dateLabel, t } from '@shared/i18n'
 import type { ReviewSegment } from '@shared/review'
-import type { AppStatus, Rating, TimelineCard } from '@shared/types'
+import type { AppStatus, Rating, Tab, TimelineCard } from '@shared/types'
 import type { DayCards, Week } from '@shared/week'
 import { CalendarPopover } from './CalendarPopover'
 import { CardDetail } from './CardDetail'
@@ -14,6 +14,7 @@ import { DayCanvas } from './DayCanvas'
 import { DaySummary } from './DaySummary'
 import { ReviewOverlay } from './ReviewOverlay'
 import { FilterBar } from './FilterBar'
+import { GettingStartedChecklist } from './GettingStarted'
 import { PausePill } from './PausePill'
 import type { SettingsTab } from './Settings'
 import { WeekGrid } from './WeekGrid'
@@ -57,6 +58,10 @@ export function Timeline(props: {
   /** The day the app wants the daily goal pop-up on: shown in day mode, nothing selected. */
   goalPromptDay: string | null
   onGoalPromptShown: () => void
+  /** Bumped after 15 minutes away: back to today, card closed, scrolled to now (upstream performIdleResetAndScroll). */
+  resetTick: number
+  /** The first-day checklist's "Open" buttons. */
+  onOpenTab: (tab: Tab) => void
 }) {
   const { t } = useTranslation()
   const [day, setDay] = useState(todayKey)
@@ -79,6 +84,16 @@ export function Timeline(props: {
     setMode('day')
     setSelected(null)
   }, [props.goalPromptDay])
+  useEffect(() => {
+    if (props.resetTick === 0) return
+    setDay(todayKey())
+    setSelected(null)
+    setScrollToNow((n) => n + 1)
+  }, [props.resetTick])
+  // Opening a card ticks the first-day checklist (a no-op once done or when the guide is off).
+  useEffect(() => {
+    if (selected !== null) void window.dayflow.updateGettingStarted({ openedCard: true })
+  }, [selected])
   const [footerHidden, setFooterHidden] = useState(false)
   const [review, setReview] = useState<{ segments: ReviewSegment[]; toReview: number } | null>(null)
   const [reviewing, setReviewing] = useState(false)
@@ -292,6 +307,7 @@ export function Timeline(props: {
             />
           ) : (
             <div className="inspector-scroll">
+              {mode === 'day' && <GettingStartedChecklist recorder={props.status?.recorder.state ?? null} onOpenTab={props.onOpenTab} />}
               <DaySummary
                 day={day}
                 cards={cards}

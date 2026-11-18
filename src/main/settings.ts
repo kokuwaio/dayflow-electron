@@ -9,6 +9,8 @@ import { sanitizeCategories } from '../shared/categories'
 import { CAPTURE_INTERVALS, DEFAULT_SETTINGS, type ProviderKind, type Settings, THEMES, type Theme } from '../shared/types'
 import { sanitizeAppLanguage } from '../shared/languages'
 import { sanitizeUiStyle } from '../shared/ui-style'
+import { sanitizeGuide } from '../shared/getting-started'
+import { sanitizeDailyProvider } from '../shared/daily-provider'
 
 const KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'codex-cli']
 /** Providers that use an API key (the agent CLIs use the user's own login). */
@@ -109,7 +111,10 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
     hideSecrets: r.hideSecrets !== false,
     blockedApps: Array.isArray(r.blockedApps)
       ? r.blockedApps.filter((x): x is string => typeof x === 'string' && x.trim() !== '').map((x) => x.trim()).slice(0, 100)
-      : [...DEFAULT_SETTINGS.blockedApps]
+      : [...DEFAULT_SETTINGS.blockedApps],
+    gettingStarted: sanitizeGuide(r.gettingStarted),
+    dailyProvider: sanitizeDailyProvider(r.dailyProvider),
+    dailyRecapUnseen: typeof r.dailyRecapUnseen === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.dailyRecapUnseen) ? r.dailyRecapUnseen : ''
   }
 }
 

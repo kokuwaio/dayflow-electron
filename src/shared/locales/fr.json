@@ -218,7 +218,23 @@
     "notGenerated": "Les données du Récap quotidien n’ont pas encore été générées. Cliquez sur Régénérer pour les générer maintenant, ou remplissez-les vous-même.",
     "blockersPlaceholder": "Indiquez les éventuels blocages",
     "itemLabel": "{{title}}, élément {{number}}",
-    "addItem": "Ajouter un élément"
+    "addItem": "Ajouter un élément",
+    "provider": {
+      "button": "Choisir le fournisseur du Récap quotidien",
+      "current": "Fournisseur du Récap quotidien : {{name}}",
+      "title": "Fournisseur du Récap quotidien",
+      "sub": "Choisissez comment générer ce Récap quotidien, ou désactivez la génération.",
+      "auto": "Comme la chronologie",
+      "autoSub": "Votre fournisseur de chronologie, puis son fournisseur de secours.",
+      "none": "Aucun fournisseur",
+      "noneSub": "Désactive la génération du Récap quotidien jusqu’à ce que vous choisissiez un autre fournisseur.",
+      "notSetUp": "Pas encore configuré. Ajoutez-le dans Réglages → Fournisseurs.",
+      "cliMissing": "Introuvable sur cet ordinateur.",
+      "checking": "Vérification des fournisseurs…",
+      "off": "Aucun fournisseur n’est sélectionné pour le Récap quotidien. Cliquez sur l’engrenage ci-dessus, puis choisissez un fournisseur pour réactiver la génération du récap.",
+      "unavailable": "{{name}} n’est pas configuré. Choisissez un autre fournisseur pour le Récap quotidien avec l’engrenage, ou ajoutez-le dans Réglages → Fournisseurs."
+    },
+    "badge": "Nouveau récap quotidien"
   },
   "chat": {
     "errors": {
@@ -940,5 +956,68 @@
     "reportProblem": "Signaler un problème",
     "reportProblemSub": "Ouvre le suivi des tickets sur GitHub dans votre navigateur.",
     "openIssues": "Ouvrir les tickets GitHub"
+  },
+  "gettingStarted": {
+    "of": "{{current}} sur {{total}}",
+    "checklist": {
+      "title": "Votre première journée avec Dayflow Electron",
+      "collapse": "Réduire",
+      "expand": "Développer",
+      "firstCards": "Premières cartes sur votre chronologie",
+      "firstCardsDone": "Dayflow Electron transforme votre temps d’écran en cartes",
+      "firstCardsWorking": "Généralement prêt environ 15 minutes après le début de l’enregistrement",
+      "firstCardsPaused": "L’enregistrement est en pause. Activez-le pour obtenir vos premières cartes.",
+      "openCard": "Ouvrir une carte",
+      "openCardSub": "Cliquez sur une carte pour voir son résumé et sa vidéo accélérée",
+      "unlockDaily": "Débloquer votre Récap quotidien",
+      "unlockChat": "Débloquer le Chat",
+      "readyToOpen": "Prêt à ouvrir",
+      "recorded": "{{progress}} enregistré",
+      "allDone": "Tout est prêt",
+      "allDoneSub": "Vous avez débloqué tout ce que Dayflow Electron propose. Profitez de votre chronologie.",
+      "done": "Terminé"
+    },
+    "tour": {
+      "label": "Visite de bienvenue",
+      "skip": "Passer la visite",
+      "gotIt": "Compris",
+      "recordingTitle": "Dayflow Electron fonctionne en arrière-plan",
+      "recordingBodyMac": "Il enregistre discrètement votre écran pendant que vous travaillez et conserve les enregistrements sur ce Mac. Mettez en pause ou reprenez à tout moment depuis l’icône Dayflow Electron dans la barre des menus.",
+      "recordingBody": "Il enregistre discrètement votre écran pendant que vous travaillez et conserve les enregistrements sur cet ordinateur. Mettez en pause ou reprenez à tout moment depuis l’icône Dayflow Electron dans la zone de notification.",
+      "cardsTitle": "Toutes les 15 minutes, votre journée s’écrit toute seule",
+      "cardsBody": "Votre IA transforme chaque période de temps d’écran en cartes de chronologie : ce sur quoi vous avez travaillé, les apps utilisées et les moments où vous avez été distrait. Cliquez sur une carte pour voir le résumé complet et une vidéo accélérée, ou pour corriger sa catégorie.",
+      "unlocksTitle": "Plus il tourne longtemps, plus il peut vous en dire",
+      "unlocksBody": "Certaines vues ont besoin d’une part suffisante de votre journée pour être utiles ; elles se débloquent donc au fil de l’enregistrement. Voici ce qui vous attend.",
+      "closeTitle": "Vous pouvez maintenant fermer cette fenêtre",
+      "closeBodyMac": "Dayflow Electron continue de fonctionner depuis votre barre des menus. Vos premières cartes apparaissent généralement environ 15 minutes après le début de l’enregistrement, et nous pouvons vous envoyer une notification lorsqu’elles sont prêtes.",
+      "closeBody": "Dayflow Electron continue de fonctionner depuis la zone de notification. Vos premières cartes apparaissent généralement environ 15 minutes après le début de l’enregistrement, et vous recevrez une notification quand elles seront prêtes.",
+      "recording": "Enregistrement",
+      "now": "maintenant",
+      "reviewing": "Revue de pull requests",
+      "planning": "Planification de la semaine",
+      "youtube": "Happé par YouTube",
+      "distraction": "Distraction · 6 min",
+      "firstCardsTime": "~15 min",
+      "hours_one": "{{count}} heure",
+      "hours_many": "{{count}} heures",
+      "hours_other": "{{count}} heures",
+      "dailyMilestone": "Récap quotidien et notes de stand-up",
+      "chatMilestone": "Chat : posez n’importe quelle question sur votre journée",
+      "weeklyMilestone": "Bilan hebdomadaire"
+    },
+    "settings": {
+      "guide": "Guide de démarrage",
+      "guideSub": "Relancez la visite de bienvenue et réaffichez la liste du premier jour sur votre chronologie.",
+      "showAgain": "Afficher à nouveau",
+      "reset": "Réinitialiser la configuration initiale",
+      "resetSub": "Refaites la configuration (fournisseur, autorisations, catégories). L’enregistrement s’arrête jusqu’à la fin ; votre chronologie, vos enregistrements et vos réglages sont conservés."
+    }
+  },
+  "player": {
+    "label": "Lecteur de vidéo accélérée",
+    "expand": "Ouvrir le lecteur en plein écran",
+    "play": "Lire",
+    "speed": "Vitesse de lecture",
+    "range": "{{start}} à {{end}}"
   }
 }

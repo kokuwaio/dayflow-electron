@@ -10,6 +10,7 @@ import type { UpdateMode } from '@shared/updates'
 import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings, type Theme } from '@shared/types'
 import type { UiStyle } from '@shared/ui-style'
 import { AgentAccessSettings } from './AgentAccessSettings'
+import { GettingStartedSettings } from './GettingStarted'
 import { Row, Section, StatusDot } from './SettingsLayout'
 import { SupportSettings } from './SupportSettings'
 import { providerChoices } from './providers'
@@ -483,6 +484,7 @@ function OtherTab({ settings, save }: { settings: Settings; save: Save }) {
           />
         </Row>
         <UpdatesRow settings={settings} save={save} />
+        <GettingStartedSettings />
       </Section>
       <CategoryEditor categories={settings.categories} save={save} />
       <SupportSettings />

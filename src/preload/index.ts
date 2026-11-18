@@ -19,6 +19,23 @@ const api: DayflowApi = {
     ipcRenderer.on('daily:changed', listener)
     return () => ipcRenderer.off('daily:changed', listener)
   },
+  getDailyProviders: () => ipcRenderer.invoke('daily:providers'),
+  getDailyBadge: () => ipcRenderer.invoke('daily:badge'),
+  onDailyBadge: (cb) => {
+    const listener = (_e: unknown, pending: boolean) => cb(pending)
+    ipcRenderer.on('daily:badge', listener)
+    return () => ipcRenderer.off('daily:badge', listener)
+  },
+  reportView: (tab) => ipcRenderer.send('app:view', tab),
+  getGettingStarted: () => ipcRenderer.invoke('gettingStarted:get'),
+  updateGettingStarted: (patch) => ipcRenderer.invoke('gettingStarted:update', patch),
+  replayGettingStarted: () => ipcRenderer.invoke('gettingStarted:replay'),
+  onGettingStarted: (cb) => {
+    const listener = (_e: unknown, guide: Parameters<typeof cb>[0]) => cb(guide)
+    ipcRenderer.on('gettingStarted:changed', listener)
+    return () => ipcRenderer.off('gettingStarted:changed', listener)
+  },
+  resetOnboarding: () => ipcRenderer.invoke('onboarding:reset'),
   getVersion: () => ipcRenderer.invoke('app:version'),
   getUpdateSupport: () => ipcRenderer.invoke('updates:support'),
   getConversations: () => ipcRenderer.invoke('chat:conversations'),

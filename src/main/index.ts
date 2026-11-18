@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { writeFile } from 'node:fs/promises'
 import { BrowserWindow, Menu, Tray, app, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, nativeTheme, powerMonitor, screen, shell, systemPreferences } from 'electron'
 import { beforeBoundary, dayCount, dayRange, daysOf, shiftDay, todayKey } from '../shared/day'
-import { needsApiKey } from '../shared/providers'
+import { cliOf, needsApiKey } from '../shared/providers'
 import { PAUSE_PRESETS, describeRecorder, pauseLabel } from '../shared/status'
 import { currentLanguage, setLanguage, t } from '../shared/i18n'
 import { resolveLanguage } from '../shared/languages'
@@ -52,6 +52,10 @@ import { type UpdateMode, parseCodesign, updateMode, isDevVersion } from '../sha
 import { errorMessage } from '../shared/errors'
 import { type ScreenPermission, type WindowCheck, windowFixCommand } from '../shared/permissions'
 import { type UiStyle, windowBackground } from '../shared/ui-style'
+import { beginGuide } from '../shared/getting-started'
+import { type DailyProviderOption, providerLabel, standupPlan } from '../shared/daily-provider'
+import { createDailyBadge } from './daily-badge'
+import { registerGettingStarted } from './getting-started'
 
 const here = dirname(fileURLToPath(import.meta.url))
 /** A deep link among the arguments (dayflow-electron://stop-recording), from the desktop or a second launch. */
@@ -102,6 +106,8 @@ let tray: Tray | null = null
 /** Set once the update check started (Windows and macOS packages). */
 let updater: Updater | null = null
 let quitting = false
+/** Set by main(): the window gained or lost focus (the Daily badge clears once Daily is seen). */
+let onWindowFocus: ((focused: boolean) => void) | null = null
 
 const log = (message: string) => {
   console.log(`[dayflow-electron] ${message}`)
@@ -242,12 +248,21 @@ async function main(): Promise<void> {
     const p = pipelineProviders()
     return typeof p === 'string' ? [] : p
   }
+  /** Who writes the standup (Daily's provider picker, upstream DailyRecapProvider): the providers, or why there are none. */
+  const standupProviders = () => {
+    const plan = standupPlan(settings.get().dailyProvider, settings.get(), usable)
+    if (plan.kind === 'off') return t('daily.provider.off')
+    if (plan.kind === 'unavailable') return t('daily.provider.unavailable', { name: providerLabel(plan.provider) })
+    return plan.providers.map(providerFor)
+  }
   /** One standup run per day at a time, shared by the scheduler and the Regenerate button (upstream isRunningCheck). */
   const standupRuns = new Map<string, Promise<StandupEntry>>()
   const writeStandup = (day: string, minMinutes: number): Promise<StandupEntry> => {
     const running = standupRuns.get(day)
     if (running) return running
-    const run = generateStandup({ store, providers: configuredProviders(), target: day, language: settings.get().outputLanguage, minMinutes })
+    const providers = standupProviders()
+    if (typeof providers === 'string') return Promise.reject(new Error(providers))
+    const run = generateStandup({ store, providers, target: day, language: settings.get().outputLanguage, minMinutes })
       .then((entry) => {
         store.saveStandup(day, entry)
         window?.webContents.send('daily:changed')
@@ -262,7 +277,8 @@ async function main(): Promise<void> {
   const scheduleStandup = async () => {
     const day = todayKey()
     if (!access().daily.unlocked || beforeBoundary(new Date()) || store.standup(day) || standupRuns.has(day)) return
-    if (configuredProviders().length === 0 || !standupSourceDay(store, day, AUTO_MIN_MINUTES)) return
+    const providers = standupProviders()
+    if (typeof providers === 'string' || providers.length === 0 || !standupSourceDay(store, day, AUTO_MIN_MINUTES)) return
     const attempts = settings.get().standupAttempts
     const tries = attempts.day === day ? attempts.count : 0
     if (tries >= 3) return
@@ -270,12 +286,36 @@ async function main(): Promise<void> {
     try {
       await writeStandup(day, AUTO_MIN_MINUTES)
       notifier.standupReady(day)
+      dailyBadge.recapReady(day)
     } catch (err) {
       log(`standup failed: ${String(err)}`)
     }
   }
+  // The sidebar dot and Dock count for a recap the user has not opened (upstream NotificationBadgeManager).
+  const dailyBadge = createDailyBadge({
+    unseen: () => settings.get().dailyRecapUnseen,
+    save: (dailyRecapUnseen) => void settings.save({ dailyRecapUnseen }),
+    send: (pending) => window?.webContents.send('daily:badge', pending),
+    setCount: (count) => (process.platform === 'darwin' || process.platform === 'linux') && app.setBadgeCount(count)
+  })
+  ipcMain.handle('daily:badge', () => dailyBadge.pending())
+  ipcMain.on('app:view', (_e, tab: Tab) => dailyBadge.view({ tab }))
+  onWindowFocus = (focused) => dailyBadge.view({ focused })
   setInterval(() => void scheduleStandup(), 5 * 60_000)
   void scheduleStandup()
+  // The providers Daily's picker offers, and whether each can run now.
+  ipcMain.handle('daily:providers', async (): Promise<DailyProviderOption[]> => {
+    const s = settings.get()
+    const host = await hostAccess(nodeRunner, inFlatpak, cliEnv.appId)
+    const kinds: ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'codex-cli']
+    return Promise.all(
+      kinds.map(async (kind) => {
+        const cli = cliOf(kind)
+        const found = cli && host.ok && (await findCli(nodeRunner, cli, { ...cliEnv, ...(s.cliPaths[cli] ? { configuredPath: s.cliPaths[cli] } : {}) }))
+        return { kind, model: s.models[kind], available: cli ? !!found : usable(kind) }
+      })
+    )
+  })
 
   ipcMain.handle('access:get', () => access())
   ipcMain.handle('daily:get', (_e, day: string) => store.standup(day))
@@ -537,7 +577,7 @@ async function main(): Promise<void> {
   ipcMain.handle('settings:get', () => settings.get())
   ipcMain.handle('settings:save', async (_e, next: Partial<Settings>) => {
     // The window only edits preferences; the app's own bookkeeping is not its to change.
-    const { notified: _n, standupAttempts: _a, onboarded: _o, chatMemory: _m, ...preferences } = next
+    const { notified: _n, standupAttempts: _a, onboarded: _o, chatMemory: _m, gettingStarted: _g, dailyRecapUnseen: _d, ...preferences } = next
     return savePreferences(preferences)
   })
   ipcMain.handle('key:set', (_e, kind: ProviderKind, key: string) => settings.setApiKey(kind, key))
@@ -687,9 +727,24 @@ async function main(): Promise<void> {
   // Recording starts once the first-run setup is done (upstream records only after onboarding).
   ipcMain.handle('onboarding:complete', async () => {
     if (settings.get().onboarded) return // a second click must not start a second recorder
-    await settings.save({ onboarded: true })
+    // The first-day guide starts here (upstream GettingStarted.begin): tour, then the checklist.
+    await settings.save({ onboarded: true, gettingStarted: beginGuide(Math.floor(Date.now() / 1000)) })
     recorder.start()
     updateTray()
+  })
+  // Upstream's "Reset Onboarding": back through setup, keeping data and settings; recording waits for the end of it.
+  ipcMain.handle('onboarding:reset', async () => {
+    if (!settings.get().onboarded) return
+    await settings.save({ onboarded: false })
+    recorder.stop()
+    updateTray()
+    window?.webContents.reload()
+  })
+  registerGettingStarted({
+    ipcMain,
+    settings,
+    hasCards: () => store.hasTimelineCards(),
+    changed: (guide) => window?.webContents.send('gettingStarted:changed', guide)
   })
   if (settings.get().onboarded) recorder.start()
 
@@ -785,6 +840,8 @@ function showWindow(): void {
   window.on('closed', () => {
     window = null
   })
+  window.on('focus', () => onWindowFocus?.(true))
+  window.on('blur', () => onWindowFocus?.(false))
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) void shell.openExternal(url)
     return { action: 'deny' }

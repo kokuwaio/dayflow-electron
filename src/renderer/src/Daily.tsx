@@ -7,6 +7,7 @@ import { shiftDay, todayKey } from '@shared/day'
 import { dateLabel, durationLabel, hourAxisLabel, t } from '@shared/i18n'
 import type { StandupEntry, TimelineCard } from '@shared/types'
 import { LockedFeature } from './LockedFeature'
+import { DailyProviderButton, useDailyProvider } from './DailyProvider'
 import { isDistractionName } from '@shared/categories'
 
 const DISTRACTION_COLOR = '#FF5950'
@@ -166,6 +167,8 @@ function Standup({ day }: { day: string }) {
   const pending = useRef<{ timer: ReturnType<typeof setTimeout>; save: () => void } | null>(null)
   const viewing = useRef(day)
   viewing.current = day
+  const [provider, setProvider] = useDailyProvider()
+  const off = provider === 'none'
 
   const apply = useCallback((e: StandupEntry | null) => {
     setEntry(e)
@@ -223,13 +226,29 @@ function Standup({ day }: { day: string }) {
           <Copy size={15} />
           {copied ? t('common.copied') : t('daily.copyStandup')}
         </button>
-        <button className="btn-glass daily-pill" disabled={regenerating} onClick={() => void regenerate()}>
+        <button
+          className="btn-glass daily-pill"
+          disabled={regenerating || off}
+          title={off ? t('daily.provider.off') : undefined}
+          onClick={() => void regenerate()}
+        >
           <RotateCw size={15} />
           {regenerating ? t('daily.regenerating') : t('daily.regenerate')}
         </button>
+        {provider && (
+          <DailyProviderButton
+            choice={provider}
+            disabled={regenerating}
+            onPick={(next) => {
+              setBusy(null)
+              setProvider(next)
+            }}
+          />
+        )}
       </div>
       {busy && !regenerating && <p className="note">{busy}</p>}
-      {!entry && <p className="note">{t('daily.notGenerated')}</p>}
+      {off && !busy && <p className="note">{t('daily.provider.off')}</p>}
+      {!entry && !off && <p className="note">{t('daily.notGenerated')}</p>}
       <div className="standup-cards">
         <div className="standup-card">
           <ItemList title={titles.highlights} items={draft.highlights} onChange={(highlights) => edit({ ...draft, highlights })} />

@@ -198,7 +198,23 @@
     "notGenerated": "尚未生成每日回顾数据。点按“重新生成”立即生成，或自行填写。",
     "blockersPlaceholder": "填写你遇到的任何阻碍",
     "itemLabel": "{{title}}第 {{number}} 项",
-    "addItem": "添加项目"
+    "addItem": "添加项目",
+    "provider": {
+      "button": "选择每日回顾提供商",
+      "current": "每日回顾提供商：{{name}}",
+      "title": "每日回顾提供商",
+      "sub": "选择此每日回顾的生成方式，或关闭生成功能。",
+      "auto": "与时间线相同",
+      "autoSub": "你的时间线提供商，其次是它的备用提供商。",
+      "none": "无提供商",
+      "noneSub": "在你选择其他提供商之前，将停止生成每日回顾。",
+      "notSetUp": "尚未设置。请在 设置 → 提供商 中添加。",
+      "cliMissing": "在这台电脑上未找到。",
+      "checking": "正在检查提供商…",
+      "off": "未选择每日回顾提供商。点击上方的齿轮按钮，然后选择一个提供商以重新开启回顾生成。",
+      "unavailable": "{{name}} 尚未设置。请用齿轮按钮选择其他每日回顾提供商，或在 设置 → 提供商 中添加。"
+    },
+    "badge": "新的每日回顾"
   },
   "chat": {
     "errors": {
@@ -894,5 +910,66 @@
     "reportProblem": "报告问题",
     "reportProblemSub": "在浏览器中打开 GitHub 上的问题跟踪页面。",
     "openIssues": "打开 GitHub Issues"
+  },
+  "gettingStarted": {
+    "of": "第 {{current}} 项，共 {{total}} 项",
+    "checklist": {
+      "title": "你使用 Dayflow Electron 的第一天",
+      "collapse": "折叠",
+      "expand": "展开",
+      "firstCards": "时间线上的首批卡片",
+      "firstCardsDone": "Dayflow Electron 正在将你的屏幕使用时间整理成卡片",
+      "firstCardsWorking": "通常在开始录制约 15 分钟后准备就绪",
+      "firstCardsPaused": "录制已暂停。开启后即可获得首批卡片。",
+      "openCard": "打开一张卡片",
+      "openCardSub": "点按任意卡片即可查看摘要和延时视频",
+      "unlockDaily": "解锁每日回顾",
+      "unlockChat": "解锁聊天",
+      "readyToOpen": "可以打开了",
+      "recorded": "已记录 {{progress}}",
+      "allDone": "一切就绪",
+      "allDoneSub": "你已解锁 Dayflow Electron 的全部功能。尽情使用你的时间线吧。",
+      "done": "完成"
+    },
+    "tour": {
+      "label": "欢迎导览",
+      "skip": "跳过导览",
+      "gotIt": "知道了",
+      "recordingTitle": "Dayflow Electron 正在后台运行",
+      "recordingBodyMac": "它会在你工作时安静地录制屏幕，并将录制内容保存在这台 Mac 上。可随时通过菜单栏中的 Dayflow Electron 图标暂停或继续。",
+      "recordingBody": "它会在你工作时安静地录制屏幕，并把录制内容保存在这台电脑上。你可以随时通过系统托盘中的 Dayflow Electron 图标暂停或继续。",
+      "cardsTitle": "每 15 分钟，你的一天自动成文",
+      "cardsBody": "你的 AI 会把每一段屏幕使用时间整理成时间线卡片：你做了什么、用了哪些 App、何时被打断。点按任意卡片即可查看完整摘要和延时视频，或修正其类别。",
+      "unlocksTitle": "运行越久，能告诉你的就越多",
+      "unlocksBody": "有些视图需要足够多的当日记录才能提供有用的内容，因此会随着 Dayflow Electron 的录制逐步解锁。以下是即将解锁的功能。",
+      "closeTitle": "现在可以关闭此窗口了",
+      "closeBodyMac": "Dayflow Electron 会在菜单栏中继续工作。首批卡片通常会在开始录制约 15 分钟后出现，准备好后我们可以通知你。",
+      "closeBody": "Dayflow Electron 会在系统托盘中继续运行。你的第一批卡片通常会在开始录制约 15 分钟后出现，准备好时你会收到通知。",
+      "recording": "录制",
+      "now": "现在",
+      "reviewing": "审查拉取请求",
+      "planning": "规划本周",
+      "youtube": "被 YouTube 吸引走",
+      "distraction": "分心 · 6 分钟",
+      "firstCardsTime": "约 15 分钟",
+      "hours_other": "{{count}} 小时",
+      "dailyMilestone": "每日回顾和站会笔记",
+      "chatMilestone": "聊天：关于你的一天，尽管提问",
+      "weeklyMilestone": "每周回顾"
+    },
+    "settings": {
+      "guide": "入门指南",
+      "guideSub": "重新播放欢迎导览，并在时间线上恢复第一天的清单。",
+      "showAgain": "再次显示",
+      "reset": "重置引导设置",
+      "resetSub": "重新完成设置（提供商、权限、类别）。完成前录制会停止；你的时间线、录制内容和设置都会保留。"
+    }
+  },
+  "player": {
+    "label": "延时播放器",
+    "expand": "在整个窗口中播放",
+    "play": "播放",
+    "speed": "播放速度",
+    "range": "{{start}} 至 {{end}}"
   }
 }

@@ -1,6 +1,8 @@
 import { DEFAULT_BLOCKLIST } from './blocklist'
 import { type Category, DEFAULT_CATEGORIES } from './categories'
 import type { StandupDraft } from './daily'
+import type { DailyProviderChoice } from './daily-provider'
+import { type GettingStarted, INACTIVE_GUIDE } from './getting-started'
 import type { AppLanguage } from './languages'
 import type { UiStyle } from './ui-style'
 
@@ -117,6 +119,12 @@ export interface Settings {
   autoInstallUpdates: boolean
   /** Ask GitHub Releases for new versions (installer builds only); the one request besides the AI provider. */
   checkForUpdates: boolean
+  /** The first-day guide after onboarding: welcome tour and checklist (app bookkeeping). */
+  gettingStarted: GettingStarted
+  /** Who writes the Daily standup: the timeline's providers ("auto"), one provider, or nobody ("none"). */
+  dailyProvider: DailyProviderChoice
+  /** The day of a recap the scheduler wrote that the user has not opened yet; '' for none (app bookkeeping). */
+  dailyRecapUnseen: string
 }
 
 /** The AI tools Settings → MCP / CLI connects: the agent CLIs, Claude Desktop (config file) and the editors (install links). */
@@ -179,7 +187,10 @@ export const DEFAULT_SETTINGS: Settings = {
   chatMemory: '',
   allowEdits: false,
   autoInstallUpdates: true,
-  checkForUpdates: true
+  checkForUpdates: true,
+  gettingStarted: { ...INACTIVE_GUIDE },
+  dailyProvider: 'auto',
+  dailyRecapUnseen: ''
 }
 
 export const THEMES = ['dark', 'light', 'system'] as const

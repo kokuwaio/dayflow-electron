@@ -7,6 +7,8 @@ import type { Language } from '../shared/languages'
 import type { UpdateMode } from '../shared/updates'
 import type { ScreenPermission, WindowCheck } from '../shared/permissions'
 import type { DayCards, Week } from '../shared/week'
+import type { DailyProviderOption } from '../shared/daily-provider'
+import type { GettingStarted } from '../shared/getting-started'
 import type {
   AgentAccessInfo,
   AgentClient,
@@ -53,6 +55,21 @@ export interface DayflowApi {
   saveStandup(day: string, draft: StandupDraft): Promise<void>
   onNavigate(cb: (tab: Tab) => void): () => void
   onDailyChanged(cb: () => void): () => void
+  /** Daily's provider picker: every provider kind and whether it can write a standup now (CLIs are looked up). */
+  getDailyProviders(): Promise<DailyProviderOption[]>
+  /** Whether a recap the scheduler wrote waits unseen (the dot on the Daily icon). */
+  getDailyBadge(): Promise<boolean>
+  onDailyBadge(cb: (pending: boolean) => void): () => void
+  /** Tells the main process which tab is on screen (the Daily badge clears on Daily). */
+  reportView(tab: Tab): void
+  /** The first-day guide, and whether the timeline has model-written cards yet. */
+  getGettingStarted(): Promise<{ guide: GettingStarted; hasCards: boolean }>
+  updateGettingStarted(patch: Partial<Pick<GettingStarted, 'tourPending' | 'openedCard' | 'dismissed' | 'collapsed'>>): Promise<GettingStarted>
+  /** Settings → Other → Show again: the tour and a fresh week of the checklist. */
+  replayGettingStarted(): Promise<GettingStarted>
+  onGettingStarted(cb: (guide: GettingStarted) => void): () => void
+  /** Back through onboarding without deleting anything; the window reloads into it. */
+  resetOnboarding(): Promise<void>
   /** The app version (1.2.3, or 0.0.0-<branch>.g<sha> for development builds). */
   getVersion(): Promise<string>
   /** Whether this build updates itself: "install", "notify" (unsigned macOS) or "off" (Flatpak, development builds). */

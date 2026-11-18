@@ -208,7 +208,23 @@
     "notGenerated": "Daily data has not been generated yet. Click Regenerate to write it now, or fill it in yourself.",
     "blockersPlaceholder": "Fill in any blockers you may have",
     "itemLabel": "{{title}} item {{number}}",
-    "addItem": "Add item"
+    "addItem": "Add item",
+    "provider": {
+      "button": "Choose daily recap provider",
+      "current": "Daily recap provider: {{name}}",
+      "title": "Daily recap provider",
+      "sub": "Choose how Daily generates this recap, or turn generation off.",
+      "auto": "Same as timeline",
+      "autoSub": "Your timeline provider, then its fallback.",
+      "none": "No provider",
+      "noneSub": "Turns off Daily recap generation until you pick another provider.",
+      "notSetUp": "Not set up yet. Add it under Settings → Providers.",
+      "cliMissing": "Not found on this computer.",
+      "checking": "Checking providers…",
+      "off": "No Daily provider is selected. Click the gear button above, then choose a provider to turn recap generation back on.",
+      "unavailable": "{{name}} is not set up. Choose another Daily provider with the gear button, or add it under Settings → Providers."
+    },
+    "badge": "New daily recap"
   },
   "chat": {
     "errors": {
@@ -917,5 +933,67 @@
     "reportProblem": "Report a problem",
     "reportProblemSub": "Opens the issue tracker on GitHub in your browser.",
     "openIssues": "Open GitHub issues"
+  },
+  "gettingStarted": {
+    "of": "{{current}} of {{total}}",
+    "checklist": {
+      "title": "Your first day with Dayflow Electron",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "firstCards": "First cards on your timeline",
+      "firstCardsDone": "Dayflow Electron is turning your screen time into cards",
+      "firstCardsWorking": "Usually ready about 15 minutes after recording starts",
+      "firstCardsPaused": "Recording is paused. Turn it on to get your first cards.",
+      "openCard": "Open a card",
+      "openCardSub": "Click any card to see its summary and timelapse",
+      "unlockDaily": "Unlock your Daily recap",
+      "unlockChat": "Unlock Chat",
+      "readyToOpen": "Ready to open",
+      "recorded": "{{progress}} recorded",
+      "allDone": "You're all set",
+      "allDoneSub": "You've unlocked everything Dayflow Electron does. Enjoy your timeline.",
+      "done": "Done"
+    },
+    "tour": {
+      "label": "Welcome tour",
+      "skip": "Skip tour",
+      "gotIt": "Got it",
+      "recordingTitle": "Dayflow Electron is running in the background",
+      "recordingBodyMac": "It quietly records your screen while you work and keeps the recordings on this Mac. Pause or resume anytime from the Dayflow Electron icon in your menu bar.",
+      "recordingBody": "It quietly records your screen while you work and keeps the recordings on this computer. Pause or resume anytime from the Dayflow Electron icon in your system tray.",
+      "cardsTitle": "Every 15 minutes, your day writes itself",
+      "cardsBody": "Your AI turns each stretch of screen time into timeline cards: what you worked on, the apps you used, and when you got pulled away. Click any card to see the full summary and a timelapse, or to fix its category.",
+      "unlocksTitle": "The longer it runs, the more it can tell you",
+      "unlocksBody": "Some views need enough of your day to say something useful, so they unlock as Dayflow Electron records. Here's what's on the way.",
+      "closeTitle": "You can close this window now",
+      "closeBodyMac": "Dayflow Electron keeps working from your menu bar. Your first cards usually show up about 15 minutes after recording starts, and we can send you a notification when they're ready.",
+      "closeBody": "Dayflow Electron keeps working from your system tray. Your first cards usually show up about 15 minutes after recording starts, and you'll get a notification when they're ready.",
+      "recording": "Recording",
+      "now": "now",
+      "reviewing": "Reviewing pull requests",
+      "planning": "Planning the week",
+      "youtube": "Pulled into YouTube",
+      "distraction": "Distraction · 6 min",
+      "firstCardsTime": "~15 min",
+      "hours_one": "{{count}} hour",
+      "hours_other": "{{count}} hours",
+      "dailyMilestone": "Daily recap and standup notes",
+      "chatMilestone": "Chat: ask anything about your day",
+      "weeklyMilestone": "Weekly review"
+    },
+    "settings": {
+      "guide": "Getting started guide",
+      "guideSub": "Replay the welcome tour and bring back the first-day checklist on your timeline.",
+      "showAgain": "Show again",
+      "reset": "Reset onboarding",
+      "resetSub": "Go through setup again (provider, permissions, categories). Recording stops until you finish; your timeline, recordings and settings stay."
+    }
+  },
+  "player": {
+    "label": "Timelapse player",
+    "expand": "Open full-window player",
+    "play": "Play",
+    "speed": "Playback speed",
+    "range": "{{start}} to {{end}}"
   }
 }

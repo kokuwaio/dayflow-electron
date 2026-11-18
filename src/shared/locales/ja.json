@@ -198,7 +198,23 @@
     "notGenerated": "デイリーデータはまだ生成されていません。「再生成」をクリックして今すぐ作成するか、自分で入力してください。",
     "blockersPlaceholder": "作業を妨げている問題があれば入力してください",
     "itemLabel": "{{title}}の項目{{number}}",
-    "addItem": "項目を追加"
+    "addItem": "項目を追加",
+    "provider": {
+      "button": "デイリー振り返りのプロバイダーを選択",
+      "current": "デイリー振り返りのプロバイダー：{{name}}",
+      "title": "デイリー振り返りのプロバイダー",
+      "sub": "このデイリー振り返りの生成方法を選択するか、生成をオフにします。",
+      "auto": "タイムラインと同じ",
+      "autoSub": "タイムラインのプロバイダー、次にそのフォールバック。",
+      "none": "プロバイダーなし",
+      "noneSub": "別のプロバイダーを選択するまで、デイリー振り返りの生成をオフにします。",
+      "notSetUp": "まだ設定されていません。設定 → プロバイダーで追加してください。",
+      "cliMissing": "このコンピューターで見つかりません。",
+      "checking": "プロバイダーを確認中…",
+      "off": "デイリーのプロバイダーが選択されていません。上の歯車ボタンをクリックしてプロバイダーを選ぶと、振り返りの生成が再開します。",
+      "unavailable": "{{name}} は設定されていません。歯車ボタンで別のデイリープロバイダーを選ぶか、設定 → プロバイダーで追加してください。"
+    },
+    "badge": "新しいデイリー振り返り"
   },
   "chat": {
     "errors": {
@@ -894,5 +910,66 @@
     "reportProblem": "問題を報告",
     "reportProblemSub": "ブラウザで GitHub の Issue トラッカーを開きます。",
     "openIssues": "GitHub Issues を開く"
+  },
+  "gettingStarted": {
+    "of": "{{current}} / {{total}}",
+    "checklist": {
+      "title": "Dayflow Electron との最初の1日",
+      "collapse": "折りたたむ",
+      "expand": "展開",
+      "firstCards": "タイムラインに最初のカード",
+      "firstCardsDone": "Dayflow Electron が画面の利用時間をカードに変換しています",
+      "firstCardsWorking": "通常、記録開始から約15分後に準備完了",
+      "firstCardsPaused": "記録は一時停止中です。オンにすると最初のカードが作成されます。",
+      "openCard": "カードを開く",
+      "openCardSub": "カードをクリックすると要約とタイムラプスを表示できます",
+      "unlockDaily": "デイリー振り返りをロック解除",
+      "unlockChat": "チャットをロック解除",
+      "readyToOpen": "開く準備ができました",
+      "recorded": "{{progress}} 記録済み",
+      "allDone": "準備完了です",
+      "allDoneSub": "Dayflow Electron のすべての機能が解放されました。タイムラインをお楽しみください。",
+      "done": "完了"
+    },
+    "tour": {
+      "label": "ウェルカムツアー",
+      "skip": "ツアーをスキップ",
+      "gotIt": "了解",
+      "recordingTitle": "Dayflow Electron はバックグラウンドで動作しています",
+      "recordingBodyMac": "作業中の画面を静かに記録し、記録はこの Mac に保存されます。メニューバーの Dayflow Electron アイコンからいつでも一時停止・再開できます。",
+      "recordingBody": "作業中の画面を静かに記録し、録画はこのコンピューターに保存されます。システムトレイの Dayflow Electron アイコンからいつでも一時停止・再開できます。",
+      "cardsTitle": "15分ごとに、あなたの1日が自動で記録されます",
+      "cardsBody": "AI が画面の利用時間を区切りごとにタイムラインカードに変換します。取り組んだ内容、使ったアプリ、気が散ったタイミングがわかります。カードをクリックすると、詳しい要約とタイムラプスの表示やカテゴリーの修正ができます。",
+      "unlocksTitle": "長く使うほど、わかることが増えます",
+      "unlocksBody": "一部の表示は、役立つ内容を示すために十分な記録が必要なため、Dayflow Electron の記録が進むにつれて解放されます。これから使えるようになるものはこちらです。",
+      "closeTitle": "このウインドウを閉じても大丈夫です",
+      "closeBodyMac": "Dayflow Electron はメニューバーで動作し続けます。最初のカードは通常、記録開始から約15分後に表示されます。準備ができたら通知でお知らせすることもできます。",
+      "closeBody": "Dayflow Electron はシステムトレイで動作し続けます。最初のカードは通常、記録開始から約15分で表示され、準備ができたら通知が届きます。",
+      "recording": "記録",
+      "now": "今",
+      "reviewing": "プルリクエストのレビュー",
+      "planning": "週の計画",
+      "youtube": "YouTube に気を取られた",
+      "distraction": "注意散漫 · 6分",
+      "firstCardsTime": "約15分",
+      "hours_other": "{{count}}時間",
+      "dailyMilestone": "デイリー振り返りとスタンドアップのメモ",
+      "chatMilestone": "チャット：1日のことを何でも質問",
+      "weeklyMilestone": "週間レビュー"
+    },
+    "settings": {
+      "guide": "はじめにガイド",
+      "guideSub": "ウェルカムツアーをもう一度表示し、タイムラインに初日のチェックリストを戻します。",
+      "showAgain": "もう一度表示",
+      "reset": "オンボーディングをリセット",
+      "resetSub": "セットアップ（プロバイダー、権限、カテゴリ）をやり直します。完了するまで記録は停止します。タイムライン、録画、設定はそのまま残ります。"
+    }
+  },
+  "player": {
+    "label": "タイムラプスプレーヤー",
+    "expand": "ウィンドウ全体で再生",
+    "play": "再生",
+    "speed": "再生速度",
+    "range": "{{start}}〜{{end}}"
   }
 }
