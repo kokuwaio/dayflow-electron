@@ -73,8 +73,12 @@ start, and macOS asks for Screen Recording again after each update. Signing
 needs certificates only the owner can get. electron-builder reads them from
 the environment; store them as repository secrets and pass them to the
 `Package` step of the `installers` job in `.github/workflows/build.yaml`.
-The job runs on pull requests too; GitHub gives no secrets to pull requests
-from forks, so those stay unsigned.
+The job packages on main, for releases, and for pull requests that change
+the packaging (the electron-builder config, the workflows, `resources/`,
+`scripts/` or the Electron packages; the `changes` job in
+`.github/workflows/ci.yaml` decides); other pull requests only run the tests
+there. GitHub gives no secrets to pull requests from forks, so those stay
+unsigned.
 
 | Variable | For | What |
 | --- | --- | --- |

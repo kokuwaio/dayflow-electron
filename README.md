@@ -60,8 +60,10 @@ make dist-win       # on Windows: NSIS installers for x64 and arm64 in dist/
 make dist-mac       # on macOS: dmg images for arm64 and x64 in dist/
 ```
 
-Neither needs the Go helper. CI builds both on every pull request and
-release; see [docs/release.md](docs/release.md) for signing.
+Neither needs the Go helper. CI tests on Windows and macOS on every pull
+request and builds both installers on main, for every release, and for pull
+requests that change the packaging; see [docs/release.md](docs/release.md)
+for signing.
 
 ## Flatpak
 
