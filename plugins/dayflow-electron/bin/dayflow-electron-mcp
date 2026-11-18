@@ -1,0 +1,47 @@
+#!/bin/sh
+# Starts the Dayflow Electron MCP server (after upstream Dayflow's
+# plugins/dayflow/bin/dayflow-mcp, MIT). The server ships inside the app so it
+# always matches the installed app's database, which is why this plugin
+# carries a launcher rather than its own copy. It looks for, in order:
+#
+#   1. $DAYFLOW_ELECTRON_CLI, the path of a `dayflow-electron` command;
+#   2. the terminal command from Settings → MCP / CLI (~/.local/bin or PATH);
+#   3. the Flatpak io.github.kokuwaio.DayflowElectron;
+#   4. the macOS app in /Applications or ~/Applications.
+#
+# A `dayflow-electron` on PATH counts only when it is the app's own wrapper
+# script: the app binary has the same name and would open the window instead.
+
+marker='# dayflow-electron CLI wrapper'
+flatpak_id=io.github.kokuwaio.DayflowElectron
+
+if [ -n "${DAYFLOW_ELECTRON_CLI:-}" ]; then
+  exec "$DAYFLOW_ELECTRON_CLI" mcp
+fi
+
+for cli in "$(command -v dayflow-electron 2>/dev/null)" "$HOME/.local/bin/dayflow-electron"; do
+  if [ -n "$cli" ] && [ -x "$cli" ] && grep -q "$marker" "$cli" 2>/dev/null; then
+    exec "$cli" mcp
+  fi
+done
+
+if command -v flatpak >/dev/null 2>&1 && flatpak info "$flatpak_id" >/dev/null 2>&1; then
+  exec flatpak run --command=dayflow-electron-cli "$flatpak_id" mcp
+fi
+
+for app in "/Applications/Dayflow Electron.app" "$HOME/Applications/Dayflow Electron.app"; do
+  # app.asar is an archive file: the shell cannot see into it, Electron can.
+  archive="$app/Contents/Resources/app.asar"
+  script="$archive/out/main/cli.js"
+  for exe in "$app"/Contents/MacOS/*; do
+    if [ -f "$exe" ] && [ -x "$exe" ] && [ -f "$archive" ]; then
+      ELECTRON_RUN_AS_NODE=1
+      export ELECTRON_RUN_AS_NODE
+      exec "$exe" "$script" mcp
+    fi
+  done
+done
+
+echo "Dayflow Electron is not installed, or its terminal command is missing." >&2
+echo "Get it at https://github.com/kokuwaio/dayflow-electron/releases, or set DAYFLOW_ELECTRON_CLI to its dayflow-electron command, then restart this plugin." >&2
+exit 1

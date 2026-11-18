@@ -1,0 +1,129 @@
+/* The first-day guide (upstream Views/UI/GettingStarted/*): welcome tour and checklist card. */
+
+/* ---------------------------------------------------------------- tour */
+.gs-backdrop {
+  position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: 24px;
+  background: var(--scrim); backdrop-filter: var(--blur-backdrop); animation: tl-gs-fade 0.25s ease-out both;
+}
+@keyframes tl-gs-fade { from { opacity: 0; } }
+.gs-tour {
+  width: min(620px, 100%); min-height: min(520px, calc(100vh - 48px)); padding: 22px; display: flex; flex-direction: column;
+  background: var(--panel-solid); color: var(--text-primary); border: 1px solid var(--popover-border); border-radius: 18px;
+  box-shadow: 0 14px 60px rgb(0 0 0 / 0.18); animation: pop-in 0.3s var(--spring) both;
+}
+:root[data-ui-style='modern'] .gs-tour { border-radius: 12px; }
+.gs-illustration {
+  height: 216px; flex: none; border-radius: 12px; overflow: hidden; position: relative;
+  background: var(--summary-fill); border: 1px solid var(--summary-border); animation: gs-in 0.35s var(--spring) both;
+}
+@keyframes gs-in { from { opacity: 0; transform: scale(0.97); } }
+.gs-text { padding: 26px 6px 0; display: grid; gap: 10px; animation: gs-text-in 0.35s var(--spring) both; }
+@keyframes gs-text-in { from { opacity: 0; transform: translateY(6px); } }
+.gs-step { font-size: 12px; font-weight: 600; color: var(--accent-text); }
+.gs-text h2 { font-family: var(--font-serif); font-weight: 400; font-size: 32px; letter-spacing: -0.6px; line-height: 1.1; }
+:root[data-ui-style='modern'] .gs-text h2 { font-family: var(--font-ui); font-weight: 600; font-size: 22px; letter-spacing: -0.02em; }
+.gs-text p { font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
+.gs-footer { margin-top: auto; padding-top: 16px; display: flex; align-items: center; gap: 12px; }
+.gs-dots { display: flex; gap: 6px; }
+.gs-dots i { width: 6px; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--text-muted) 35%, transparent); transition: width 0.3s var(--spring), background-color 0.2s; }
+.gs-dots i.on { width: 18px; background: var(--accent); }
+.gs-skip { font-size: 13px; color: var(--text-muted); }
+.gs-primary { padding: 9px 20px; font-size: 13px; font-weight: 600; }
+.gs-secondary { padding: 8px 16px; font-size: 13px; border-radius: var(--radius-pill); }
+
+/* page 1: a desktop panel with the tray menu */
+.gs-rec { padding: 18px 18px 0; display: grid; gap: 6px; justify-items: end; }
+.gs-panel-bar {
+  width: 100%; height: 28px; display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 0 14px;
+  border-radius: 8px; background: var(--popover-fill); border: 1px solid var(--popover-border); font-size: 12px; font-weight: 500;
+  color: color-mix(in srgb, var(--text-primary) 80%, transparent);
+}
+.gs-app-tile { width: 18px; height: 18px; border-radius: 5px; display: grid; place-items: center; background: #4f46e5; color: #fde68a; }
+.gs-app-tile.big { width: 30px; height: 30px; border-radius: 8px; flex: none; }
+.gs-menu {
+  width: 200px; margin-right: 92px; padding: 5px; display: grid; gap: 2px; font-size: 12px;
+  background: var(--popover-fill); border: 1px solid var(--popover-border); border-radius: 10px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.12);
+}
+.gs-menu-rec { display: flex; align-items: center; gap: 8px; padding: 7px 10px; font-weight: 600; }
+.gs-menu-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; }
+.gs-menu-row svg { color: var(--text-secondary); }
+.gs-pulse { position: relative; width: 8px; height: 8px; border-radius: 50%; background: #e5483b; }
+.gs-pulse::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgb(229 72 59 / 0.5); animation: gs-pulse 1.1s ease-in-out infinite alternate; }
+@keyframes gs-pulse { to { transform: scale(2.2); opacity: 0; } }
+
+/* page 2: sample cards */
+.gs-cards { height: 100%; padding: 0 60px; display: grid; align-content: center; gap: 10px; }
+.gs-card-row { display: flex; align-items: center; gap: 12px; animation: gs-drop 0.42s var(--spring) both; }
+@keyframes gs-drop { from { opacity: 0; transform: translateY(-10px) scale(0.97); } }
+.gs-time { width: 34px; text-align: right; font-size: 11px; color: var(--hour-label); flex: none; }
+.gs-card {
+  flex: 1; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px;
+  background: var(--card-fill); border: 1px solid var(--card-border);
+}
+.gs-card > i { width: 4px; height: 30px; border-radius: 2px; flex: none; }
+.gs-card > div { display: grid; gap: 2px; }
+.gs-card b { font-size: 13px; font-weight: 600; color: var(--card-title); }
+.gs-card span { font-size: 11px; color: var(--card-time); }
+
+/* page 3: the unlock ladder */
+.gs-ladder { list-style: none; margin: 0; height: 100%; padding: 0 70px; display: grid; align-content: center; gap: 16px; }
+.gs-ladder li { position: relative; display: flex; align-items: center; gap: 12px; height: 28px; }
+.gs-ladder li + li::before { content: ''; position: absolute; left: 89px; top: -16px; width: 1.5px; height: 16px; background: var(--chip-border); }
+.gs-badge { width: 64px; text-align: right; font-size: 11px; font-weight: 600; color: var(--text-secondary); flex: none; }
+.gs-node {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; flex: none;
+  background: var(--chip-fill); border: 1px solid var(--chip-border); color: var(--text-secondary);
+}
+.gs-title { font-size: 13px; }
+.gs-ladder li.first .gs-badge { color: var(--accent-text); }
+.gs-ladder li.first .gs-node { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.gs-ladder li.first .gs-title { font-weight: 600; }
+
+/* page 4: the notification */
+.gs-notify { height: 100%; padding: 22px; display: flex; justify-content: flex-end; align-items: flex-start; }
+.gs-banner {
+  width: 330px; display: flex; align-items: flex-start; gap: 10px; padding: 12px; border-radius: 14px; font-size: 12px;
+  background: var(--popover-fill); border: 1px solid var(--popover-border); box-shadow: 0 8px 32px rgb(0 0 0 / 0.14);
+  animation: gs-slide 0.5s var(--spring) 0.35s both;
+}
+@keyframes gs-slide { from { opacity: 0; transform: translateX(40px); } }
+.gs-banner > div { flex: 1; display: grid; gap: 2px; }
+.gs-banner-head { display: flex; justify-content: space-between; }
+.gs-banner-head span { color: var(--text-muted); font-size: 11px; }
+.gs-banner p { color: var(--text-secondary); }
+
+/* ---------------------------------------------------------------- checklist */
+.gs-checklist {
+  margin: 14px 18px 0; padding: 14px; border-radius: 10px; display: grid; gap: 8px;
+  background: var(--summary-fill); border: 1px solid var(--summary-border); box-shadow: var(--summary-shadow), var(--summary-glow);
+  animation: rise-in 0.35s var(--spring) both;
+}
+.gs-check-head { display: flex; align-items: center; gap: 8px; }
+.gs-check-head h3 { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; }
+.gs-count { font-size: 11px; font-weight: 500; color: var(--text-tertiary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.gs-icon { width: 18px; height: 18px; display: grid; place-items: center; color: var(--text-muted); }
+.gs-bar { height: 4px; border-radius: 999px; background: var(--track-fill); overflow: hidden; }
+.gs-bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width 0.4s var(--spring); }
+.gs-rows { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 2px; }
+.gs-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
+.gs-row-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.gs-row-text b { font-size: 12.5px; font-weight: 600; }
+.gs-row.done .gs-row-text b { color: var(--text-tertiary); }
+.gs-row-text span { font-size: 11px; color: var(--text-tertiary); }
+.gs-status { width: 18px; height: 18px; flex: none; border-radius: 50%; }
+.gs-status.done { display: grid; place-items: center; background: var(--accent); color: var(--on-accent); }
+.gs-status.todo { border: 1.5px solid color-mix(in srgb, var(--text-muted) 60%, transparent); }
+.gs-status.spinner { width: 13px; height: 13px; margin: 2.5px; }
+.gs-status.ring { border-radius: 0; }
+.gs-status.ring circle { fill: none; stroke-width: 2.5; }
+.gs-status.ring .track { stroke: var(--track-fill); }
+.gs-status.ring .value { stroke: var(--accent); stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+.gs-row-btn { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-pill); flex: none; }
+
+/* Settings → Other: Reset onboarding's second click */
+.confirm-danger { background: #df6055; border-color: #cb4e43; color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gs-card-row, .gs-banner, .gs-illustration, .gs-text { animation: none; }
+  .gs-pulse::after { animation: none; }
+}

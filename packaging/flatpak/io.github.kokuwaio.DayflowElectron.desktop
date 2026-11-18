@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Dayflow Electron
+Comment=A timeline of your day from periodic screenshots
+Exec=dayflow-electron %u
+Icon=io.github.kokuwaio.DayflowElectron
+Categories=Utility;
+StartupWMClass=dayflow-electron
+MimeType=x-scheme-handler/dayflow-electron;

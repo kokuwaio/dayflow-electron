@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "dayflow-electron": {
+      "command": "/bin/sh",
+      "args": ["./bin/dayflow-electron-mcp"],
+      "cwd": "."
+    }
+  }
+}

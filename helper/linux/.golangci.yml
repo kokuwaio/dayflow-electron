@@ -1,0 +1,22 @@
+# golangci-lint v2: `make lint` (root Makefile) and CI run this.
+version: "2"
+linters:
+  default: standard
+  enable:
+    - errorlint
+    - gocritic
+    - misspell
+    - unconvert
+  exclusions:
+    presets:
+      # Deferred Close on connections and read handles; writes check Close themselves.
+      - std-error-handling
+    rules:
+      # cgo expands C calls into code that looks like `x == x`.
+      - path: pipewire/pipewire\.go
+        linters: [gocritic]
+        text: dupSubExpr
+formatters:
+  enable:
+    - gofmt
+    - goimports

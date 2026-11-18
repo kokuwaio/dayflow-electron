@@ -1,0 +1,336 @@
+# Architecture
+
+How dayflow-electron turns screenshots into a timeline. For what is built and
+what is next, see [roadmap.md](roadmap.md). For Linux desktop details, see
+[platform-notes.md](platform-notes.md).
+
+## Overview
+
+The app has three processes. Only the main process touches files, the
+database and the network.
+
+- **Renderer**: the React UI in a sandboxed window. It has no Node access. It
+  calls the main process through the `window.dayflow` API that the preload
+  script exposes, and it loads screenshots and icons through the
+  `dayflow-media://` scheme. Its look comes from CSS tokens in
+  `styles.css`: `data-ui-style` on the root element picks Modern (default)
+  or Original, `prefers-color-scheme` light or dark (the main process sets
+  `nativeTheme.themeSource` from Settings → Appearance). Its texts come from
+  i18next (`src/shared/i18n.ts`, one JSON file per language in
+  `src/shared/locales`, English the source and fallback); the main process
+  resolves Settings → Other → App language against the system languages,
+  passes the result in the page URL and on changes, and uses the same files
+  for the tray, notifications and dialogs. Full-window overlays
+  (review, goal pop-up) render into `document.body`, outside the panels'
+  `backdrop-filter`.
+- **Main process** (Node, Electron): records, stores, analyzes and serves the
+  data.
+- **Linux helper**: a Go program for what Electron cannot do on Wayland.
+  The main process starts it and reads JSON lines from it. Windows and macOS
+  need no helper (see [Windows and macOS](#windows-and-macos)).
+
+```mermaid
+flowchart LR
+  subgraph Desktop["Linux desktop"]
+    Portal["ScreenCast portal<br/>+ PipeWire"]
+    DBus["D-Bus: ScreenSaver,<br/>logind, KWin"]
+    Wayland["Wayland<br/>ext-idle-notify-v1"]
+  end
+
+  subgraph Helper["Go helper (helper/linux)"]
+    Capture["capture<br/>frames of the screen<br/>under the mouse"]
+    Watch["watch<br/>lock, sleep, idle"]
+    Window["window<br/>focused app"]
+  end
+
+  subgraph Main["Electron main process (src/main)"]
+    Platform["platform/linux.ts"]
+    Recorder["capture/recorder.ts<br/>pause, backoff,<br/>blocked apps"]
+    Store[("SQLite<br/>db/store.ts")]
+    Files[("JPEG frames<br/>recordings/")]
+    Pipeline["analysis/pipeline.ts<br/>batches, idle check,<br/>failover"]
+    Providers["providers/<br/>Anthropic, Gemini,<br/>OpenAI-compatible,<br/>Claude Code, Codex"]
+    Privacy["privacy/<br/>OCR, hide secrets<br/>(on by default)"]
+    Insights["insights/daily.ts<br/>standup"]
+    Notify["notifications.ts"]
+    Retention["retention.ts<br/>storage limit"]
+    Media["media.ts<br/>dayflow-media://"]
+    IPC["IPC handlers<br/>index.ts"]
+  end
+
+  subgraph Renderer["Renderer (src/renderer)"]
+    UI["Timeline · Daily ·<br/>Weekly · Settings"]
+  end
+
+  AI(["AI provider<br/>(cloud or local)"])
+
+  Portal --> Capture
+  DBus --> Watch
+  Wayland --> Watch
+  DBus --> Window
+  Capture -- "frame JSON lines" --> Platform
+  Watch -- "lock / idle events" --> Platform
+  Window -- "app + title" --> Platform
+  Platform --> Recorder
+  Recorder -- "block / unblock" --> Capture
+  Recorder --> Files
+  Recorder --> Store
+  Store --> Pipeline
+  Files --> Pipeline
+  Pipeline <--> Privacy
+  Pipeline <--> Providers
+  Providers <--> AI
+  Pipeline -- "cards" --> Store
+  Store --> Insights
+  Insights <--> Providers
+  Store --> Notify
+  Retention --> Files
+  Store <--> IPC
+  Files --> Media
+  IPC <-- "window.dayflow (preload)" --> UI
+  Media --> UI
+```
+
+## From frame to card
+
+1. **Capture.** The helper shares all screens once through the ScreenCast
+   portal and keeps the restore token, so later starts show no dialog (the
+   onboarding's Permissions step can run that dialog ahead with
+   `helper grant`, which stores the token and captures nothing). It
+   reads frames from PipeWire and uses the cursor metadata to keep only the
+   screen under the mouse. Every few seconds (10 s by default) it writes a
+   JPEG and prints a `frame` line.
+2. **Record.** The recorder stores each frame in `screenshots`. It pauses
+   while the screen is locked or the computer sleeps, and when you pause it
+   from the tray. While a blocked app (a password manager) has focus, the
+   helper writes no file and the recorder stores a placeholder row instead.
+3. **Batch.** Every minute the pipeline groups unbatched frames into
+   `analysis_batches` like upstream: about 15 minutes each, split at gaps of
+   more than 2 minutes, and at least 5 minutes long.
+4. **Shortcuts.** A batch that is all blocked frames becomes a "Private" card.
+   A batch where the idle check sees no activity becomes an Idle card, or
+   extends the Idle card before it when that ended less than 5 minutes
+   earlier on the same day, so a long break stays one card. Neither needs a
+   model call.
+5. **Analyze.**
+   - With **Hide secrets in screenshots** on, each sampled frame is masked
+     before any provider sees it (see [Secret masking](#secret-masking)).
+   - Cloud providers get one request with a sample of the frames, the
+     previous cards and the categories (upstream's prompt, verbatim). The
+     reply is checked; on errors the model gets up to 3 tries with a
+     correction message.
+   - Local models (and cloud models whose cards keep failing the checks) use
+     the two-step path: describe each frame, turn the descriptions into
+     observations, then write the summary and title and maybe merge with the
+     previous card.
+   - When the main provider fails, the fallback provider takes over.
+     Failed batches get a "Processing failed" card and are retried later.
+   - Offline, a busy or signed-out provider, or a used-up plan make a batch
+     wait (`analysis/availability.ts`): status `waiting`, a "Waiting for …"
+     card, no retry used. The provider is held back for a while, and the
+     batch goes out again after the hold, when the network or the computer
+     is back, or after a sign-in (`providers/cli/sign-in.ts`). Gemini steps
+     down its model list and then to Gemma on the same key
+     (`shared/gemini-models.ts`).
+6. **Store and show.** Cards replace the batch's old cards in
+   `timeline_cards`. The main process tells the window, which reloads the day.
+
+```mermaid
+sequenceDiagram
+  participant H as Go helper
+  participant R as Recorder
+  participant DB as SQLite
+  participant P as Pipeline
+  participant AI as AI provider
+  participant UI as Window
+
+  loop every few seconds
+    H->>R: frame (path, time, size)
+    R->>DB: insert screenshot
+  end
+  loop every minute
+    P->>DB: unbatched screenshots
+    P->>DB: create batch (~15 min)
+    alt all frames blocked or idle
+      P->>DB: Private or Idle card
+    else
+      P->>AI: frames + previous cards + categories
+      AI-->>P: cards (JSON)
+      P->>P: validate, retry with correction
+      P->>DB: replace cards for the batch
+    end
+    P->>UI: cards changed
+    UI->>DB: day:get (through IPC)
+  end
+```
+
+## Secret masking
+
+On by default (`hideSecrets`, switchable in Settings → Privacy), after upstream's Privacy Shield
+(`Core/PrivacyShield/`). Upstream masks frames at capture with a trained
+model plus rules; the model comes from upstream's paid backend, so the port
+runs the rules alone, on text read by Tesseract, and masks only what goes to
+a provider.
+
+1. The pipeline samples a batch's frames (up to 15) once, before the provider
+   failover, and passes each through `prepareFrame`
+   (`src/main/privacy/masker.ts`). A failure fails the batch, so no frame
+   leaves unmasked; it is retried later.
+2. `privacy/tesseract.ts` reads the text with `tesseract.js` (WebAssembly in a
+   worker thread, kept alive between batches and closed when the setting is
+   off or the app quits). The English model (`@tesseract.js-data/eng`,
+   `4.0.0_best_int`) is read from inside `app.asar` with caching off, so
+   nothing is downloaded or written.
+3. `privacy/regions.ts` orders the lines like upstream (1% bands, then left
+   to right) and joins each line's words. `privacy/rules.ts` ports upstream's
+   `PIIMaskRules` passes that mask without the model (setup keys, password
+   manager screens, labeled passwords, key blocks, seed phrases with the
+   BIP39 list, recovery codes, key prefixes) and the unmask passes their
+   masks can reach, in upstream's order. Recovery codes need one addition:
+   code-shaped tokens stand in for the model's one-time code labels.
+4. Masked character runs become rectangles from Tesseract's character boxes
+   (or the word box), padded by 3 px, and `privacy/redact.ts` blacks them out
+   with `jpeg-js` (upstream pixelates). Frames without secrets pass unchanged.
+
+## Windows and macOS
+
+The recorder sees the same `Platform` interface (`src/main/platform/types.ts`)
+on every OS; `createPlatform` in `platform/index.ts` picks the implementation.
+On Windows and macOS it is built from Electron APIs, which `index.ts` passes
+in, so the platform code never imports Electron and its tests run without it.
+
+| Piece | Windows (`win32.ts`) | macOS (`darwin.ts`) |
+| --- | --- | --- |
+| Frames | `electron-capture.ts`: every interval, `desktopCapturer` grabs the display under `screen.getCursorScreenPoint()` at the configured height and writes a JPEG named like the Linux helper's (`20261117-090507.042+0100_s1.jpg`: time to the millisecond, UTC offset, screen). While blocked it saves nothing and reports a skipped frame. Three failed screenshots in a row end capture, and the recorder backs off. | Same, after checking the Screen Recording permission before each frame; a missing permission ends capture with a message the status shows. |
+| Focused window | A long-running Windows PowerShell process calls user32 `GetForegroundWindow` and prints `{"app","title"}` lines on change; app is the process name. | A long-running `osascript -l JavaScript` loop reads `NSWorkspace`'s frontmost app and its window title from `CGWindowListCopyWindowInfo`; app is the bundle ID. Replaced every 5 minutes; off without Screen Recording. |
+| Lock, sleep, idle | `power-session.ts`: `powerMonitor` events, idle time polled every 5 s | same |
+| Autostart | `app.setLoginItemSettings` with `--hidden` | `app.setLoginItemSettings`; `wasOpenedAtLogin` starts hidden |
+
+`window-process.ts` runs either watcher script: it parses its lines
+(`window-lines.ts`), reports why it stopped as "window detection
+unavailable", and restarts it after 10 s, or after 5 minutes when it never
+worked.
+
+## Insights
+
+- **Daily** builds its activity grid from the day's cards in the renderer.
+  The standup is written by the AI provider once a day after 4 AM, from the
+  best of the last three days with enough activity (`insights/daily.ts`).
+  `settings.dailyProvider` picks who writes it, for the scheduler and
+  Regenerate alike (`standupPlan` in `src/shared/daily-provider.ts`). A recap
+  the scheduler wrote sets `dailyRecapUnseen` until the focused window shows
+  Daily (the renderer reports its tab; `src/main/daily-badge.ts`), which
+  drives the sidebar dot and `app.setBadgeCount`.
+- **Weekly** needs no AI. Every chart is computed from the week's cards in
+  `src/shared/weekly.ts` and `src/shared/weekly-insights.ts` (overview,
+  highlights, app interactions).
+- **Chat** (`src/main/chat/`) streams answers to the window. API providers
+  run a tool loop (up to 20 rounds) with upstream's `fetchTimeline` and
+  `fetchObservations` tools, which read the store. CLI providers get the
+  recent timeline in the prompt and run with their tools off. Each answer's
+  trailing `suggestions` and `memory` blocks are taken out and kept in the
+  settings; conversations live in `chat_conversations` and `chat_messages`.
+- **Unlocks** follow upstream: Daily after 5 hours of analyzed data, Chat
+  after 10, Weekly after 30.
+
+## Agent access (CLI and MCP)
+
+The `dayflow-electron` CLI and MCP server (`src/cli/`) are a second entry point of the
+main build (`out/main/cli.js`). Electron runs it in Node mode
+(`ELECTRON_RUN_AS_NODE=1`), so it uses Node only, never the `electron`
+module. The Flatpak wraps that in `/app/bin/dayflow-electron-cli`, started as
+`flatpak run --command=dayflow-electron-cli io.github.kokuwaio.DayflowElectron`.
+
+- **Reads** go straight to the data folder (`DAYFLOW_DATA_DIR`, else
+  Electron's userData path; `DAYFLOW_DB` overrides the database): SQLite
+  opened read-only, categories and the "Allow edits" switch from
+  `settings.json`. They work while the app is closed. `--json` and the MCP
+  tools share the payloads in `src/cli/payloads.ts`.
+- **MCP** (`src/cli/mcp.ts`): JSON-RPC over stdio, protocol `2025-06-18`,
+  upstream's tool names and descriptions. Write tools are listed only while
+  edits are on.
+- **Writes** go to the running app over `agent.sock` in the data folder
+  (`src/main/agent/`). The app listens only while "Allow edits" is on, with
+  mode 0600. One JSON line each way, `protocol_version` 1, at most 1 MB. The
+  app checks the switch again, validates every argument, runs the write
+  through the same settings save and store calls as the window, appends it to
+  `agent-writes.log` and tells the window to reload.
+- **Settings → MCP / CLI** (`src/main/agent/clients.ts`) registers the
+  server with `claude mcp add` or `codex mcp add` on the host, merges it into
+  Claude Desktop's `claude_desktop_config.json`, and opens Cursor's and VS
+  Code's install links. Inside the Flatpak, commands and files go through
+  `flatpak-spawn --host` (the same opt-in as the CLI providers); without it
+  the row shows the command or snippet to copy. Outside the Flatpak the
+  command is the app's path with `ELECTRON_RUN_AS_NODE=1` in the entry's
+  environment (no `env` program, which Windows lacks); at launch the app
+  rewrites its entries that point at a moved copy (upstream
+  `repairStaleRegistrations`). The JSON merge, install links and stale check
+  are pure functions in `client-config.ts`.
+
+```mermaid
+flowchart LR
+  Client(["Claude Code / Codex /<br/>terminal"]) -- "dayflow-electron mcp · …" --> CLI["src/cli<br/>(Electron in Node mode)"]
+  CLI -- "read-only" --> DB[("dayflow.sqlite")]
+  CLI -- "categories, allowEdits" --> Settings[("settings.json")]
+  CLI -- "writes: agent.sock<br/>(only while edits are on)" --> Bridge["main: agent/bridge.ts"]
+  Bridge --> DB
+  Bridge --> Settings
+  Bridge --> Log[("agent-writes.log")]
+```
+
+## Data
+
+- **SQLite** (`dayflow.sqlite` in the data folder) keeps upstream's table
+  names: `screenshots`, `analysis_batches`, `batch_screenshots`,
+  `timeline_cards`, `observations`, `llm_calls`, `timeline_review_ratings`,
+  `day_goals`, `day_goal_categories`, `daily_standup_entries`. Migrations are
+  counted with `PRAGMA user_version`. Times are Unix seconds.
+  `timeline_review_ratings` holds the review flow's distracted, neutral and
+  focused ratings as time ranges (`src/shared/review.ts`); thumbs up and down
+  live in `timeline_card_feedback`.
+- **Days run from 4 AM to 4 AM**, so a late night stays on the day it began
+  (`src/shared/day.ts`).
+- **Backups**: a daily copy of the database in `backups/` (newest three);
+  `src/main/db/backup.ts` restores the newest one when the database is
+  damaged at start.
+- **Log**: `logs/dayflow-electron.log` (`src/main/log-file.ts`), rotated to
+  `dayflow-electron.1.log` at 1 MB, with API keys and the home folder
+  hidden. "Copy debug logs" (`src/main/support.ts`) formats it with the latest
+  rows of `timeline_cards`, `llm_calls` and `analysis_batches`
+  (`src/shared/debug-report.ts`).
+- **Frames** are JPEG files in `recordings/`. The retention job deletes the
+  oldest ones when the storage limit (a preset from `src/shared/storage.ts`,
+  or unlimited) is reached; cards stay.
+- **Settings** are a JSON file. API keys are encrypted with Electron's
+  `safeStorage` (KWallet or Secret Service on Linux).
+
+## Code layout
+
+| Path | What |
+| --- | --- |
+| `src/main/index.ts` | Starts everything and registers the IPC handlers |
+| `src/main/capture/` | Recorder: pause, restart with backoff, blocked apps |
+| `src/main/platform/` | OS interface; `linux.ts` runs the Go helper, `win32.ts` and `darwin.ts` use Electron APIs and a window watcher script; `installed-apps.ts` lists the apps Settings → Privacy offers to block |
+| `src/main/analysis/` | Batching, idle check, prompts, card checks, two-step path, pipeline |
+| `src/main/providers/` | One adapter per provider; `cli/` runs Claude Code and Codex on the host |
+| `src/main/privacy/` | Secret masking: OCR, upstream's mask rules, black boxes |
+| `src/main/insights/` | Daily standup generation |
+| `src/main/chat/` | Chat: tools, tool loop, system prompts, answering service |
+| `src/main/db/` | Schema migrations and all SQL |
+| `src/main/agent/` | Write bridge for the CLI, its write handlers, MCP client registration |
+| `src/cli/` | The `dayflow-electron` CLI and MCP server (`out/main/cli.js`) |
+| `src/main/media.ts` | Serves frames and site icons to the window |
+| `src/main/notifications.ts` | Desktop notifications |
+| `src/main/getting-started.ts` | The first-day guide's state (tour, checklist) for the window; rules in `src/shared/getting-started.ts` |
+| `src/main/updater.ts` | Auto-update of the Windows and macOS builds (electron-updater; policy in `src/shared/updates.ts`) |
+| `src/preload/` | The `window.dayflow` API |
+| `src/renderer/src/` | React views: Timeline, Daily, Weekly, Chat, Settings, Onboarding |
+| `src/shared/` | Pure logic used by both sides: days, categories, day canvas geometry (`canvas.ts`), Daily and Weekly math, export, failure kinds |
+| `helper/linux/` | Go helper: `portal/`, `pipewire/`, `wayland/`, `frames/`, commands in `cmd/` |
+| `plugins/dayflow-electron/` | Agent plugin for Codex and Claude Code: MCP launcher and skills (marketplaces in `.agents/plugins/` and `.claude-plugin/`) |
+| `packaging/` | Flatpak manifest, desktop file and metainfo (`flatpak/`) |
+| `scripts/` | Build version, metainfo release entry, merging the Windows update feeds |
+
+Most logic sits in `src/shared/` and `src/main/analysis/` as pure functions,
+so the tests run without Electron. Run them with `npm test`; run the Go tests
+with `npm run test:helper`.

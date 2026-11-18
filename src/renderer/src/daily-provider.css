@@ -1,0 +1,29 @@
+/* Daily's provider picker (upstream DailyView+Provider.swift). */
+.dp-anchor { position: relative; flex: none; }
+.dp-gear { width: 42px; height: 42px; padding: 0; border-radius: 50%; }
+:root[data-ui-style='modern'] .dp-gear { border-radius: var(--radius-control); width: 40px; height: 40px; }
+.dp-popover {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; width: 312px; padding: 16px; display: grid; gap: 12px;
+  background: var(--popover-fill); border: 1px solid var(--popover-border); border-radius: 12px; box-shadow: var(--popover-shadow);
+  backdrop-filter: var(--blur-popover); animation: drop-in 0.25s var(--spring) both;
+}
+.dp-head { display: flex; align-items: flex-start; gap: 8px; }
+.dp-head > div { flex: 1; display: grid; gap: 2px; }
+.dp-head h3 { font-family: var(--font-serif); font-weight: 400; font-size: 22px; color: var(--text-primary); }
+:root[data-ui-style='modern'] .dp-head h3 { font-family: var(--font-ui); font-weight: 600; font-size: 15px; }
+.dp-head p { font-size: 12px; color: var(--text-secondary); }
+.dp-rows { display: grid; gap: 8px; }
+.dp-row {
+  justify-content: space-between; align-items: flex-start; gap: 10px; padding: 10px 12px; text-align: left; border-radius: 14px;
+  background: var(--chip-fill); border: 1.2px solid var(--chip-border); color: var(--text-primary);
+}
+:root[data-ui-style='modern'] .dp-row { border-radius: 8px; border-width: 1px; }
+.dp-row.on { background: var(--control-fill); border-color: var(--control-border); }
+:root[data-ui-style='modern'] .dp-row.on { background: var(--soft-fill); border-color: var(--accent); }
+.dp-row:hover:not(:disabled) { transform: none; border-color: var(--accent); }
+.dp-text { display: grid; gap: 2px; min-width: 0; }
+.dp-text b { font-size: 13px; font-weight: 600; }
+.dp-text span { font-size: 12px; font-weight: 400; color: var(--text-secondary); overflow-wrap: anywhere; }
+.dp-row:disabled .dp-text span { color: var(--text-muted); }
+.dp-check { width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--accent); color: var(--on-accent); margin-top: 1px; }
+.dp-circle { color: var(--text-muted); flex: none; margin-top: 1px; }

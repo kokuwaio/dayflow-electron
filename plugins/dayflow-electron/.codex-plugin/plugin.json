@@ -1,0 +1,37 @@
+{
+  "name": "dayflow-electron",
+  "version": "0.1.0",
+  "description": "Ask about your day. Dayflow Electron's timeline of what you worked on, read locally from your computer.",
+  "author": {
+    "name": "Dayflow Electron",
+    "url": "https://github.com/kokuwaio/dayflow-electron"
+  },
+  "homepage": "https://github.com/kokuwaio/dayflow-electron",
+  "repository": "https://github.com/kokuwaio/dayflow-electron",
+  "license": "MIT",
+  "keywords": ["time tracking", "timeline", "productivity", "standup"],
+  "skills": "./skills/",
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/onboarding/SKILL.md"
+    }
+  },
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Dayflow Electron",
+    "shortDescription": "Your day's timeline, from the Dayflow Electron app.",
+    "longDescription": "Dayflow Electron records what you work on and turns it into a timeline. This plugin lets you ask where your time went and draft standups and weekly reviews from it. Everything is read from the Dayflow Electron app on this computer; nothing is uploaded by the plugin.",
+    "developerName": "Dayflow Electron",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/kokuwaio/dayflow-electron",
+    "composerIcon": "./assets/icon.svg",
+    "logo": "./assets/icon.svg",
+    "brandColor": "#4338CA",
+    "defaultPrompt": [
+      "@Dayflow Electron what did I work on today?",
+      "@Dayflow Electron where did my time go this week?",
+      "@Dayflow Electron write my standup from yesterday."
+    ]
+  }
+}

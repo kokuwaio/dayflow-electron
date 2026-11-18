@@ -1,0 +1,265 @@
+name: Build
+
+# Tests and builds everything for x86_64 and aarch64; CI and releases call
+# this workflow. The Flatpak job packs the app and helper built by the other
+# two jobs, like `npm run flatpak` does locally. The installers job tests on
+# Windows and macOS and builds their installers and the update feeds that
+# electron-updater reads (one job per OS: macOS minutes cost ten times as
+# much in private repositories). Nothing is published here: every
+# electron-builder call has --publish never; the release workflow uploads.
+
+permissions: read-all
+
+on:
+  workflow_call:
+
+jobs:
+  typescript:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    env:
+      # Tests run without Electron; electron-builder fetches its own copy.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Version
+        # 1.2.3 for a release tag v1.2.3, else 0.0.0-<branch>.<sha>.
+        working-directory: .
+        run: echo "VERSION=$(scripts/version.sh)" >> "$GITHUB_ENV"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          # node:sqlite needs Node 24, the version Electron ships.
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Package
+        # electron-builder fetches Electron for each architecture; both unpack as linux-unpacked.
+        run: |
+          npx electron-vite build
+          # The tests never load the bundles; a syntax error there only shows when the app starts.
+          for bundle in out/main/*.js; do node --check "$bundle"; done
+          npx electron-builder --linux dir --x64 --arm64 --publish never -c.extraMetadata.version="$VERSION"
+          tar -C dist -czf app-x86_64.tar.gz linux-unpacked
+          mkdir -p dist/arm64 && mv dist/linux-arm64-unpacked dist/arm64/linux-unpacked
+          tar -C dist/arm64 -czf app-aarch64.tar.gz linux-unpacked
+
+      - name: Upload app (x86_64)
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-x86_64
+          path: app-x86_64.tar.gz
+          retention-days: 7
+
+      - name: Upload app (aarch64)
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-aarch64
+          path: app-aarch64.tar.gz
+          retention-days: 7
+
+  go:
+    name: Go helper (${{ matrix.arch }})
+    strategy:
+      matrix:
+        include:
+          # Not ubuntu-latest: the helper must not need a newer glibc than the
+          # Flatpak runtime (freedesktop 25.08) ships.
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        working-directory: helper/linux
+    env:
+      # Ubuntu's libpipewire-0.3.pc passes this flag, which cgo blocks by default.
+      CGO_CFLAGS_ALLOW: -fno-strict-overflow
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Version
+        # 1.2.3 for a release tag v1.2.3, else 0.0.0-<branch>.<sha>.
+        working-directory: .
+        run: echo "VERSION=$(scripts/version.sh)" >> "$GITHUB_ENV"
+
+      - name: Install libpipewire
+        # The pipewire package links libpipewire-0.3 through cgo.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpipewire-0.3-dev
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: helper/linux/go.mod
+          cache-dependency-path: helper/linux/go.sum
+
+      - name: Lint
+        # Same check as `make lint`: go vet, formatting and more (helper/linux/.golangci.yml).
+        if: matrix.arch == 'x86_64'
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.15.0
+          working-directory: helper/linux
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build
+        run: go build -trimpath -ldflags "-X main.version=$VERSION" -o bin/dayflow-linux-helper ./cmd/dayflow-linux-helper
+
+      - name: Upload helper
+        uses: actions/upload-artifact@v7
+        with:
+          name: helper-${{ matrix.arch }}
+          path: helper/linux/bin/dayflow-linux-helper
+          retention-days: 7
+
+  flatpak:
+    name: Flatpak (${{ matrix.arch }})
+    needs:
+      - typescript
+      - go
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
+      options: --privileged
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Version
+        # 1.2.3 for a release tag v1.2.3, else 0.0.0-<branch>.<sha>.
+        working-directory: .
+        run: echo "VERSION=$(scripts/version.sh)" >> "$GITHUB_ENV"
+
+      - name: Download app
+        uses: actions/download-artifact@v8
+        with:
+          name: app-${{ matrix.arch }}
+
+      - name: Download helper
+        uses: actions/download-artifact@v8
+        with:
+          name: helper-${{ matrix.arch }}
+          path: helper/linux/bin
+
+      - name: Unpack app
+        run: mkdir -p dist && tar -C dist -xzf "app-${{ matrix.arch }}.tar.gz"
+
+      - name: Add the release to the metainfo
+        run: scripts/metainfo-release.sh "$VERSION"
+
+      - name: Make the preinstalled runtimes updatable
+        # The image's runtimes lie in a lower overlay layer, where flatpak
+        # cannot move directories ("Invalid cross-device link") once Flathub
+        # has a newer SDK. A copy in the container's writable layer can, and
+        # flatpak-builder updates that copy.
+        run: |
+          cp -a "$(flatpak --installations | head -n 1)" /flatpak-system
+          echo "FLATPAK_SYSTEM_DIR=/flatpak-system" >> "$GITHUB_ENV"
+          FLATPAK_SYSTEM_DIR=/flatpak-system flatpak list --runtime --columns=application,branch
+
+      - name: Build Flatpak
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          manifest-path: packaging/flatpak/io.github.kokuwaio.DayflowElectron.yml
+          bundle: dayflow-electron.flatpak
+          arch: ${{ matrix.arch }}
+          artifact-name: dayflow-electron-flatpak-${{ matrix.arch }}
+
+  installers:
+    name: Installers (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows
+            runner: windows-latest
+            # One NSIS installer per architecture: x64 and arm64. Each run writes
+            # latest.yml for its own installer; the feed has to list both.
+            package: >-
+              npx electron-builder --win nsis --x64 --publish never -c.extraMetadata.version="$VERSION" &&
+              mv dist/latest.yml dist/latest-x64.yml &&
+              npx electron-builder --win nsis --arm64 --publish never -c.extraMetadata.version="$VERSION" &&
+              node scripts/merge-update-feeds.ts dist/latest.yml dist/latest-x64.yml dist/latest.yml &&
+              rm dist/latest-x64.yml
+            files: |
+              dist/*.exe
+              dist/*.exe.blockmap
+              dist/latest.yml
+          - os: macos
+            runner: macos-latest
+            # One dmg per architecture: arm64 and x64, plus the zips that
+            # Squirrel.Mac installs updates from; latest-mac.yml lists both.
+            package: npx electron-builder --mac dmg zip --arm64 --x64 --publish never -c.extraMetadata.version="$VERSION"
+            files: |
+              dist/*.dmg
+              dist/*.zip
+              dist/*.blockmap
+              dist/latest-mac.yml
+    runs-on: ${{ matrix.runner }}
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      # electron-builder skips all macOS signing in pull requests; the
+      # ad-hoc signature that Apple silicon needs uses no secret.
+      CSC_FOR_PULL_REQUEST: "true"
+    defaults:
+      run:
+        # Git Bash on Windows, so the same commands and scripts/version.sh work everywhere.
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Version
+        run: echo "VERSION=$(scripts/version.sh)" >> "$GITHUB_ENV"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Package
+        # Unsigned; signing certificates plug in through the environment (docs/release.md).
+        run: |
+          npx electron-vite build
+          ${{ matrix.package }}
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v7
+        with:
+          name: installers-${{ matrix.os }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+          retention-days: 7

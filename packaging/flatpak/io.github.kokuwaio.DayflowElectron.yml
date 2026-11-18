@@ -1,0 +1,65 @@
+# Flatpak from a local build: `make flatpak` packs the app, builds the Go
+# helper and runs flatpak-builder on this manifest; CI does the same.
+id: io.github.kokuwaio.DayflowElectron
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: '25.08'
+command: dayflow-electron
+separate-locales: false
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # Screen lock (pause capture) and sleep
+  - --talk-name=org.freedesktop.ScreenSaver
+  - --system-talk-name=org.freedesktop.login1
+  # Tray icon
+  - --talk-name=org.kde.StatusNotifierWatcher
+  # API keys via Electron safeStorage
+  - --talk-name=org.freedesktop.secrets
+  - --talk-name=org.kde.kwalletd6
+  - --talk-name=org.kde.kwalletd5
+  # Not requested on purpose (opt-in with flatpak override): org.kde.KWin
+  # (active window) and org.freedesktop.Flatpak (host CLI providers).
+modules:
+  - name: dayflow-electron
+    buildsystem: simple
+    build-commands:
+      - cp -a linux-unpacked /app/dayflow-electron
+      - install -Dm755 dayflow-linux-helper /app/bin/dayflow-linux-helper
+      - install -Dm755 dayflow-electron.sh /app/bin/dayflow-electron
+      - install -Dm755 dayflow-electron-cli.sh /app/bin/dayflow-electron-cli
+      - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/io.github.kokuwaio.DayflowElectron.png
+      - install -Dm644 icon.svg /app/share/icons/hicolor/scalable/apps/io.github.kokuwaio.DayflowElectron.svg
+      - install -Dm644 io.github.kokuwaio.DayflowElectron.desktop /app/share/applications/io.github.kokuwaio.DayflowElectron.desktop
+      - install -Dm644 io.github.kokuwaio.DayflowElectron.metainfo.xml /app/share/metainfo/io.github.kokuwaio.DayflowElectron.metainfo.xml
+    sources:
+      - type: dir
+        path: ../../dist/linux-unpacked
+        dest: linux-unpacked
+      - type: file
+        path: ../../helper/linux/bin/dayflow-linux-helper
+      - type: file
+        path: ../../resources/icon.png
+      - type: file
+        path: ../../resources/icon.svg
+      - type: file
+        path: io.github.kokuwaio.DayflowElectron.desktop
+      - type: file
+        path: io.github.kokuwaio.DayflowElectron.metainfo.xml
+      - type: script
+        dest-filename: dayflow-electron.sh
+        commands:
+          - export TMPDIR="$XDG_RUNTIME_DIR/app/$FLATPAK_ID"
+          - exec zypak-wrapper /app/dayflow-electron/dayflow-electron "$@"
+      # The `dayflow-electron` CLI and MCP server: Electron in Node mode, no window or zypak.
+      # Run as `flatpak run --command=dayflow-electron-cli io.github.kokuwaio.DayflowElectron <args>`.
+      - type: script
+        dest-filename: dayflow-electron-cli.sh
+        commands:
+          - export ELECTRON_RUN_AS_NODE=1
+          - exec /app/dayflow-electron/dayflow-electron /app/dayflow-electron/resources/app.asar/out/main/cli.js "$@"

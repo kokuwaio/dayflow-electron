@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.kokuwaio.DayflowElectron</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Dayflow Electron</name>
+  <summary>A timeline of your day from periodic screenshots</summary>
+  <developer id="io.github.kokuwaio">
+    <name>kokuwa.io</name>
+  </developer>
+  <description>
+    <p>
+      Takes a screenshot of the screen under your mouse every few seconds and
+      lets an AI model you choose turn each 15 minutes into timeline cards that
+      say what you did. Screenshots stay on your computer; only the provider
+      you pick sees them, and there is no telemetry.
+    </p>
+    <ul>
+      <li>Timeline by day and week, with categories, day summary and export</li>
+      <li>Cloud providers (Anthropic, Gemini, OpenAI-compatible) or a local model with Ollama or LM Studio</li>
+      <li>Daily standup notes and a weekly dashboard</li>
+      <li>Password managers and other blocked apps are left out of recordings where the app can see the focused window (KDE Plasma with window detection allowed)</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">io.github.kokuwaio.DayflowElectron.desktop</launchable>
+  <url type="homepage">https://github.com/kokuwaio/dayflow-electron</url>
+  <url type="bugtracker">https://github.com/kokuwaio/dayflow-electron/issues</url>
+  <content_rating type="oars-1.1" />
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <releases>
+    <release version="0.1.0" date="2026-11-17" />
+  </releases>
+</component>

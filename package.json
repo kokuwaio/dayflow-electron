@@ -1,0 +1,58 @@
+{
+  "name": "dayflow-electron",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cross-platform reimplementation of Dayflow: a timeline of your day from periodic screenshots.",
+  "license": "MIT",
+  "type": "module",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "helper": "make helper",
+    "test:helper": "make -C helper/linux test",
+    "pack": "make pack",
+    "dist:win": "electron-vite build && electron-builder --win nsis --x64 --publish never && node -e \"require('fs').renameSync('dist/latest.yml','dist/latest-x64.yml')\" && electron-builder --win nsis --arm64 --publish never && node scripts/merge-update-feeds.ts dist/latest.yml dist/latest-x64.yml dist/latest.yml && node -e \"require('fs').rmSync('dist/latest-x64.yml')\"",
+    "dist:mac": "electron-vite build && electron-builder --mac dmg zip --arm64 --x64 --publish never",
+    "flatpak": "make flatpak"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "electron": "45.3.3",
+    "electron-builder": "^26.18.0",
+    "electron-vite": "^6.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.9.0",
+    "@fontsource-variable/figtree": "5.3.0",
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource/instrument-serif": "5.3.0",
+    "@tesseract.js-data/eng": "1.0.0",
+    "echarts": "^6.1.0",
+    "electron-updater": "6.8.12",
+    "i18next": "26.7.1",
+    "jpeg-js": "0.4.4",
+    "lucide-react": "1.66.0",
+    "react-i18next": "17.1.12",
+    "react-markdown": "10.1.0",
+    "remark-gfm": "4.0.1",
+    "tesseract.js": "7.0.0"
+  },
+  "author": "kokuwaio",
+  "homepage": "https://github.com/kokuwaio/dayflow-electron",
+  "overrides": {
+    "wasm-feature-detect": "1.9.0"
+  }
+}

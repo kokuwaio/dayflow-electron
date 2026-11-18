@@ -1,0 +1,343 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
+import { Calendar, Check, ChevronLeft, ChevronRight, Copy, Pencil } from 'lucide-react'
+import { dayChanged, weekTrackedMinutes } from '@shared/canvas'
+import { type Category, PRIVATE_CATEGORY, SYSTEM_CATEGORY, categoryKey } from '@shared/categories'
+import { shiftDay, todayKey } from '@shared/day'
+import { dateLabel, t } from '@shared/i18n'
+import type { ReviewSegment } from '@shared/review'
+import type { AppStatus, Rating, Tab, TimelineCard } from '@shared/types'
+import type { DayCards, Week } from '@shared/week'
+import { CalendarPopover } from './CalendarPopover'
+import { CardDetail } from './CardDetail'
+import { DayCanvas } from './DayCanvas'
+import { DaySummary } from './DaySummary'
+import { ReviewOverlay } from './ReviewOverlay'
+import { FilterBar } from './FilterBar'
+import { GettingStartedChecklist } from './GettingStarted'
+import { PausePill } from './PausePill'
+import type { SettingsTab } from './Settings'
+import { WeekGrid } from './WeekGrid'
+
+/** Colors for cards the app writes itself, outside the user's categories. */
+const BUILT_IN_COLORS: Record<string, string> = { [SYSTEM_CATEGORY]: '#E0A100', [PRIVATE_CATEGORY]: '#5C6B7A' }
+/** Upstream's fallback for a category without a colour. */
+const FALLBACK = '#4F80EB'
+
+/** "Today, Nov 17" or "Mon, Nov 10", like upstream's header. */
+function headerDate(key: string, isToday: boolean): string {
+  return isToday
+    ? t('timeline.todayDate', { date: dateLabel(key, { month: 'short', day: 'numeric' }) })
+    : dateLabel(key, { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+/** "November 16 - November 22" in the app language. */
+function weekTitle(days: string[]): string {
+  const fmt = (d: string) => dateLabel(d, { month: 'long', day: 'numeric' })
+  return days.length ? t('timeline.weekRange', { from: fmt(days[0]!), to: fmt(days[days.length - 1]!) }) : ''
+}
+
+/** The rating covering most of the card, if any. */
+function ratingFor(card: TimelineCard, ratings: Rating[]): Rating | undefined {
+  return ratings
+    .map((r) => ({ r, overlap: Math.min(r.end, card.end) - Math.max(r.start, card.start) }))
+    .filter((x) => x.overlap > (card.end - card.start) / 2)
+    .sort((a, b) => b.overlap - a.overlap)[0]?.r
+}
+
+const nowSec = () => Date.now() / 1000
+
+/**
+ * The Timeline tab (upstream MainView): header with navigation and the pause
+ * pill, category chips, the day canvas or week grid, and the inspector card.
+ */
+export function Timeline(props: {
+  status: AppStatus | null
+  onStatusChange: (s: AppStatus) => void
+  onOpenSettings: (tab: SettingsTab) => void
+  /** The day the app wants the daily goal pop-up on: shown in day mode, nothing selected. */
+  /** The OpenAI-compatible base URL, so a local server is named as such. */
+  baseUrl: string
+  goalPromptDay: string | null
+  onGoalPromptShown: () => void
+  /** Bumped after 15 minutes away: back to today, card closed, scrolled to now (upstream performIdleResetAndScroll). */
+  resetTick: number
+  /** The first-day checklist's "Open" buttons. */
+  onOpenTab: (tab: Tab) => void
+}) {
+  const { t } = useTranslation()
+  const [day, setDay] = useState(todayKey)
+  const [mode, setMode] = useState<'day' | 'week'>('day')
+  const [cards, setCards] = useState<TimelineCard[]>([])
+  const [week, setWeek] = useState<(Week & { columns: DayCards[]; ratings: Rating[] }) | null>(null)
+  const loadId = useRef(0)
+  const [ratings, setRatings] = useState<Rating[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [selected, setSelected] = useState<number | null>(null)
+  const [muted, setMuted] = useState<Set<string>>(new Set())
+  const [copy, setCopy] = useState<'idle' | 'copying' | 'copied'>('idle')
+  const [showIcons, setShowIcons] = useState(false)
+  const [now, setNow] = useState(nowSec)
+  const [scrollToNow, setScrollToNow] = useState(0)
+  // Like upstream: the goal pop-up shows on today's day view with no card open.
+  useEffect(() => {
+    if (!props.goalPromptDay) return
+    setDay(props.goalPromptDay)
+    setMode('day')
+    setSelected(null)
+  }, [props.goalPromptDay])
+  useEffect(() => {
+    if (props.resetTick === 0) return
+    setDay(todayKey())
+    setSelected(null)
+    setScrollToNow((n) => n + 1)
+  }, [props.resetTick])
+  // Opening a card ticks the first-day checklist (a no-op once done or when the guide is off).
+  useEffect(() => {
+    if (selected !== null) void window.dayflow.updateGettingStarted({ openedCard: true })
+  }, [selected])
+  const [footerHidden, setFooterHidden] = useState(false)
+  const [review, setReview] = useState<{ segments: ReviewSegment[]; toReview: number } | null>(null)
+  const [reviewing, setReviewing] = useState(false)
+  const lastSeenDay = useRef(todayKey())
+  const [calendarOpen, setCalendarOpen] = useState(false)
+
+  const load = useCallback(() => {
+    // Only the newest request may update the view, so fast paging cannot show an older week.
+    const id = ++loadId.current
+    void window.dayflow.getDay(day).then((r) => {
+      if (id !== loadId.current) return
+      setCards(r.cards)
+      setRatings(r.ratings)
+    })
+    // The week also feeds "N hours tracked this week" in day mode.
+    void window.dayflow.getWeek(day).then((w) => id === loadId.current && setWeek(w))
+    void window.dayflow.getReview(day).then((r) => id === loadId.current && setReview(r))
+    void window.dayflow.getSettings().then((s) => {
+      setCategories(s.categories)
+      setShowIcons(s.showAppIcons)
+    })
+  }, [day])
+
+  useEffect(() => {
+    load()
+    return window.dayflow.onCardsChanged(load)
+  }, [load])
+
+  // Every minute: move the status card along, and at 4 AM jump to the new day (upstream Lifecycle.swift).
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(nowSec())
+      const next = dayChanged(lastSeenDay.current, nowSec())
+      if (next) {
+        lastSeenDay.current = next
+        setDay(next)
+        setSelected(null)
+        setScrollToNow((n) => n + 1)
+      }
+    }, 60_000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const colorOf = (category: string) =>
+    categories.find((c) => categoryKey(c.name) === categoryKey(category))?.color ?? BUILT_IN_COLORS[category] ?? FALLBACK
+  const weekCards = week?.columns.flatMap((c) => c.cards) ?? []
+  const allCards = mode === 'week' ? weekCards : cards
+  const visibleRatings = mode === 'week' ? (week?.ratings ?? []) : ratings
+  const card = allCards.find((c) => c.id === selected) ?? null
+  const today = todayKey()
+  const isToday = day === today
+  const step = mode === 'week' ? 7 : 1
+  const inCurrentPeriod = mode === 'week' ? (week?.columns.some((c) => c.day === today) ?? true) : isToday
+  const trackedHours = Math.floor(weekTrackedMinutes(weekCards) / 60)
+  const goTo = (next: string) => {
+    setDay(next)
+    setSelected(null)
+    if (next === todayKey()) setScrollToNow((n) => n + 1)
+  }
+  const refreshStatus = () => void window.dayflow.getStatus().then(props.onStatusChange)
+
+  return (
+    <div className="timeline">
+      <section className="tl-main">
+        <header className="tl-header">
+          <div className="tl-lead">
+            <div className="nav-arrows">
+              <button className="nav-arrow" aria-label={mode === 'week' ? t('timeline.previousWeek') : t('timeline.previousDay')} onClick={() => goTo(shiftDay(day, -step))}>
+                <ChevronLeft size={24} strokeWidth={1.5} />
+              </button>
+              <button className="nav-arrow" aria-label={mode === 'week' ? t('timeline.nextWeek') : t('timeline.nextDay')} disabled={inCurrentPeriod} onClick={() => goTo(shiftDay(day, step))}>
+                <ChevronRight size={24} strokeWidth={1.5} />
+              </button>
+            </div>
+            <div className="cal-anchor">
+              <button
+                className={`btn-glass cal-pill ${calendarOpen ? 'open' : ''}`}
+                aria-label={t('timeline.pickDate')}
+                aria-expanded={calendarOpen}
+                onClick={() => setCalendarOpen(!calendarOpen)}
+              >
+                <Calendar size={16} />
+              </button>
+              {calendarOpen && (
+                <CalendarPopover
+                  day={day}
+                  today={today}
+                  mode={mode}
+                  onPick={(next) => {
+                    setCalendarOpen(false)
+                    goTo(next)
+                  }}
+                  onClose={() => setCalendarOpen(false)}
+                />
+              )}
+            </div>
+            <div className="segment" role="group" aria-label={t('timeline.view')}>
+              <span className={`thumb ${mode}`} />
+              {(['day', 'week'] as const).map((m) => (
+                <button key={m} className={mode === m ? 'active' : ''} aria-pressed={mode === m} onClick={() => (setMode(m), setSelected(null))}>
+                  {m === 'day' ? t('timeline.day') : t('timeline.week')}
+                </button>
+              ))}
+            </div>
+            {!inCurrentPeriod && (
+              <button className="today-btn" onClick={() => goTo(todayKey())}>
+                {t('timeline.today')}
+              </button>
+            )}
+            <h1 className="tl-date">{mode === 'week' ? (week ? weekTitle(week.days) : '') : headerDate(day, isToday)}</h1>
+          </div>
+          {props.status && <PausePill status={props.status} onChange={refreshStatus} />}
+        </header>
+
+        <div className="tl-chips">
+          <FilterBar
+            categories={categories}
+            muted={muted}
+            onToggle={(name) => {
+              const next = new Set(muted)
+              if (next.has(name)) next.delete(name)
+              else next.add(name)
+              setMuted(next)
+            }}
+            onReorder={(next) => {
+              setCategories(next)
+              void window.dayflow.saveSettings({ categories: next })
+            }}
+          />
+          <button className="icon-circle" aria-label={t('timeline.editCategories')} title={t('timeline.editCategories')} onClick={() => props.onOpenSettings('categories')}>
+            <Pencil size={13} />
+          </button>
+        </div>
+
+        {mode === 'week' && week ? (
+          <WeekGrid
+            columns={week.columns}
+            today={today}
+            now={now}
+            recorder={props.status?.recorder.state ?? null}
+            selected={selected}
+            muted={muted}
+            colorOf={colorOf}
+            onSelect={setSelected}
+            onFooterOverlap={setFooterHidden}
+          />
+        ) : (
+          <DayCanvas
+            day={day}
+            cards={cards}
+            now={now}
+            recorder={props.status?.recorder.state ?? null}
+            selected={selected}
+            muted={muted}
+            showIcons={showIcons}
+            scrollToNow={scrollToNow}
+            colorOf={colorOf}
+            onSelect={setSelected}
+            onResume={() => void window.dayflow.resume().then(refreshStatus)}
+            onFooterOverlap={setFooterHidden}
+          />
+        )}
+
+        {mode === 'day' && (review?.toReview ?? 0) > 0 && (
+          <button className="review-badge" aria-label={t('timeline.cardsToReview', { count: review!.toReview })} onClick={() => setReviewing(true)}>
+            <span className="review-badge-icon" aria-hidden="true">
+              <span />
+              <span>{review!.toReview}</span>
+            </span>
+            {t('timeline.reviewCards')}
+          </button>
+        )}
+
+        <footer className="tl-footer">
+          <button
+            className="copy-btn"
+            disabled={copy === 'copying'}
+            onClick={() => {
+              setCopy('copying')
+              void window.dayflow.copyTimeline(mode, day).then(() => {
+                setCopy('copied')
+                setTimeout(() => setCopy('idle'), 2000)
+              })
+            }}
+          >
+            {copy === 'copying' ? <span className="spinner dark" /> : copy === 'copied' ? <Check size={12} /> : <Copy size={11.5} />}
+            {copy === 'copied' ? t('common.copied') : t('timeline.copyTimeline')}
+          </button>
+          <span className={`tracked ${footerHidden ? 'hidden' : ''}`}>
+            <Trans
+              i18nKey={mode === 'week' ? 'timeline.trackedActivitiesThisWeek' : 'timeline.trackedThisWeek'}
+              count={trackedHours}
+              components={{ b: <b /> }}
+            />
+          </span>
+        </footer>
+      </section>
+
+      {(mode === 'day' || card) && (
+        <aside className={`inspector ${mode}`} aria-label={card ? t('timeline.cardDetails') : t('timeline.daySummary')}>
+          {card ? (
+            <CardDetail
+              key={card.id}
+              card={card}
+              color={colorOf(card.category)}
+              categories={categories}
+              rating={ratingFor(card, visibleRatings)}
+              onClose={() => setSelected(null)}
+              onDeleted={() => setSelected(null)}
+              onEditCategories={() => props.onOpenSettings('categories')}
+              status={props.status}
+              baseUrl={props.baseUrl}
+              onOpenProviders={() => props.onOpenSettings('providers')}
+            />
+          ) : (
+            <div className="inspector-scroll">
+              {mode === 'day' && <GettingStartedChecklist recorder={props.status?.recorder.state ?? null} onOpenTab={props.onOpenTab} />}
+              <DaySummary
+                day={day}
+                cards={cards}
+                categories={categories}
+                recorder={props.status?.recorder.state ?? null}
+                review={review}
+                onReview={() => setReviewing(true)}
+                openGoalsFor={props.goalPromptDay}
+                onGoalsOpened={props.onGoalPromptShown}
+              />
+            </div>
+          )}
+        </aside>
+      )}
+      {reviewing && (
+        <ReviewOverlay
+          day={day}
+          cards={cards}
+          colorOf={colorOf}
+          onClose={() => {
+            setReviewing(false)
+            load()
+          }}
+        />
+      )}
+    </div>
+  )
+}
