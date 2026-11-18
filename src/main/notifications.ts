@@ -4,6 +4,7 @@
 
 import { Notification } from 'electron'
 import { failureKind, needsUser } from '../shared/failures'
+import { t } from '../shared/i18n'
 import type { Tab } from '../shared/types'
 
 export interface Notifier {
@@ -15,7 +16,11 @@ export interface Notifier {
 }
 
 const waiting = (minutes: number) =>
-  minutes < 60 ? `${minutes} min` : minutes < 120 ? '1 hr' : minutes < 1440 ? `${Math.floor(minutes / 60)} hrs` : '1 day'
+  minutes < 60
+    ? t('notifications.waitingMinutes', { count: minutes })
+    : minutes < 1440
+      ? t('notifications.waitingHours', { count: Math.floor(minutes / 60) })
+      : t('notifications.waitingDay')
 
 export function createNotifier(opts: {
   open: (tab: Tab) => void
@@ -32,17 +37,16 @@ export function createNotifier(opts: {
     n.show()
   }
   return {
-    standupReady: () => show('Your daily recap for yesterday is ready', 'Tap to open it in Daily view.', 'daily'),
-    firstCards: () =>
-      show('Your first Dayflow Electron cards are ready', 'Take a look at what Dayflow Electron picked up from your last few minutes of work.', 'timeline'),
-    weeklyUnlocked: () => show('Weekly view is ready', 'Tap to open your weekly review.', 'weekly'),
+    standupReady: () => show(t('notifications.standupReady.title'), t('notifications.standupReady.body'), 'daily'),
+    firstCards: () => show(t('notifications.firstCards.title'), t('notifications.firstCards.body'), 'timeline'),
+    weeklyUnlocked: () => show(t('notifications.weeklyUnlocked.title'), t('notifications.weeklyUnlocked.body'), 'weekly'),
     providerProblem(message, waitingMinutes) {
       const kind = failureKind(message)
       if (opts.windowFocused() || !needsUser(kind)) return
       const days = opts.problemDays()
       if (days[kind] === opts.today()) return
       opts.saveProblemDays({ ...days, [kind]: opts.today() })
-      show('Dayflow Electron needs a hand', `${message.slice(0, 200)} ${waiting(waitingMinutes)} of recording is waiting.`, 'timeline')
+      show(t('notifications.problem.title'), `${message.slice(0, 200)} ${t('notifications.problem.waiting', { time: waiting(waitingMinutes) })}`, 'timeline')
     }
   }
 }

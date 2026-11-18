@@ -27,7 +27,7 @@ import {
 } from 'lucide-react'
 import { ChatChart } from './ChatChart'
 import { ProgressBar } from './LockedFeature'
-import { PROVIDER_CHOICES } from './providers'
+import { providerChoices } from './providers'
 
 /** Upstream's welcome prompts and their icons (Views/UI/ChatView+State.swift). */
 const WELCOME_PROMPTS: Array<{ text: string; icon: LucideIcon }> = [
@@ -42,7 +42,7 @@ const STATUS_TEXT: Record<Status, string> = { thinking: 'Thinking', tools: 'Runn
 const STATUS_ICON: Record<Status, LucideIcon> = { thinking: Sparkles, tools: Wrench, answering: MessageSquareText }
 type Panel = 'history' | 'memory' | null
 const MEMORY_MAX = 10_000
-const providerLabel = (kind: string) => PROVIDER_CHOICES.find((p) => p.kind === kind)?.label ?? kind
+const providerLabel = (kind: string) => providerChoices().find((p) => p.kind === kind)?.label ?? kind
 
 /** The Chat tab (upstream ChatView): questions about your timeline, answered with the timeline tools. */
 export function Chat() {

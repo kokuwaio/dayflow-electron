@@ -8,7 +8,7 @@ import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, typ
 import type { UiStyle } from '@shared/ui-style'
 import { AgentAccessSettings } from './AgentAccessSettings'
 import { Row, Section, StatusDot } from './SettingsLayout'
-import { PROVIDER_CHOICES } from './providers'
+import { providerChoices } from './providers'
 import { applyUiStyle } from './ui-style'
 
 /** Upstream's Settings tabs that the port has (Settings/SettingsView.swift); "categories" opens Other at the category list. */
@@ -108,7 +108,7 @@ function ProvidersTab({ settings, status, save }: { settings: Settings; status: 
     <>
       <Section title="AI provider" sub="Screenshots go only to the providers chosen here. Nothing else leaves this computer.">
         <div className="provider-list" role="radiogroup" aria-label="Provider">
-          {PROVIDER_CHOICES.map((p) => (
+          {providerChoices().map((p) => (
             <label key={p.kind} className={`provider ${provider === p.kind ? 'active' : ''}`}>
               <input type="radio" name="provider" checked={provider === p.kind} onChange={() => (save({ provider: p.kind }), setTest(null))} />
               <div>
@@ -174,7 +174,7 @@ function ProvidersTab({ settings, status, save }: { settings: Settings; status: 
         <Row label="Fallback provider" sub="Takes over a batch when the main provider fails. Select it above to set its model and key.">
           <select value={settings.fallbackProvider ?? ''} onChange={(e) => save({ fallbackProvider: (e.target.value || null) as ProviderKind | null })}>
             <option value="">None</option>
-            {PROVIDER_CHOICES.filter((p) => p.kind !== provider).map((p) => (
+            {providerChoices().filter((p) => p.kind !== provider).map((p) => (
               <option key={p.kind} value={p.kind}>
                 {p.label} ({settings.models[p.kind]}){needsApiKey(p.kind, settings.openaiBaseUrl) && !keys?.[p.kind] ? ', no key yet' : ''}
               </option>

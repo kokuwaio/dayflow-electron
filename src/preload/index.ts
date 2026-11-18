@@ -70,6 +70,11 @@ const api: DayflowApi = {
     ipcRenderer.on('cards:changed', listener)
     return () => ipcRenderer.off('cards:changed', listener)
   },
+  onLanguage: (cb) => {
+    const listener = (_e: unknown, language: Parameters<typeof cb>[0]) => cb(language)
+    ipcRenderer.on('language:changed', listener)
+    return () => ipcRenderer.off('language:changed', listener)
+  },
   onStatus: (cb) => {
     const listener = (_e: unknown, s: Parameters<typeof cb>[0]) => cb(s)
     ipcRenderer.on('status:changed', listener)

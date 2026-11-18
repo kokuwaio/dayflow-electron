@@ -1,0 +1,190 @@
+{
+  "common": {
+    "dismiss": "Dismiss"
+  },
+  "app": {
+    "views": "Views",
+    "tabs": {
+      "timeline": "Timeline",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "chat": "Chat",
+      "settings": "Settings"
+    },
+    "analysisFailed": "Analysis failed",
+    "captureFailed": "Capture failed",
+    "openSettings": "Open settings"
+  },
+  "providers": {
+    "anthropic": {
+      "hint": "Claude models through the Anthropic API."
+    },
+    "gemini": {
+      "hint": "Google Gemini API; frames are sent inline."
+    },
+    "openai": {
+      "label": "OpenAI-compatible",
+      "hint": "OpenAI, OpenRouter, or a local Ollama or LM Studio server (no key needed; analyzed in small steps)."
+    },
+    "claudeCli": {
+      "hint": "Your claude CLI and its subscription; no API key."
+    },
+    "codexCli": {
+      "hint": "Your codex CLI and its ChatGPT subscription; no API key."
+    }
+  },
+  "format": {
+    "hoursMinutes": "{{h}}h {{m}}m",
+    "hours": "{{h}}h",
+    "minutes": "{{m}}m",
+    "spelledHours_one": "{{count}} hour",
+    "spelledHours_other": "{{count}} hours",
+    "spelledMinutes_one": "{{count}} minute",
+    "spelledMinutes_other": "{{count}} minutes",
+    "spelledHoursMinutes": "{{hours}}, {{minutes}}"
+  },
+  "access": {
+    "progress": "{{done}} / {{total}}"
+  },
+  "recorder": {
+    "recording": "Recording",
+    "paused": "Paused",
+    "pausedUntil": "Paused until {{time}}",
+    "locked": "Paused while locked",
+    "sleeping": "Paused while asleep",
+    "backoff": "Capture failed",
+    "backoffUntil": "Capture failed, retrying at {{time}}",
+    "stopped": "Stopped"
+  },
+  "pause": {
+    "forMinutes_one": "For {{count}} minute",
+    "forMinutes_other": "For {{count}} minutes",
+    "forHours_one": "For {{count}} hour",
+    "forHours_other": "For {{count}} hours",
+    "untilResumed": "Until I resume",
+    "chipMinutes_one": "Pause for {{count}} minute",
+    "chipMinutes_other": "Pause for {{count}} minutes",
+    "chipHours_one": "Pause for {{count}} hour",
+    "chipHours_other": "Pause for {{count}} hours",
+    "chipUntilResumed": "Pause until I resume",
+    "chipShortMinutes_one": "{{count}}m",
+    "chipShortMinutes_other": "{{count}}m",
+    "chipShortHours_one": "{{count}}h",
+    "chipShortHours_other": "{{count}}h",
+    "pausedFor": "Dayflow Electron paused for {{time}}",
+    "pausedIndefinitely": "Dayflow Electron paused indefinitely",
+    "hiddenBlockedApp": "Hidden: blocked app in front",
+    "resume": "Resume",
+    "pause": "Pause",
+    "closeOptions": "Close pause options",
+    "pauseRecording": "Pause recording"
+  },
+  "tray": {
+    "tooltip": "Dayflow Electron: {{status}}",
+    "resume": "Resume recording",
+    "pause": "Pause recording",
+    "open": "Open Dayflow Electron",
+    "openRecordings": "Open recordings folder",
+    "quit": "Quit"
+  },
+  "notifications": {
+    "standupReady": {
+      "title": "Your daily recap for yesterday is ready",
+      "body": "Tap to open it in Daily view."
+    },
+    "firstCards": {
+      "title": "Your first Dayflow Electron cards are ready",
+      "body": "Take a look at what Dayflow Electron picked up from your last few minutes of work."
+    },
+    "weeklyUnlocked": {
+      "title": "Weekly view is ready",
+      "body": "Tap to open your weekly review."
+    },
+    "problem": {
+      "title": "Dayflow Electron needs a hand",
+      "waiting": "{{time}} of recording is waiting."
+    },
+    "waitingMinutes_one": "{{count}} min",
+    "waitingMinutes_other": "{{count}} min",
+    "waitingHours_one": "{{count}} hr",
+    "waitingHours_other": "{{count}} hrs",
+    "waitingDay": "1 day"
+  },
+  "updates": {
+    "available": {
+      "title": "Dayflow Electron {{version}} is available",
+      "bodyDownload": "Click to download it.",
+      "bodyOpen": "This copy can't install updates itself. Click to open the download page."
+    },
+    "ready": {
+      "title": "Dayflow Electron {{version}} is ready",
+      "body": "Restart Dayflow Electron to update, or it updates the next time you quit."
+    },
+    "menuGet": "Get version {{version}}…",
+    "menuDownload": "Download version {{version}}",
+    "menuDownloading": "Downloading version {{version}} ({{percent}}%)",
+    "menuRestart": "Restart to update to {{version}}"
+  },
+  "permissions": {
+    "checking": "Checking…",
+    "granted": "Granted",
+    "notGranted": "Not granted",
+    "allowed": "Allowed",
+    "notAllowedYet": "Not allowed yet",
+    "works": "Works",
+    "needsPermission": "Needs permission",
+    "notAvailable": "Not available",
+    "macScreen": {
+      "title": "Screen Recording",
+      "detail": "Periodic screenshots let Dayflow Electron write your timeline for you.",
+      "turnOn": "Turn on Dayflow Electron in System Settings → Privacy & Security → Screen Recording, then quit and reopen the app."
+    },
+    "linuxScreen": {
+      "title": "Screen sharing",
+      "detail": "Your desktop asks which screens to share. Choose all screens and allow restoring the permission, so it does not ask again. The app keeps only the screen under your mouse."
+    },
+    "window": {
+      "title": "Window detection (optional)",
+      "detail": "Blocked apps such as password managers are left out of recordings only where the app can see the active window.",
+      "detailFlatpak": "Blocked apps such as password managers are left out of recordings only where the app can see the active window. In the Flatpak on KDE Plasma, run this command once, then restart the app.",
+      "detailUnavailable": "Blocked apps such as password managers are left out of recordings only where the app can see the active window. Where it is not available, pause recording before opening a password manager."
+    },
+    "windows": {
+      "title": "Nothing to allow",
+      "detail": "Windows needs no permission for screenshots. Recording starts as soon as you launch."
+    }
+  },
+  "daily": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "highlightsFrom": "Highlights from {{day}}",
+    "recentHighlights": "Recent highlights",
+    "tasksFor": "Tasks for {{day}}",
+    "blockers": "Blockers",
+    "yesterdaysHighlights": "Yesterday's highlights",
+    "todaysTasks": "Today's tasks",
+    "noneRightNow": "None right now"
+  },
+  "chat": {
+    "errors": {
+      "busy": "The assistant is still answering.",
+      "locked": "Chat unlocks after 10 hours of timeline data.",
+      "empty": "Type a question first."
+    }
+  },
+  "settings": {
+    "export": {
+      "startAfterEnd": "Start must be on or before end.",
+      "tooLong": "Choose at most ten years.",
+      "canceled": "Export canceled",
+      "saveFailed": "Couldn't save file: {{error}}",
+      "saved": "Saved to {{path}}. Activities: {{activities}}; days: {{days}}."
+    },
+    "providers": {
+      "testAnswered": "{{model}} answered: {{text}}",
+      "cliFound": "Found {{path}}. Click \"Test connection\" to check that you are logged in.",
+      "cliNotFound": "Not found. Install it, or enter its full path.",
+      "cliNotFoundAt": "Not found at {{path}}. Install it, or enter its full path."
+    }
+  }
+}
