@@ -73,9 +73,9 @@ means English).
 ## The window
 
 The icons on the left switch between **Timeline**, **Daily**, **Weekly**,
-**Chat** and **Settings**. The look follows upstream Dayflow: a peach-to-blue
-background, a translucent panel, Figtree for text and Instrument Serif for
-titles. Dark mode follows the system setting. Animations are switched off
+**Chat** and **Settings**. The window starts in the Modern theme and dark;
+[Appearance](#appearance) below switches to light, to your
+desktop's setting, or to the Original look of upstream Dayflow. Animations are switched off
 when the system asks for reduced motion. Analysis and capture errors show as
 notes in the bottom right corner; the × hides one until the next error.
 

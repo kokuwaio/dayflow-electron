@@ -205,8 +205,8 @@ each of the three providers.
   priorities, blockers (upstream `Views/UI/DailyView*.swift`).
 - [x] Weekly dashboard: donut, treemap, Sankey, focus and distraction heat
   map, context switches, workflow heat map. No AI needed; built from
-  `timeline_cards` (upstream `Core/Weekly/`). Upstream's overview card, app
-  interaction graph and highlights are not built yet.
+  `timeline_cards` (upstream `Core/Weekly/`).
+- [ ] Weekly: upstream's overview card, app interaction graph and highlights.
 - [x] Chat with your journal: streamed answers, tool calls for timeline and
   observations, inline charts from fenced `chart` blocks, history panel,
   memory (upstream `Core/AI/Chat*`, `ChatPromptBuilder.swift`). API providers
