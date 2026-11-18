@@ -43,7 +43,14 @@ const nowSec = () => Date.now() / 1000
  * The Timeline tab (upstream MainView): header with navigation and the pause
  * pill, category chips, the day canvas or week grid, and the inspector card.
  */
-export function Timeline(props: { status: AppStatus | null; onStatusChange: (s: AppStatus) => void; onOpenSettings: (tab: SettingsTab) => void }) {
+export function Timeline(props: {
+  status: AppStatus | null
+  onStatusChange: (s: AppStatus) => void
+  onOpenSettings: (tab: SettingsTab) => void
+  /** The day the app wants the daily goal pop-up on: shown in day mode, nothing selected. */
+  goalPromptDay: string | null
+  onGoalPromptShown: () => void
+}) {
   const [day, setDay] = useState(todayKey)
   const [mode, setMode] = useState<'day' | 'week'>('day')
   const [cards, setCards] = useState<TimelineCard[]>([])
@@ -57,6 +64,13 @@ export function Timeline(props: { status: AppStatus | null; onStatusChange: (s: 
   const [showIcons, setShowIcons] = useState(false)
   const [now, setNow] = useState(nowSec)
   const [scrollToNow, setScrollToNow] = useState(0)
+  // Like upstream: the goal pop-up shows on today's day view with no card open.
+  useEffect(() => {
+    if (!props.goalPromptDay) return
+    setDay(props.goalPromptDay)
+    setMode('day')
+    setSelected(null)
+  }, [props.goalPromptDay])
   const [footerHidden, setFooterHidden] = useState(false)
   const [review, setReview] = useState<{ segments: ReviewSegment[]; toReview: number } | null>(null)
   const [reviewing, setReviewing] = useState(false)
@@ -274,6 +288,8 @@ export function Timeline(props: { status: AppStatus | null; onStatusChange: (s: 
                 recorder={props.status?.recorder.state ?? null}
                 review={review}
                 onReview={() => setReviewing(true)}
+                openGoalsFor={props.goalPromptDay}
+                onGoalsOpened={props.onGoalPromptShown}
               />
             </div>
           )}

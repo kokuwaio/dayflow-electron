@@ -6,6 +6,7 @@ import { Daily } from './Daily'
 import { Onboarding } from './Onboarding'
 import { type SettingsTab, SettingsView } from './Settings'
 import { Timeline } from './Timeline'
+import { dueGoalPrompt } from './goal-prompt'
 import { applyUiStyle } from './ui-style'
 import { Weekly } from './Weekly'
 
@@ -25,6 +26,7 @@ export function App() {
   const [status, setStatus] = useState<AppStatus | null>(null)
   const [settings, setSettings] = useState<Settings | null>(null)
   const [dismissed, setDismissed] = useState<string[]>([])
+  const [goalPromptDay, setGoalPromptDay] = useState<string | null>(null)
 
   useEffect(() => {
     void window.dayflow.getStatus().then(setStatus)
@@ -39,6 +41,31 @@ export function App() {
       offStatus()
     }
   }, [])
+
+  // The daily goal pop-up, checked at start, on focus and every minute (upstream requestDailyGoalPromptIfNeeded).
+  const onboarded = !!settings?.onboarded
+  useEffect(() => {
+    if (!onboarded) return
+    let checking = false
+    const check = () => {
+      if (checking) return
+      checking = true
+      void dueGoalPrompt()
+        .then((day) => {
+          if (!day) return
+          setView('timeline')
+          setGoalPromptDay(day)
+        })
+        .finally(() => (checking = false))
+    }
+    check()
+    window.addEventListener('focus', check)
+    const timer = setInterval(check, 60_000)
+    return () => {
+      window.removeEventListener('focus', check)
+      clearInterval(timer)
+    }
+  }, [onboarded])
 
   if (settings && !settings.onboarded) {
     return (
@@ -81,7 +108,15 @@ export function App() {
         })}
       </nav>
       <main className="panel">
-        {view === 'timeline' && <Timeline status={status} onStatusChange={setStatus} onOpenSettings={openSettings} />}
+        {view === 'timeline' && (
+          <Timeline
+            status={status}
+            onStatusChange={setStatus}
+            onOpenSettings={openSettings}
+            goalPromptDay={goalPromptDay}
+            onGoalPromptShown={() => setGoalPromptDay(null)}
+          />
+        )}
         {view === 'daily' && <Daily />}
         {view === 'weekly' && <Weekly />}
         {view === 'chat' && <Chat />}

@@ -294,9 +294,10 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   Inter (bundled with its OFL text), one indigo accent and 1px borders, in
   light and dark. `data-ui-style` on the root element switches the CSS
   tokens, the onboarding included; category colours stay as they are.
-- [ ] Goal pop-up trigger: upstream checks at app level and switches to the
-  timeline itself; here the check runs when today's day summary is shown
-  (the app opens there, so it differs only when another tab is open at 4 AM).
+- [x] Goal pop-up trigger at app level like upstream: checked at start, when
+  the window gets focus and every minute (so after 4 AM too); when due, the
+  app switches to today's timeline in day mode and opens it
+  (`src/renderer/src/goal-prompt.ts`).
 - [x] Deep links: `dayflow-electron://start-recording` and `stop-recording`
   (aliases `start`, `resume`, `stop`, `pause`).
 - [x] Database backups: a daily copy, the newest three kept, a damaged

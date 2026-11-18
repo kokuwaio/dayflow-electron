@@ -3,30 +3,13 @@ import { Brain, Info, Pencil, Shapes } from 'lucide-react'
 import type { Category } from '@shared/categories'
 import { formatClock, todayKey } from '@shared/day'
 import { type CategoryTotal, type GoalPlan, formatMinutes, summarizeDay } from '@shared/day-summary'
-import { type GoalContext, goalFlowStart, goalPromptAction } from '@shared/goal-flow'
+import { type GoalContext, goalFlowStart } from '@shared/goal-flow'
 import { REVIEW_RATINGS, type ReviewSegment, reviewSummary } from '@shared/review'
 import type { RecorderState, TimelineCard } from '@shared/types'
 import { GoalFlow } from './GoalFlow'
+import { REVIEW_SHOWN_KEY, readDay, writeDay } from './goal-prompt'
 import { RATING_LOOK, RatingBars } from './ReviewOverlay'
 import { categoryKey } from '@shared/categories'
-
-/** Days the pop-up was handled and yesterday's review shown, kept per device like upstream's UserDefaults. */
-const HANDLED_KEY = 'dayGoalPromptHandledTimelineDay'
-const REVIEW_SHOWN_KEY = 'dayGoalReviewShownTimelineDay'
-const readDay = (k: string): string | null => {
-  try {
-    return localStorage.getItem(k)
-  } catch {
-    return null
-  }
-}
-const writeDay = (k: string, day: string) => {
-  try {
-    localStorage.setItem(k, day)
-  } catch {
-    // Without storage the pop-up may open once more; nothing else depends on it.
-  }
-}
 
 const hours = (minutes: number) => {
   const h = minutes / 60
@@ -45,6 +28,9 @@ export function DaySummary(props: {
   recorder: RecorderState | null
   review: { segments: ReviewSegment[]; toReview: number } | null
   onReview: () => void
+  /** The day whose goal pop-up the app asked to open (see goal-prompt.ts). */
+  openGoalsFor: string | null
+  onGoalsOpened: () => void
 }) {
   const { day, cards, categories } = props
   const [plan, setPlan] = useState<GoalPlan | null>(null)
@@ -62,21 +48,12 @@ export function DaySummary(props: {
     if (start === 'review') writeDay(REVIEW_SHOWN_KEY, day)
     setFlow({ context: ctx, start })
   }
-  // The first visit after 4 AM opens the pop-up by itself (upstream requestDailyGoalPromptIfNeeded).
+  // The app asks for the pop-up once a day and has switched to this day already.
   useEffect(() => {
-    const today = todayKey()
-    if (day !== today || readDay(HANDLED_KEY) === today) return
-    let live = true
-    void Promise.all([window.dayflow.getSettings(), window.dayflow.getGoalContext(today)]).then(([settings, context]) => {
-      if (!live) return
-      const action = goalPromptAction({ enabled: settings.showDailyGoalPopups, handledDay: readDay(HANDLED_KEY), today, ...context })
-      if (action !== 'none') writeDay(HANDLED_KEY, today)
-      if (action === 'open') void openFlow(context)
-    })
-    return () => {
-      live = false
-    }
-  }, [day])
+    if (!props.openGoalsFor || props.openGoalsFor !== day) return
+    props.onGoalsOpened()
+    void openFlow()
+  }, [props.openGoalsFor, day])
   if (!plan) return null
 
   const s = summarizeDay(cards, categories, plan, day)
