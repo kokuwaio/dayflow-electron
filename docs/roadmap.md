@@ -185,13 +185,9 @@ each of the three providers.
       permission; the settings page detects whether it is granted and otherwise
       shows the one-time opt-in command
       (`flatpak override --user --talk-name=org.freedesktop.Flatpak <app-id>`).
-- [ ] Gemini video upload via the Files API. Deferred: needs `ffmpeg` in the
-      Flatpak to encode the video; inline frames work meanwhile.
 - [x] Prompt overrides (title, summary, detailed blocks; one set for all
       providers).
 - [x] Output-language setting for card text.
-- [ ] Frames stored as video segments to cut disk use. Deferred with the
-      Gemini video upload (needs `ffmpeg`); 720p JPEGs use about 25 MB per hour.
 - [x] Onboarding: provider choice and setup with test, capture consent
       (portal on Linux, Screen Recording on macOS), categories preset.
 - [x] Onboarding permission rows with live state and Grant (upstream
@@ -340,6 +336,8 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
 | Surveys, PostHog analytics | Never | Telemetry |
 | Sparkle updates, launch video | Never | Replaced by `electron-updater`; branded asset |
 | Accessibility recorder (keystrokes, clicks) | Never by default | Off upstream too; high privacy risk |
+| Gemini video upload (Files API) | Later, optional | Inline frames work with every provider; video needs an encoder (Chromium's WebCodecs and a JS muxer would do without `ffmpeg`) |
+| Frames stored as video segments | Later, optional | Changes how every recording is stored and read back (playback, retention, the Linux helper); 720p JPEGs use only about 25 MB per hour |
 
 ## Open questions
 
