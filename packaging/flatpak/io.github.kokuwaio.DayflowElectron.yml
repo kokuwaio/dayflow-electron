@@ -33,7 +33,8 @@ modules:
       - install -Dm755 dayflow-linux-helper /app/bin/dayflow-linux-helper
       - install -Dm755 dayflow-electron.sh /app/bin/dayflow-electron
       - install -Dm755 dayflow-electron-cli.sh /app/bin/dayflow-electron-cli
-      - install -Dm644 icon.png /app/share/icons/hicolor/256x256/apps/io.github.kokuwaio.DayflowElectron.png
+      - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/io.github.kokuwaio.DayflowElectron.png
+      - install -Dm644 icon.svg /app/share/icons/hicolor/scalable/apps/io.github.kokuwaio.DayflowElectron.svg
       - install -Dm644 io.github.kokuwaio.DayflowElectron.desktop /app/share/applications/io.github.kokuwaio.DayflowElectron.desktop
       - install -Dm644 io.github.kokuwaio.DayflowElectron.metainfo.xml /app/share/metainfo/io.github.kokuwaio.DayflowElectron.metainfo.xml
     sources:
@@ -44,6 +45,8 @@ modules:
         path: ../../helper/linux/bin/dayflow-linux-helper
       - type: file
         path: ../../resources/icon.png
+      - type: file
+        path: ../../resources/icon.svg
       - type: file
         path: io.github.kokuwaio.DayflowElectron.desktop
       - type: file
