@@ -84,6 +84,7 @@ describe.skipIf(models.length === 0)('local model speed', () => {
       const loadMs = Date.now() - started
       if ((load as { error?: string }).error) {
         rows.push([model, '–', '–', '–', '–', `load failed: ${(load as { error: string }).error}`])
+        console.log(rows.at(-1)!.join(' · '))
         continue
       }
       for (const batch of batches) {
@@ -104,6 +105,8 @@ describe.skipIf(models.length === 0)('local model speed', () => {
           result = `failed: ${String(err).slice(0, 80)}`
         }
         rows.push([model, `#${batch.id}`, seconds(loadMs), `${seconds(step1)} (${seconds(step1 / batch.frames.length)}/frame)`, seconds(step2), result])
+        // Each result as it comes, the table at the end.
+        console.log(rows.at(-1)!.join(' · '))
       }
       // Free the memory for the next model.
       await ollama('generate', { model, keep_alive: 0 }).catch(() => {})
