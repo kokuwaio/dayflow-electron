@@ -362,3 +362,24 @@ describe('Pipeline with secret masking', () => {
     expect(store.retryableBatches(0, 3)).toHaveLength(1)
   })
 })
+
+describe('Pipeline idle shortcut', () => {
+  /** Frames every 10 s in [from, to] while nobody touched the computer since a minute before 2:00 PM. */
+  function recordIdle(from: number, to: number) {
+    for (let t = from; t <= to; t += 10) store.insertScreenshot({ capturedAt: t, filePath: '', fileSize: 0, idleSeconds: t - at(14, 0) + 60 })
+  }
+
+  it('extends one Idle card over consecutive idle batches without asking a model, like upstream', async () => {
+    const primary = scriptedProvider('anthropic', 'claude', [])
+    recordIdle(at(14, 0), at(14, 15))
+    await pipelineWith(primary.provider).tick()
+    expect(store.cardsForDay('2026-11-17')).toMatchObject([{ title: 'Idle', startTime: '2:00 PM', endTime: '2:15 PM' }])
+
+    recordIdle(at(14, 15, 10), at(14, 30))
+    vi.setSystemTime(at(14, 33) * 1000)
+    await pipelineWith(primary.provider).tick()
+
+    expect(store.cardsForDay('2026-11-17')).toMatchObject([{ title: 'Idle', startTime: '2:00 PM', endTime: '2:30 PM' }])
+    expect(primary.requests).toHaveLength(0)
+  })
+})

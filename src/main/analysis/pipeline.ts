@@ -8,7 +8,7 @@ import type { Batch, NewCard, Screenshot, Store } from '../db/store'
 import { type Provider, ProviderError } from '../providers/types'
 import { BATCHING, planBatches } from './batching'
 import { parseCards } from './cards'
-import { assessIdleBatch } from './idle'
+import { assessIdleBatch, idleCardSpan } from './idle'
 import { type Category, PRIVATE_CATEGORY, idleCategory } from '../../shared/categories'
 import { type PromptFrame, buildCardRequest, sampleEvenly, withCorrection } from './prompt'
 import { cardFromObservations, transcribe } from './two-step'
@@ -133,8 +133,11 @@ export class Pipeline {
     }
 
     const idle = assessIdleBatch(shots)
-    if (idle) {
-      store.replaceCards(span, batch.id, [idleCard(span, idleCategory(this.deps.categories())?.name ?? 'Idle')], batch.start)
+    // Like upstream: extend an Idle card that just ended, else a new one in whole minutes.
+    const idleSpan = idle ? idleCardSpan(shots, store.cardEndingLastBefore(shots[0]!.capturedAt, batch.id)) : null
+    if (idleSpan) {
+      if (idleSpan.extend !== null) store.extendCard(idleSpan.extend, idleSpan.end, batch.id)
+      else store.replaceCards(idleSpan, batch.id, [idleCard(idleSpan, idleCategory(this.deps.categories())?.name ?? 'Idle')], batch.start)
       store.finishBatch(batch.id, 'analyzed', 'idle_shortcut_applied')
       this.deps.onCardsChanged()
       return 'analyzed'

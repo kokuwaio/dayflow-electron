@@ -611,6 +611,25 @@ export class Store {
     })
   }
 
+  /** The live card that ends last among those starting before `start`, other than `batchId`'s (upstream fetchTimelineCardEndingLast). */
+  cardEndingLastBefore(start: number, batchId: number): { id: number; start: number; end: number; title: string; category: string } | null {
+    const row = this.db
+      .prepare(
+        `SELECT id, start_ts AS start, end_ts AS end, title, category FROM timeline_cards
+         WHERE is_deleted = 0 AND start_ts < ? AND COALESCE(batch_id, -1) != ? ORDER BY end_ts DESC, id DESC LIMIT 1`
+      )
+      .get(start, batchId) as { id: number; start: number; end: number; title: string; category: string } | undefined
+    return row ?? null
+  }
+
+  /** Moves a card's end, and drops `batchId`'s own earlier cards (upstream saveIdleBatchCard with extendingCardId). */
+  extendCard(cardId: number, end: number, batchId: number): void {
+    this.tx(() => {
+      this.db.prepare(`UPDATE timeline_cards SET is_deleted = 1 WHERE batch_id = ? AND id != ? AND is_deleted = 0`).run(batchId, cardId)
+      this.db.prepare(`UPDATE timeline_cards SET end_ts = ?, end = ? WHERE id = ?`).run(end, formatClock(end), cardId)
+    })
+  }
+
   /** Adds cards without replacing anything. */
   addCards(batchId: number, cards: NewCard[]): void {
     this.tx(() => this.insertCards(batchId, cards))

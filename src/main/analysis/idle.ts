@@ -1,5 +1,8 @@
 // Decides whether a batch was idle enough to skip the model and write an
-// Idle card directly. Port of upstream Core/Analysis/IdleBatchClassifier.swift.
+// Idle card directly. Port of upstream Core/Analysis/IdleBatchClassifier.swift
+// and the idle shortcut of AnalysisManager.swift.
+
+import { dayKey } from '../../shared/day'
 
 export const IDLE_RULES = {
   version: 'idle_v1',
@@ -8,7 +11,9 @@ export const IDLE_RULES = {
   qualifiedIdleRatio: 0.9,
   sampleAvailabilityRatio: 0.9,
   qualifyingIdleSec: 60,
-  maxUncoveredGapSec: 30
+  maxUncoveredGapSec: 30,
+  /** An Idle card that ended less than this before the batch is extended instead of followed by a new one. */
+  mergeGapSec: 5 * 60
 } as const
 
 export interface IdleSample {
@@ -80,4 +85,43 @@ export function assessIdleBatch(shots: readonly IdleSample[]): IdleAssessment | 
     screenshotCount: ordered.length,
     qualifiedIdleRatio
   }
+}
+
+/** The card that ended last before the batch, as far as the idle shortcut needs it. */
+export interface PreviousCard {
+  id: number
+  start: number
+  end: number
+  title: string
+  category: string
+}
+
+const floorToMinute = (t: number) => t - (t % 60)
+const isIdle = (value: string) => value.trim().toLowerCase() === 'idle'
+
+/**
+ * Where the Idle card of an idle batch goes, like upstream: it extends the
+ * previous card when that is an Idle card of the same 4 AM day that ended
+ * less than 5 minutes before the batch; otherwise a new card starts where the
+ * previous card ends. Times are whole minutes; null when none is left.
+ */
+export function idleCardSpan(
+  shots: readonly { capturedAt: number }[],
+  previous: PreviousCard | null
+): { start: number; end: number; extend: number | null } | null {
+  const ordered = [...shots].sort((a, b) => a.capturedAt - b.capturedAt)
+  const first = ordered[0]
+  const last = ordered[ordered.length - 1]
+  if (!first || !last) return null
+  const extend =
+    previous &&
+    first.capturedAt - previous.end < IDLE_RULES.mergeGapSec &&
+    dayKey(previous.start) === dayKey(first.capturedAt) &&
+    isIdle(previous.title) &&
+    isIdle(previous.category)
+      ? previous
+      : null
+  const end = floorToMinute(last.capturedAt)
+  const start = extend ? extend.start : Math.max(floorToMinute(first.capturedAt), previous?.end ?? 0)
+  return end > start ? { start, end, extend: extend?.id ?? null } : null
 }
