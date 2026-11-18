@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs'
+import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -65,7 +65,8 @@ describe('LogFile', () => {
     expect(readFileSync(join(dir, LOG_NAME), 'utf8').trim().split('\n').map((l) => l.slice(20))).toEqual(['message 7'])
     // tail reads across both files, oldest first.
     expect(log.tail(3).map((l) => l.slice(20))).toEqual(['message 5', 'message 6', 'message 7'])
-    expect(statSync(join(dir, LOG_NAME)).mode & 0o777).toBe(0o600)
+    // Windows has no Unix permissions: every file reports 0o666 there.
+    if (process.platform !== 'win32') expect(statSync(join(dir, LOG_NAME)).mode & 0o777).toBe(0o600)
   })
 
   it('continues a file from an earlier run and counts its size', () => {
@@ -78,7 +79,9 @@ describe('LogFile', () => {
   })
 
   it('never throws when the folder cannot be written', () => {
-    const log = new LogFile('/proc/no-such-dir/logs', { now: fixedNow })
+    // A folder below a file can be created on no system.
+    writeFileSync(join(dir, 'a-file'), '')
+    const log = new LogFile(join(dir, 'a-file', 'logs'), { now: fixedNow })
     expect(() => log.write('lost')).not.toThrow()
     expect(log.tail(5)).toEqual([])
   })
