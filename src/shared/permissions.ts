@@ -71,6 +71,20 @@ export function windowFixCommand(reason: string | null, flatpakId: string): stri
   return flatpakId && reason && /KWin/.test(reason) ? kwinOverrideCommand(flatpakId) : null
 }
 
+/**
+ * Window detection as the running recorder sees it. While it records, a probe
+ * would start a second KWin watcher under the same script name and stop the
+ * recorder's, so Settings reads the recorder's state instead.
+ */
+export function liveWindowCheck(
+  recorder: { windowDetection: 'ok' | 'unavailable' | 'starting'; windowDetectionError: string | null },
+  flatpakId: string
+): WindowCheck {
+  if (recorder.windowDetection === 'starting') return { state: 'checking', reason: null, command: null }
+  if (recorder.windowDetection === 'ok') return { state: 'ok', reason: null, command: null }
+  return { state: 'unavailable', reason: recorder.windowDetectionError, command: windowFixCommand(recorder.windowDetectionError, flatpakId) }
+}
+
 const row = (r: Pick<PermissionRow, 'id' | 'title' | 'detail'> & Partial<PermissionRow>): PermissionRow => ({
   status: null,
   actions: [],

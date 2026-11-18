@@ -76,16 +76,14 @@
     "forMinutes_other": "Für {{count}} Minuten",
     "forHours_one": "Für {{count}} Stunde",
     "forHours_other": "Für {{count}} Stunden",
+    "forDuration": "Für {{time}}",
     "untilResumed": "Bis ich fortsetze",
     "chipMinutes_one": "{{count}} Minute pausieren",
     "chipMinutes_other": "{{count}} Minuten pausieren",
     "chipHours_one": "{{count}} Stunde pausieren",
     "chipHours_other": "{{count}} Stunden pausieren",
+    "chipDuration": "{{time}} pausieren",
     "chipUntilResumed": "Pausieren, bis ich fortsetze",
-    "chipShortMinutes_one": "{{count}} Min.",
-    "chipShortMinutes_other": "{{count}} Min.",
-    "chipShortHours_one": "{{count}} Std.",
-    "chipShortHours_other": "{{count}} Std.",
     "pausedFor": "Dayflow Electron pausiert für {{time}}",
     "pausedIndefinitely": "Dayflow Electron auf unbestimmte Zeit pausiert",
     "hiddenBlockedApp": "Ausgeblendet: blockierte App im Vordergrund",
@@ -138,7 +136,16 @@
     "menuGet": "Version {{version}} holen…",
     "menuDownload": "Version {{version}} herunterladen",
     "menuDownloading": "Version {{version}} wird heruntergeladen ({{percent}} %)",
-    "menuRestart": "Neu starten, um auf {{version}} zu aktualisieren"
+    "menuRestart": "Neu starten, um auf {{version}} zu aktualisieren",
+    "manual": {
+      "check": "Nach Updates suchen…",
+      "checking": "Suche nach Updates…",
+      "upToDate": "Du bist auf dem neuesten Stand",
+      "upToDateBody": "Dayflow Electron {{version}} ist die neueste Version.",
+      "failed": "Suche nach Updates fehlgeschlagen",
+      "noAnswer": "Keine Antwort vom Update-Server.",
+      "downloading": "Wird jetzt heruntergeladen. Sobald es bereit ist, wirst du um einen Neustart gebeten."
+    }
   },
   "permissions": {
     "checking": "Wird geprüft…",
@@ -345,6 +352,7 @@
     "tabs": {
       "storage": "Speicher",
       "privacy": "Datenschutz",
+      "permissions": "Berechtigungen",
       "providers": "Anbieter",
       "agents": "MCP / CLI",
       "export": "Exportieren",
@@ -363,19 +371,52 @@
       }
     },
     "storage": {
-      "recording": "Aufzeichnung",
-      "recordingSub": "Nur der Bildschirm unter der Maus wird aufgezeichnet. Bei gesperrtem Bildschirm pausiert die Aufzeichnung.",
       "frequency": "Aufnahmehäufigkeit",
       "frequencySub": "Wie oft ein Screenshot aufgenommen wird.",
       "everySeconds_one": "Alle {{count}} s",
       "everySeconds_other": "Alle {{count}} s",
       "resolution": "Auflösung",
-      "title": "Speicher",
       "sub": "Ist das Limit erreicht, werden die ältesten Screenshots zuerst gelöscht. Karten bleiben erhalten.",
       "limit": "Speicherlimit",
-      "used": "Screenshots belegen {{size}} GB.",
-      "limitAria": "Speicherlimit in GB",
-      "folder": "Aufzeichnungsordner"
+      "status": "Aufnahmestatus",
+      "statusSub": "Stelle sicher, dass Dayflow Electron deinen Bildschirm aufnehmen kann.",
+      "runCheck": "Statusprüfung ausführen",
+      "checking": "Wird geprüft…",
+      "lastChecked": "Zuletzt geprüft: {{time}}",
+      "check": {
+        "permission": "Berechtigung für Bildschirmaufnahme",
+        "missing": "Fehlt",
+        "asksAtStart": "Fragt beim Start der Aufnahme",
+        "notNeeded": "Nicht nötig",
+        "recorder": "Rekorder",
+        "permissionRequired": "Berechtigung erforderlich",
+        "active": "Aktiv",
+        "paused": "Pausiert",
+        "idle": "Inaktiv",
+        "failing": "Aufnahme schlägt fehl, neuer Versuch folgt",
+        "notStarted": "Nicht gestartet",
+        "lastFrame": "Letztes Bild",
+        "noFrames": "Noch keine Bilder",
+        "secondsAgo_one": "vor {{count}} s",
+        "secondsAgo_other": "vor {{count}} s",
+        "ago": "vor {{time}}",
+        "lateNote": "Die Aufnahme sollte alle {{interval}} s ein Bild speichern. Wartet der Freigabedialog, beantworte ihn; sonst pausiere die Aufnahme und setze sie fort.",
+        "helper": "Aufnahme-Helfer",
+        "running": "Läuft",
+        "notRunning": "Läuft nicht"
+      },
+      "quality": "Aufnahmequalität",
+      "qualitySub": "Eine höhere Auflösung und häufigere Aufnahmen benötigen mehr Speicherplatz.",
+      "estimate": "≈ {{hour}} pro Stunde · ≈ {{month}} pro Monat bei 8 Std./Tag",
+      "measured": "In der letzten Stunde gemessen: {{size}} pro Stunde",
+      "diskUsage": "Speicherplatzbelegung",
+      "recordings": "Aufnahmen",
+      "usage": "{{size}} · {{percent}} %",
+      "unlimited": "Unbegrenzt",
+      "gb": "{{size}} GB",
+      "mb": "{{size}} MB",
+      "lowerTitle": "{{category}}-Limit senken?",
+      "lowerBody": "Wenn das {{category}}-Limit auf {{limit}} reduziert wird, werden die ältesten {{category}}-Daten sofort gelöscht, um das neue Limit einzuhalten."
     },
     "privacy": {
       "title": "Blockierte Apps",
@@ -386,7 +427,24 @@
       "hidePrivate": "Private Browserfenster ausblenden",
       "hidePrivateSub": "Inkognito-Fenster von Chrome und private Fenster von Firefox erhalten statt eines Screenshots eine geschwärzte Karte. Erkannt wird das am Fenstertitel, daher ist auch die Fenstererkennung nötig.",
       "hideSecrets": "Geheimnisse in Screenshots ausblenden",
-      "hideSecretsSub": "Liest den Text jedes Bildes, das an den KI-Anbieter geht, und schwärzt erkannte API-Schlüssel, Passwörter, private Schlüssel, Seed-Phrasen und Wiederherstellungscodes. Die Erkennung beruht auf Mustern, übersieht also manches, und kostet einige Sekunden pro Bild."
+      "hideSecretsSub": "Liest den Text jedes Bildes, das an den KI-Anbieter geht, und schwärzt erkannte API-Schlüssel, Passwörter, private Schlüssel, Seed-Phrasen und Wiederherstellungscodes. Die Erkennung beruht auf Mustern, übersieht also manches, und kostet einige Sekunden pro Bild.",
+      "apps": {
+        "title": "Apps",
+        "sub": "Apps, die Dayflow Electron ausblenden soll, sobald sie im Vordergrund sind.",
+        "search": "Installierte Apps suchen",
+        "installed": "Installierte Apps",
+        "loading": "Apps werden geladen ...",
+        "shown_one": "{{count}} angezeigt",
+        "shown_other": "{{count}} angezeigt",
+        "blocked_one": "{{count}} blockiert",
+        "blocked_other": "{{count}} blockiert",
+        "noMatch": "Keine Apps entsprechen deiner Suche.",
+        "none": "Keine installierten Apps gefunden. Trage Regeln unten von Hand ein.",
+        "hint": "Klicke auf eine App, um sie zu blockieren; ihre Regeln landen in der Liste unten. Ein weiterer Klick entfernt sie wieder.",
+        "block": "{{name}} blockieren",
+        "unblock": "{{name}} nicht mehr blockieren",
+        "sandbox": "Im Flatpak bleiben die auf deinem Computer installierten Apps verborgen, bis du ihre Liste (nur lesend) freigibst. Führe dies einmal aus und öffne diesen Tab dann erneut. Systemweit installierte Flatpak-Apps bleiben verborgen; trage ihre ID von Hand ein."
+      }
     },
     "reprocess": {
       "title": "Erneut verarbeiten",
@@ -415,6 +473,9 @@
       "original": "Original",
       "launchAtLogin": "Dayflow Electron bei der Anmeldung starten",
       "launchAtLoginAria": "Bei der Anmeldung starten",
+      "pauseLengths": "Pausenlängen",
+      "pauseLengthsSub": "Die drei Zeitoptionen, die beim Pausieren von Dayflow Electron angeboten werden.",
+      "pauseLength": "Pausenlänge {{n}}",
       "showIcons": "App-/Website-Symbole in der Zeitleiste anzeigen",
       "showIconsSub": "Symbole werden von den Websites selbst geladen (z. B. github.com/favicon.ico), wodurch diese Websites deine IP-Adresse erfahren.",
       "showIconsAria": "Symbole anzeigen",
@@ -453,6 +514,13 @@
         "dataScientist": "Data Scientist",
         "other": "Sonstiges"
       }
+    },
+    "permissions": {
+      "title": "Berechtigungen",
+      "subMac": "macOS-Zugriffe, die Dayflow Electron braucht. Sie bleiben aus, bis du sie einschaltest.",
+      "sub": "Was Dayflow Electron von deinem Desktop zum Aufnehmen braucht. Nichts wird geteilt, bevor du es erlaubst.",
+      "footMac": "Die Bildschirmaufnahme wirkt meist erst, nachdem Dayflow Electron neu gestartet wurde.",
+      "footLinux": "„Erlauben“ öffnet den Freigabedialog jetzt statt erst beim Start der Aufnahme. Die Fenstererkennung zeigt, was die laufende Aufnahme sieht; starte die App nach einer Änderung der Berechtigung neu."
     }
   },
   "summary": {

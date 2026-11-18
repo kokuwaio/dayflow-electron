@@ -179,6 +179,11 @@ export class Recorder {
     }
   }
 
+  /** A capture process (the Linux helper) or capture loop runs right now; for Settings → Storage → Run status check. */
+  captureRunning(): boolean {
+    return this.capture !== null
+  }
+
   private currentState(): RecorderState {
     if (!this.running) return 'stopped'
     // Timers do not run while suspended, so a timed pause may have ended unnoticed.

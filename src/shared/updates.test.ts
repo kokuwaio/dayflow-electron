@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { acceptUpdate, checkDue, isDevVersion, parseCodesign, releaseUrl, updateMenuItem, updateMode } from './updates'
+import {
+  acceptUpdate,
+  checkDue,
+  isDevVersion,
+  manualCheckLabel,
+  manualCheckNotice,
+  manualCheckResult,
+  parseCodesign,
+  releaseUrl,
+  updateMenuItem,
+  updateMode
+} from './updates'
 
 const release = { platform: 'win32' as const, version: '1.2.3', packaged: true, inFlatpak: false }
 
@@ -74,5 +85,53 @@ describe('the tray entry', () => {
 
   it('links the release page of a version', () => {
     expect(releaseUrl('1.3.0')).toBe('https://github.com/kokuwaio/dayflow-electron/releases/tag/v1.3.0')
+  })
+})
+
+describe('checking for updates by hand', () => {
+  it('finds a newer stable release', () => {
+    expect(manualCheckResult({ version: '1.3.0' }, '1.2.3')).toEqual({ kind: 'found', version: '1.3.0' })
+  })
+
+  it('is up to date with the same, an older or a prerelease version', () => {
+    expect(manualCheckResult({ version: '1.2.3' }, '1.2.3')).toEqual({ kind: 'up-to-date', current: '1.2.3' })
+    expect(manualCheckResult({ version: '1.1.0' }, '1.2.3')).toEqual({ kind: 'up-to-date', current: '1.2.3' })
+    expect(manualCheckResult({ version: '1.3.0-beta.1' }, '1.2.3')).toEqual({ kind: 'up-to-date', current: '1.2.3' })
+  })
+
+  it('fails without an answer from the feed', () => {
+    expect(manualCheckResult(null, '1.2.3')).toMatchObject({ kind: 'failed' })
+  })
+
+  it('says "You\'re up to date" with the running version', () => {
+    expect(manualCheckNotice({ kind: 'up-to-date', current: '1.2.3' }, { mode: 'install', autoDownload: true })).toEqual({
+      title: "You're up to date",
+      body: 'Dayflow Electron 1.2.3 is the newest version.',
+      action: null
+    })
+  })
+
+  it('names the found version and what happens next', () => {
+    const found = { kind: 'found', version: '1.3.0' } as const
+    expect(manualCheckNotice(found, { mode: 'install', autoDownload: true })).toEqual({
+      title: 'Dayflow Electron 1.3.0 is available',
+      body: 'Downloading it now. You will be asked to restart when it is ready.',
+      action: null
+    })
+    expect(manualCheckNotice(found, { mode: 'install', autoDownload: false })).toMatchObject({ body: 'Click to download it.', action: 'download' })
+    expect(manualCheckNotice(found, { mode: 'notify', autoDownload: false })).toMatchObject({ action: 'open-release' })
+  })
+
+  it('reports a failed check with its reason', () => {
+    expect(manualCheckNotice({ kind: 'failed', message: 'net::ERR_INTERNET_DISCONNECTED' }, { mode: 'install', autoDownload: true })).toEqual({
+      title: "Couldn't check for updates",
+      body: 'net::ERR_INTERNET_DISCONNECTED',
+      action: null
+    })
+  })
+
+  it('labels the menu entry while idle and while checking', () => {
+    expect(manualCheckLabel(false)).toBe('Check for updates…')
+    expect(manualCheckLabel(true)).toBe('Checking for updates…')
   })
 })

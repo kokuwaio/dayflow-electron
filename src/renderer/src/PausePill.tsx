@@ -2,11 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Play } from 'lucide-react'
 import { pad } from '@shared/day'
-import { PAUSE_PRESETS, describeRecorder } from '@shared/status'
+import { DEFAULT_PAUSE_MINUTES, describeRecorder, pauseChipLabel, pauseChipTitle, pausePresets } from '@shared/status'
 import type { AppStatus } from '@shared/types'
 
-/** ∞, 1h, 30m, 15m: the tray's presets, longest first like upstream. */
-const CHIPS = [...PAUSE_PRESETS].reverse()
 
 /** "14:59", or "1:02:05" for an hour or more. */
 function countdown(seconds: number): string {
@@ -24,6 +22,13 @@ function countdown(seconds: number): string {
 export function PausePill({ status, onChange }: { status: AppStatus; onChange: () => void }) {
   const { t } = useTranslation()
   const [menu, setMenu] = useState(false)
+  const [minutes, setMinutes] = useState<readonly number[]>(DEFAULT_PAUSE_MINUTES)
+  // The lengths from Settings → Other, read again each time the chips open.
+  useEffect(() => {
+    if (menu) void window.dayflow.getSettings().then((s) => setMinutes(s.pauseMinutes))
+  }, [menu])
+  /** ∞ and the three lengths, longest first like upstream; the same as the tray's. */
+  const chips = pausePresets(minutes).reverse()
   const [now, setNow] = useState(() => Date.now() / 1000)
   const leave = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { state, until, blockedBy } = status.recorder
@@ -78,8 +83,8 @@ export function PausePill({ status, onChange }: { status: AppStatus; onChange: (
             </button>
             {menu && (
               <div className="pause-chips" role="menu">
-                {CHIPS.map((c) => {
-                  const title = c.seconds === null ? t('pause.chipUntilResumed') : c.seconds >= 3600 ? t('pause.chipHours', { count: c.seconds / 3600 }) : t('pause.chipMinutes', { count: c.seconds / 60 })
+                {chips.map((c) => {
+                  const title = pauseChipTitle(c.seconds)
                   return (
                     <button
                       key={String(c.seconds)}
@@ -89,7 +94,7 @@ export function PausePill({ status, onChange }: { status: AppStatus; onChange: (
                       aria-label={title}
                       onClick={() => run(window.dayflow.pause(c.seconds))}
                     >
-                      {c.seconds === null ? '∞' : c.seconds >= 3600 ? t('pause.chipShortHours', { count: c.seconds / 3600 }) : t('pause.chipShortMinutes', { count: c.seconds / 60 })}
+                      {pauseChipLabel(c.seconds)}
                     </button>
                   )
                 })}

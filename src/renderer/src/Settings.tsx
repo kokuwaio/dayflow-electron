@@ -1,24 +1,29 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { numberLabel } from '@shared/i18n'
-import { ArrowRight, Download, FolderOpen, RotateCw } from 'lucide-react'
+import { clockLabel } from '@shared/i18n'
+import { ArrowRight, Download, FolderOpen, Lock, RefreshCw, RotateCw, Search } from 'lucide-react'
 import { CATEGORY_PRESETS, type Category, presetCategories } from '@shared/categories'
 import { todayKey } from '@shared/day'
 import { type AppLanguage, LANGUAGES } from '@shared/languages'
+import { type InstalledApps, isAppBlocked, searchApps, toggleAppRules } from '@shared/installed-apps'
 import { cliOf, needsApiKey } from '@shared/providers'
+import { recordingStatusRows } from '@shared/recording-status'
+import { PAUSE_MINUTE_OPTIONS, pauseChipLabel } from '@shared/status'
+import { STORAGE_LIMIT_PRESETS, estimatedBytesPerHour, estimatedBytesPerMonth, limitChange, limitLabel, sizeLabel, usedShare } from '@shared/storage'
 import type { UpdateMode } from '@shared/updates'
 import { type AppStatus, CAPTURE_INTERVALS, type CliName, type ProviderKind, type Settings, type Theme } from '@shared/types'
 import type { UiStyle } from '@shared/ui-style'
 import { AgentAccessSettings } from './AgentAccessSettings'
 import { GettingStartedSettings } from './GettingStarted'
-import { Row, Section, StatusDot } from './SettingsLayout'
+import { CommandBlock, Row, Section, StatusDot } from './SettingsLayout'
+import { PermissionCards, usePermissions } from './PermissionRows'
 import { SupportSettings } from './SupportSettings'
 import { providerChoices } from './providers'
 import { applyUiStyle } from './ui-style'
 
 /** Upstream's Settings tabs that the port has (Settings/SettingsView.swift); "categories" opens Other at the category list. */
-export type SettingsTab = 'providers' | 'storage' | 'privacy' | 'agents' | 'export' | 'other' | 'categories'
-const TABS: Array<Exclude<SettingsTab, 'categories'>> = ['storage', 'privacy', 'providers', 'agents', 'export', 'other']
+export type SettingsTab = 'providers' | 'storage' | 'privacy' | 'permissions' | 'agents' | 'export' | 'other' | 'categories'
+const TABS: Array<Exclude<SettingsTab, 'categories'>> = ['storage', 'privacy', 'permissions', 'providers', 'agents', 'export', 'other']
 
 /** CATEGORY_PRESETS' role names (stored in English) and their text keys. */
 const ROLE_KEYS: Record<string, string> = {
@@ -33,7 +38,6 @@ const ROLE_KEYS: Record<string, string> = {
 
 /** Upstream's sidebar footer links its release notes; ours are the GitHub releases. */
 const RELEASE_NOTES_URL = 'https://github.com/kokuwaio/dayflow-electron/releases'
-const gb = (bytes: number) => numberLabel(bytes / 1024 ** 3, 2)
 type Save = (next: Partial<Settings>) => void
 
 export function SettingsView({ status, tab, onTab }: { status: AppStatus | null; tab: SettingsTab; onTab: (tab: SettingsTab) => void }) {
@@ -84,8 +88,9 @@ export function SettingsView({ status, tab, onTab }: { status: AppStatus | null;
       <div className="settings-content">
         <div className="settings-tab" key={current}>
           {current === 'providers' && <ProvidersTab settings={settings} status={status} save={save} />}
-          {current === 'storage' && <StorageTab settings={settings} status={status} save={save} />}
+          {current === 'storage' && <StorageTab settings={settings} save={save} />}
           {current === 'privacy' && <PrivacyTab settings={settings} status={status} save={save} />}
+          {current === 'permissions' && status && <PermissionsTab platform={status.platform} />}
           {current === 'agents' && <AgentAccessSettings settings={settings} save={save} />}
           {current === 'export' && <ExportTab />}
           {current === 'other' && <OtherTab settings={settings} save={save} />}
@@ -274,11 +279,69 @@ function CliSetup({ cli, settings, save }: { cli: CliName; settings: Settings; s
   )
 }
 
-function StorageTab({ settings, status, save }: { settings: Settings; status: AppStatus | null; save: Save }) {
+/** Settings → Permissions (upstream SettingsPermissionsTabView): the onboarding's live rows, for turning on what was skipped. */
+function PermissionsTab({ platform }: { platform: string }) {
   const { t } = useTranslation()
+  const permissions = usePermissions(platform)
+  const foot = platform === 'darwin' ? t('settings.permissions.footMac') : platform === 'linux' ? t('settings.permissions.footLinux') : null
+  return (
+    <Section title={t('settings.permissions.title')} sub={platform === 'darwin' ? t('settings.permissions.subMac') : t('settings.permissions.sub')}>
+      <div className="perm-list">
+        <PermissionCards permissions={permissions} />
+      </div>
+      {foot && <p className="s-foot">{foot}</p>}
+    </Section>
+  )
+}
+
+type StorageInfo = Awaited<ReturnType<typeof window.dayflow.checkStorage>>
+
+/** Settings → Storage (upstream SettingsStorageTabView): recording status, quality with the expected disk use, and the limit. */
+function StorageTab({ settings, save }: { settings: Settings; save: Save }) {
+  const { t } = useTranslation()
+  const [info, setInfo] = useState<StorageInfo | null>(null)
+  const [checking, setChecking] = useState(false)
+  const [pending, setPending] = useState<number | null>(null)
+  const refresh = (run: boolean) => {
+    setChecking(run)
+    void window.dayflow.checkStorage(run).then((next) => (setInfo(next), setChecking(false)))
+  }
+  useEffect(() => refresh(false), [settings.storageLimitGb])
+
+  const pick = (gb: number) => {
+    const change = limitChange(settings.storageLimitGb, gb)
+    if (change === 'confirm') setPending(gb)
+    else if (change === 'apply') save({ storageLimitGb: gb })
+  }
+  const perHour = estimatedBytesPerHour(settings.captureHeight, settings.captureIntervalSec)
+  const share = info ? usedShare(info.framesBytes, settings.storageLimitGb) : null
+  const status = info ? recordingStatusRows(info.check) : null
+  const category = t('settings.storage.recordings')
+
   return (
     <>
-      <Section title={t('settings.storage.recording')} sub={t('settings.storage.recordingSub')}>
+      <Section title={t('settings.storage.status')} sub={t('settings.storage.statusSub')}>
+        {status?.rows.map((r) => (
+          <Row key={r.id} label={r.label} sub={r.note ?? undefined}>
+            <StatusDot kind={r.status.kind}>{r.status.label}</StatusDot>
+          </Row>
+        ))}
+        <div className="s-actions">
+          <button className="btn-ink" disabled={checking} onClick={() => refresh(true)}>
+            <RefreshCw size={13} className={checking ? 'spin' : undefined} />
+            {checking ? t('settings.storage.checking') : t('settings.storage.runCheck')}
+          </button>
+          {info && <span className="note">{t('settings.storage.lastChecked', { time: clockLabel(info.check.checkedAt) })}</span>}
+        </div>
+      </Section>
+
+      <Section title={t('settings.storage.quality')} sub={t('settings.storage.qualitySub')}>
+        <Row label={t('settings.storage.resolution')}>
+          <select value={settings.captureHeight} onChange={(e) => save({ captureHeight: Number(e.target.value) === 1080 ? 1080 : 720 })}>
+            <option value={720}>720p</option>
+            <option value={1080}>1080p</option>
+          </select>
+        </Row>
         <Row label={t('settings.storage.frequency')} sub={t('settings.storage.frequencySub')}>
           <select value={settings.captureIntervalSec} onChange={(e) => save({ captureIntervalSec: Number(e.target.value) })}>
             {CAPTURE_INTERVALS.map((s) => (
@@ -288,33 +351,84 @@ function StorageTab({ settings, status, save }: { settings: Settings; status: Ap
             ))}
           </select>
         </Row>
-        <Row label={t('settings.storage.resolution')}>
-          <select value={settings.captureHeight} onChange={(e) => save({ captureHeight: Number(e.target.value) === 1080 ? 1080 : 720 })}>
-            <option value={720}>720p</option>
-            <option value={1080}>1080p</option>
-          </select>
-        </Row>
+        <div className="s-foot">
+          <span>{t('settings.storage.estimate', { hour: sizeLabel(perHour), month: sizeLabel(estimatedBytesPerMonth(perHour)) })}</span>
+          {info?.observedBytesPerHour != null && <span>{t('settings.storage.measured', { size: sizeLabel(info.observedBytesPerHour) })}</span>}
+        </div>
       </Section>
-      <Section title={t('settings.storage.title')} sub={t('settings.storage.sub')}>
-        <Row label={t('settings.storage.limit')} sub={status ? t('settings.storage.used', { size: gb(status.framesBytes) }) : undefined}>
-          <input
-            type="number"
-            min={1}
-            style={{ width: 80 }}
-            defaultValue={settings.storageLimitGb}
-            onBlur={(e) => save({ storageLimitGb: Number(e.target.value) })}
-            aria-label={t('settings.storage.limitAria')}
-          />
-          <span className="note">GB</span>
-        </Row>
-        <Row label={t('settings.storage.folder')}>
-          <button className="btn-subtle" onClick={() => void window.dayflow.openRecordings()}>
-            <FolderOpen size={14} />
-            {t('common.open')}
-          </button>
-        </Row>
+
+      <Section title={t('settings.storage.diskUsage')} sub={t('settings.storage.sub')}>
+        <div className="usage-row">
+          <div className="label">
+            <b>{category}</b>
+            <span>{info ? (share === null ? sizeLabel(info.framesBytes) : t('settings.storage.usage', { size: sizeLabel(info.framesBytes), percent: Math.round(share * 100) })) : '…'}</span>
+          </div>
+          <div className="control">
+            <button className="btn-subtle" onClick={() => void window.dayflow.openRecordings()}>
+              <FolderOpen size={14} />
+              {t('common.open')}
+            </button>
+            <select value={settings.storageLimitGb} onChange={(e) => pick(Number(e.target.value))} aria-label={t('settings.storage.limit')}>
+              {STORAGE_LIMIT_PRESETS.map((gb) => (
+                <option key={gb} value={gb}>
+                  {limitLabel(gb)}
+                </option>
+              ))}
+            </select>
+          </div>
+          {share !== null && (
+            <div className="usage-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(share * 100)} aria-label={category}>
+              <i style={{ width: `${share * 100}%` }} />
+            </div>
+          )}
+        </div>
       </Section>
+
+      {pending !== null && (
+        <ConfirmDialog
+          title={t('settings.storage.lowerTitle', { category })}
+          body={t('settings.storage.lowerBody', { category, limit: limitLabel(pending) })}
+          confirm={t('common.confirm')}
+          onCancel={() => setPending(null)}
+          onConfirm={() => {
+            save({ storageLimitGb: pending })
+            setPending(null)
+          }}
+        />
+      )}
     </>
+  )
+}
+
+/** A question before something that cannot be undone, like upstream's destructive Alert. */
+function ConfirmDialog({ title, body, confirm, onCancel, onConfirm }: { title: string; body: string; confirm: string; onCancel: () => void; onConfirm: () => void }) {
+  const { t } = useTranslation()
+  const id = useId()
+  const cancel = useRef<HTMLButtonElement>(null)
+  const latestCancel = useRef(onCancel)
+  latestCancel.current = onCancel
+  // Cancel has the focus, as in upstream's Alert; Escape cancels.
+  useEffect(() => {
+    cancel.current?.focus()
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && latestCancel.current()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+  return (
+    <div className="confirm-backdrop" onClick={(e) => e.target === e.currentTarget && onCancel()}>
+      <div className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby={`${id}-title`} aria-describedby={`${id}-body`}>
+        <h3 id={`${id}-title`}>{title}</h3>
+        <p id={`${id}-body`}>{body}</p>
+        <div className="confirm-actions">
+          <button className="btn-subtle" ref={cancel} onClick={onCancel}>
+            {t('common.cancel')}
+          </button>
+          <button className="btn-danger" onClick={onConfirm}>
+            {confirm}
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -326,6 +440,7 @@ function PrivacyTab({ settings, status, save }: { settings: Settings; status: Ap
       title={t('settings.privacy.title')}
       sub={<Trans i18nKey="settings.privacy.sub" components={{ code: <code /> }} />}
     >
+      <AppPicker blocked={settings.blockedApps} save={save} />
       <Row
         label={t('settings.privacy.rules')}
         sub={
@@ -339,7 +454,8 @@ function PrivacyTab({ settings, status, save }: { settings: Settings; status: Ap
         }
         stack
       >
-        <textarea className="mono" rows={7} defaultValue={settings.blockedApps.join('\n')} onBlur={(e) => save({ blockedApps: e.target.value.split('\n') })} />
+        {/* Keyed by the list, so picking an app above shows up here. */}
+        <textarea key={settings.blockedApps.join('\n')} className="mono" rows={7} defaultValue={settings.blockedApps.join('\n')} onBlur={(e) => save({ blockedApps: e.target.value.split('\n') })} />
       </Row>
       <Row
         label={t('settings.privacy.hidePrivate')}
@@ -366,6 +482,65 @@ function PrivacyTab({ settings, status, save }: { settings: Settings; status: Ap
         />
       </Row>
     </Section>
+  )
+}
+
+/** The searchable installed apps (upstream's Apps grid); a click adds or removes the app's rules. */
+function AppPicker({ blocked, save }: { blocked: string[]; save: Save }) {
+  const { t } = useTranslation()
+  const [list, setList] = useState<InstalledApps | null>(null)
+  const [query, setQuery] = useState('')
+  useEffect(() => void window.dayflow.getInstalledApps().then(setList), [])
+  const shown = list ? searchApps(list.apps, query) : []
+  const blockedCount = list ? list.apps.filter((a) => isAppBlocked(a, blocked)).length : 0
+  return (
+    <div className="s-row stack app-picker">
+      <div className="label">
+        <b>{t('settings.privacy.apps.title')}</b>
+        <span>
+          {t('settings.privacy.apps.sub')} {t('settings.privacy.apps.hint')}
+        </span>
+      </div>
+      <div className="app-search">
+        <Search size={14} aria-hidden="true" />
+        <input type="search" value={query} placeholder={t('settings.privacy.apps.search')} aria-label={t('settings.privacy.apps.search')} onChange={(e) => setQuery(e.target.value)} />
+        <span className="note">
+          {list ? `${t('settings.privacy.apps.shown', { count: shown.length })} · ${t('settings.privacy.apps.blocked', { count: blockedCount })}` : t('settings.privacy.apps.loading')}
+        </span>
+      </div>
+      {list && (
+        <div className="app-grid" role="group" aria-label={t('settings.privacy.apps.installed')}>
+          {shown.length === 0 ? (
+            <p className="empty">{list.apps.length ? t('settings.privacy.apps.noMatch') : t('settings.privacy.apps.none')}</p>
+          ) : (
+            shown.map((app) => {
+              const on = isAppBlocked(app, blocked)
+              return (
+                <button
+                  key={app.id}
+                  className={`picker-app ${on ? 'blocked' : ''}`}
+                  aria-pressed={on}
+                  title={app.rules.join(', ')}
+                  aria-label={on ? t('settings.privacy.apps.unblock', { name: app.name }) : t('settings.privacy.apps.block', { name: app.name })}
+                  onClick={() => save({ blockedApps: toggleAppRules(blocked, app) })}
+                >
+                  <span className="picker-tile" aria-hidden="true">
+                    {on ? <Lock size={13} /> : app.name.slice(0, 1).toUpperCase()}
+                  </span>
+                  <span className="picker-name">{app.name}</span>
+                </button>
+              )
+            })
+          )}
+        </div>
+      )}
+      {list?.sandboxCommand && (
+        <div className="app-sandbox">
+          <span>{t('settings.privacy.apps.sandbox')}</span>
+          <CommandBlock text={list.sandboxCommand} />
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -470,6 +645,23 @@ function OtherTab({ settings, save }: { settings: Settings; save: Save }) {
         </Row>
         <Row label={t('settings.other.launchAtLogin')}>
           <input type="checkbox" className="switch" checked={settings.launchAtLogin} onChange={(e) => save({ launchAtLogin: e.target.checked })} aria-label={t('settings.other.launchAtLoginAria')} />
+        </Row>
+        <Row label={t('settings.other.pauseLengths')} sub={t('settings.other.pauseLengthsSub')}>
+          {settings.pauseMinutes.map((minutes, i) => (
+            <select
+              key={i}
+              className="pause-length"
+              value={minutes}
+              aria-label={t('settings.other.pauseLength', { n: i + 1 })}
+              onChange={(e) => save({ pauseMinutes: settings.pauseMinutes.map((m, j) => (j === i ? Number(e.target.value) : m)) as Settings['pauseMinutes'] })}
+            >
+              {PAUSE_MINUTE_OPTIONS.map((m) => (
+                <option key={m} value={m}>
+                  {pauseChipLabel(m * 60)}
+                </option>
+              ))}
+            </select>
+          ))}
         </Row>
         <Row label={t('settings.other.showIcons')} sub={t('settings.other.showIconsSub')}>
           <input type="checkbox" className="switch" checked={settings.showAppIcons} onChange={(e) => save({ showAppIcons: e.target.checked })} aria-label={t('settings.other.showIconsAria')} />

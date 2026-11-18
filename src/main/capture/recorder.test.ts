@@ -101,6 +101,16 @@ describe('Recorder', () => {
     expect(fake.state.starts).toBe(3)
   })
 
+  it('tells whether capture runs, for the status check', () => {
+    expect(recorder.captureRunning()).toBe(true)
+    recorder.pause(null)
+    expect(recorder.captureRunning()).toBe(false)
+    recorder.resume()
+    expect(recorder.captureRunning()).toBe(true)
+    fake.state.capture!.failed('helper crashed')
+    expect(recorder.captureRunning()).toBe(false)
+  })
+
   it('backs off 60, 120, 300 and 600 s after capture failures and resets after a frame', () => {
     const failAndMeasureRestart = () => {
       fake.state.capture!.failed('portal closed')

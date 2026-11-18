@@ -8,9 +8,9 @@ import { useTranslation } from 'react-i18next'
 import { Check, ChevronLeft, ChevronRight, Shield, Sun } from 'lucide-react'
 import { CATEGORY_PRESETS, presetCategories } from '@shared/categories'
 import { OLLAMA_BASE_URL, OLLAMA_MODEL, cliOf, providerChoice } from '@shared/providers'
-import { type PermissionRow, type ScreenPermission, type WindowCheck, permissionsView } from '@shared/permissions'
 import { type CliName, DEFAULT_SETTINGS, type ProviderKind, type Settings } from '@shared/types'
 import { CommandBlock, StatusDot } from './SettingsLayout'
+import { PermissionCards, usePermissions } from './PermissionRows'
 
 type Step = 'intro' | 'role' | 'provider' | 'setup' | 'permissions' | 'done'
 /** Filled ring segments per step (upstream OnboardingFlow: 6 segments; the video, referral and goal steps are not ported). */
@@ -444,52 +444,13 @@ function resumeStep(): Step {
  */
 function Permissions({ platform, onBack, onNext }: { platform: string; onBack: () => void; onNext: () => void }) {
   const { t } = useTranslation()
-  const [screen, setScreen] = useState<ScreenPermission | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [windowCheck, setWindowCheck] = useState<WindowCheck>(CHECKING_WINDOW)
-
-  // macOS: re-check twice a second while the user is in System Settings (upstream SystemPermissionsMonitor).
-  useEffect(() => {
-    let live = true
-    const load = () => void window.dayflow.getScreenPermission().then((p) => live && setScreen(p))
-    load()
-    const timer = platform === 'darwin' ? setInterval(load, 500) : undefined
-    return () => {
-      live = false
-      clearInterval(timer)
-    }
-  }, [platform])
-
-  const [windowRun, setWindowRun] = useState(0)
-  useEffect(() => {
-    if (platform !== 'linux') return
-    let live = true
-    setWindowCheck(CHECKING_WINDOW)
-    void window.dayflow.checkWindowDetection().then((c) => live && setWindowCheck(c))
-    return () => {
-      live = false
-    }
-  }, [platform, windowRun])
-
-  const grant = async () => {
-    setBusy(true)
-    setError(null)
-    const result = await window.dayflow.requestScreenPermission()
-    setBusy(false)
-    if (!result.ok) setError(result.message)
-    setScreen(await window.dayflow.getScreenPermission())
-  }
-  const relaunch = () => {
+  const view = usePermissions(platform, () => {
     try {
       localStorage.setItem(RESUME_KEY, 'permissions')
     } catch {
       // Without storage the app restarts at the beginning of the setup.
     }
-    void window.dayflow.relaunch()
-  }
-
-  const view = permissionsView({ platform, screen: screen?.screen ?? null, requested: screen?.requested ?? false, busy, error, window: windowCheck })
+  })
   return (
     <div className={`onb-perms ${platform === 'darwin' ? '' : 'single'}`}>
       <div className="onb-perms-left">
@@ -503,9 +464,7 @@ function Permissions({ platform, onBack, onNext }: { platform: string; onBack: (
           <p>{t('onboarding.permissions.privateLocal')}</p>
           <p>{t('onboarding.permissions.privateControl')}</p>
         </div>
-        {view.rows.map((r) => (
-          <PermissionCard key={r.id} row={r} onGrant={() => void grant()} onRelaunch={relaunch} onRecheck={() => setWindowRun((n) => n + 1)} />
-        ))}
+        <PermissionCards permissions={view} />
       </div>
       {platform === 'darwin' && (
         // A picture of macOS's Screen Recording list next to the rows, like upstream's; not controls.
@@ -548,44 +507,6 @@ function Permissions({ platform, onBack, onNext }: { platform: string; onBack: (
           {t('common.next')} <ChevronRight size={14} />
         </button>
       </div>
-    </div>
-  )
-}
-
-const CHECKING_WINDOW: WindowCheck = { state: 'checking', reason: null, command: null }
-
-/** One permission: title, detail and state, with Grant (and Quit and Reopen) on the right (upstream SystemPermissionRow). */
-function PermissionCard({ row, onGrant, onRelaunch, onRecheck }: { row: PermissionRow; onGrant: () => void; onRelaunch: () => void; onRecheck: () => void }) {
-  const { t } = useTranslation()
-  const hasControls = !!row.status || row.actions.length > 0
-  return (
-    <div className="perm-row">
-      <div className="perm-text">
-        <b>{row.title}</b>
-        <span>{row.detail}</span>
-        {row.note && <span className="perm-note">{row.note}</span>}
-      </div>
-      {hasControls && (
-        <div className="perm-controls">
-          {row.status && <StatusDot kind={row.status.kind}>{row.status.label}</StatusDot>}
-          {row.actions.includes('grant') && (
-            <button className="perm-grant" disabled={row.busy} onClick={onGrant}>
-              {row.busy ? t('onboarding.permissions.waiting') : t('onboarding.permissions.grant')}
-            </button>
-          )}
-          {row.actions.includes('recheck') && (
-            <button className="perm-grant" onClick={onRecheck}>
-              {t('onboarding.permissions.checkAgain')}
-            </button>
-          )}
-          {row.actions.includes('relaunch') && (
-            <button className="perm-link" onClick={onRelaunch}>
-              {t('onboarding.permissions.quitReopen')}
-            </button>
-          )}
-        </div>
-      )}
-      {row.command && <CommandBlock text={row.command} />}
     </div>
   )
 }

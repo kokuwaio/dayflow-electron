@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type PermissionsInput, kwinOverrideCommand, permissionsView, windowFixCommand } from './permissions'
+import { type PermissionsInput, kwinOverrideCommand, liveWindowCheck, permissionsView, windowFixCommand } from './permissions'
 
 const input = (over: Partial<PermissionsInput>): PermissionsInput => ({
   platform: 'linux',
@@ -98,5 +98,23 @@ describe('windowFixCommand', () => {
     expect(windowFixCommand('Window detection needs KWin access.', '')).toBeNull()
     expect(windowFixCommand('Window detection works on KDE Plasma only so far.', 'io.example.App')).toBeNull()
     expect(windowFixCommand(null, 'io.example.App')).toBeNull()
+  })
+})
+
+describe('liveWindowCheck', () => {
+  const kwin = 'Window detection needs KWin access. Run "flatpak override …" once, then restart the app.'
+
+  it("reads the running recorder's window detection instead of starting a second watcher", () => {
+    expect(liveWindowCheck({ windowDetection: 'ok', windowDetectionError: null }, 'io.example.App')).toEqual({ state: 'ok', reason: null, command: null })
+    expect(liveWindowCheck({ windowDetection: 'starting', windowDetectionError: null }, '')).toEqual({ state: 'checking', reason: null, command: null })
+  })
+
+  it('offers the KWin command when the recorder found the permission missing in the Flatpak', () => {
+    expect(liveWindowCheck({ windowDetection: 'unavailable', windowDetectionError: kwin }, 'io.example.App')).toEqual({
+      state: 'unavailable',
+      reason: kwin,
+      command: kwinOverrideCommand('io.example.App')
+    })
+    expect(liveWindowCheck({ windowDetection: 'unavailable', windowDetectionError: 'GNOME' }, 'io.example.App').command).toBeNull()
   })
 })

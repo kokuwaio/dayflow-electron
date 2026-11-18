@@ -11,6 +11,8 @@ import { sanitizeAppLanguage } from '../shared/languages'
 import { sanitizeUiStyle } from '../shared/ui-style'
 import { sanitizeGuide } from '../shared/getting-started'
 import { sanitizeDailyProvider } from '../shared/daily-provider'
+import { sanitizePauseMinutes } from '../shared/status'
+import { snapStorageLimit } from '../shared/storage'
 
 const KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'codex-cli']
 /** Providers that use an API key (the agent CLIs use the user's own login). */
@@ -77,11 +79,9 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
       ? Number(r.captureIntervalSec)
       : DEFAULT_SETTINGS.captureIntervalSec,
     captureHeight: r.captureHeight === 1080 ? 1080 : 720,
-    storageLimitGb:
-      Number.isFinite(Number(r.storageLimitGb)) && Number(r.storageLimitGb) >= 1
-        ? Math.round(Number(r.storageLimitGb))
-        : DEFAULT_SETTINGS.storageLimitGb,
+    storageLimitGb: snapStorageLimit(r.storageLimitGb, DEFAULT_SETTINGS.storageLimitGb),
     launchAtLogin: r.launchAtLogin === true,
+    pauseMinutes: sanitizePauseMinutes(r.pauseMinutes),
     cliPaths: {
       claude: typeof r.cliPaths?.claude === 'string' ? r.cliPaths.claude.trim() : '',
       codex: typeof r.cliPaths?.codex === 'string' ? r.cliPaths.codex.trim() : ''

@@ -110,7 +110,11 @@ Your data lives in `~/Library/Application Support/dayflow-electron`.
 
 **Settings → Other → Install updates automatically** (on by default) turns
 the background download off: the app then only tells you about a new version,
-and the tray menu offers **Download version …**. Builds from a branch
+and the tray menu offers **Download version …**. **Check for updates…** in the
+tray (and in the app menu on macOS) asks GitHub right away instead of waiting
+for the next 6-hour check, and answers with a notification ("You're up to
+date" or the new version). It is there only while **Settings → Other → Check
+for updates** is on, and not in the Flatpak. Builds from a branch
 (`0.0.0-...`) never update.
 
 ## The command-line tool

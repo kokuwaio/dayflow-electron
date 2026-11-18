@@ -72,12 +72,12 @@
   "pause": {
     "forMinutes_other": "{{count}} 分钟",
     "forHours_other": "{{count}} 小时",
+    "forDuration": "{{time}}",
     "untilResumed": "直到我手动继续",
     "chipMinutes_other": "暂停 {{count}} 分钟",
     "chipHours_other": "暂停 {{count}} 小时",
+    "chipDuration": "暂停 {{time}}",
     "chipUntilResumed": "暂停，直到我手动继续",
-    "chipShortMinutes_other": "{{count}} 分钟",
-    "chipShortHours_other": "{{count}} 小时",
     "pausedFor": "Dayflow Electron 已暂停 {{time}}",
     "pausedIndefinitely": "Dayflow Electron 已无限期暂停",
     "hiddenBlockedApp": "已隐藏：前台为已屏蔽的应用",
@@ -128,7 +128,16 @@
     "menuGet": "获取版本 {{version}}…",
     "menuDownload": "下载版本 {{version}}",
     "menuDownloading": "正在下载版本 {{version}}（{{percent}}%）",
-    "menuRestart": "重启以更新到 {{version}}"
+    "menuRestart": "重启以更新到 {{version}}",
+    "manual": {
+      "check": "检查更新…",
+      "checking": "正在检查更新…",
+      "upToDate": "已是最新版本",
+      "upToDateBody": "Dayflow Electron {{version}} 是最新版本。",
+      "failed": "无法检查更新",
+      "noAnswer": "更新服务器没有响应。",
+      "downloading": "正在下载。准备就绪后会提示你重新启动。"
+    }
   },
   "permissions": {
     "checking": "正在检查…",
@@ -335,6 +344,7 @@
     "tabs": {
       "storage": "存储空间",
       "privacy": "隐私",
+      "permissions": "权限",
       "providers": "提供商",
       "agents": "MCP / CLI",
       "export": "导出",
@@ -353,18 +363,50 @@
       }
     },
     "storage": {
-      "recording": "录制",
-      "recordingSub": "只录制鼠标所在的屏幕。锁屏期间录制会暂停。",
       "frequency": "截屏频率",
       "frequencySub": "截屏的频率。",
       "everySeconds_other": "每 {{count}} 秒",
       "resolution": "分辨率",
-      "title": "存储空间",
       "sub": "达到上限时，会优先删除最旧的截图。卡片会保留。",
       "limit": "存储上限",
-      "used": "截图占用 {{size}} GB。",
-      "limitAria": "存储上限（GB）",
-      "folder": "录制文件夹"
+      "status": "录屏状态",
+      "statusSub": "确保 Dayflow Electron 可以捕捉你的屏幕。",
+      "runCheck": "运行状态检查",
+      "checking": "正在检查…",
+      "lastChecked": "上次检查于 {{time}}",
+      "check": {
+        "permission": "屏幕录制权限",
+        "missing": "缺失",
+        "asksAtStart": "开始录制时询问",
+        "notNeeded": "无需授权",
+        "recorder": "录屏工具",
+        "permissionRequired": "需要权限",
+        "active": "已启用",
+        "paused": "已暂停",
+        "idle": "空闲",
+        "failing": "捕获失败，正在重试",
+        "notStarted": "未开始",
+        "lastFrame": "最后一帧",
+        "noFrames": "还没有画面",
+        "secondsAgo_other": "{{count}} 秒前",
+        "ago": "{{time}}前",
+        "lateNote": "录制应每 {{interval}} 秒保存一帧。如果共享对话框正在等待，请先回应；否则请暂停后再继续录制。",
+        "helper": "捕获助手",
+        "running": "运行中",
+        "notRunning": "未运行"
+      },
+      "quality": "录屏质量",
+      "qualitySub": "分辨率越高、截取越频繁，占用的磁盘空间越多。",
+      "estimate": "每小时约 {{hour}} · 按每天 8 小时计算，每月约 {{month}}",
+      "measured": "过去一小时测得：每小时 {{size}}",
+      "diskUsage": "磁盘用量",
+      "recordings": "录屏",
+      "usage": "{{size}} · {{percent}}%",
+      "unlimited": "无限制",
+      "gb": "{{size}} GB",
+      "mb": "{{size}} MB",
+      "lowerTitle": "降低 {{category}} 限制？",
+      "lowerBody": "将 {{category}} 限制降至 {{limit}} 后，系统会立即删除最早的 {{category}} 数据，以确保不超过新上限。"
     },
     "privacy": {
       "title": "已屏蔽的应用",
@@ -375,7 +417,22 @@
       "hidePrivate": "隐藏无痕浏览窗口",
       "hidePrivateSub": "Chrome 无痕窗口和 Firefox 隐私窗口会以遮盖卡片代替截图。此功能通过窗口标题识别，因此也需要窗口检测。",
       "hideSecrets": "隐藏截图中的敏感信息",
-      "hideSecretsSub": "读取发送给 AI 提供商的每一帧画面中的文字，并涂黑识别出的 API 密钥、密码、私钥、助记词和恢复码。识别基于模式匹配，因此会有遗漏，且每帧会增加几秒钟处理时间。"
+      "hideSecretsSub": "读取发送给 AI 提供商的每一帧画面中的文字，并涂黑识别出的 API 密钥、密码、私钥、助记词和恢复码。识别基于模式匹配，因此会有遗漏，且每帧会增加几秒钟处理时间。",
+      "apps": {
+        "title": "应用",
+        "sub": "位于前台时 Dayflow Electron 应隐藏的应用。",
+        "search": "搜索已安装的应用",
+        "installed": "已安装的应用",
+        "loading": "正在加载应用...",
+        "shown_other": "显示 {{count}} 个",
+        "blocked_other": "已屏蔽 {{count}} 个",
+        "noMatch": "没有符合搜索条件的应用。",
+        "none": "未找到已安装的应用。请在下方手动添加规则。",
+        "hint": "点击应用即可屏蔽，其规则会添加到下方列表。再次点击即可移除。",
+        "block": "屏蔽 {{name}}",
+        "unblock": "取消屏蔽 {{name}}",
+        "sandbox": "在 Flatpak 中，电脑上安装的应用会一直隐藏，直到你（以只读方式）共享其列表。请运行一次此命令，然后重新打开此标签页。系统范围安装的 Flatpak 应用仍然隐藏，请手动添加其 ID。"
+      }
     },
     "reprocess": {
       "title": "重新处理",
@@ -403,6 +460,9 @@
       "original": "原版",
       "launchAtLogin": "登录时启动 Dayflow Electron",
       "launchAtLoginAria": "登录时启动",
+      "pauseLengths": "暂停时长",
+      "pauseLengthsSub": "暂停 Dayflow Electron 时显示的三个定时选项。",
+      "pauseLength": "暂停时长 {{n}}",
       "showIcons": "在时间线中显示应用/网站图标",
       "showIconsSub": "图标直接从网站本身加载（例如 github.com/favicon.ico），这些网站会因此得知你的 IP 地址。",
       "showIconsAria": "显示图标",
@@ -441,6 +501,13 @@
         "dataScientist": "数据科学家",
         "other": "其他"
       }
+    },
+    "permissions": {
+      "title": "权限",
+      "subMac": "Dayflow Electron 需要的 macOS 访问权限。在你开启之前它们保持关闭。",
+      "sub": "Dayflow Electron 录制所需的桌面权限。在你允许之前不会共享任何内容。",
+      "footMac": "屏幕录制通常需要重新启动 Dayflow Electron 后 macOS 才会生效。",
+      "footLinux": "点击“授权”会立即打开共享对话框，而不是等到开始录制时。窗口检测显示的是正在运行的录制所见的状态；更改权限后请重新启动应用。"
     }
   },
   "summary": {

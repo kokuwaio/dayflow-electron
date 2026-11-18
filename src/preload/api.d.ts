@@ -6,6 +6,8 @@ import type { FrameRef } from '../shared/media'
 import type { Language } from '../shared/languages'
 import type { UpdateMode } from '../shared/updates'
 import type { ScreenPermission, WindowCheck } from '../shared/permissions'
+import type { RecordingCheck } from '../shared/recording-status'
+import type { InstalledApps } from '../shared/installed-apps'
 import type { DayCards, Week } from '../shared/week'
 import type { DailyProviderOption } from '../shared/daily-provider'
 import type { GettingStarted } from '../shared/getting-started'
@@ -109,6 +111,10 @@ export interface DayflowApi {
   copyDebugLogs(): Promise<void>
   /** Opens logs/ in the data folder; resolves to an error message, or '' on success. */
   openLogFolder(): Promise<string>
+  /** Disk use and the recording status check of Settings → Storage; run: purge over the limit first ("Run status check"). */
+  checkStorage(run: boolean): Promise<{ check: RecordingCheck; framesBytes: number; observedBytesPerHour: number | null }>
+  /** Installed apps to block, and inside the Flatpak the command that shows them. */
+  getInstalledApps(): Promise<InstalledApps>
   runAnalysis(): Promise<void>
   checkCli(cli: CliName): Promise<{ ok: boolean; message: string }>
   /** How AI tools and terminals start the bundled CLI. */

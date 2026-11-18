@@ -147,9 +147,20 @@ JSON-per-day store for SQLite.
       at the current slot; it moves to the new day after 4 AM.
 - [x] Settings: provider and key, test connection, capture interval and
       resolution, storage limit, launch at login (Background portal in the
-      Flatpak).
+      Flatpak; off until the user turns it on, pinned by a test).
 - [x] Retention: storage cap for frames (default 10 GB), hourly purge of the
       oldest frames.
+- [x] Settings → Storage like upstream (`Views/UI/Settings/SettingsStorageTabView.swift`,
+      `StorageSettingsViewModel.swift`): "Recording status" with the screen
+      permission, the recorder (Active, Paused, Idle, failing), the age of the
+      last frame and, on Linux, whether the capture helper runs; "Run status
+      check" purges first like upstream. "Recording quality" shows the expected
+      disk use per hour and month (our JPEG sizes: about 70 KB at 720p, 145 KB
+      at 1080p) and the use measured over the last hour. The limit is one of
+      upstream's presets (1, 2, 3, 5, 10, 20 GB or Unlimited; older typed
+      values move up to the next preset), with a confirmation before a lower
+      limit deletes old recordings (`src/shared/storage.ts`,
+      `src/shared/recording-status.ts`).
 - [x] Flatpak `io.github.kokuwaio.DayflowElectron` (`packaging/flatpak/`).
 
 **Done when:** a full working day on Linux produces a sensible timeline with
@@ -293,8 +304,25 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
 - [x] Dark mode: upstream's dark palette; Settings → Other → Appearance picks
   dark (the default), light or the system setting.
 - [x] Show/hide app and site icons (Settings → Other).
-- [x] Pause presets: 15, 30, 60 minutes or until resumed, in the tray and the
-  timeline's Pause pill.
+- [x] Pause presets: three timed lengths (15, 30 and 60 minutes by default)
+  or until resumed, in the tray and the timeline's Pause pill. Settings →
+  Other → Pause lengths picks each from upstream's choices, 5 minutes to
+  8 hours (upstream `PausePresets` in `App/PauseManager.swift`,
+  `SettingsOtherTabView.swift`).
+- [x] Settings → Permissions (upstream `SettingsPermissionsTabView.swift`):
+  the onboarding's live permission rows (one shared component,
+  `src/renderer/src/PermissionRows.tsx`), so a skipped permission can be
+  granted later. While recording, window detection shows the recorder's own
+  state: a second probe would replace its KWin script.
+- [x] Blocked apps from a list (upstream `SettingsRecordingPrivacyTabView.swift`):
+  Settings → Privacy searches the installed apps and adds or removes their
+  rules next to the typed ones. Linux reads `.desktop` files from the XDG data
+  folders (desktop file ID, `StartupWMClass` and the `Exec` program); inside the Flatpak the
+  host's lists need a read-only `flatpak override`, which the tab shows, and
+  system-wide Flatpak apps stay hidden (`/var` cannot be shared). Windows reads
+  Start-menu shortcuts (process name of the target, through Electron's
+  `shell.readShortcutLink`), macOS the bundle IDs in `/Applications` and
+  `~/Applications` (`src/shared/installed-apps.ts`).
 - [x] App language: Settings → Other → App language (upstream
   `Utilities/AppLanguagePreferences.swift`), English by default, or the
   system's language, with upstream's seven languages (de, fr, ru, ja, ko,
@@ -361,7 +389,9 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   images (arm64, x64), all built in CI and attached to releases;
   `electron-updater` (check at start and every 6 hours, background download,
   "Install updates automatically" in Settings → Other, restart from the tray
-  or a notification; unsigned macOS only notifies). Open: Windows and macOS
+  or a notification; unsigned macOS only notifies; "Check for updates…" in
+  the tray and the macOS app menu checks at once and answers with a
+  notification). Open: Windows and macOS
   signing and notarization (certificates needed, see
   [release.md](release.md#signing-windows-and-macos); macOS installs updates
   only once signed), a public repository (the updater downloads without a

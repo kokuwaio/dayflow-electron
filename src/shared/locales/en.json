@@ -76,16 +76,14 @@
     "forMinutes_other": "For {{count}} minutes",
     "forHours_one": "For {{count}} hour",
     "forHours_other": "For {{count}} hours",
+    "forDuration": "For {{time}}",
     "untilResumed": "Until I resume",
     "chipMinutes_one": "Pause for {{count}} minute",
     "chipMinutes_other": "Pause for {{count}} minutes",
     "chipHours_one": "Pause for {{count}} hour",
     "chipHours_other": "Pause for {{count}} hours",
+    "chipDuration": "Pause for {{time}}",
     "chipUntilResumed": "Pause until I resume",
-    "chipShortMinutes_one": "{{count}}m",
-    "chipShortMinutes_other": "{{count}}m",
-    "chipShortHours_one": "{{count}}h",
-    "chipShortHours_other": "{{count}}h",
     "pausedFor": "Dayflow Electron paused for {{time}}",
     "pausedIndefinitely": "Dayflow Electron paused indefinitely",
     "hiddenBlockedApp": "Hidden: blocked app in front",
@@ -138,7 +136,16 @@
     "menuGet": "Get version {{version}}…",
     "menuDownload": "Download version {{version}}",
     "menuDownloading": "Downloading version {{version}} ({{percent}}%)",
-    "menuRestart": "Restart to update to {{version}}"
+    "menuRestart": "Restart to update to {{version}}",
+    "manual": {
+      "check": "Check for updates…",
+      "checking": "Checking for updates…",
+      "upToDate": "You're up to date",
+      "upToDateBody": "Dayflow Electron {{version}} is the newest version.",
+      "failed": "Couldn't check for updates",
+      "noAnswer": "No answer from the update server.",
+      "downloading": "Downloading it now. You will be asked to restart when it is ready."
+    }
   },
   "permissions": {
     "checking": "Checking…",
@@ -345,6 +352,7 @@
     "tabs": {
       "storage": "Storage",
       "privacy": "Privacy",
+      "permissions": "Permissions",
       "providers": "Providers",
       "agents": "MCP / CLI",
       "export": "Export",
@@ -363,19 +371,52 @@
       }
     },
     "storage": {
-      "recording": "Recording",
-      "recordingSub": "Only the screen under the mouse is recorded. Recording pauses while the screen is locked.",
       "frequency": "Capture frequency",
       "frequencySub": "How often a screenshot is taken.",
       "everySeconds_one": "Every {{count}} s",
       "everySeconds_other": "Every {{count}} s",
       "resolution": "Resolution",
-      "title": "Storage",
       "sub": "When the limit is reached, the oldest screenshots are deleted first. Cards stay.",
       "limit": "Storage limit",
-      "used": "Screenshots use {{size}} GB.",
-      "limitAria": "Storage limit in GB",
-      "folder": "Recordings folder"
+      "status": "Recording status",
+      "statusSub": "Ensure Dayflow Electron can capture your screen.",
+      "runCheck": "Run status check",
+      "checking": "Checking…",
+      "lastChecked": "Last checked {{time}}",
+      "check": {
+        "permission": "Screen recording permission",
+        "missing": "Missing",
+        "asksAtStart": "Asks when recording starts",
+        "notNeeded": "Not needed",
+        "recorder": "Recorder",
+        "permissionRequired": "Permission required",
+        "active": "Active",
+        "paused": "Paused",
+        "idle": "Idle",
+        "failing": "Capture failing, retrying",
+        "notStarted": "Not started",
+        "lastFrame": "Last frame",
+        "noFrames": "No frames yet",
+        "secondsAgo_one": "{{count}} s ago",
+        "secondsAgo_other": "{{count}} s ago",
+        "ago": "{{time}} ago",
+        "lateNote": "Recording should save a frame every {{interval}} s. If the share dialog is waiting, answer it; otherwise pause and resume recording.",
+        "helper": "Capture helper",
+        "running": "Running",
+        "notRunning": "Not running"
+      },
+      "quality": "Recording quality",
+      "qualitySub": "Higher resolution and more frequent captures use more disk.",
+      "estimate": "≈ {{hour}} per hour · ≈ {{month}} per month at 8 h/day",
+      "measured": "Measured over the last hour: {{size}} per hour",
+      "diskUsage": "Disk usage",
+      "recordings": "Recordings",
+      "usage": "{{size}} · {{percent}}%",
+      "unlimited": "Unlimited",
+      "gb": "{{size}} GB",
+      "mb": "{{size}} MB",
+      "lowerTitle": "Lower {{category}} limit?",
+      "lowerBody": "Reducing the {{category}} limit to {{limit}} will immediately delete the oldest {{category}} data to stay under the new cap."
     },
     "privacy": {
       "title": "Blocked apps",
@@ -386,7 +427,24 @@
       "hidePrivate": "Hide private browsing windows",
       "hidePrivateSub": "Chrome incognito and Firefox private windows get a redaction card instead of a screenshot. Detected from the window title, so it needs window detection too.",
       "hideSecrets": "Hide secrets in screenshots",
-      "hideSecretsSub": "Reads the text on each frame sent to the AI provider and blacks out API keys, passwords, private keys, seed phrases and recovery codes it recognizes. It recognizes these by pattern, so it misses some, and it adds a few seconds per frame."
+      "hideSecretsSub": "Reads the text on each frame sent to the AI provider and blacks out API keys, passwords, private keys, seed phrases and recovery codes it recognizes. It recognizes these by pattern, so it misses some, and it adds a few seconds per frame.",
+      "apps": {
+        "title": "Apps",
+        "sub": "Apps Dayflow Electron should hide whenever they're in front.",
+        "search": "Search installed apps",
+        "installed": "Installed apps",
+        "loading": "Loading apps...",
+        "shown_one": "{{count}} shown",
+        "shown_other": "{{count}} shown",
+        "blocked_one": "{{count}} blocked",
+        "blocked_other": "{{count}} blocked",
+        "noMatch": "No apps match your search.",
+        "none": "No installed apps found. Add rules by hand below.",
+        "hint": "Click an app to block it; its rules are added to the list below. Click again to remove them.",
+        "block": "Block {{name}}",
+        "unblock": "Unblock {{name}}",
+        "sandbox": "Inside the Flatpak, the apps installed on your computer are hidden until you share their list (read-only). Run this once, then open this tab again. System-wide Flatpak apps stay hidden; add their ID by hand."
+      }
     },
     "reprocess": {
       "title": "Reprocess",
@@ -415,6 +473,9 @@
       "original": "Original",
       "launchAtLogin": "Launch Dayflow Electron at login",
       "launchAtLoginAria": "Launch at login",
+      "pauseLengths": "Pause lengths",
+      "pauseLengthsSub": "The three timed options shown when you pause Dayflow Electron.",
+      "pauseLength": "Pause length {{n}}",
       "showIcons": "Show app/website icons in timeline",
       "showIconsSub": "Icons are loaded from the websites themselves (e.g. github.com/favicon.ico), which tells those sites your IP address.",
       "showIconsAria": "Show icons",
@@ -453,6 +514,13 @@
         "dataScientist": "Data Scientist",
         "other": "Other"
       }
+    },
+    "permissions": {
+      "title": "Permissions",
+      "subMac": "macOS access Dayflow Electron needs. These stay off until you turn them on.",
+      "sub": "What Dayflow Electron needs from your desktop to record. Nothing is shared until you allow it.",
+      "footMac": "Screen Recording usually needs Dayflow Electron to restart before macOS applies it.",
+      "footLinux": "Grant opens the share dialog now instead of when recording starts. Window detection shows what the running recorder sees; after a permission change, restart the app."
     }
   },
   "summary": {

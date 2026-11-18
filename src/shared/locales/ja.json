@@ -72,12 +72,12 @@
   "pause": {
     "forMinutes_other": "{{count}}分間",
     "forHours_other": "{{count}}時間",
+    "forDuration": "{{time}}",
     "untilResumed": "再開するまで",
     "chipMinutes_other": "{{count}}分間一時停止",
     "chipHours_other": "{{count}}時間一時停止",
+    "chipDuration": "{{time}}一時停止",
     "chipUntilResumed": "再開するまで一時停止",
-    "chipShortMinutes_other": "{{count}}分",
-    "chipShortHours_other": "{{count}}時間",
     "pausedFor": "Dayflow Electronをあと{{time}}一時停止中",
     "pausedIndefinitely": "Dayflow Electronを無期限に一時停止",
     "hiddenBlockedApp": "非表示：ブロック中のアプリが前面にあります",
@@ -128,7 +128,16 @@
     "menuGet": "バージョン{{version}}を入手…",
     "menuDownload": "バージョン{{version}}をダウンロード",
     "menuDownloading": "バージョン{{version}}をダウンロード中（{{percent}}%）",
-    "menuRestart": "再起動して{{version}}にアップデート"
+    "menuRestart": "再起動して{{version}}にアップデート",
+    "manual": {
+      "check": "アップデートを確認…",
+      "checking": "アップデートを確認中…",
+      "upToDate": "最新の状態です",
+      "upToDateBody": "Dayflow Electron {{version}}が最新バージョンです。",
+      "failed": "アップデートを確認できませんでした",
+      "noAnswer": "アップデートサーバーから応答がありません。",
+      "downloading": "今ダウンロードしています。準備ができたら再起動を求められます。"
+    }
   },
   "permissions": {
     "checking": "確認中…",
@@ -335,6 +344,7 @@
     "tabs": {
       "storage": "ストレージ",
       "privacy": "プライバシー",
+      "permissions": "権限",
       "providers": "プロバイダー",
       "agents": "MCP / CLI",
       "export": "書き出す",
@@ -353,18 +363,50 @@
       }
     },
     "storage": {
-      "recording": "記録",
-      "recordingSub": "マウスがある画面だけが記録されます。画面のロック中は記録を一時停止します。",
       "frequency": "キャプチャ頻度",
       "frequencySub": "スクリーンショットを撮る間隔。",
       "everySeconds_other": "{{count}}秒ごと",
       "resolution": "解像度",
-      "title": "ストレージ",
       "sub": "上限に達すると、古いスクリーンショットから順に削除されます。カードは残ります。",
       "limit": "ストレージの上限",
-      "used": "スクリーンショットの使用量：{{size}} GB",
-      "limitAria": "ストレージの上限（GB）",
-      "folder": "録画フォルダ"
+      "status": "録画状況",
+      "statusSub": "Dayflow Electronが画面をキャプチャできることを確認してください。",
+      "runCheck": "ステータス確認を実行",
+      "checking": "確認中…",
+      "lastChecked": "最終確認：{{time}}",
+      "check": {
+        "permission": "画面収録の許可",
+        "missing": "不足",
+        "asksAtStart": "録画開始時に確認します",
+        "notNeeded": "不要",
+        "recorder": "レコーダー",
+        "permissionRequired": "権限が必要です",
+        "active": "有効",
+        "paused": "一時停止中",
+        "idle": "アイドル",
+        "failing": "キャプチャに失敗、再試行中",
+        "notStarted": "未開始",
+        "lastFrame": "最新のフレーム",
+        "noFrames": "まだフレームがありません",
+        "secondsAgo_other": "{{count}}秒前",
+        "ago": "{{time}}前",
+        "lateNote": "{{interval}}秒ごとにフレームが保存されるはずです。共有ダイアログが待機中なら応答してください。そうでなければ録画を一時停止して再開してください。",
+        "helper": "キャプチャヘルパー",
+        "running": "実行中",
+        "notRunning": "停止中"
+      },
+      "quality": "録画品質",
+      "qualitySub": "解像度を上げ、キャプチャ頻度を高くすると、ディスク使用量が増えます。",
+      "estimate": "1時間あたり約 {{hour}} · 1日8時間で月額約 {{month}}",
+      "measured": "過去1時間の測定値：1時間あたり{{size}}",
+      "diskUsage": "ディスク使用量",
+      "recordings": "録画",
+      "usage": "{{size}} · {{percent}}%",
+      "unlimited": "無制限",
+      "gb": "{{size}} GB",
+      "mb": "{{size}} MB",
+      "lowerTitle": "{{category}} の上限を引き下げますか？",
+      "lowerBody": "{{category}}の上限を{{limit}}に引き下げると、新しい上限を超えないよう、最も古い{{category}}データが直ちに削除されます。"
     },
     "privacy": {
       "title": "ブロック中のアプリ",
@@ -375,7 +417,22 @@
       "hidePrivate": "プライベートブラウジングのウィンドウを隠す",
       "hidePrivateSub": "Chromeのシークレットウィンドウと Firefoxのプライベートウィンドウは、スクリーンショットの代わりに伏せ字のカードになります。ウィンドウタイトルから検出するため、ウィンドウ検出も必要です。",
       "hideSecrets": "スクリーンショット内の機密情報を隠す",
-      "hideSecretsSub": "AIプロバイダーに送る各フレームのテキストを読み取り、認識したAPIキー、パスワード、秘密鍵、シードフレーズ、リカバリーコードを黒塗りします。パターンで認識するため一部を見逃すことがあり、1フレームあたり数秒かかります。"
+      "hideSecretsSub": "AIプロバイダーに送る各フレームのテキストを読み取り、認識したAPIキー、パスワード、秘密鍵、シードフレーズ、リカバリーコードを黒塗りします。パターンで認識するため一部を見逃すことがあり、1フレームあたり数秒かかります。",
+      "apps": {
+        "title": "アプリ",
+        "sub": "前面にあるときにDayflow Electronが隠すアプリ。",
+        "search": "インストール済みアプリを検索",
+        "installed": "インストール済みアプリ",
+        "loading": "アプリを読み込み中...",
+        "shown_other": "{{count}}件表示",
+        "blocked_other": "{{count}}件ブロック中",
+        "noMatch": "検索条件に一致するアプリはありません。",
+        "none": "インストール済みアプリが見つかりません。下にルールを手動で追加してください。",
+        "hint": "アプリをクリックするとブロックされ、そのルールが下のリストに追加されます。もう一度クリックすると削除されます。",
+        "block": "{{name}}をブロック",
+        "unblock": "{{name}}のブロックを解除",
+        "sandbox": "Flatpak内では、アプリの一覧を（読み取り専用で）共有するまで、コンピューターにインストールされたアプリは表示されません。これを一度実行してから、このタブを開き直してください。システム全体にインストールされたFlatpakアプリは表示されないため、IDを手動で追加してください。"
+      }
     },
     "reprocess": {
       "title": "再処理",
@@ -403,6 +460,9 @@
       "original": "オリジナル",
       "launchAtLogin": "ログイン時に Dayflow Electron を起動",
       "launchAtLoginAria": "ログイン時に起動",
+      "pauseLengths": "一時停止の長さ",
+      "pauseLengthsSub": "Dayflow Electronを一時停止するときに表示される3つの時間。",
+      "pauseLength": "一時停止の長さ {{n}}",
       "showIcons": "タイムラインにアプリ／Webサイトのアイコンを表示",
       "showIconsSub": "アイコンは各Webサイトから直接読み込まれます（例：github.com/favicon.ico）。そのため、これらのサイトにIPアドレスが伝わります。",
       "showIconsAria": "アイコンを表示",
@@ -441,6 +501,13 @@
         "dataScientist": "データサイエンティスト",
         "other": "その他"
       }
+    },
+    "permissions": {
+      "title": "権限",
+      "subMac": "Dayflow Electronに必要なmacOSのアクセス権。オンにするまでオフのままです。",
+      "sub": "Dayflow Electronが記録のためにデスクトップから必要とするもの。許可するまで何も共有されません。",
+      "footMac": "画面収録は通常、Dayflow Electronを再起動してからmacOSに適用されます。",
+      "footLinux": "「許可」を押すと、録画開始時ではなく今すぐ共有ダイアログが開きます。ウィンドウ検出には実行中の録画の状態が表示されます。権限を変更したらアプリを再起動してください。"
     }
   },
   "summary": {
