@@ -242,6 +242,14 @@ Each 15-minute batch then takes the local model a few minutes. To compare
 backends or models, `ollama run <model> --verbose "<prompt>" <image.jpg>`
 prints the prompt and generation speed.
 
+From a source checkout, `make bench-models MODELS="qwen3-vl:2b-instruct
+qwen3-vl:8b-instruct"` runs the app's own analysis on your latest recorded
+batch with each model and prints the load time, the seconds per screenshot,
+the time for the card and the card it wrote. It takes the first minute of the
+batch (`MINUTES=15` for all of it, `BATCHES=3` for more batches), reads the
+database without changing it, and only talks to a local server. Pause
+recording first, so the app does not use the model at the same time.
+
 ### LM Studio
 
 Start LM Studio's local server (default `http://localhost:1234/v1`), load a

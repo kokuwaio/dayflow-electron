@@ -10,13 +10,14 @@ HELPER_SRC = $(shell find $(HELPER) -name '*.go' -o -name go.mod -o -name go.sum
 # On Linux the app needs the helper; dev rebuilds it when its sources changed.
 DEV_HELPER = $(if $(filter Linux,$(shell uname -s)),$(HELPER_BIN))
 
-.PHONY: help install dev dev-clean check typecheck test test-helper lint build helper pack flatpak dist-win dist-mac version clean
+.PHONY: help install dev dev-clean bench-models check typecheck test test-helper lint build helper pack flatpak dist-win dist-mac version clean
 
 help:
 	@echo "make install      install npm dependencies (npm ci)"
 	@echo "make dev          start the app with hot reload"
 	@echo "make dev-clean    like dev, with empty data, so the first-run setup shows again"
 	@echo "make check        typecheck, test and lint everything (run before a PR)"
+	@echo "make bench-models MODELS=\"a b\"  speed of local Ollama models on recorded screenshots"
 	@echo "make typecheck    TypeScript typecheck of main and renderer"
 	@echo "make test         Vitest"
 	@echo "make test-helper  Go tests of the Linux helper, inside the Flatpak SDK"
@@ -44,6 +45,17 @@ dev-clean: $(DEV_HELPER)
 	DAYFLOW_DATA_DIR="$(CURDIR)/.dev-clean-data" npm run dev
 
 check: typecheck test lint test-helper
+
+# Speed of local models on screenshots already recorded (scripts/bench-local-models.test.ts).
+# MODELS: Ollama model names; BATCHES: how many of the latest batches (default 1);
+# MINUTES: only the first minutes of each batch (default 1, 15 for whole batches);
+# BENCH_BASE_URL and BENCH_DATA_DIR override the server and the data folder.
+MODELS ?=
+BATCHES ?= 1
+MINUTES ?= 1
+bench-models:
+	@test -n "$(MODELS)" || { echo 'usage: make bench-models MODELS="qwen3-vl:2b-instruct qwen3-vl:8b-instruct" [BATCHES=2] [MINUTES=15]'; exit 2; }
+	BENCH_MODELS="$(MODELS)" BENCH_BATCHES=$(BATCHES) BENCH_MINUTES=$(MINUTES) npx vitest run scripts/bench-local-models.test.ts --reporter=verbose --silent=false
 
 typecheck:
 	npm run typecheck
