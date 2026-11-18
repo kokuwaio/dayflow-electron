@@ -63,12 +63,12 @@ export function wrapperScript(inv: Invocation): string {
 }
 
 /** Removes what terminalInstallCommand put in place (upstream's tab offers install and remove). */
-export function terminalRemoveCommand(platform: NodeJS.Platform = process.platform): string {
+export function terminalRemoveCommand(platform: NodeJS.Platform): string {
   return `${terminalTarget(platform).sudo ? 'sudo ' : ''}rm -f ${terminalCommandPath(platform)}`
 }
 
 /** A command to paste into a terminal that installs `dayflow-electron` (sudo on macOS asks for the password once). */
-export function terminalInstallCommand(inv: Invocation, platform: NodeJS.Platform = process.platform): string {
+export function terminalInstallCommand(inv: Invocation, platform: NodeJS.Platform): string {
   const { dir, sudo } = terminalTarget(platform)
   const path = terminalCommandPath(platform)
   const lines = `printf '%s\\n' ${wrapperScript(inv).trimEnd().split('\n').map(shQuote).join(' ')}`

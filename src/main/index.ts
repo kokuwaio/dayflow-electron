@@ -572,7 +572,7 @@ async function main(): Promise<void> {
       terminal:
         process.platform === 'win32'
           ? null
-          : { install: terminalInstallCommand(inv), remove: terminalRemoveCommand(), dir: terminalTarget(process.platform).dir },
+          : { install: terminalInstallCommand(inv, process.platform), remove: terminalRemoveCommand(process.platform), dir: terminalTarget(process.platform).dir },
       configSnippet: manualConfigSnippet(inv)
     }
   })

@@ -70,7 +70,7 @@ describe('CLI invocation', () => {
   it.skipIf(process.platform === 'win32')('builds a terminal install command that writes exactly that wrapper', () => {
     const home = mkdtempSync(join(tmpdir(), 'dayflow-home-'))
     try {
-      execFileSync('sh', ['-c', terminalInstallCommand(plain)], { env: { ...process.env, HOME: home } })
+      execFileSync('sh', ['-c', terminalInstallCommand(plain, 'linux')], { env: { ...process.env, HOME: home } })
       expect(readFileSync(join(home, '.local/bin/dayflow-electron'), 'utf8')).toBe(wrapperScript(plain))
       const out = execFileSync('sh', ['-c', `sed -n 3p ${join(home, '.local/bin/dayflow-electron')}`]).toString()
       expect(out).toBe(`exec env ELECTRON_RUN_AS_NODE=1 '/opt/Day flow/dayflow-electron' '/opt/Day flow/resources/app.asar/out/main/cli.js' "$@"\n`)
