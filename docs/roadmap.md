@@ -208,7 +208,15 @@ each of the three providers.
 - [x] Weekly dashboard: donut, treemap, Sankey, focus and distraction heat
   map, context switches, workflow heat map. No AI needed; built from
   `timeline_cards` (upstream `Core/Weekly/`).
-- [ ] Weekly: upstream's overview card, app interaction graph and highlights.
+- [x] Weekly: top highlights (the three longest cards), "Time distribution"
+  (per-day bars, tabs for the longest focus and the days with least or most
+  context shifts, context switch and focus totals) and app interactions
+  (switches between the most used apps, work patterns, rabbit holes), all
+  from `timeline_cards` (upstream `WeeklyOverviewBuilder.swift`,
+  `buildHighlights`, `WeeklyDashboardBuilder+Interactions.swift`). Upstream
+  builds these but has not shown them in its Weekly view since May 2026; its
+  `WeeklyInteractionGraph*` canvas is a prototype on fixture data, so the
+  card follows `WeeklyApplicationInteractionsSection` instead.
 - [x] Chat with your journal: streamed answers, tool calls for timeline and
   observations, inline charts from fenced `chart` blocks, history panel,
   memory (upstream `Core/AI/Chat*`, `ChatPromptBuilder.swift`). API providers

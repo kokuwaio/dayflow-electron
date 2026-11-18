@@ -147,10 +147,17 @@ after 5 hours, Weekly after 30 hours. Until then each tab shows the progress.
   - **Copy standup update** puts it on the clipboard as plain text.
 - **Weekly** needs no AI. It opens the newest week with at least 15 hours
   tracked and shows time per category, context shifts and distractions per
-  day, a grid of the week's categories, a focus and distraction heat map
+  day, the week's three longest cards as top highlights, a "Time
+  distribution" of each day's cards (its tabs pick out the longest focus
+  stretch and the days with the least or most context shifts; below are the
+  week's context switches, total focus, longest focus and primary category),
+  a grid of the week's categories, a focus and distraction heat map
   (5-minute cells, Sunday first: blue for sustained focus, peach for
   distraction and quick switches), your most used apps per category with the
-  change against the week before, and how categories flow into apps.
+  change against the week before, how categories flow into apps, and which
+  apps you switch between: the most used apps as circles (blue work, grey
+  personal, peach distraction), your two most common work patterns and the
+  app that most often leads into distractions.
 - **Notifications** tell you when your first cards are ready, when the
   standup is written, when Weekly unlocks, and when the AI provider has a
   problem only you can fix (a wrong key, a usage limit, a stopped Ollama).

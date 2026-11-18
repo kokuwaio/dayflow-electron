@@ -152,6 +152,7 @@ describe('top highlights (upstream WeeklyDashboardBuilder.buildHighlights)', () 
     expect(long).toHaveLength(170)
     expect(long.endsWith('word word...')).toBe(true)
     expect(one({}, 'A rather long category name').tag).toBe('A RATHER LONG C...')
+    expect(one({}, 'personal').color).toBe('#6AADFF')
   })
 })
 

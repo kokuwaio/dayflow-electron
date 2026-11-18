@@ -153,8 +153,9 @@ export interface WeeklyHighlight {
   id: number
   day: string
   minutes: number
-  /** The category in capitals, at most 18 characters. */
+  /** The category in capitals, at most 18 characters, and its colour. */
   tag: string
+  color: string
   text: string
 }
 
@@ -188,7 +189,7 @@ export function weeklyHighlights(cards: TimelineCard[], categories: Category[]):
     .filter((c) => !isFullDistraction(c))
     .sort((a, b) => minutesOf(b) - minutesOf(a) || a.start - b.start)
     .slice(0, 3)
-    .map((c) => ({ id: c.id, day: c.day, minutes: minutesOf(c), tag: shortened(nameOf(c, categories).toUpperCase(), 18), text: narrative(c, 170) }))
+    .map((c) => ({ id: c.id, day: c.day, minutes: minutesOf(c), tag: shortened(nameOf(c, categories).toUpperCase(), 18), color: colorOf(nameOf(c, categories), categories), text: narrative(c, 170) }))
 }
 
 // ---- Application interactions (upstream buildApplicationInteractions, WeeklyApplicationInteractionsSection)

@@ -205,7 +205,8 @@ worked.
   The standup is written by the AI provider once a day after 4 AM, from the
   best of the last three days with enough activity (`insights/daily.ts`).
 - **Weekly** needs no AI. Every chart is computed from the week's cards in
-  `src/shared/weekly.ts`.
+  `src/shared/weekly.ts` and `src/shared/weekly-insights.ts` (overview,
+  highlights, app interactions).
 - **Chat** (`src/main/chat/`) streams answers to the window. API providers
   run a tool loop (up to 20 rounds) with upstream's `fetchTimeline` and
   `fetchObservations` tools, which read the store. CLI providers get the
