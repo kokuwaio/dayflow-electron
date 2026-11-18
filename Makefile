@@ -5,6 +5,10 @@
 HELPER = helper/linux
 # 1.2.3 on a release tag, else 0.0.0-<branch>.<sha>; override with make VERSION=...
 VERSION ?= $(shell scripts/version.sh)
+HELPER_BIN = $(HELPER)/bin/dayflow-linux-helper
+HELPER_SRC = $(shell find $(HELPER) -name '*.go' -o -name go.mod -o -name go.sum)
+# On Linux the app needs the helper; dev rebuilds it when its sources changed.
+DEV_HELPER = $(if $(filter Linux,$(shell uname -s)),$(HELPER_BIN))
 
 .PHONY: help install dev dev-clean check typecheck test test-helper lint build helper pack flatpak dist-win dist-mac version clean
 
@@ -29,13 +33,13 @@ help:
 install:
 	npm ci
 
-dev:
+dev: $(DEV_HELPER)
 	npm run dev
 
 # The first-run setup again: an empty data folder in .dev-clean-data, emptied
 # at each start (kept after quitting, to look at). The usual dev data stays
 # untouched; API keys live in the system keyring and stay too.
-dev-clean:
+dev-clean: $(DEV_HELPER)
 	rm -rf .dev-clean-data
 	DAYFLOW_DATA_DIR="$(CURDIR)/.dev-clean-data" npm run dev
 
@@ -57,6 +61,9 @@ build:
 	npm run build
 
 helper:
+	$(MAKE) -C $(HELPER) build VERSION=$(VERSION)
+
+$(HELPER_BIN): $(HELPER_SRC)
 	$(MAKE) -C $(HELPER) build VERSION=$(VERSION)
 
 pack:
