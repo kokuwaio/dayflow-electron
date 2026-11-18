@@ -187,9 +187,15 @@ analyzed in small steps: one short request per screenshot, then a few
 text-only requests for the card. Small models handle that far better than one
 large request.
 
-You need a **vision model**. `qwen3-vl:8b-instruct` (about 6 GB) is a good start;
-`qwen3-vl:30b-a3b-instruct` (about 20 GB, but only 3B active parameters) gives
-better cards if your machine has the memory. Take the `-instruct` tags: the
+You need a **vision model**. **`qwen3-vl:2b-instruct`** (about 2 GB) is the
+recommended start and what the first-run setup fills in: it is quick enough
+for an integrated laptop GPU (about 8 s per screenshot on an AMD Radeon
+840M/860M; a 15-minute batch sends 15 screenshots, so about 2-3 minutes) and
+writes usable cards.
+`qwen3-vl:8b-instruct` (about 6 GB) writes better cards but takes longer;
+`qwen3-vl:30b-a3b-instruct` (about 20 GB, but only 3B active parameters) is
+better still if your machine has the memory. `make bench-models` (below)
+compares them on your own screenshots. Take the `-instruct` tags: the
 plain tags are "thinking" variants that write a few hundred hidden reasoning
 tokens before every answer, which makes each screenshot several times slower,
 and Ollama's OpenAI-compatible API cannot switch that off per request.
@@ -216,23 +222,24 @@ sudo mkdir -p /etc/systemd/system/ollama.service.d
 printf '[Service]\nEnvironment="OLLAMA_CONTEXT_LENGTH=32768"\nEnvironment="OLLAMA_IGPU_ENABLE=1"\n' | sudo tee /etc/systemd/system/ollama.service.d/context.conf
 sudo systemctl daemon-reload
 sudo systemctl enable --now ollama
-ollama pull qwen3-vl:8b-instruct
+ollama pull qwen3-vl:2b-instruct
 ```
 
 Check that the model runs on the GPU: `ollama ps` should show `GPU` under
 PROCESSOR after the first request.
 
 ```sh
-ollama run qwen3-vl:8b-instruct "Say OK"
+ollama run qwen3-vl:2b-instruct "Say OK"
 ollama ps
 ```
 
 ### 2. Point the app at Ollama
 
-In **Settings**:
+The first-run setup does this for you: choose **Local AI** and it fills in
+Ollama's address and `qwen3-vl:2b-instruct`. Later, in **Settings**:
 
 1. AI provider: **OpenAI-compatible**.
-2. Model: `qwen3-vl:8b-instruct`.
+2. Model: `qwen3-vl:2b-instruct` (or another vision model you pulled).
 3. Base URL: `http://localhost:11434/v1`.
 4. Leave the API key empty and click **Test connection**.
 5. Keep Recording → Resolution at **720p** (the default). Smaller

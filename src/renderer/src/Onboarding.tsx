@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import { Check, ChevronLeft, ChevronRight, Shield, Sun } from 'lucide-react'
 import { CATEGORY_PRESETS, presetCategories } from '@shared/categories'
-import { cliOf } from '@shared/providers'
+import { OLLAMA_BASE_URL, OLLAMA_MODEL, cliOf, providerChoice } from '@shared/providers'
 import { type PermissionRow, type ScreenPermission, type WindowCheck, permissionsView } from '@shared/permissions'
 import { type CliName, DEFAULT_SETTINGS, type ProviderKind, type Settings } from '@shared/types'
 import { CommandBlock, StatusDot } from './SettingsLayout'
@@ -20,8 +20,6 @@ interface Column {
   id: string
   title: string
   kind: ProviderKind
-  /** Base URL to preset (local AI). */
-  baseUrl?: string
   flavor: 'api' | 'gemini' | 'cli' | 'local' | 'endpoint'
   accuracy: [Level, string]
   subscription: string
@@ -36,7 +34,7 @@ const COLUMNS: Column[] = [
   { id: 'anthropic', title: 'Anthropic API', kind: 'anthropic', flavor: 'api', accuracy: ['best', 'Best'], subscription: 'API credits', ease: ['medium', 'API key'], notes: 'Claude models through the Anthropic API.' },
   { id: 'gemini', title: 'Gemini', kind: 'gemini', flavor: 'gemini', accuracy: ['medium', 'Medium'], subscription: 'Free', ease: ['medium', 'API key'], notes: 'Uses Gemini free tier.' },
   { id: 'openai', title: 'OpenRouter / Custom', kind: 'openai', flavor: 'endpoint', accuracy: ['medium', 'Varies'], subscription: 'API credits', ease: ['medium', 'API key and model'], notes: 'Uses OpenRouter or any OpenAI-compatible endpoint.' },
-  { id: 'local', title: 'Local AI', kind: 'openai', baseUrl: 'http://localhost:11434/v1', flavor: 'local', accuracy: ['basic', 'Passable'], subscription: 'Free', ease: ['basic', 'Extensive setup'], notes: 'Requires 16GB+ RAM and 4GB free disk space. Ollama or LM Studio.' }
+  { id: 'local', title: 'Local AI', kind: 'openai', flavor: 'local', accuracy: ['basic', 'Passable'], subscription: 'Free', ease: ['basic', 'Extensive setup'], notes: 'Requires 16GB+ RAM and 4GB free disk space. Ollama or LM Studio.' }
 ]
 
 const WIZARD: Record<Column['flavor'], string[]> = {
@@ -113,7 +111,7 @@ export function Onboarding({ settings, platform, onDone }: { settings: Settings;
             onBack={() => setStep('role')}
             onSelect={(c) => {
               setColumn(c)
-              void save({ provider: c.kind, ...(c.baseUrl ? { openaiBaseUrl: c.baseUrl } : c.kind === 'openai' && draft.openaiBaseUrl === COLUMNS[5]!.baseUrl ? { openaiBaseUrl: DEFAULT_SETTINGS.openaiBaseUrl } : {}) }).then(() => setStep('setup'))
+              void save(providerChoice(c.flavor, c.kind, draft)).then(() => setStep('setup'))
             }}
           />
         )}
@@ -240,6 +238,7 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
   const [test, setTest] = useState<TestResult>(null)
   const [cliCheck, setCliCheck] = useState<TestResult>(null)
   const provider = column.kind
+  const local = column.flavor === 'local'
   const cli = cliOf(provider)
   const current = steps[index]!
   const isTest = current === 'Test connection'
@@ -289,7 +288,7 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
       <input
         key={provider}
         defaultValue={draft.models[provider]}
-        onBlur={(e) => void save({ models: { ...draft.models, [provider]: e.target.value.trim() || DEFAULT_SETTINGS.models[provider] } })}
+        onBlur={(e) => void save({ models: { ...draft.models, [provider]: e.target.value.trim() || (local ? OLLAMA_MODEL : DEFAULT_SETTINGS.models[provider]) } })}
       />
     </label>
   )
@@ -358,7 +357,7 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
                 Run a model on this computer with Ollama or LM Studio. The app sends one small request per screenshot, so a vision model and a
                 fast machine help. Expect lower quality than the hosted models.
               </p>
-              <CommandBlock text="ollama pull qwen2.5vl:7b" />
+              <CommandBlock text={`ollama pull ${OLLAMA_MODEL}`} />
             </>
           )}
           {current === 'Check installation' && cli && (
@@ -378,7 +377,7 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
             <>
               <label className="onb-field">
                 Base URL <em>(e.g. http://localhost:11434/v1 for Ollama, http://localhost:1234/v1 for LM Studio)</em>
-                <input defaultValue={draft.openaiBaseUrl} onBlur={(e) => void save({ openaiBaseUrl: e.target.value.trim() || DEFAULT_SETTINGS.openaiBaseUrl })} />
+                <input defaultValue={draft.openaiBaseUrl} onBlur={(e) => void save({ openaiBaseUrl: e.target.value.trim() || (local ? OLLAMA_BASE_URL : DEFAULT_SETTINGS.openaiBaseUrl) })} />
               </label>
               {modelField}
               {column.flavor === 'endpoint' && (
