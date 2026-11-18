@@ -23,6 +23,19 @@ the one you pick with a connection test (**Skip for now** leaves it for
 Settings), and what recording needs on your system. **Launch Dayflow
 Electron** starts recording.
 
+A four-page welcome tour follows: the app keeps recording from the tray
+(the menu bar on macOS), every 15 minutes becomes timeline cards, Daily, Chat
+and Weekly unlock after 5, 10 and 30 hours, and the window may be closed.
+**Skip tour**, **Esc** or **Got it** close it; ← and → step through it. Then
+the timeline shows **Your first day with Dayflow Electron**, a checklist
+above the day summary that ticks itself: first cards on your timeline, open
+a card, and the progress to Daily and Chat (with **Open** once they unlock).
+It stays for a week; the chevron folds it and × removes it.
+**Settings → Other → Getting started guide → Show again** brings back the
+tour and a fresh week of the checklist. **Reset onboarding** (same place,
+then **Confirm**) runs the setup again: recording stops until you finish it,
+and your timeline, recordings and settings stay.
+
 ### Allow screen recording
 
 The setup's last step, **Permissions**, shows one row per permission with
@@ -89,6 +102,10 @@ succeeds.
   button opens a month (Monday first; future days are greyed out, and in
   week mode the whole week is marked), **Day / Week** switches the view, and **Today** comes
   back to today. After 4 AM the timeline moves to the new day by itself.
+  After 15 minutes without a click, key press or scroll in the window (also
+  while it was hidden or in the background), it goes back to today, closes
+  the open card and scrolls to the current time; on Settings this waits
+  until you leave it.
 - **Day view**: cards sit on a 4 AM to 4 AM time axis, sized by how long
   they lasted. Today the view opens at the current time, and a card marks
   the slot where the next card is being made ("Generating your next card").
@@ -104,7 +121,11 @@ succeeds.
   your role.
 - **Card details** (right panel): click the title to rename the card, the
   pencil next to the category to move it to another one, the image to play
-  its screenshots. The footer rates the summary (thumbs up, or thumbs down
+  its screenshots. The expand button in the image's corner opens the
+  full-window player: the card's title and time range, the screenshots at
+  90% of the window, a speed chip (20x, 40x, 60x; shown on hover) and a
+  scrubber. **Space** or a click on the picture plays and pauses, **Esc** or
+  a click outside closes it. The footer rates the summary (thumbs up, or thumbs down
   with an optional note), and **Reanalyze** or **Delete** act after a
   second click on **Confirm**. A "Processing failed" card has **Retry**.
 - **Day summary** (right panel when no card is selected): today's targets
@@ -140,6 +161,15 @@ after 5 hours, Weekly after 30 hours. Until then each tab shows the progress.
   - After 4 AM the app writes the standup from the most recent of the last
     three days with at least 3 hours of cards. It tries at most 3 times a
     day. **Regenerate** writes it now (2 hours of cards are enough).
+  - The gear next to **Regenerate** picks who writes it: **Same as
+    timeline** (the default: your provider, then its fallback), one of the
+    providers you set up (Anthropic, Gemini, OpenAI-compatible, Claude Code,
+    Codex; the ones without a key or not found on this computer are greyed
+    out), or **No provider**, which turns the automatic standup and
+    **Regenerate** off.
+  - A dot on the Daily icon marks a standup the app wrote that you have not
+    opened yet; on macOS the Dock icon shows a 1 (on Linux only the Unity
+    launcher shows counts). Opening Daily clears both.
   - Edit any line; changes save as you type. Enter adds a line, Backspace on
     an empty line removes it, and the handle left of a line drags it to
     another place. You can also fill in the standup yourself before one was

@@ -209,6 +209,11 @@ worked.
 - **Daily** builds its activity grid from the day's cards in the renderer.
   The standup is written by the AI provider once a day after 4 AM, from the
   best of the last three days with enough activity (`insights/daily.ts`).
+  `settings.dailyProvider` picks who writes it, for the scheduler and
+  Regenerate alike (`standupPlan` in `src/shared/daily-provider.ts`). A recap
+  the scheduler wrote sets `dailyRecapUnseen` until the focused window shows
+  Daily (the renderer reports its tab; `src/main/daily-badge.ts`), which
+  drives the sidebar dot and `app.setBadgeCount`.
 - **Weekly** needs no AI. Every chart is computed from the week's cards in
   `src/shared/weekly.ts` and `src/shared/weekly-insights.ts` (overview,
   highlights, app interactions).
@@ -308,6 +313,7 @@ flowchart LR
 | `src/cli/` | The `dayflow-electron` CLI and MCP server (`out/main/cli.js`) |
 | `src/main/media.ts` | Serves frames and site icons to the window |
 | `src/main/notifications.ts` | Desktop notifications |
+| `src/main/getting-started.ts` | The first-day guide's state (tour, checklist) for the window; rules in `src/shared/getting-started.ts` |
 | `src/main/updater.ts` | Auto-update of the Windows and macOS builds (electron-updater; policy in `src/shared/updates.ts`) |
 | `src/preload/` | The `window.dayflow` API |
 | `src/renderer/src/` | React views: Timeline, Daily, Weekly, Chat, Settings, Onboarding |

@@ -227,6 +227,16 @@ each of the three providers.
 - [x] Unlock thresholds like upstream: Daily after 5 h, Chat after 10 h, Weekly
   after 30 h of recorded data (upstream `Core/Access/`).
 - [x] Day goals (`day_goals`, `day_goal_categories`; built in M2 with the day summary).
+- [x] Daily recap provider picker (upstream `Views/UI/DailyView+Provider.swift`,
+  `Core/AI/DailyRecapModels.swift`): the gear beside Regenerate picks the
+  timeline's providers (default), one configured provider, or none, which
+  turns automatic and manual generation off. Upstream's fixed list (hosted
+  backend, Gemini, ChatGPT, Claude, local) becomes the provider kinds set up
+  here.
+- [x] Daily "ready" badge (upstream `NotificationBadgeManager.swift`,
+  `SidebarView.swift`): a dot on the Daily icon from the scheduler's recap
+  until Daily is opened; `app.setBadgeCount` on the macOS Dock and the Unity
+  launcher (Electron supports no other Linux launcher).
 
 ### M4 Agent access (CLI and MCP)
 
@@ -313,6 +323,21 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   Inter (bundled with its OFL text), one indigo accent and 1px borders, in
   light and dark. `data-ui-style` on the root element switches the CSS
   tokens, the onboarding included; category colours stay as they are.
+- [x] Getting started (upstream `Views/UI/GettingStarted/*`): the four-page
+  welcome tour after onboarding (illustrations redrawn with Lucide and CSS;
+  tray instead of menu bar outside macOS), the "Your first day" checklist
+  above the day summary for a week, ticked from real state, and **Show
+  again** in Settings → Other. Upstream's "Turn on notifications" item is
+  left out (Electron cannot read the desktop's notification permission), as
+  is its PostHog experiment. **Reset onboarding** (upstream's app menu item)
+  sits in Settings → Other and keeps the data; recording waits for the
+  setup's end instead of the app quitting.
+- [x] Back to today after 15 minutes away (upstream `App/InactivityMonitor.swift`,
+  `performIdleResetAndScroll`): clicks, keys and scrolling count as use;
+  checked on focus and every minute; deferred while Settings is open.
+- [x] Full-window timelapse player (upstream `VideoPlayerModal.swift`
+  `VideoExpansionOverlay`): opened from the card's image or inline player,
+  Space plays and pauses, Esc closes, 20x/40x/60x chip and scrubber.
 - [x] Goal pop-up trigger at app level like upstream: checked at start, when
   the window gets focus and every minute (so after 4 AM too); when due, the
   app switches to today's timeline in day mode and opens it
