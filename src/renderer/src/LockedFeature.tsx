@@ -5,7 +5,7 @@ import type { FeatureAccess } from '@shared/daily'
 
 /**
  * Upstream's shared locked-feature look (DailyAccessLockedViews.swift,
- * Weekly lock, Chat "Unlock Beta"): a serif title with an optional BETA badge,
+ * Weekly lock, Chat's "Unlock Beta", here "Unlock Chat"): a serif title with an optional BETA badge,
  * the progress as a peach pill and a gradient bar with a round knob. The knob
  * carries a plain sun glyph instead of upstream's logo.
  */

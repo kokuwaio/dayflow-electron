@@ -224,7 +224,7 @@
       "answering": "Answering"
     },
     "locked": {
-      "title": "Unlock Beta",
+      "title": "Unlock Chat",
       "beta": "BETA",
       "intro": "Chat lets you ask questions about your Dayflow Electron activity and get summaries, comparisons, and insights.",
       "dataRequired": "10 hours of timeline data required",
