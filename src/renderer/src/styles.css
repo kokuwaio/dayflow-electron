@@ -1894,3 +1894,61 @@ input[type='range'] { accent-color: var(--accent); }
 select option { background-color: var(--panel-solid); color: var(--text-primary); }
 @media (prefers-color-scheme: dark) { :root { color-scheme: dark; } }
 @media (prefers-color-scheme: light) { :root { color-scheme: light; } }
+
+/* ================================================================ settings: permissions, storage, blocked apps */
+/* Settings → Permissions reuses the onboarding's rows, in the settings' own colours. */
+.settings .perm-list { display: grid; gap: 8px; }
+.settings .perm-row { background: var(--subtle-fill); border: 1px solid var(--settings-divider); }
+.settings .perm-text b { color: var(--settings-title); }
+.settings .perm-text > span { color: var(--settings-sub); }
+.settings .perm-text > .perm-note { color: var(--warn); }
+.s-foot { display: grid; gap: 4px; margin-top: 14px; font-size: 12px; color: var(--text-muted); line-height: 1.45; }
+.s-actions { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+.s-actions .btn-ink { display: inline-flex; gap: 6px; }
+.spin { animation: spin 0.9s linear infinite; }
+
+/* Disk usage: label and usage left, Open and the limit right, a bar below (upstream usageRow). */
+.usage-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 16px; padding: 14px 0; }
+.usage-row .label { display: grid; gap: 3px; }
+.usage-row .label > b { font-size: 14px; font-weight: 600; color: var(--settings-title); }
+.usage-row .label > span { font-size: 12px; color: var(--settings-sub); }
+.usage-row .control { display: flex; gap: 8px; align-items: center; }
+.usage-bar { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: var(--subtle-fill); overflow: hidden; }
+.usage-bar i { display: block; height: 100%; border-radius: inherit; background: var(--ink-button); transition: width 0.3s ease-out; }
+.settings select.pause-length { width: 84px; }
+
+/* A destructive question (lowering the storage limit). */
+.confirm-backdrop { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: 24px; background: var(--scrim); backdrop-filter: var(--blur-backdrop); animation: fade-in 0.15s ease-out both; }
+.confirm-dialog {
+  width: min(380px, 100%); display: grid; gap: 10px; padding: 20px; border-radius: 12px;
+  background: var(--panel-solid); border: 1px solid var(--popover-border); box-shadow: var(--popover-shadow); animation: pop-in 0.2s var(--spring);
+}
+.confirm-dialog h3 { margin: 0; font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.confirm-dialog p { font-size: 13px; color: var(--text-secondary); line-height: 1.45; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.btn-danger { background: var(--bad); border: none; color: #fff; border-radius: var(--radius-control); padding: 7px 14px; font-weight: 600; }
+
+/* Blocked apps: search and a grid of installed apps (upstream's Apps section). */
+.app-picker { border-bottom: 1px solid var(--settings-divider); }
+.app-search { display: flex; align-items: center; gap: 8px; padding: 0 10px; border-radius: 8px; background: var(--input-fill); border: 1px solid var(--input-border); color: var(--text-muted); }
+.app-search input[type='search'] { flex: 1; border: none; background: none; padding: 8px 0; }
+.app-search input[type='search']:focus { border: none; }
+.app-search .note { white-space: nowrap; }
+.app-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 6px; max-height: 236px; overflow-y: auto;
+  padding: 6px; border-radius: 8px; border: 1px solid var(--settings-divider); background: var(--subtle-fill);
+}
+.app-grid .empty { grid-column: 1 / -1; padding: 24px 0; text-align: center; font-size: 13px; }
+.picker-app {
+  justify-content: flex-start; gap: 8px; min-width: 0; padding: 6px 8px; border-radius: 8px; border: 1px solid transparent;
+  background: none; color: var(--text-primary); font-size: 12px; font-weight: 600; text-align: left;
+}
+.picker-app:hover:not(:disabled) { transform: none; background: var(--subtle-fill); }
+.picker-app.blocked { background: var(--soft-fill); border-color: var(--accent); color: var(--accent-text); }
+.picker-tile {
+  flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px;
+  background: var(--panel-solid); border: 1px solid var(--settings-divider); color: var(--text-secondary); font-size: 12px; font-weight: 700;
+}
+.picker-app.blocked .picker-tile { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #fff); }
+.picker-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-sandbox { display: grid; gap: 8px; font-size: 12px; color: var(--settings-sub); line-height: 1.45; }

@@ -81,8 +81,12 @@ export interface Settings {
   appLanguage: AppLanguage
   captureIntervalSec: number
   captureHeight: 720 | 1080
+  /** Frames cap in GB, one of STORAGE_LIMIT_PRESETS (src/shared/storage.ts); 0 is unlimited. */
   storageLimitGb: number
+  /** Off by default; only the user turns it on (Settings → Other). */
   launchAtLogin: boolean
+  /** The three timed pause lengths in minutes, offered in the tray and the Pause pill (upstream PausePresets). */
+  pauseMinutes: [number, number, number]
   /** Blocklist rules: app IDs, or "title:<text>" for window titles. */
   blockedApps: string[]
   /** Chrome incognito and Firefox private windows count as blocked (upstream "Hide private browsing windows"). */
@@ -163,6 +167,7 @@ export const DEFAULT_SETTINGS: Settings = {
   captureHeight: 720,
   storageLimitGb: 10,
   launchAtLogin: false,
+  pauseMinutes: [15, 30, 60],
   blockedApps: [...DEFAULT_BLOCKLIST],
   hidePrivateWindows: true,
   hideSecrets: true,

@@ -94,3 +94,40 @@ export function updateMenuItem(state: UpdateState, mode: 'install' | 'notify'): 
 }
 
 export const releaseUrl = (version: string) => `https://github.com/${RELEASES_REPO}/releases/tag/v${version.replace(/^v/, '')}`
+
+/** What a "Check for updates…" click found (tray and macOS app menu). */
+export type ManualCheck =
+  | { kind: 'up-to-date'; current: string }
+  | { kind: 'found'; version: string }
+  | { kind: 'failed'; message: string }
+
+/** Reads electron-updater's answer; null (no feed) counts as failed, an older or prerelease version as up to date. */
+export function manualCheckResult(found: { version: string } | null, current: string): ManualCheck {
+  if (!found) return { kind: 'failed', message: t('updates.manual.noAnswer') }
+  return acceptUpdate(found.version, current) ? { kind: 'found', version: found.version } : { kind: 'up-to-date', current }
+}
+
+/**
+ * The notification after a manual check. A found version says what happens
+ * next: it downloads by itself ("Install updates automatically"), a click
+ * downloads it, or (unsigned macOS) a click opens its release page.
+ */
+export function manualCheckNotice(
+  check: ManualCheck,
+  o: { mode: 'install' | 'notify'; autoDownload: boolean }
+): { title: string; body: string; action: UpdateAction | null } {
+  switch (check.kind) {
+    case 'up-to-date':
+      return { title: t('updates.manual.upToDate'), body: t('updates.manual.upToDateBody', { version: check.current }), action: null }
+    case 'failed':
+      return { title: t('updates.manual.failed'), body: check.message, action: null }
+    case 'found': {
+      const title = t('updates.available.title', { version: check.version })
+      if (o.mode === 'notify') return { title, body: t('updates.available.bodyOpen'), action: 'open-release' }
+      return o.autoDownload ? { title, body: t('updates.manual.downloading'), action: null } : { title, body: t('updates.available.bodyDownload'), action: 'download' }
+    }
+  }
+}
+
+/** The tray and app-menu entry: "Check for updates…", or "Checking for updates…" while it runs. */
+export const manualCheckLabel = (running: boolean): string => (running ? t('updates.manual.checking') : t('updates.manual.check'))

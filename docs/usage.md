@@ -50,6 +50,11 @@ its state and a **Grant** button.
   the app is not signed with a Developer ID yet, macOS may ask again after
   each update.
 
+**Settings → Permissions** shows the same rows later, so a skipped
+permission can be granted there. While the app records, its window
+detection row shows what the recorder sees (after granting the KWin
+permission, restart the app).
+
 The app keeps only the screen under the mouse and pauses while the screen is
 locked or the computer sleeps.
 
@@ -96,8 +101,9 @@ succeeds.
 - **Week view**: seven 4 AM to 4 AM columns, Monday to Sunday, so late
   nights stay on the day they started. Hover a short card to read its whole
   title.
-- **Pause** (top right): opens ∞, 1h, 30m and 15m; while paused it turns
-  into **Resume** and shows how long the pause lasts.
+- **Pause** (top right): opens ∞ and the three pause lengths (1h, 30m and
+  15m unless changed under **Settings → Other → Pause lengths**); while
+  paused it turns into **Resume** and shows how long the pause lasts.
 - **Category chips** above the timeline: click one to dim its cards, drag it
   (or press Alt+← / Alt+→ on it) to reorder. The pencil opens **Settings → Other → Categories**, which edits
   names, colors and the description the model sees, or applies a preset for
@@ -402,6 +408,20 @@ the system:
 
 Rules ignore upper and lower case.
 
+Above the rules, **Apps** lists the installed apps with a search field.
+Click one to block it: its rules go into the list (on Linux the desktop file
+ID, window class and program name from its `.desktop` file, on Windows the program name
+of its Start-menu shortcut, on macOS its bundle ID). Click it again to remove
+them. Inside the Flatpak the installed apps stay hidden until you let it read
+their list once (read-only), then reopen the tab:
+
+```sh
+flatpak override --user --filesystem=host-os:ro --filesystem=xdg-data/applications:ro io.github.kokuwaio.DayflowElectron
+```
+
+Apps installed as system-wide Flatpaks are not listed even then (Flatpak
+never shares `/var`); type their Flatpak ID as a rule.
+
 This needs to know the focused window:
 
 - **Windows:** a hidden PowerShell process asks Windows for the focused
@@ -505,15 +525,24 @@ translations waiting for a native speaker's review (listed in
 ## Pause, privacy and storage
 
 - **Pause** from the tray or the Pause button in the timeline: 15, 30 or 60
-  minutes, or until you resume.
+  minutes, or until you resume. **Settings → Other → Pause lengths** changes
+  the three lengths (5 minutes to 8 hours).
 - Recording also pauses while the screen is locked or the computer sleeps.
 - Screenshots, the database and settings live in
   `~/.var/app/io.github.kokuwaio.DayflowElectron/config/dayflow-electron/`
   (Flatpak), `%APPDATA%\dayflow-electron\` (Windows) or
   `~/Library/Application Support/dayflow-electron/` (macOS).
   **Open recordings folder** in the tray shows the screenshots.
-- **Settings → Storage** caps the space used by screenshots (default 10 GB);
-  the oldest are deleted first.
+- **Settings → Storage** caps the space used by screenshots: 1, 2, 3, 5, 10
+  (the default) or 20 GB, or Unlimited; the oldest are deleted first. A
+  lower limit asks first, since it deletes old screenshots right away. The
+  tab shows how much the recordings use, the expected use per hour (about
+  25 MB at 720p and 52 MB at 1080p every 10 s) and what the last hour
+  really used.
+- **Settings → Storage → Recording status** tells whether recording works:
+  the screen permission, the recorder (Active, Paused, Idle), how old the
+  last screenshot is and, on Linux, whether the capture helper runs. **Run
+  status check** also deletes what is over the limit, like upstream.
 - The database is backed up once a day to `backups/` in the same folder (the
   newest three are kept). If it is ever damaged, the app restores the newest
   backup on start and keeps the damaged file as `dayflow.sqlite.corrupt-…`.

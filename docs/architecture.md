@@ -282,7 +282,8 @@ flowchart LR
   `src/main/db/backup.ts` restores the newest one when the database is
   damaged at start.
 - **Frames** are JPEG files in `recordings/`. The retention job deletes the
-  oldest ones when the storage limit is reached; cards stay.
+  oldest ones when the storage limit (a preset from `src/shared/storage.ts`,
+  or unlimited) is reached; cards stay.
 - **Settings** are a JSON file. API keys are encrypted with Electron's
   `safeStorage` (KWallet or Secret Service on Linux).
 
@@ -292,7 +293,7 @@ flowchart LR
 | --- | --- |
 | `src/main/index.ts` | Starts everything and registers the IPC handlers |
 | `src/main/capture/` | Recorder: pause, restart with backoff, blocked apps |
-| `src/main/platform/` | OS interface; `linux.ts` runs the Go helper, `win32.ts` and `darwin.ts` use Electron APIs and a window watcher script |
+| `src/main/platform/` | OS interface; `linux.ts` runs the Go helper, `win32.ts` and `darwin.ts` use Electron APIs and a window watcher script; `installed-apps.ts` lists the apps Settings → Privacy offers to block |
 | `src/main/analysis/` | Batching, idle check, prompts, card checks, two-step path, pipeline |
 | `src/main/providers/` | One adapter per provider; `cli/` runs Claude Code and Codex on the host |
 | `src/main/privacy/` | Secret masking: OCR, upstream's mask rules, black boxes |

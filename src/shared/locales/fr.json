@@ -80,6 +80,7 @@
     "forHours_one": "Pendant {{count}} heure",
     "forHours_many": "Pendant {{count}} heures",
     "forHours_other": "Pendant {{count}} heures",
+    "forDuration": "Pendant {{time}}",
     "untilResumed": "Jusqu’à ce que je reprenne",
     "chipMinutes_one": "Pause de {{count}} minute",
     "chipMinutes_many": "Pause de {{count}} minutes",
@@ -87,13 +88,8 @@
     "chipHours_one": "Pause de {{count}} heure",
     "chipHours_many": "Pause de {{count}} heures",
     "chipHours_other": "Pause de {{count}} heures",
+    "chipDuration": "Pause de {{time}}",
     "chipUntilResumed": "Pause jusqu’à ce que je reprenne",
-    "chipShortMinutes_one": "{{count}} min",
-    "chipShortMinutes_many": "{{count}} min",
-    "chipShortMinutes_other": "{{count}} min",
-    "chipShortHours_one": "{{count}} h",
-    "chipShortHours_many": "{{count}} h",
-    "chipShortHours_other": "{{count}} h",
     "pausedFor": "Dayflow Electron en pause pendant {{time}}",
     "pausedIndefinitely": "Dayflow Electron en pause pour une durée indéterminée",
     "hiddenBlockedApp": "Masqué : app bloquée au premier plan",
@@ -148,7 +144,16 @@
     "menuGet": "Obtenir la version {{version}}…",
     "menuDownload": "Télécharger la version {{version}}",
     "menuDownloading": "Téléchargement de la version {{version}} ({{percent}} %)",
-    "menuRestart": "Redémarrer pour passer à la version {{version}}"
+    "menuRestart": "Redémarrer pour passer à la version {{version}}",
+    "manual": {
+      "check": "Rechercher des mises à jour…",
+      "checking": "Recherche de mises à jour…",
+      "upToDate": "Vous êtes à jour",
+      "upToDateBody": "Dayflow Electron {{version}} est la version la plus récente.",
+      "failed": "Impossible de rechercher des mises à jour",
+      "noAnswer": "Pas de réponse du serveur de mises à jour.",
+      "downloading": "Téléchargement en cours. Un redémarrage vous sera proposé quand elle sera prête."
+    }
   },
   "permissions": {
     "checking": "Vérification…",
@@ -339,6 +344,7 @@
     "tabs": {
       "storage": "Stockage",
       "privacy": "Confidentialité",
+      "permissions": "Autorisations",
       "providers": "Fournisseurs",
       "agents": "MCP / CLI",
       "export": "Exporter",
@@ -357,20 +363,54 @@
       }
     },
     "storage": {
-      "recording": "Enregistrement",
-      "recordingSub": "Seul l’écran sous la souris est enregistré. L’enregistrement se met en pause quand l’écran est verrouillé.",
       "frequency": "Fréquence de capture",
       "frequencySub": "Fréquence des captures d’écran.",
       "everySeconds_one": "Toutes les {{count}} s",
       "everySeconds_many": "Toutes les {{count}} s",
       "everySeconds_other": "Toutes les {{count}} s",
       "resolution": "Résolution",
-      "title": "Stockage",
       "sub": "Une fois la limite atteinte, les captures d’écran les plus anciennes sont supprimées en premier. Les cartes sont conservées.",
       "limit": "Limite de stockage",
-      "used": "Les captures d’écran occupent {{size}} Go.",
-      "limitAria": "Limite de stockage en Go",
-      "folder": "Dossier des enregistrements"
+      "status": "État de l’enregistrement",
+      "statusSub": "Vérifiez que Dayflow Electron peut capturer votre écran.",
+      "runCheck": "Vérifier l’état",
+      "checking": "Vérification…",
+      "lastChecked": "Dernière vérification : {{time}}",
+      "check": {
+        "permission": "Autorisation d’enregistrement de l’écran",
+        "missing": "Manquant",
+        "asksAtStart": "Demande au début de l’enregistrement",
+        "notNeeded": "Inutile",
+        "recorder": "Enregistreur",
+        "permissionRequired": "Autorisation requise",
+        "active": "Actif",
+        "paused": "En pause",
+        "idle": "Inactif",
+        "failing": "La capture échoue, nouvel essai",
+        "notStarted": "Pas démarré",
+        "lastFrame": "Dernière image",
+        "noFrames": "Aucune image pour l’instant",
+        "secondsAgo_one": "il y a {{count}} s",
+        "secondsAgo_many": "il y a {{count}} s",
+        "secondsAgo_other": "il y a {{count}} s",
+        "ago": "il y a {{time}}",
+        "lateNote": "L’enregistrement devrait sauvegarder une image toutes les {{interval}} s. Si la boîte de dialogue de partage attend, répondez-y ; sinon, mettez l’enregistrement en pause puis reprenez-le.",
+        "helper": "Assistant de capture",
+        "running": "En cours",
+        "notRunning": "Arrêté"
+      },
+      "quality": "Qualité d’enregistrement",
+      "qualitySub": "Une résolution plus élevée et des captures plus fréquentes utilisent davantage d’espace disque.",
+      "estimate": "≈ {{hour}} par heure · ≈ {{month}} par mois à raison de 8 h/jour",
+      "measured": "Mesuré sur la dernière heure : {{size}} par heure",
+      "diskUsage": "Utilisation du disque",
+      "recordings": "Enregistrements",
+      "usage": "{{size}} · {{percent}} %",
+      "unlimited": "Illimité",
+      "gb": "{{size}} Go",
+      "mb": "{{size}} Mo",
+      "lowerTitle": "Réduire la limite de {{category}} ?",
+      "lowerBody": "Réduire la limite de {{category}} à {{limit}} supprimera immédiatement les données {{category}} les plus anciennes afin de respecter la nouvelle limite."
     },
     "privacy": {
       "title": "Apps bloquées",
@@ -381,7 +421,26 @@
       "hidePrivate": "Masquer les fenêtres de navigation privée",
       "hidePrivateSub": "Les fenêtres de navigation privée de Chrome et de Firefox sont remplacées par une carte masquée au lieu d’une capture d’écran. La détection se fait par le titre de la fenêtre et nécessite donc aussi la détection des fenêtres.",
       "hideSecrets": "Masquer les secrets dans les captures d’écran",
-      "hideSecretsSub": "Lit le texte de chaque image envoyée au fournisseur d’IA et noircit les clés API, mots de passe, clés privées, phrases mnémoniques et codes de récupération qu’il reconnaît. La reconnaissance se fait par motifs : certains lui échappent, et elle ajoute quelques secondes par image."
+      "hideSecretsSub": "Lit le texte de chaque image envoyée au fournisseur d’IA et noircit les clés API, mots de passe, clés privées, phrases mnémoniques et codes de récupération qu’il reconnaît. La reconnaissance se fait par motifs : certains lui échappent, et elle ajoute quelques secondes par image.",
+      "apps": {
+        "title": "Apps",
+        "sub": "Les apps que Dayflow Electron doit masquer lorsqu’elles sont au premier plan.",
+        "search": "Rechercher parmi les apps installées",
+        "installed": "Apps installées",
+        "loading": "Chargement des apps...",
+        "shown_one": "{{count}} affichée(s)",
+        "shown_many": "{{count}} affichée(s)",
+        "shown_other": "{{count}} affichée(s)",
+        "blocked_one": "{{count}} bloquée(s)",
+        "blocked_many": "{{count}} bloquée(s)",
+        "blocked_other": "{{count}} bloquée(s)",
+        "noMatch": "Aucune app ne correspond à votre recherche.",
+        "none": "Aucune app installée trouvée. Ajoutez des règles à la main ci-dessous.",
+        "hint": "Cliquez sur une app pour la bloquer ; ses règles s’ajoutent à la liste ci-dessous. Cliquez à nouveau pour les retirer.",
+        "block": "Bloquer {{name}}",
+        "unblock": "Débloquer {{name}}",
+        "sandbox": "Dans le Flatpak, les apps installées sur votre ordinateur restent cachées tant que vous n’en partagez pas la liste (en lecture seule). Exécutez ceci une fois, puis rouvrez cet onglet. Les apps Flatpak installées pour tout le système restent cachées ; ajoutez leur ID à la main."
+      }
     },
     "reprocess": {
       "title": "Retraiter",
@@ -411,6 +470,9 @@
       "original": "Original",
       "launchAtLogin": "Lancer Dayflow Electron à l’ouverture de session",
       "launchAtLoginAria": "Lancer à l’ouverture de session",
+      "pauseLengths": "Durées de pause",
+      "pauseLengthsSub": "Les trois durées proposées quand vous mettez Dayflow Electron en pause.",
+      "pauseLength": "Durée de pause {{n}}",
       "showIcons": "Afficher les icônes des apps et des sites web dans la chronologie",
       "showIconsSub": "Les icônes sont chargées depuis les sites web eux-mêmes (p. ex. github.com/favicon.ico), ce qui leur communique votre adresse IP.",
       "showIconsAria": "Afficher les icônes",
@@ -449,6 +511,13 @@
         "dataScientist": "Data scientist",
         "other": "Autre"
       }
+    },
+    "permissions": {
+      "title": "Autorisations",
+      "subMac": "Les accès macOS dont Dayflow Electron a besoin. Ils restent désactivés tant que vous ne les activez pas.",
+      "sub": "Ce dont Dayflow Electron a besoin de votre bureau pour enregistrer. Rien n’est partagé sans votre accord.",
+      "footMac": "L’enregistrement de l’écran ne s’applique généralement qu’après un redémarrage de Dayflow Electron.",
+      "footLinux": "« Autoriser » ouvre la boîte de dialogue de partage maintenant plutôt qu’au début de l’enregistrement. La détection des fenêtres montre ce que voit l’enregistrement en cours ; après un changement d’autorisation, redémarrez l’app."
     }
   },
   "summary": {

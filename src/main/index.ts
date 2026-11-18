@@ -7,7 +7,9 @@ import { writeFile } from 'node:fs/promises'
 import { BrowserWindow, Menu, Tray, app, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, nativeTheme, powerMonitor, screen, shell, systemPreferences } from 'electron'
 import { beforeBoundary, dayCount, dayRange, daysOf, shiftDay, todayKey } from '../shared/day'
 import { needsApiKey } from '../shared/providers'
-import { PAUSE_PRESETS, describeRecorder, pauseLabel } from '../shared/status'
+import { describeRecorder, pauseLabel, pausePresets } from '../shared/status'
+import { limitBytes, limitChange, observedBytesPerHour } from '../shared/storage'
+import type { RecordingCheck } from '../shared/recording-status'
 import { currentLanguage, setLanguage, t } from '../shared/i18n'
 import { resolveLanguage } from '../shared/languages'
 import { renamedCategories } from '../shared/categories'
@@ -38,6 +40,7 @@ import { AUTO_MIN_MINUTES, MANUAL_MIN_MINUTES, generateStandup, standupSourceDay
 import { handleMedia, registerMediaScheme } from './media'
 import { createNotifier } from './notifications'
 import { createPlatform } from './platform'
+import { listInstalledApps } from './platform/installed-apps'
 import { probeWindowDetection } from './platform/window-probe'
 import { createProvider } from './providers'
 import { findCli, hostAccess, nodeRunner } from './providers/cli/host'
@@ -48,7 +51,7 @@ import { SettingsStore } from './settings'
 import { type Updater, startUpdater } from './updater'
 import { type UpdateMode, parseCodesign, updateMode, isDevVersion } from '../shared/updates'
 import { errorMessage } from '../shared/errors'
-import { type ScreenPermission, type WindowCheck, windowFixCommand } from '../shared/permissions'
+import { type ScreenPermission, type WindowCheck, liveWindowCheck, windowFixCommand } from '../shared/permissions'
 import { type UiStyle, windowBackground } from '../shared/ui-style'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -199,7 +202,8 @@ async function main(): Promise<void> {
   })
 
   const purge = async () => {
-    const limit = settings.get().storageLimitGb * 1024 ** 3
+    const limit = limitBytes(settings.get().storageLimitGb)
+    if (limit === Infinity) return
     const ids = selectFramesToPurge(store.storedFrames(), limit)
     for (const file of store.deleteScreenshots(ids)) await unlink(file).catch(() => {})
     if (ids.length) log(`purged ${ids.length} frames over the storage limit`)
@@ -519,8 +523,10 @@ async function main(): Promise<void> {
       recorder.reconfigure(captureOptions(saved))
     }
     recorder.refreshBlocking()
-    if (saved.storageLimitGb < before.storageLimitGb) await purge()
+    if (limitChange(before.storageLimitGb, saved.storageLimitGb) === 'confirm') await purge()
     if (saved.allowEdits !== before.allowEdits) await syncBridge()
+    // The tray offers the pause lengths and "Check for updates…" only while that is on.
+    if (String(saved.pauseMinutes) !== String(before.pauseMinutes) || saved.checkForUpdates !== before.checkForUpdates) updateTray()
     if (saved.autoInstallUpdates !== before.autoInstallUpdates) updater?.setAutoInstall(saved.autoInstallUpdates)
     return saved
   }
@@ -553,6 +559,35 @@ async function main(): Promise<void> {
     updateTray()
   })
   ipcMain.handle('recordings:open', () => shell.openPath(recordingsDir))
+  // Settings → Storage: disk use, and "Run status check" (purges first, like upstream).
+  ipcMain.handle('storage:check', async (_e, run: boolean) => {
+    if (run === true) await purge()
+    const frames = store.storedFrames()
+    const now = Math.floor(Date.now() / 1000)
+    const r = recorder.status()
+    const check: RecordingCheck = {
+      platform: process.platform,
+      screen: platform.screenAccess(),
+      recorder: r.state,
+      lastError: r.lastError,
+      lastFrameAt: store.captureStatus().lastCaptureAt,
+      intervalSec: settings.get().captureIntervalSec,
+      captureRunning: recorder.captureRunning(),
+      checkedAt: now
+    }
+    return { check, framesBytes: frames.reduce((sum, f) => sum + f.bytes, 0), observedBytesPerHour: observedBytesPerHour(frames, now) }
+  })
+  // Settings → Privacy: installed apps to block (src/main/platform/installed-apps.ts).
+  ipcMain.handle('apps:installed', () =>
+    listInstalledApps({
+      platform: process.platform,
+      home: homedir(),
+      env: process.env,
+      flatpakId: process.env.FLATPAK_ID ?? '',
+      language: currentLanguage(),
+      ...(process.platform === 'win32' ? { readShortcutLink: (path: string) => shell.readShortcutLink(path) } : {})
+    })
+  )
   ipcMain.handle('cli:check', async (_e, cli: CliName) => {
     const access = await hostAccess(nodeRunner, inFlatpak, cliEnv.appId)
     if (!access.ok) return { ok: false, message: access.reason }
@@ -571,17 +606,20 @@ async function main(): Promise<void> {
     const paused = r.state === 'paused'
     const description = describeRecorder(r.state, r.until)
     const updateItem = updater?.menuItem()
+    const checkItem = updater?.checkItem()
+    updateAppMenu()
     tray.setToolTip(t('tray.tooltip', { status: description }))
     tray.setContextMenu(
       Menu.buildFromTemplate([
         { label: description, enabled: false },
         ...(updateItem ? [{ ...updateItem, enabled: !!updateItem.click }] : []),
+        ...(checkItem ? [checkItem] : []),
         { type: 'separator' },
         paused
           ? { label: t('tray.resume'), click: () => (recorder.resume(), updateTray()) }
           : {
               label: t('tray.pause'),
-              submenu: PAUSE_PRESETS.map((p) => ({
+              submenu: pausePresets(settings.get().pauseMinutes).map((p) => ({
                 label: pauseLabel(p.seconds),
                 click: () => {
                   recorder.pause(p.seconds)
@@ -593,6 +631,37 @@ async function main(): Promise<void> {
         { label: t('tray.openRecordings'), click: () => void shell.openPath(recordingsDir) },
         { type: 'separator' },
         { label: t('tray.quit'), click: () => app.quit() }
+      ])
+    )
+  }
+  // macOS: the app menu gets "Check for updates…" too, once the updater runs (installer builds).
+  let appMenuLabel: string | null = null
+  const updateAppMenu = () => {
+    if (process.platform !== 'darwin' || !updater) return
+    const item = updater.checkItem()
+    const key = item ? `${item.label}|${item.enabled}` : ''
+    if (key === appMenuLabel) return
+    appMenuLabel = key
+    Menu.setApplicationMenu(
+      Menu.buildFromTemplate([
+        {
+          role: 'appMenu',
+          submenu: [
+            { role: 'about' },
+            ...(item ? [{ label: item.label, enabled: item.enabled, click: item.click }] : []),
+            { type: 'separator' },
+            { role: 'services' },
+            { type: 'separator' },
+            { role: 'hide' },
+            { role: 'hideOthers' },
+            { role: 'unhide' },
+            { type: 'separator' },
+            { role: 'quit' }
+          ]
+        },
+        { role: 'editMenu' },
+        { role: 'viewMenu' },
+        { role: 'windowMenu' }
       ])
     )
   }
@@ -626,6 +695,7 @@ async function main(): Promise<void> {
           quitting = true
         }
       })
+      updateTray()
     })
     .catch((err: unknown) => log(`updates: ${errorMessage(err)}`))
 
@@ -700,6 +770,8 @@ async function main(): Promise<void> {
     app.quit()
   })
   ipcMain.handle('permissions:window', async (): Promise<WindowCheck> => {
+    // Settings → Permissions while recording: the recorder's own state (src/shared/permissions.ts, liveWindowCheck).
+    if (recorder.status().state !== 'stopped') return liveWindowCheck(recorder.status(), process.env.FLATPAK_ID ?? '')
     const result = await probeWindowDetection(platform)
     return { ...result, command: windowFixCommand(result.reason, process.env.FLATPAK_ID ?? '') }
   })
