@@ -54,6 +54,8 @@ mac:
     - dmg
     - zip
   category: public.app-category.productivity
+  # electron-builder turns the 512 px PNG into the .icns.
+  icon: resources/icon.png
   # Ad-hoc signature: Apple silicon runs no unsigned code. To sign and
   # notarize, drop these two lines and set the variables in docs/release.md.
   identity: "-"

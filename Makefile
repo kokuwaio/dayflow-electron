@@ -10,7 +10,7 @@ HELPER_SRC = $(shell find $(HELPER) -name '*.go' -o -name go.mod -o -name go.sum
 # On Linux the app needs the helper; dev rebuilds it when its sources changed.
 DEV_HELPER = $(if $(filter Linux,$(shell uname -s)),$(HELPER_BIN))
 
-.PHONY: help install dev dev-clean bench-models check typecheck test test-helper lint build helper pack flatpak dist-win dist-mac version clean
+.PHONY: help install dev dev-clean bench-models check typecheck test test-helper lint build helper pack flatpak dist-win dist-mac icons version clean
 
 help:
 	@echo "make install      install npm dependencies (npm ci)"
@@ -26,6 +26,7 @@ help:
 	@echo "make helper       build the Linux helper inside the Flatpak SDK"
 	@echo "make pack         package the app into dist/linux-unpacked"
 	@echo "make flatpak      pack, build the helper and install the Flatpak for this user"
+	@echo "make icons        render the PNG icons in resources/ from their SVGs (needs rsvg-convert)"
 	@echo "make version      print the version builds get (VERSION=... overrides it)"
 	@echo "make dist-win     Windows NSIS installers (x64, arm64) and latest.yml in dist/; run on Windows"
 	@echo "make dist-mac     macOS dmg images and update zips (arm64, x64) in dist/; run on macOS"
@@ -84,6 +85,10 @@ pack:
 
 flatpak: pack helper
 	flatpak-builder --user --install --force-clean packaging/flatpak/build packaging/flatpak/io.github.kokuwaio.DayflowElectron.yml
+
+# PNGs from resources/*.svg; commit them with the SVGs.
+icons:
+	scripts/render-icons.sh
 
 version:
 	@echo $(VERSION)
