@@ -5,13 +5,19 @@ name: Build
 # two jobs, like `npm run flatpak` does locally. The installers job tests on
 # Windows and macOS and builds their installers and the update feeds that
 # electron-updater reads (one job per OS: macOS minutes cost ten times as
-# much in private repositories). Nothing is published here: every
+# much in private repositories); with `installers: false` it only tests,
+# which saves about 8 of its 10 minutes on macOS. Nothing is published here: every
 # electron-builder call has --publish never; the release workflow uploads.
 
 permissions: read-all
 
 on:
   workflow_call:
+    inputs:
+      installers:
+        description: Build the Windows and macOS installers; without it, those jobs only test.
+        type: boolean
+        default: true
 
 jobs:
   typescript:
@@ -252,11 +258,13 @@ jobs:
 
       - name: Package
         # Unsigned; signing certificates plug in through the environment (docs/release.md).
+        if: inputs.installers
         run: |
           npx electron-vite build
           ${{ matrix.package }}
 
       - name: Upload installers
+        if: inputs.installers
         uses: actions/upload-artifact@v7
         with:
           name: installers-${{ matrix.os }}
