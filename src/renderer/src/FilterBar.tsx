@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { type Category, categoryKey } from '@shared/categories'
 
 /** How muted categories are remembered: by name, any case (like upstream). */
@@ -15,6 +16,7 @@ export function FilterBar(props: {
   onToggle: (name: string) => void
   onReorder: (next: Category[]) => void
 }) {
+  const { t } = useTranslation()
   const { categories, muted } = props
   const [dragging, setDragging] = useState<number | null>(null)
   const bar = useRef<HTMLDivElement>(null)
@@ -41,14 +43,18 @@ export function FilterBar(props: {
   }
 
   return (
-    <div ref={bar} className={`filterbar ${overflowing ? 'overflowing' : ''}`} role="toolbar" aria-label="Categories">
+    <div ref={bar} className={`filterbar ${overflowing ? 'overflowing' : ''}`} role="toolbar" aria-label={t('filter.categories')}>
       {[...regular, ...idle].map((c, i) => (
         <button
           key={c.id}
           className={`chip ${muted.has(muteKey(c.name)) ? 'muted' : ''}`}
           draggable={!c.isIdle}
           aria-pressed={!muted.has(muteKey(c.name))}
-          title={`${muted.has(muteKey(c.name)) ? `Show ${c.name}` : `Dim ${c.name}`}${c.isIdle ? '' : ' · drag or Alt+←/→ to move'}`}
+          title={
+            muted.has(muteKey(c.name))
+              ? t(c.isIdle ? 'filter.show' : 'filter.showMovable', { name: c.name })
+              : t(c.isIdle ? 'filter.dim' : 'filter.dimMovable', { name: c.name })
+          }
           onClick={() => props.onToggle(muteKey(c.name))}
           onKeyDown={(e) => {
             // Reordering without a pointer; Idle stays last.

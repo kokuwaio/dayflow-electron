@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { Calendar, Check, ChevronLeft, ChevronRight, Copy, Pencil } from 'lucide-react'
 import { dayChanged, weekTrackedMinutes } from '@shared/canvas'
 import { type Category, PRIVATE_CATEGORY, SYSTEM_CATEGORY, categoryKey } from '@shared/categories'
-import { parseKey, shiftDay, todayKey } from '@shared/day'
+import { shiftDay, todayKey } from '@shared/day'
+import { dateLabel, t } from '@shared/i18n'
 import type { ReviewSegment } from '@shared/review'
 import type { AppStatus, Rating, TimelineCard } from '@shared/types'
 import type { DayCards, Week } from '@shared/week'
@@ -23,10 +25,15 @@ const FALLBACK = '#4F80EB'
 
 /** "Today, Nov 17" or "Mon, Nov 10", like upstream's header. */
 function headerDate(key: string, isToday: boolean): string {
-  const d = parseKey(key)
   return isToday
-    ? `Today, ${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}`
-    : d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
+    ? t('timeline.todayDate', { date: dateLabel(key, { month: 'short', day: 'numeric' }) })
+    : dateLabel(key, { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+/** "November 16 - November 22" in the app language. */
+function weekTitle(days: string[]): string {
+  const fmt = (d: string) => dateLabel(d, { month: 'long', day: 'numeric' })
+  return days.length ? t('timeline.weekRange', { from: fmt(days[0]!), to: fmt(days[days.length - 1]!) }) : ''
 }
 
 /** The rating covering most of the card, if any. */
@@ -51,6 +58,7 @@ export function Timeline(props: {
   goalPromptDay: string | null
   onGoalPromptShown: () => void
 }) {
+  const { t } = useTranslation()
   const [day, setDay] = useState(todayKey)
   const [mode, setMode] = useState<'day' | 'week'>('day')
   const [cards, setCards] = useState<TimelineCard[]>([])
@@ -138,17 +146,17 @@ export function Timeline(props: {
         <header className="tl-header">
           <div className="tl-lead">
             <div className="nav-arrows">
-              <button className="nav-arrow" aria-label={`Previous ${mode}`} onClick={() => goTo(shiftDay(day, -step))}>
+              <button className="nav-arrow" aria-label={mode === 'week' ? t('timeline.previousWeek') : t('timeline.previousDay')} onClick={() => goTo(shiftDay(day, -step))}>
                 <ChevronLeft size={24} strokeWidth={1.5} />
               </button>
-              <button className="nav-arrow" aria-label={`Next ${mode}`} disabled={inCurrentPeriod} onClick={() => goTo(shiftDay(day, step))}>
+              <button className="nav-arrow" aria-label={mode === 'week' ? t('timeline.nextWeek') : t('timeline.nextDay')} disabled={inCurrentPeriod} onClick={() => goTo(shiftDay(day, step))}>
                 <ChevronRight size={24} strokeWidth={1.5} />
               </button>
             </div>
             <div className="cal-anchor">
               <button
                 className={`btn-glass cal-pill ${calendarOpen ? 'open' : ''}`}
-                aria-label="Pick a date"
+                aria-label={t('timeline.pickDate')}
                 aria-expanded={calendarOpen}
                 onClick={() => setCalendarOpen(!calendarOpen)}
               >
@@ -167,20 +175,20 @@ export function Timeline(props: {
                 />
               )}
             </div>
-            <div className="segment" role="group" aria-label="View">
+            <div className="segment" role="group" aria-label={t('timeline.view')}>
               <span className={`thumb ${mode}`} />
               {(['day', 'week'] as const).map((m) => (
                 <button key={m} className={mode === m ? 'active' : ''} aria-pressed={mode === m} onClick={() => (setMode(m), setSelected(null))}>
-                  {m === 'day' ? 'Day' : 'Week'}
+                  {m === 'day' ? t('timeline.day') : t('timeline.week')}
                 </button>
               ))}
             </div>
             {!inCurrentPeriod && (
               <button className="today-btn" onClick={() => goTo(todayKey())}>
-                Today
+                {t('timeline.today')}
               </button>
             )}
-            <h1 className="tl-date">{mode === 'week' ? (week?.title ?? '') : headerDate(day, isToday)}</h1>
+            <h1 className="tl-date">{mode === 'week' ? (week ? weekTitle(week.days) : '') : headerDate(day, isToday)}</h1>
           </div>
           {props.status && <PausePill status={props.status} onChange={refreshStatus} />}
         </header>
@@ -200,7 +208,7 @@ export function Timeline(props: {
               void window.dayflow.saveSettings({ categories: next })
             }}
           />
-          <button className="icon-circle" aria-label="Edit categories" title="Edit categories" onClick={() => props.onOpenSettings('categories')}>
+          <button className="icon-circle" aria-label={t('timeline.editCategories')} title={t('timeline.editCategories')} onClick={() => props.onOpenSettings('categories')}>
             <Pencil size={13} />
           </button>
         </div>
@@ -235,12 +243,12 @@ export function Timeline(props: {
         )}
 
         {mode === 'day' && (review?.toReview ?? 0) > 0 && (
-          <button className="review-badge" aria-label={`${review!.toReview} cards to review`} onClick={() => setReviewing(true)}>
+          <button className="review-badge" aria-label={t('timeline.cardsToReview', { count: review!.toReview })} onClick={() => setReviewing(true)}>
             <span className="review-badge-icon" aria-hidden="true">
               <span />
               <span>{review!.toReview}</span>
             </span>
-            Review cards
+            {t('timeline.reviewCards')}
           </button>
         )}
 
@@ -257,17 +265,20 @@ export function Timeline(props: {
             }}
           >
             {copy === 'copying' ? <span className="spinner dark" /> : copy === 'copied' ? <Check size={12} /> : <Copy size={11.5} />}
-            {copy === 'copied' ? 'Copied' : 'Copy timeline'}
+            {copy === 'copied' ? t('common.copied') : t('timeline.copyTimeline')}
           </button>
           <span className={`tracked ${footerHidden ? 'hidden' : ''}`}>
-            <b>{trackedHours} hours</b>
-            {mode === 'week' ? ' of activities tracked this week' : ' tracked this week'}
+            <Trans
+              i18nKey={mode === 'week' ? 'timeline.trackedActivitiesThisWeek' : 'timeline.trackedThisWeek'}
+              count={trackedHours}
+              components={{ b: <b /> }}
+            />
           </span>
         </footer>
       </section>
 
       {(mode === 'day' || card) && (
-        <aside className={`inspector ${mode}`} aria-label={card ? 'Card details' : 'Day summary'}>
+        <aside className={`inspector ${mode}`} aria-label={card ? t('timeline.cardDetails') : t('timeline.daySummary')}>
           {card ? (
             <CardDetail
               key={card.id}

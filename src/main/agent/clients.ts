@@ -18,6 +18,7 @@ import { AGENT_CLIENT_NAMES } from '../../shared/agent-clients'
 import { type ClientPlaces, type DeepLinkClient, claudeDesktopConfigPath, cursorInstallUrl, deepLinkMarkers, entryMatches, mergeServerEntry, readServerEntry, removeServerEntry, vscodeInstallUrl, pathFor } from './client-config'
 import { type Invocation, manualConfigSnippet, mcpRegistration, shellLine } from './invocation'
 import { errorMessage } from '../../shared/errors'
+import { t } from '../../shared/i18n'
 
 /** Files on the host: directly outside the Flatpak, through `flatpak-spawn --host` inside it. */
 export interface HostFiles {
@@ -100,10 +101,10 @@ type Run = (args: string[]) => Promise<{ code: number | null; stdout: string; st
 async function locate(client: CliName, env: ClientEnv, args: string[]): Promise<Run | AgentClientState> {
   const access = await hostAccess(env.runner, env.inFlatpak, env.appId)
   if (!access.ok) {
-    return { state: 'manual', message: `${access.reason} Or run this in a terminal to connect ${AGENT_CLIENT_NAMES[client]}:`, command: shellLine([client, ...args]) }
+    return { state: 'manual', message: `${access.reason} ${t('agents.messages.runInTerminal', { client: AGENT_CLIENT_NAMES[client] })}`, command: shellLine([client, ...args]) }
   }
   const location = await findCli(env.runner, client, { inFlatpak: env.inFlatpak, home: env.home, configuredPath: env.configuredPath })
-  if (!location) return { state: 'notFound', message: 'Not found' }
+  if (!location) return { state: 'notFound', message: t('agents.messages.notFound') }
   const [shell, flags] = location.shell
   return (cliArgs) => {
     // Through the shell that found it, so the CLI finds node and friends on PATH.
@@ -147,9 +148,9 @@ async function cliConnect(client: CliName, env: ClientEnv): Promise<AgentClientS
   // Replace only our own "dayflow-electron" entry, so a stale path gets repaired.
   await run(reg.remove)
   const added = await run(reg.add)
-  if (added.code !== 0) return { state: 'failed', message: lastLine(added.stderr) || lastLine(added.stdout) || `${AGENT_CLIENT_NAMES[client]} could not add the connection.` }
+  if (added.code !== 0) return { state: 'failed', message: lastLine(added.stderr) || lastLine(added.stdout) || t('agents.messages.couldNotAdd', { client: AGENT_CLIENT_NAMES[client] }) }
   const after = await check(client, run, env.invocation)
-  return after === 'connected' ? { state: 'connected' } : { state: 'failed', message: `${AGENT_CLIENT_NAMES[client]} didn't keep the Dayflow Electron connection.` }
+  return after === 'connected' ? { state: 'connected' } : { state: 'failed', message: t('agents.messages.didNotKeep', { client: AGENT_CLIENT_NAMES[client] }) }
 }
 
 async function cliDisconnect(client: CliName, env: ClientEnv): Promise<AgentClientState> {
@@ -159,7 +160,7 @@ async function cliDisconnect(client: CliName, env: ClientEnv): Promise<AgentClie
   const removed = await run(reg.remove)
   const after = await check(client, run, env.invocation)
   if (after === 'connected') {
-    return { state: 'failed', message: lastLine(removed.stderr) || `${AGENT_CLIENT_NAMES[client]} kept the connection.` }
+    return { state: 'failed', message: lastLine(removed.stderr) || t('agents.messages.keptConnection', { client: AGENT_CLIENT_NAMES[client] }) }
   }
   return shown(after)
 }
@@ -175,7 +176,7 @@ async function desktopConfig(env: ClientEnv): Promise<string | AgentClientState>
   if (!access.ok) {
     return {
       state: 'manual',
-      message: `${access.reason} Or add this under "mcpServers" in ${path}, then restart Claude Desktop:`,
+      message: `${access.reason} ${t('agents.messages.addToConfig', { path })}`,
       command: manualConfigSnippet(env.invocation)
     }
   }
@@ -187,7 +188,7 @@ async function desktopStatus(env: ClientEnv): Promise<AgentClientState> {
   if (typeof path !== 'string') return path
   const files = filesOf(env)
   try {
-    if (!(await files.exists(pathFor(env.places.platform).dirname(path)))) return { state: 'notFound', message: 'Not found' }
+    if (!(await files.exists(pathFor(env.places.platform).dirname(path)))) return { state: 'notFound', message: t('agents.messages.notFound') }
     const read = readServerEntry(await files.read(path), DESKTOP_FILE)
     if (!read.ok) return { state: 'failed', message: read.error }
     // An entry for another copy of the app counts as not connected; connecting replaces it.
@@ -208,7 +209,7 @@ async function desktopWrite(env: ClientEnv, change: (text: string | null) => Ret
     if (next.text !== null && next.text !== before) await files.write(path, next.text)
     return done
   } catch (err) {
-    return { state: 'failed', message: `Could not update ${DESKTOP_FILE}: ${errorMessage(err)}` }
+    return { state: 'failed', message: t('agents.messages.couldNotUpdate', { file: DESKTOP_FILE, error: errorMessage(err) }) }
   }
 }
 
@@ -221,7 +222,7 @@ async function linkStatus(client: DeepLinkClient, env: ClientEnv): Promise<Agent
   for (const marker of deepLinkMarkers(client, env.places)) {
     if (await files.exists(marker).catch(() => false)) return { state: 'available' }
   }
-  return { state: 'notFound', message: 'Not found' }
+  return { state: 'notFound', message: t('agents.messages.notFound') }
 }
 
 async function linkConnect(client: DeepLinkClient, env: ClientEnv): Promise<AgentClientState> {
@@ -230,7 +231,7 @@ async function linkConnect(client: DeepLinkClient, env: ClientEnv): Promise<Agen
     await env.openExternal(url)
     return { state: 'openedInstaller' }
   } catch (err) {
-    return { state: 'failed', message: `Could not open ${AGENT_CLIENT_NAMES[client]}: ${errorMessage(err)}` }
+    return { state: 'failed', message: t('agents.messages.couldNotOpen', { client: AGENT_CLIENT_NAMES[client], error: errorMessage(err) }) }
   }
 }
 

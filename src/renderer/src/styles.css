@@ -1329,7 +1329,7 @@ input[type='range'] { accent-color: var(--accent); }
 .chat-composer .pills button.on { background: var(--soft-fill); border-color: var(--soft-border); color: var(--text-primary); }
 .chat-side { width: 280px; flex: none; background: var(--side-fill); border-left: 1px solid var(--grid-border); padding: 12px; overflow-y: auto; animation: inspector-in 0.25s var(--spring) both; }
 .chat-side.memory { width: 360px; }
-.chat-side h4 { font-size: 10px; font-weight: 700; color: var(--text-muted); margin: 12px 0 4px; }
+.chat-side h4 { font-size: 10px; font-weight: 700; color: var(--text-muted); margin: 12px 0 4px; text-transform: uppercase; }
 .chat-side textarea { width: 100%; }
 .chat-history-row { display: flex; align-items: center; border-radius: 8px; padding: 4px 6px; }
 .chat-history-row.current { background: var(--soft-fill); }

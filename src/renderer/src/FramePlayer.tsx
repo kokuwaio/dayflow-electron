@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { currentLanguage } from '@shared/i18n'
 import type { FrameRef } from '@shared/media'
 
 const SPEEDS = [20, 40, 60] as const
-const clock = (ts: number) => new Date(ts * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })
+const clock = (ts: number) =>
+  new Date(ts * 1000).toLocaleTimeString(currentLanguage() === 'en' ? 'en-US' : currentLanguage(), { hour: 'numeric', minute: '2-digit', second: '2-digit' })
 
 /**
  * A card's screenshots: step through them, or play them as a timelapse at
@@ -10,6 +13,7 @@ const clock = (ts: number) => new Date(ts * 1000).toLocaleTimeString([], { hour:
  * none).
  */
 export function FramePlayer({ start, end }: { start: number; end: number }) {
+  const { t } = useTranslation()
   const [frames, setFrames] = useState<FrameRef[]>([])
   const [index, setIndex] = useState(0)
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number] | null>(null)
@@ -43,25 +47,25 @@ export function FramePlayer({ start, end }: { start: number; end: number }) {
     }
   }, [speed, index, frames])
 
-  if (frames.length === 0) return <p className="note">No screenshots kept for this card.</p>
+  if (frames.length === 0) return <p className="note">{t('frames.none')}</p>
   const frame = frames[Math.min(index, frames.length - 1)]!
 
   return (
     <div className="player">
-      <img src={frame.url} alt={`Screenshot at ${clock(frame.capturedAt)}`} />
+      <img src={frame.url} alt={t('frames.screenshotAt', { time: clock(frame.capturedAt) })} />
       <input
         type="range"
         min={0}
         max={frames.length - 1}
         value={index}
-        aria-label="Position"
+        aria-label={t('frames.position')}
         onChange={(e) => setIndex(Number(e.target.value))}
       />
       <div className="row">
-        <button aria-label="Previous screenshot" disabled={index === 0} onClick={() => setIndex(index - 1)}>
+        <button aria-label={t('frames.previous')} disabled={index === 0} onClick={() => setIndex(index - 1)}>
           ‹
         </button>
-        <button aria-label="Next screenshot" disabled={index >= frames.length - 1} onClick={() => setIndex(index + 1)}>
+        <button aria-label={t('frames.next')} disabled={index >= frames.length - 1} onClick={() => setIndex(index + 1)}>
           ›
         </button>
         {speed === null ? (
@@ -71,7 +75,7 @@ export function FramePlayer({ start, end }: { start: number; end: number }) {
             </button>
           ))
         ) : (
-          <button onClick={() => setSpeed(null)}>❚❚ Pause</button>
+          <button onClick={() => setSpeed(null)}>❚❚ {t('frames.pause')}</button>
         )}
         <span className="note push-right">
           {clock(frame.capturedAt)} · {index + 1}/{frames.length}
