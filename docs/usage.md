@@ -62,13 +62,42 @@ which is stored in your keyring (KWallet or Secret Service).
 | Provider | What to enter | Notes |
 | --- | --- | --- |
 | Anthropic | API key from console.anthropic.com; model, e.g. `claude-opus-5-5` | One request per 15 minutes with up to 15 screenshots |
-| Gemini | API key from aistudio.google.com; model, e.g. `gemini-4-hydrogen` | Same request shape as Anthropic |
+| Gemini | API key from aistudio.google.com; pick a model (4 Hydrogen by default) or **Custom model…** for any other ID | Same request shape as Anthropic. A busy or out-of-quota model hands the request to the next one in the list, down to 3.5 Flash-Lite, and then to Gemma 4 31B on the same key; the line under the picker shows the order. |
 | OpenAI-compatible | Base URL, model, API key if the server needs one | OpenAI, OpenRouter, or a local server such as Ollama or LM Studio |
 
 Click **Test connection** after saving. **Fallback provider** takes over a
-batch when the main provider fails (offline, rate limit, bad key).
+batch when the main provider fails (rate limit, bad key, signed out).
 **Output language override** sets the language of titles and summaries (empty
 means English). The app's own texts follow [App language](#app-language).
+
+### When the provider is down
+
+A batch does not fail when the computer is offline, the provider is busy,
+rate-limited or out of reach, its plan's usage is used up, or Claude Code or
+Codex is signed out. It gets a yellow **Waiting for …** card instead
+("Waiting for internet" while offline), and the app sends it again by itself:
+when the network comes back, after the computer wakes up, when you bring the
+window to the front, and otherwise after a short wait (a few minutes for a
+busy provider, 15 to 60 minutes for a usage limit or a sign-in). Waiting uses
+up none of a batch's retries. Bad replies and wrong keys still end in
+"Processing failed".
+
+When only you can fix the problem, a card in the bottom right corner says
+what is wrong and how much recording waits, and the tray icon gets an orange
+dot with a "Click to fix" item:
+
+- **Sign in to Claude Code** or **Sign in to Codex** runs the tool's own
+  login (`claude auth login`, `codex login`) on your computer. Sign in in the
+  browser that opens; the waiting batches go out once the tool reports you
+  as signed in. If the browser does not open, **Open the sign-in page** opens
+  the address the tool printed. When the sign-in does not finish, the card
+  shows the command to run in a terminal.
+- **Use X as backup** makes another provider that is already set up (one with
+  a key, or a signed-in CLI) the fallback provider, and the waiting batches
+  go to it right away.
+- The waiting card's details offer the same buttons and **Try now**.
+
+The card comes back from the tray after you close it.
 
 ## The window
 
@@ -297,8 +326,9 @@ or OpenAI under your account.
 Defaults follow upstream: Claude Code uses the `haiku` model, Codex
 `gpt-6-luna` (falling back to `gpt-5.6-luna` when your account cannot use it
 yet). Change the model in Settings. If the tool reports that you are logged
-out or hit your usage limit, the batch shows "Processing failed" with that
-message; the fallback provider, if set, takes over.
+out or hit your usage limit, the batch waits (see
+[When the provider is down](#when-the-provider-is-down)) and the card offers
+**Sign in**; the fallback provider, if set, takes over meanwhile.
 
 For the other direction, where Claude Code or Codex reads your timeline, see
 the next section.
@@ -532,6 +562,8 @@ translations waiting for a native speaker's review (listed in
 | Symptom | What to check |
 | --- | --- |
 | No cards after 20 minutes | Settings → Providers: a key or a reachable local server; **Test connection**. The note in the bottom right corner of the window shows the last analysis error. |
+| "Waiting for …" cards | Recorded, not analyzed yet: the computer was offline or the provider busy, rate-limited or signed out. They go out by themselves; **Try now** in the card's details sends them at once. The problem card or the tray's "Click to fix" item offers Sign in or a backup provider. |
+| Sign in does nothing | The tool's login opens the browser on your computer. Click **Open the sign-in page**, or run `claude auth login` (or `codex login`) in a terminal; in the Flatpak, the `flatpak override` permission from [Claude Code or Codex](#claude-code-or-codex-on-your-subscription) is needed. |
 | "Ollama/LM Studio at … unreachable" | The local server is not running. Start it (`sudo systemctl start ollama`, see above); the waiting batches are analyzed once it answers. |
 | Daily says "Not enough captured activity" | None of the last three days has enough cards (3 hours for the automatic standup, 2 for Regenerate). |
 | "Processing failed" cards or very slow batches with a local model | Run `ollama ps` while a batch runs: `100% CPU` on a machine with an integrated GPU means `OLLAMA_IGPU_ENABLE=1` is missing. Check the context length setting above, try 720p. |
