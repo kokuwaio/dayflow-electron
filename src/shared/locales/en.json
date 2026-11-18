@@ -904,5 +904,11 @@
       "empty": "No recorded app interactions for this week yet.",
       "coverage": "About {{percent}}% of recorded app time was spent using these applications."
     }
+  },
+  "geminiModels": {
+    "custom": "Custom model…",
+    "customId": "Model ID",
+    "chain": "When {{model}} is busy or out of quota, Dayflow Electron tries {{models}}, then {{gemma}} on the same key.",
+    "chainLast": "When {{model}} is busy or out of quota, Dayflow Electron tries {{gemma}} on the same key."
   }
 }

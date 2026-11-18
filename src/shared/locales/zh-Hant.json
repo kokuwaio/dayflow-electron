@@ -881,5 +881,11 @@
       "empty": "本週尚未記錄任何 App 互動。",
       "coverage": "已記錄的 App 時間中約 {{percent}}% 用在這些 App 上。"
     }
+  },
+  "geminiModels": {
+    "custom": "自訂模型…",
+    "customId": "模型 ID",
+    "chain": "當 {{model}} 忙碌或配額用盡時，Dayflow Electron 會嘗試 {{models}}，然後用同一組金鑰嘗試 {{gemma}}。",
+    "chainLast": "當 {{model}} 忙碌或配額用盡時，Dayflow Electron 會用同一組金鑰嘗試 {{gemma}}。"
   }
 }

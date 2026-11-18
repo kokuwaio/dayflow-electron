@@ -904,5 +904,11 @@
       "empty": "Für diese Woche wurden noch keine App-Interaktionen aufgezeichnet.",
       "coverage": "Etwa {{percent}} % der aufgezeichneten App-Zeit entfielen auf diese Apps."
     }
+  },
+  "geminiModels": {
+    "custom": "Eigenes Modell…",
+    "customId": "Modell-ID",
+    "chain": "Wenn {{model}} ausgelastet ist oder kein Kontingent mehr hat, versucht Dayflow Electron {{models}} und dann {{gemma}} mit demselben Schlüssel.",
+    "chainLast": "Wenn {{model}} ausgelastet ist oder kein Kontingent mehr hat, versucht Dayflow Electron {{gemma}} mit demselben Schlüssel."
   }
 }

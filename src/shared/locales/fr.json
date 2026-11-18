@@ -927,5 +927,11 @@
       "empty": "Aucune interaction avec des applications enregistrée pour cette semaine pour le moment.",
       "coverage": "Environ {{percent}} % du temps d’app enregistré a été passé dans ces applications."
     }
+  },
+  "geminiModels": {
+    "custom": "Modèle personnalisé…",
+    "customId": "ID du modèle",
+    "chain": "Si {{model}} est surchargé ou à court de quota, Dayflow Electron essaie {{models}}, puis {{gemma}} avec la même clé.",
+    "chainLast": "Si {{model}} est surchargé ou à court de quota, Dayflow Electron essaie {{gemma}} avec la même clé."
   }
 }

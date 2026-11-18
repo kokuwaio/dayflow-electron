@@ -881,5 +881,11 @@
       "empty": "今週はまだアプリの操作が記録されていません。",
       "coverage": "記録されたアプリ時間の約{{percent}}%がこれらのアプリで使われました。"
     }
+  },
+  "geminiModels": {
+    "custom": "カスタムモデル…",
+    "customId": "モデル ID",
+    "chain": "{{model}} が混雑しているか利用枠を超えた場合、Dayflow Electron は {{models}} を試し、その後同じキーで {{gemma}} を試します。",
+    "chainLast": "{{model}} が混雑しているか利用枠を超えた場合、Dayflow Electron は同じキーで {{gemma}} を試します。"
   }
 }

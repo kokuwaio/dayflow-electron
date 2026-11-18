@@ -7,6 +7,7 @@ import { writeFile } from 'node:fs/promises'
 import { BrowserWindow, Menu, Tray, app, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, nativeTheme, powerMonitor, screen, shell, systemPreferences } from 'electron'
 import { beforeBoundary, dayCount, dayRange, daysOf, shiftDay, todayKey } from '../shared/day'
 import { needsApiKey } from '../shared/providers'
+import { GeminiCooldowns } from '../shared/gemini-models'
 import { PAUSE_PRESETS, describeRecorder, pauseLabel } from '../shared/status'
 import { currentLanguage, setLanguage, t } from '../shared/i18n'
 import { resolveLanguage } from '../shared/languages'
@@ -168,10 +169,13 @@ async function main(): Promise<void> {
 
   const inFlatpak = !!process.env.FLATPAK_ID
   const cliEnv = { inFlatpak, home: homedir(), scratchDir: join(dataDir, 'cli-frames'), appId: process.env.FLATPAK_ID ?? '' }
+  // Which Gemini models refused the key lately, for every request (upstream GeminiModelCooldowns).
+  const geminiCooldowns = new GeminiCooldowns()
   const providerFor = (kind: ProviderKind) => {
     const s = settings.get()
     return createProvider({ kind, model: s.models[kind], baseUrl: s.openaiBaseUrl }, settings.apiKey(kind), {
-      cli: { ...cliEnv, runner: nodeRunner, paths: s.cliPaths }
+      cli: { ...cliEnv, runner: nodeRunner, paths: s.cliPaths },
+      geminiCooldowns
     })
   }
   const currentProvider = () => providerFor(settings.get().provider)

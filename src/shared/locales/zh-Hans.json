@@ -881,5 +881,11 @@
       "empty": "本周尚未记录任何应用交互。",
       "coverage": "已记录的应用时间中约 {{percent}}% 用在这些应用上。"
     }
+  },
+  "geminiModels": {
+    "custom": "自定义模型…",
+    "customId": "模型 ID",
+    "chain": "当 {{model}} 繁忙或配额用尽时，Dayflow Electron 会尝试 {{models}}，然后用同一密钥尝试 {{gemma}}。",
+    "chainLast": "当 {{model}} 繁忙或配额用尽时，Dayflow Electron 会用同一密钥尝试 {{gemma}}。"
   }
 }

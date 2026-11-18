@@ -2,6 +2,7 @@ import type { CliName, ProviderKind } from '../../shared/types'
 import type { CliEnv } from './cli/cli-providers'
 import type { ProcessRunner } from './cli/host'
 import { errorMessage } from '../../shared/errors'
+import type { GeminiCooldowns } from '../../shared/gemini-models'
 
 export type { ProviderKind }
 
@@ -85,6 +86,8 @@ export interface ProviderOptions {
   fetch?: typeof fetch
   /** For the agent CLI providers: how to reach the host and where to put temporary files. */
   cli?: CliEnv & { runner: ProcessRunner; paths: Record<CliName, string> }
+  /** Gemini: which models recently refused the key; share one so the next request skips them. */
+  geminiCooldowns?: GeminiCooldowns
 }
 
 /** A failed provider call. retryable: worth trying again later (rate limit, outage). */

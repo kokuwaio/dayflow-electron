@@ -881,5 +881,11 @@
       "empty": "이번 주에 기록된 앱 상호작용이 아직 없습니다.",
       "coverage": "기록된 앱 사용 시간의 약 {{percent}}%가 이 앱들에서 사용되었습니다."
     }
+  },
+  "geminiModels": {
+    "custom": "사용자 지정 모델…",
+    "customId": "모델 ID",
+    "chain": "{{model}}이(가) 바쁘거나 할당량을 넘으면 Dayflow Electron이 {{models}}을(를) 시도한 뒤 같은 키로 {{gemma}}을(를) 시도합니다.",
+    "chainLast": "{{model}}이(가) 바쁘거나 할당량을 넘으면 Dayflow Electron이 같은 키로 {{gemma}}을(를) 시도합니다."
   }
 }
