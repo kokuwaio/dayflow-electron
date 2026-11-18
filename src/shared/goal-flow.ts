@@ -4,6 +4,7 @@
 
 import { categoryKey } from './categories'
 import type { CategoryTotal, GoalPlan } from './day-summary'
+import { t } from './i18n'
 
 /** Days with cards (before today) needed before the pop-up opens by itself (upstream FeatureAccessRequirements). */
 export const GOAL_PROMPT_MIN_ACTIVE_DAYS = 3
@@ -86,9 +87,10 @@ export const minutesByCategory = (totals: CategoryTotal[]): Record<string, numbe
 export function spelledDuration(total: number): string {
   const h = Math.floor(total / 60)
   const m = Math.floor(total % 60)
-  const part = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`
-  if (h && m) return `${part(h, 'hour')}, ${part(m, 'minute')}`
-  return h ? part(h, 'hour') : part(m, 'minute')
+  const hours = t('format.spelledHours', { count: h })
+  const minutes = t('format.spelledMinutes', { count: m })
+  if (h && m) return t('format.spelledHoursMinutes', { hours, minutes })
+  return h ? hours : minutes
 }
 
 /** The wheels' total: hours 0-12, minutes 0-55 in steps of 5, at most 12 hours. */

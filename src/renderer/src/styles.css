@@ -887,6 +887,8 @@ input[type='range'] { accent-color: var(--accent); }
 .nav-item {
   width: 61.6px; height: 61.6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   background: none; border: none; padding: 0; color: var(--nav-text); font-size: 12.1px; font-weight: 400;
+  /* Longer labels of other languages may use the sidebar's width, on one line. */
+  min-width: 61.6px; width: auto; max-width: 78px; white-space: nowrap;
 }
 .nav-item .nav-icon { position: relative; width: 37.4px; height: 37.4px; display: grid; place-items: center; }
 .nav-item .nav-icon::before {
@@ -960,15 +962,16 @@ input[type='range'] { accent-color: var(--accent); }
 .pause-status.muted { color: var(--text-muted); }
 @keyframes status-in { from { opacity: 0; transform: translateY(6px); filter: blur(6px); } }
 
-/* The morphing Pause pill: 73 px idle, 250 px with the duration chips, 84 px paused. */
+/* The morphing Pause pill: 73 px idle, 250 px with the duration chips, 84 px paused; wider when a language's label needs it. */
 .pause-pill {
+  interpolate-size: allow-keywords;
   height: 32px; display: flex; align-items: center; overflow: hidden; border-radius: var(--radius-pill); flex: none; white-space: nowrap;
   background: var(--control-fill); border: 0.75px solid var(--control-border); box-shadow: var(--control-glow); color: var(--control-text);
   transition: width 0.5s var(--bounce), background-color 0.35s ease-in-out, border-color 0.35s ease-in-out, transform 0.24s var(--spring);
-  width: 73px; font-size: 12px; font-weight: 500;
+  width: fit-content; min-width: 73px; font-size: 12px; font-weight: 500;
 }
 .pause-pill.menu { width: 250px; }
-.pause-pill.paused { width: 84px; background: var(--primary-fill); border: 1px solid var(--primary-border); box-shadow: var(--primary-glow); color: var(--on-accent); }
+.pause-pill.paused { min-width: 84px; background: var(--primary-fill); border: 1px solid var(--primary-border); box-shadow: var(--primary-glow); color: var(--on-accent); }
 .pause-pill:not(.menu):hover { transform: scale(1.02); }
 .pause-pill:not(.menu):active { transform: scale(0.97); }
 .pause-pill > button { height: 100%; border: none; background: none; color: inherit; font-size: 12px; font-weight: 500; padding: 0 12px; gap: 4px; flex: none; border-radius: var(--radius-pill); }
@@ -1453,7 +1456,7 @@ input[type='range'] { accent-color: var(--accent); }
 .chat-composer .pills button.on { background: var(--soft-fill); border-color: var(--soft-border); color: var(--text-primary); }
 .chat-side { width: 280px; flex: none; background: var(--side-fill); border-left: 1px solid var(--grid-border); padding: 12px; overflow-y: auto; animation: inspector-in 0.25s var(--spring) both; }
 .chat-side.memory { width: 360px; }
-.chat-side h4 { font-size: 10px; font-weight: 700; color: var(--text-muted); margin: 12px 0 4px; }
+.chat-side h4 { font-size: 10px; font-weight: 700; color: var(--text-muted); margin: 12px 0 4px; text-transform: uppercase; }
 .chat-side textarea { width: 100%; }
 .chat-history-row { display: flex; align-items: center; border-radius: 8px; padding: 4px 6px; }
 .chat-history-row.current { background: var(--soft-fill); }

@@ -1,15 +1,18 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Pause, Play } from 'lucide-react'
 import { recordingProjection } from '@shared/canvas'
 import { SYSTEM_CATEGORY } from '@shared/categories'
-import { formatClock, parseKey } from '@shared/day'
+import { parseKey } from '@shared/day'
+import { clockLabel, currentLanguage, dateLabel, hourAxisLabel } from '@shared/i18n'
 import type { RecorderState } from '@shared/types'
 import { type DayCards, PX_PER_MIN, cardBox, mergeFailed, resolveOverlaps } from '@shared/week'
 import { underFooter } from './DayCanvas'
 import { muteKey } from './FilterBar'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => (4 + i) % 24)
-const hourLabel = (h: number) => `${h % 12 === 0 ? 12 : h % 12}:00 ${h < 12 ? 'AM' : 'PM'}`
+/** "4:00 AM" in English, the language's own clock ("04:00") otherwise. */
+const hourLabel = (h: number) => (currentLanguage() === 'en' ? `${h % 12 === 0 ? 12 : h % 12}:00 ${h < 12 ? 'AM' : 'PM'}` : hourAxisLabel(h * 60))
 /** Title line height and vertical padding of a week card (upstream WeekTimelineGridView). */
 const LINE = 12
 
@@ -26,6 +29,7 @@ export function WeekGrid(props: {
   /** Whether a card sits under the footer, which then hides its text. */
   onFooterOverlap: (overlaps: boolean) => void
 }) {
+  const { t } = useTranslation()
   const scroller = useRef<HTMLDivElement>(null)
   const boxes = props.columns.flatMap((c) => c.cards.map((card) => cardBox(card, c.day)))
   const firstStart = boxes.map((b) => b.top).sort((a, b) => a - b)[0]
@@ -48,7 +52,7 @@ export function WeekGrid(props: {
           const date = parseKey(day)
           return (
             <span key={day} className={day === props.today ? 'today' : ''}>
-              {date.toLocaleDateString([], { weekday: 'short' })} <b className="num">{date.getDate()}</b>
+              {dateLabel(day, { weekday: 'short' })} <b className="num">{date.getDate()}</b>
             </span>
           )
         })}
@@ -79,14 +83,14 @@ export function WeekGrid(props: {
                         props.muted.has(muteKey(card.category)) ? 'muted' : ''
                       }`}
                       style={{ top: box.top, height: box.height, '--h': `${box.height}px`, '--cat': props.colorOf(card.category) } as React.CSSProperties}
-                      title={`${formatClock(card.start)} - ${formatClock(card.end)}: ${card.title}`}
+                      title={t('card.timeTitle', { time: t('card.timeRange', { start: clockLabel(card.start), end: clockLabel(card.end) }), title: card.title })}
                       onClick={(e) => {
                         e.stopPropagation()
                         props.onSelect(card.id)
                       }}
                     >
                       <span className="text" style={{ WebkitLineClamp: lines }}>
-                        {failed ? 'Processing failed' : card.title}
+                        {failed ? t('card.processingFailed') : card.title}
                       </span>
                     </button>
                   )
@@ -102,12 +106,13 @@ export function WeekGrid(props: {
 }
 
 function WeekStatus({ box, recorder }: { box: { top: number; height: number }; recorder: RecorderState }) {
+  const { t } = useTranslation()
   const paused = recorder === 'paused' || recorder === 'stopped'
   const Icon = recorder === 'paused' ? Pause : Play
   return (
     <div className={`status-card week ${paused ? 'paused' : 'generating'}`} style={{ top: box.top, height: box.height }}>
       {paused ? <Icon size={9} fill="currentColor" strokeWidth={0} /> : box.height >= 20 && <span className="spinner" />}
-      {box.height >= 14 && <span>{paused ? (recorder === 'paused' ? 'Paused' : 'Resume') : 'Next card...'}</span>}
+      {box.height >= 14 && <span>{paused ? (recorder === 'paused' ? t('timeline.weekPaused') : t('timeline.weekResume')) : t('timeline.weekNextCard')}</span>}
     </div>
   )
 }

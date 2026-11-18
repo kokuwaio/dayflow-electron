@@ -1,29 +1,29 @@
+import { clockLabel, t } from './i18n'
 import type { RecorderState } from './types'
 
 /** Pause choices offered in the tray and in the window. null: until resumed. */
-export const PAUSE_PRESETS: ReadonlyArray<{ label: string; seconds: number | null }> = [
-  { label: 'For 15 minutes', seconds: 15 * 60 },
-  { label: 'For 30 minutes', seconds: 30 * 60 },
-  { label: 'For 1 hour', seconds: 60 * 60 },
-  { label: 'Until I resume', seconds: null }
-]
+export const PAUSE_PRESETS: ReadonlyArray<{ seconds: number | null }> = [{ seconds: 15 * 60 }, { seconds: 30 * 60 }, { seconds: 60 * 60 }, { seconds: null }]
 
-const clock = (ts: number) => new Date(ts * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+/** A preset's menu label, e.g. "For 15 minutes". */
+export function pauseLabel(seconds: number | null): string {
+  if (seconds === null) return t('pause.untilResumed')
+  return seconds >= 3600 ? t('pause.forHours', { count: seconds / 3600 }) : t('pause.forMinutes', { count: seconds / 60 })
+}
 
 /** One line describing the recorder, e.g. "Paused until 3:15 PM". */
 export function describeRecorder(state: RecorderState, until: number | null): string {
   switch (state) {
     case 'recording':
-      return 'Recording'
+      return t('recorder.recording')
     case 'paused':
-      return until ? `Paused until ${clock(until)}` : 'Paused'
+      return until ? t('recorder.pausedUntil', { time: clockLabel(until) }) : t('recorder.paused')
     case 'locked':
-      return 'Paused while locked'
+      return t('recorder.locked')
     case 'sleeping':
-      return 'Paused while asleep'
+      return t('recorder.sleeping')
     case 'backoff':
-      return until ? `Capture failed, retrying at ${clock(until)}` : 'Capture failed'
+      return until ? t('recorder.backoffUntil', { time: clockLabel(until) }) : t('recorder.backoff')
     case 'stopped':
-      return 'Stopped'
+      return t('recorder.stopped')
   }
 }

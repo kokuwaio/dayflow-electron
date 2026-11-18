@@ -1,15 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Play } from 'lucide-react'
 import { pad } from '@shared/day'
 import { PAUSE_PRESETS, describeRecorder } from '@shared/status'
 import type { AppStatus } from '@shared/types'
 
 /** ∞, 1h, 30m, 15m: the tray's presets, longest first like upstream. */
-const CHIPS = [...PAUSE_PRESETS].reverse().map((p) => ({
-  seconds: p.seconds,
-  label: p.seconds === null ? '∞' : p.seconds >= 3600 ? `${p.seconds / 3600}h` : `${p.seconds / 60}m`,
-  title: `Pause ${p.label.toLowerCase()}`
-}))
+const CHIPS = [...PAUSE_PRESETS].reverse()
 
 /** "14:59", or "1:02:05" for an hour or more. */
 function countdown(seconds: number): string {
@@ -25,6 +22,7 @@ function countdown(seconds: number): string {
  * status text to its left tells how long the pause lasts.
  */
 export function PausePill({ status, onChange }: { status: AppStatus; onChange: () => void }) {
+  const { t } = useTranslation()
   const [menu, setMenu] = useState(false)
   const [now, setNow] = useState(() => Date.now() / 1000)
   const leave = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -45,9 +43,9 @@ export function PausePill({ status, onChange }: { status: AppStatus; onChange: (
 
   const run = (p: Promise<unknown>) => void p.then(() => (setMenu(false), onChange()))
   const statusText = paused
-    ? { text: until ? `Dayflow Electron paused for ${countdown(until - now)}` : 'Dayflow Electron paused indefinitely', muted: false }
+    ? { text: until ? t('pause.pausedFor', { time: countdown(until - now) }) : t('pause.pausedIndefinitely'), muted: false }
     : blockedBy && state === 'recording'
-      ? { text: 'Hidden: blocked app in front', muted: true }
+      ? { text: t('pause.hiddenBlockedApp'), muted: true }
       : state !== 'recording'
         ? { text: describeRecorder(state, until), muted: true }
         : null
@@ -67,31 +65,34 @@ export function PausePill({ status, onChange }: { status: AppStatus; onChange: (
         {paused ? (
           <button onClick={() => run(window.dayflow.resume())}>
             <Play size={11} fill="currentColor" strokeWidth={0} />
-            Resume
+            {t('pause.resume')}
           </button>
         ) : (
           <>
-            <button aria-expanded={menu} aria-label={menu ? 'Close pause options' : 'Pause recording'} onClick={() => setMenu(!menu)}>
+            <button aria-expanded={menu} aria-label={menu ? t('pause.closeOptions') : t('pause.pauseRecording')} onClick={() => setMenu(!menu)}>
               <span className="pause-glyph" aria-hidden="true">
                 <i />
                 <i />
               </span>
-              Pause
+              {t('pause.pause')}
             </button>
             {menu && (
               <div className="pause-chips" role="menu">
-                {CHIPS.map((c) => (
-                  <button
-                    key={c.label}
-                    role="menuitem"
-                    className={c.seconds === null ? 'infinite' : ''}
-                    title={c.title}
-                    aria-label={c.title}
-                    onClick={() => run(window.dayflow.pause(c.seconds))}
-                  >
-                    {c.label}
-                  </button>
-                ))}
+                {CHIPS.map((c) => {
+                  const title = c.seconds === null ? t('pause.chipUntilResumed') : c.seconds >= 3600 ? t('pause.chipHours', { count: c.seconds / 3600 }) : t('pause.chipMinutes', { count: c.seconds / 60 })
+                  return (
+                    <button
+                      key={String(c.seconds)}
+                      role="menuitem"
+                      className={c.seconds === null ? 'infinite' : ''}
+                      title={title}
+                      aria-label={title}
+                      onClick={() => run(window.dayflow.pause(c.seconds))}
+                    >
+                      {c.seconds === null ? '∞' : c.seconds >= 3600 ? t('pause.chipShortHours', { count: c.seconds / 3600 }) : t('pause.chipShortMinutes', { count: c.seconds / 60 })}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </>

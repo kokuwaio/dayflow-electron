@@ -1,6 +1,7 @@
 import { DEFAULT_BLOCKLIST } from './blocklist'
 import { type Category, DEFAULT_CATEGORIES } from './categories'
 import type { StandupDraft } from './daily'
+import type { AppLanguage } from './languages'
 import type { UiStyle } from './ui-style'
 
 // Types shared by the main process and the renderer.
@@ -76,6 +77,8 @@ export interface Settings {
   openaiBaseUrl: string
   /** Language for card text, e.g. "German"; empty for English. */
   outputLanguage: string
+  /** Language of the app's own texts; '' follows the system. English unless changed. */
+  appLanguage: AppLanguage
   captureIntervalSec: number
   captureHeight: 720 | 1080
   storageLimitGb: number
@@ -154,6 +157,7 @@ export const DEFAULT_SETTINGS: Settings = {
   models: { anthropic: 'claude-opus-5-5', gemini: 'gemini-4-hydrogen', openai: 'gpt-5.1', 'claude-cli': 'haiku', 'codex-cli': 'gpt-6-luna' },
   openaiBaseUrl: 'https://api.openai.com/v1',
   outputLanguage: '',
+  appLanguage: 'en',
   captureIntervalSec: 10,
   // Upstream records at 1080p; 720p keeps requests and local models faster.
   captureHeight: 720,

@@ -1,21 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Copy, GripVertical, Plus, RotateCw } from 'lucide-react'
 import type { Category } from '@shared/categories'
 import { type FeatureAccess, type StandupDraft, emptyStandup, standupText, standupTitles, workflowGrid } from '@shared/daily'
-import { hourLabel, parseKey, shiftDay, todayKey } from '@shared/day'
-import { formatMinutes } from '@shared/day-summary'
+import { shiftDay, todayKey } from '@shared/day'
+import { dateLabel, durationLabel, hourAxisLabel, t } from '@shared/i18n'
 import type { StandupEntry, TimelineCard } from '@shared/types'
 import { LockedFeature } from './LockedFeature'
 import { isDistractionName } from '@shared/categories'
 
 const DISTRACTION_COLOR = '#FF5950'
+/** The busy state while a standup is written (anything else is an error message). */
+const WRITING = 'writing'
 /** Minutes per grid cell. */
 const SLOT = 15
 
 /** "Today, November 17" or "Monday, November 10", like upstream's Daily title. */
 function longDate(day: string, today: string): string {
-  const text = parseKey(day).toLocaleDateString([], { weekday: day === today ? undefined : 'long', month: 'long', day: 'numeric' })
-  return day === today ? `Today, ${text}` : text
+  if (day === today) return t('daily.todayDate', { date: dateLabel(day, { month: 'long', day: 'numeric' }) })
+  return dateLabel(day, { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
 /** Runs `load` now and whenever `subscribe` fires, dropping answers that arrive after the inputs changed. */
@@ -34,6 +37,7 @@ function useFresh<T>(load: () => Promise<T>, apply: (value: T) => void, subscrib
 
 /** The Daily tab (upstream DailyView): the day's workflow grid and an editable standup update. */
 export function Daily() {
+  const { t } = useTranslation()
   const today = todayKey()
   const [day, setDay] = useState(today)
   const [access, setAccess] = useState<FeatureAccess | null>(null)
@@ -56,18 +60,18 @@ export function Daily() {
   if (!access) return null
   if (!access.unlocked) {
     return (
-      <LockedFeature title="Dayflow Electron Daily" italic beta access={access}>
-        <p>Daily is a new way to visualize your day and turn it into a standup update fast.</p>
-        <p>Daily unlocks after 5 hours of analyzed timeline data.</p>
+      <LockedFeature title={t('daily.locked.title')} italic beta access={access}>
+        <p>{t('daily.locked.intro')}</p>
+        <p>{t('daily.locked.unlock')}</p>
       </LockedFeature>
     )
   }
 
   const grid = workflowGrid(cards, categories)
   const yesterday = shiftDay(today, -1)
-  const short = parseKey(day).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
-  const heading = day === today ? 'Today so far. Come back tomorrow for the full day view.' : day === yesterday ? 'Your workflow yesterday' : `Your workflow on ${short}`
-  const totalTitle = day === today ? "Today's total so far" : day === yesterday ? "Yesterday's total" : `Total for ${short}`
+  const short = dateLabel(day, { weekday: 'short', month: 'short', day: 'numeric' })
+  const heading = day === today ? t('daily.headingToday') : day === yesterday ? t('daily.headingYesterday') : t('daily.headingOn', { date: short })
+  const totalTitle = day === today ? t('daily.totalToday') : day === yesterday ? t('daily.totalYesterday') : t('daily.totalOn', { date: short })
   const span = grid.slots * SLOT
   const rows = grid.rows.filter((r) => !(grid.hasDistractionRow && isDistractionName(r.category)))
   const colorOf = (name: string) => grid.rows.find((r) => r.category === name)?.color ?? DISTRACTION_COLOR
@@ -76,11 +80,11 @@ export function Daily() {
     <div className="daily">
       <div className="daily-page">
         <div className="date-row">
-          <button className="nav-arrow" aria-label="Previous day" onClick={() => setDay(shiftDay(day, -1))}>
+          <button className="nav-arrow" aria-label={t('daily.previousDay')} onClick={() => setDay(shiftDay(day, -1))}>
             <ChevronLeft size={24} strokeWidth={1.5} />
           </button>
           <h1>{longDate(day, today)}</h1>
-          <button className="nav-arrow" aria-label="Next day" disabled={day === today} onClick={() => setDay(shiftDay(day, 1))}>
+          <button className="nav-arrow" aria-label={t('daily.nextDay')} disabled={day === today} onClick={() => setDay(shiftDay(day, 1))}>
             <ChevronRight size={24} strokeWidth={1.5} />
           </button>
         </div>
@@ -101,12 +105,12 @@ export function Daily() {
                 </Row>
               ))}
               {grid.hasDistractionRow && (
-                <Row label="Distractions">
+                <Row label={t('daily.distractions')}>
                   <span className="distraction-track" style={{ gridColumn: '2 / -1' }}>
                     {grid.distractions.map((d, i) => (
                       <i
                         key={i}
-                        title={`${formatMinutes(Math.max(1, Math.round(d.end - d.start)))}: ${d.title}`}
+                        title={t('daily.distractionTooltip', { duration: durationLabel(Math.max(1, Math.round(d.end - d.start))), title: d.title })}
                         style={{ left: `${((d.start - grid.startMinute) / span) * 100}%`, width: `${((d.end - d.start) / span) * 100}%` }}
                       />
                     ))}
@@ -117,7 +121,7 @@ export function Daily() {
               <div className="axis" style={{ gridColumn: '2 / -1' }}>
                 {Array.from({ length: Math.floor(grid.slots / 4) + 1 }, (_, i) => (
                   <span key={i} style={{ left: `${((i * 60) / span) * 100}%` }}>
-                    {hourLabel(grid.startMinute + i * 60).replace(/(am|pm)$/, (m) => ` ${m.toUpperCase()}`)}
+                    {hourAxisLabel(grid.startMinute + i * 60).replace(/(am|pm)$/, (m) => ` ${m.toUpperCase()}`)}
                   </span>
                 ))}
               </div>
@@ -126,11 +130,11 @@ export function Daily() {
           <div className="totals-strip">
             <h4>{totalTitle}</h4>
             {grid.totals.length === 0 ? (
-              <span className="note">{day === today ? 'No captured activity yet.' : 'No captured activity during 9am-9pm'}</span>
+              <span className="note">{day === today ? t('daily.noActivityYet') : t('daily.noActivityDay')}</span>
             ) : (
-              grid.totals.map((t) => (
-                <span key={t.category}>
-                  {t.category} <b style={{ color: colorOf(t.category) }}>{formatMinutes(t.minutes)}</b>
+              grid.totals.map((total) => (
+                <span key={total.category}>
+                  {total.category} <b style={{ color: colorOf(total.category) }}>{durationLabel(total.minutes)}</b>
                 </span>
               ))
             )}
@@ -153,8 +157,10 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 /** The standup update: highlights, tasks and blockers; edits save after 250 ms like upstream. */
 function Standup({ day }: { day: string }) {
+  const { t } = useTranslation()
   const [entry, setEntry] = useState<StandupEntry | null>(null)
   const [draft, setDraft] = useState<StandupDraft>(emptyStandup)
+  /** WRITING while a standup is generated, else the last error. */
   const [busy, setBusy] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const pending = useRef<{ timer: ReturnType<typeof setTimeout>; save: () => void } | null>(null)
@@ -191,7 +197,7 @@ function Standup({ day }: { day: string }) {
   }
   const regenerate = async () => {
     const target = day
-    setBusy('Writing your standup…')
+    setBusy(WRITING)
     const result = await window.dayflow.generateStandup(target)
     // Upstream drops results for a day the user has moved away from.
     if (viewing.current !== target) return
@@ -200,11 +206,11 @@ function Standup({ day }: { day: string }) {
   }
 
   const titles = standupTitles(day, entry?.sourceDay ?? null, todayKey())
-  const regenerating = busy === 'Writing your standup…'
+  const regenerating = busy === WRITING
   return (
     <section className="standup">
       <div className="standup-head">
-        <h2 className="serif-heading">Standup for {longDate(day, todayKey())}</h2>
+        <h2 className="serif-heading">{t('daily.standupFor', { date: longDate(day, todayKey()) })}</h2>
         <button
           className="btn-glass daily-pill"
           onClick={() =>
@@ -215,15 +221,15 @@ function Standup({ day }: { day: string }) {
           }
         >
           <Copy size={15} />
-          {copied ? 'Copied' : 'Copy standup update'}
+          {copied ? t('common.copied') : t('daily.copyStandup')}
         </button>
         <button className="btn-glass daily-pill" disabled={regenerating} onClick={() => void regenerate()}>
           <RotateCw size={15} />
-          {regenerating ? 'Regenerating…' : 'Regenerate'}
+          {regenerating ? t('daily.regenerating') : t('daily.regenerate')}
         </button>
       </div>
       {busy && !regenerating && <p className="note">{busy}</p>}
-      {!entry && <p className="note">Daily data has not been generated yet. Click Regenerate to write it now, or fill it in yourself.</p>}
+      {!entry && <p className="note">{t('daily.notGenerated')}</p>}
       <div className="standup-cards">
         <div className="standup-card">
           <ItemList title={titles.highlights} items={draft.highlights} onChange={(highlights) => edit({ ...draft, highlights })} />
@@ -234,7 +240,7 @@ function Standup({ day }: { day: string }) {
             <h4>{titles.blockers}</h4>
             <textarea
               rows={3}
-              placeholder="Fill in any blockers you may have"
+              placeholder={t('daily.blockersPlaceholder')}
               value={draft.blockersBody}
               onChange={(e) => edit({ ...draft, blockersBody: e.target.value })}
             />
@@ -250,6 +256,7 @@ function Standup({ day }: { day: string }) {
  * Backspace on an empty item removes it, the handle drags it to a new place.
  */
 function ItemList({ title, items, onChange }: { title: string; items: string[]; onChange: (items: string[]) => void }) {
+  const { t } = useTranslation()
   const refs = useRef<Array<HTMLInputElement | null>>([])
   const [dragging, setDragging] = useState<number | null>(null)
   const focus = (i: number) => setTimeout(() => refs.current[i]?.focus(), 0)
@@ -281,7 +288,7 @@ function ItemList({ title, items, onChange }: { title: string; items: string[]; 
                 refs.current[i] = el
               }}
               value={item}
-              aria-label={`${title} item ${i + 1}`}
+              aria-label={t('daily.itemLabel', { title, number: i + 1 })}
               onChange={(e) => onChange(items.map((x, j) => (j === i ? e.target.value : x)))}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -300,7 +307,7 @@ function ItemList({ title, items, onChange }: { title: string; items: string[]; 
       </ul>
       <button className="add-item" onClick={() => (onChange([...items, '']), focus(items.length))}>
         <Plus size={14} />
-        Add item
+        {t('daily.addItem')}
       </button>
     </>
   )

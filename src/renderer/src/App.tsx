@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CalendarRange, ChartPie, ListTree, type LucideIcon, MessagesSquare, Settings as SettingsIcon, X } from 'lucide-react'
 import type { AppStatus, Settings, Tab } from '@shared/types'
 import { Chat } from './Chat'
@@ -12,15 +13,17 @@ import { Weekly } from './Weekly'
 
 /** Upstream's sidebar (MainView/SidebarView.swift), with Lucide icons in place of its artwork. */
 const TABS = [
-  { id: 'timeline', label: 'Timeline', icon: ListTree },
-  { id: 'daily', label: 'Daily', icon: ChartPie },
-  { id: 'weekly', label: 'Weekly', icon: CalendarRange },
-  { id: 'chat', label: 'Chat', icon: MessagesSquare },
-  { id: 'settings', label: 'Settings', icon: SettingsIcon }
-] as const satisfies ReadonlyArray<{ id: Tab; label: string; icon: LucideIcon }>
+  { id: 'timeline', icon: ListTree },
+  { id: 'daily', icon: ChartPie },
+  { id: 'weekly', icon: CalendarRange },
+  { id: 'chat', icon: MessagesSquare },
+  { id: 'settings', icon: SettingsIcon }
+] as const satisfies ReadonlyArray<{ id: Tab; icon: LucideIcon }>
 type View = (typeof TABS)[number]['id']
 
 export function App() {
+  // Re-renders the whole window when the app language changes.
+  const { t } = useTranslation()
   const [view, setView] = useState<View>('timeline')
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('providers')
   const [status, setStatus] = useState<AppStatus | null>(null)
@@ -82,27 +85,27 @@ export function App() {
     setView('settings')
   }
   const toasts = [
-    status?.analysis.lastError && { key: `analysis:${status.analysis.lastError}`, title: 'Analysis failed', body: status.analysis.lastError, settings: true },
+    status?.analysis.lastError && { key: `analysis:${status.analysis.lastError}`, title: t('app.analysisFailed'), body: status.analysis.lastError, settings: true },
     status?.recorder.state === 'backoff' &&
-      status.recorder.lastError && { key: `capture:${status.recorder.lastError}`, title: 'Capture failed', body: status.recorder.lastError, settings: false }
-  ].filter((t): t is { key: string; title: string; body: string; settings: boolean } => !!t && !dismissed.includes(t.key))
+      status.recorder.lastError && { key: `capture:${status.recorder.lastError}`, title: t('app.captureFailed'), body: status.recorder.lastError, settings: false }
+  ].filter((x): x is { key: string; title: string; body: string; settings: boolean } => !!x && !dismissed.includes(x.key))
 
   return (
     <div className="app">
-      <nav className="sidebar" aria-label="Views">
-        {TABS.map((t) => {
-          const Icon = t.icon
+      <nav className="sidebar" aria-label={t('app.views')}>
+        {TABS.map((tab) => {
+          const Icon = tab.icon
           return (
             <button
-              key={t.id}
-              className={`nav-item ${view === t.id ? 'active' : ''}`}
-              aria-current={view === t.id ? 'page' : undefined}
-              onClick={() => setView(t.id)}
+              key={tab.id}
+              className={`nav-item ${view === tab.id ? 'active' : ''}`}
+              aria-current={view === tab.id ? 'page' : undefined}
+              onClick={() => setView(tab.id)}
             >
               <span className="nav-icon">
                 <Icon size={17.6} strokeWidth={1.75} />
               </span>
-              {t.label}
+              {t(`app.tabs.${tab.id}`)}
             </button>
           )
         })}
@@ -124,20 +127,20 @@ export function App() {
       </main>
       {toasts.length > 0 && (
         <div className="toasts" role="status">
-          {toasts.map((t) => (
-            <div key={t.key} className="toast">
+          {toasts.map((toast) => (
+            <div key={toast.key} className="toast">
               <div className="toast-body">
                 <div>
-                  <strong>{t.title}</strong>
-                  {t.body}
+                  <strong>{toast.title}</strong>
+                  {toast.body}
                 </div>
-                {t.settings && view !== 'settings' && (
+                {toast.settings && view !== 'settings' && (
                   <button className="btn-primary" onClick={() => openSettings('providers')}>
-                    Open settings
+                    {t('app.openSettings')}
                   </button>
                 )}
               </div>
-              <button className="bare close" aria-label="Dismiss" onClick={() => setDismissed([...dismissed, t.key])}>
+              <button className="bare close" aria-label={t('common.dismiss')} onClick={() => setDismissed([...dismissed, toast.key])}>
                 <X size={14} />
               </button>
             </div>

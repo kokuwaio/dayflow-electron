@@ -9,6 +9,7 @@
 //   needs to install): only tells that a version is out and opens its page.
 
 import { Notification, shell } from 'electron'
+import { t } from '../shared/i18n'
 import {
   FIRST_CHECK_DELAY_MS,
   type UpdateAction,
@@ -94,8 +95,8 @@ export async function startUpdater(o: {
     if (updater.autoDownload) return // the "ready" notification follows
     notify(
       `available ${info.version}`,
-      `Dayflow Electron ${info.version} is available`,
-      install ? 'Click to download it.' : "This copy can't install updates itself. Click to open the download page.",
+      t('updates.available.title', { version: info.version }),
+      install ? t('updates.available.bodyDownload') : t('updates.available.bodyOpen'),
       () => run(install ? 'download' : 'open-release')
     )
   })
@@ -104,7 +105,7 @@ export async function startUpdater(o: {
   })
   updater.on('update-downloaded', (info) => {
     set({ kind: 'ready', version: info.version })
-    notify(`ready ${info.version}`, `Dayflow Electron ${info.version} is ready`, 'Restart Dayflow Electron to update, or it updates the next time you quit.', restart)
+    notify(`ready ${info.version}`, t('updates.ready.title', { version: info.version }), t('updates.ready.body'), restart)
   })
   updater.on('error', () => {
     // Logged by the logger; a failed download can be tried again.

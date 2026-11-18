@@ -4,18 +4,19 @@
 
 import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import { Meh, Sparkles, X, Zap } from 'lucide-react'
-import { formatClock } from '@shared/day'
-import { formatMinutes } from '@shared/day-summary'
+import { clockLabel, durationLabel, t } from '@shared/i18n'
 import type { FrameRef } from '@shared/media'
 import { type ReviewRating, type ReviewSegment, type ReviewSummary, reviewSummary, unreviewedCards } from '@shared/review'
 import type { TimelineCard } from '@shared/types'
 import { SYSTEM_CATEGORY, categoryKey } from '@shared/categories'
 
-export const RATING_LOOK: Record<ReviewRating, { label: string; color: string; soft: string; icon: typeof Zap }> = {
-  distracted: { label: 'Distracted', color: '#FF8772', soft: '#FFBDB1', icon: Zap },
-  neutral: { label: 'Neutral', color: '#EAE0DB', soft: '#FFFEFE', icon: Meh },
-  focused: { label: 'Focused', color: '#42D0BB', soft: '#92F1E3', icon: Sparkles }
+/** Each rating's look; `label` is read in the current app language. */
+export const RATING_LOOK: Record<ReviewRating, { readonly label: string; color: string; soft: string; icon: typeof Zap }> = {
+  distracted: { get label() { return t('review.ratings.distracted') }, color: '#FF8772', soft: '#FFBDB1', icon: Zap },
+  neutral: { get label() { return t('review.ratings.neutral') }, color: '#EAE0DB', soft: '#FFFEFE', icon: Meh },
+  focused: { get label() { return t('review.ratings.focused') }, color: '#42D0BB', soft: '#92F1E3', icon: Sparkles }
 }
 /** The tint over a card while it is dragged towards a rating. */
 const DRAG_TINT: Record<ReviewRating, { bg: string; text: string; icon: string }> = {
@@ -33,6 +34,7 @@ function dragRating(dx: number, dy: number, commit: boolean): ReviewRating | nul
 }
 
 export function ReviewOverlay({ day, cards, colorOf, onClose }: { day: string; cards: TimelineCard[]; colorOf: (c: string) => string; onClose: () => void }) {
+  const { t } = useTranslation()
   const [segments, setSegments] = useState<ReviewSegment[]>([])
   const [session, setSession] = useState<TimelineCard[] | null>(null)
   const [index, setIndex] = useState(0)
@@ -104,8 +106,8 @@ export function ReviewOverlay({ day, cards, colorOf, onClose }: { day: string; c
 
   // Over the whole window like upstream, outside the main panel's backdrop-filter.
   return createPortal(
-    <div className="review-overlay" role="dialog" aria-modal="true" aria-label="Review cards">
-      <button className="review-close" aria-label="Close" onClick={onClose}>
+    <div className="review-overlay" role="dialog" aria-modal="true" aria-label={t('timeline.reviewCards')}>
+      <button className="review-close" aria-label={t('common.close')} onClick={onClose}>
         <X size={14} strokeWidth={2.5} />
       </button>
       {done ? (
@@ -128,10 +130,10 @@ export function ReviewOverlay({ day, cards, colorOf, onClose }: { day: string; c
             </div>
           </div>
           <footer className="review-footer">
-            <p>Swipe on each card on your Timeline to review your day.</p>
+            <p>{t('review.swipeHint')}</p>
             <div className="review-keys">
               <button onClick={undo} disabled={index === 0}>
-                <kbd>Z</kbd> Undo
+                <kbd>Z</kbd> {t('review.undo')}
               </button>
               {ORDER.map((r) => (
                 <button key={r} onClick={() => rate(r)}>
@@ -160,6 +162,7 @@ function DragTint({ rating }: { rating: ReviewRating }) {
 }
 
 function ReviewCard(props: { card: TimelineCard; color: string; position: string; behind?: boolean; playing?: boolean; onTogglePlay?: () => void }) {
+  const { t } = useTranslation()
   const { card, color } = props
   return (
     <article className={`review-card ${props.behind ? 'behind' : ''}`} aria-hidden={props.behind}>
@@ -172,7 +175,7 @@ function ReviewCard(props: { card: TimelineCard; color: string; position: string
             {card.category}
           </span>
           <span className="time">
-            {formatClock(card.start)} - {formatClock(card.end)}
+            {t('card.timeRange', { start: clockLabel(card.start), end: clockLabel(card.end) })}
           </span>
         </div>
         <p className="review-summary">{card.summary}</p>
@@ -184,6 +187,7 @@ function ReviewCard(props: { card: TimelineCard; color: string; position: string
 
 /** The card's screenshots as a timelapse at 20x; Space or a click plays and pauses. */
 function ReviewMedia({ start, end, playing, onToggle }: { start: number; end: number; playing: boolean; onToggle?: () => void }) {
+  const { t } = useTranslation()
   const [frames, setFrames] = useState<FrameRef[]>([])
   const [index, setIndex] = useState(0)
   useEffect(() => {
@@ -198,15 +202,15 @@ function ReviewMedia({ start, end, playing, onToggle }: { start: number; end: nu
     const a = frames[index]
     const b = frames[(index + 1) % frames.length]
     const wait = a && b && b.capturedAt > a.capturedAt ? Math.min(2000, Math.max(50, ((b.capturedAt - a.capturedAt) * 1000) / 20)) : 500
-    const t = setTimeout(() => setIndex((i) => (i + 1) % frames.length), wait)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setIndex((i) => (i + 1) % frames.length), wait)
+    return () => clearTimeout(timer)
   }, [playing, index, frames])
   const frame = frames[index]
   return (
     <div className="review-media" onClick={onToggle} onPointerDown={(e) => e.stopPropagation()}>
-      {frame ? <img src={frame.url} alt="" draggable={false} /> : <span className="note">No screenshots kept for this card.</span>}
+      {frame ? <img src={frame.url} alt="" draggable={false} /> : <span className="note">{t('frames.none')}</span>}
       {frames.length > 1 && <span className="review-progress" style={{ width: `${((index + 1) / frames.length) * 100}%` }} />}
-      {frames.length > 1 && <span className="review-speed">{playing ? '20x' : 'Space to play'}</span>}
+      {frames.length > 1 && <span className="review-speed">{playing ? '20x' : t('review.spaceToPlay')}</span>}
     </div>
   )
 }
@@ -230,20 +234,19 @@ export function RatingBars({ summary, height, all }: { summary: ReviewSummary; h
 }
 
 function ReviewDone({ empty, summary, onClose }: { empty: boolean; summary: ReviewSummary; onClose: () => void }) {
+  const { t } = useTranslation()
   if (empty)
     return (
       <div className="review-done">
-        <h2 className="small">Nothing to review yet</h2>
-        <p className="note">Come back after a few timeline cards appear.</p>
+        <h2 className="small">{t('review.nothingYet')}</h2>
+        <p className="note">{t('review.comeBack')}</p>
       </div>
     )
   return (
     <div className="review-done">
-      <h2>All caught up!</h2>
+      <h2>{t('review.allCaughtUp')}</h2>
       <p>
-        You've reviewed all your activities so far.
-        <br />
-        The Timeline right panel will be updated with your rating.
+        <Trans i18nKey="review.allReviewed" components={{ br: <br /> }} />
       </p>
       {summary.total > 0 && (
         <>
@@ -257,7 +260,7 @@ function ReviewDone({ empty, summary, onClose }: { empty: boolean; summary: Revi
                     <Icon size={16} color={RATING_LOOK[r].color === '#EAE0DB' ? '#B8ABA3' : RATING_LOOK[r].color} />
                     {RATING_LOOK[r].label}
                   </span>
-                  <b>{formatMinutes(Math.floor(summary[r] / 60))}</b>
+                  <b>{durationLabel(Math.floor(summary[r] / 60))}</b>
                 </span>
               )
             })}
@@ -265,7 +268,7 @@ function ReviewDone({ empty, summary, onClose }: { empty: boolean; summary: Revi
         </>
       )}
       <button className="review-close-btn" onClick={onClose}>
-        Close
+        {t('common.close')}
       </button>
     </div>
   )

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { chatBlocks, visibleStreamingText } from '@shared/chat-content'
 import { historyGroups } from '@shared/chat-history'
 import type { FeatureAccess } from '@shared/daily'
-import { formatClock, todayKey } from '@shared/day'
+import { todayKey } from '@shared/day'
+import { clockLabel } from '@shared/i18n'
 import type { ChatConversation, ChatStoredMessage, ProviderKind } from '@shared/types'
 import {
   ArrowUp,
@@ -27,25 +29,27 @@ import {
 } from 'lucide-react'
 import { ChatChart } from './ChatChart'
 import { ProgressBar } from './LockedFeature'
-import { PROVIDER_CHOICES } from './providers'
+import { providerChoices } from './providers'
 
 /** Upstream's welcome prompts and their icons (Views/UI/ChatView+State.swift). */
-const WELCOME_PROMPTS: Array<{ text: string; icon: LucideIcon }> = [
-  { text: 'Generate standup notes for yesterday', icon: FileText },
-  { text: 'What did I get done last week?', icon: BadgeCheck },
-  { text: 'When was I most focused this week', icon: MessageSquareWarning },
-  { text: 'Compare this week to last week', icon: Sparkles }
-]
+const WELCOME_PROMPTS = [
+  { id: 'standup', icon: FileText },
+  { id: 'lastWeek', icon: BadgeCheck },
+  { id: 'focused', icon: MessageSquareWarning },
+  { id: 'compare', icon: Sparkles }
+] as const satisfies ReadonlyArray<{ id: string; icon: LucideIcon }>
 
 type Status = 'thinking' | 'tools' | 'answering'
-const STATUS_TEXT: Record<Status, string> = { thinking: 'Thinking', tools: 'Running tools', answering: 'Answering' }
+/** The history panel's groups (from historyGroups) and their text keys. */
+const GROUP_KEYS = { TODAY: 'today', YESTERDAY: 'yesterday', 'THIS WEEK': 'thisWeek', EARLIER: 'earlier' } as const
 const STATUS_ICON: Record<Status, LucideIcon> = { thinking: Sparkles, tools: Wrench, answering: MessageSquareText }
 type Panel = 'history' | 'memory' | null
 const MEMORY_MAX = 10_000
-const providerLabel = (kind: string) => PROVIDER_CHOICES.find((p) => p.kind === kind)?.label ?? kind
+const providerLabel = (kind: string) => providerChoices().find((p) => p.kind === kind)?.label ?? kind
 
 /** The Chat tab (upstream ChatView): questions about your timeline, answered with the timeline tools. */
 export function Chat() {
+  const { t } = useTranslation()
   const [access, setAccess] = useState<FeatureAccess | null>(null)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatStoredMessage[]>([])
@@ -136,31 +140,32 @@ export function Chat() {
       <div className="locked-page">
         <div className="locked-card">
           <h2>
-            Unlock Beta<span className="beta">BETA</span>
+            {t('chat.locked.title')}
+            <span className="beta">{t('chat.locked.beta')}</span>
           </h2>
-          <p>Chat lets you ask questions about your Dayflow Electron activity and get summaries, comparisons, and insights.</p>
+          <p>{t('chat.locked.intro')}</p>
           <ul className="requirements">
             <li>
               <Zap size={18} color="var(--accent-icon)" />
               <div>
-                <strong>10 hours of timeline data required</strong>
-                <span className="note">Chat unlocks after Dayflow Electron has analyzed enough activity. {access.label}</span>
+                <strong>{t('chat.locked.dataRequired')}</strong>
+                <span className="note">{t('chat.locked.dataNote', { progress: access.label })}</span>
               </div>
             </li>
             <li>
               {providers.length ? <CircleCheck size={18} color="#34C759" /> : <Zap size={18} color="var(--accent-icon)" />}
               <div>
-                <strong>{providers.length ? 'AI provider configured' : 'AI provider required'}</strong>
-                {!providers.length && <span className="note">Unlock chat by adding an AI provider in Settings.</span>}
+                <strong>{providers.length ? t('chat.locked.providerConfigured') : t('chat.locked.providerRequired')}</strong>
+                {!providers.length && <span className="note">{t('chat.locked.providerNote')}</span>}
               </div>
             </li>
           </ul>
-          <ProgressBar value={access.progress} label="Chat unlock progress" text={access.label} />
+          <ProgressBar value={access.progress} label={t('chat.locked.progress')} text={access.label} />
           <button className="btn-primary" disabled>
-            Keep recording to unlock
+            {t('chat.locked.keepRecording')}
           </button>
           <p className="note">
-            <strong>Privacy note:</strong> your questions and the answers stay on this computer; only the provider you chose sees them.
+            <Trans i18nKey="chat.locked.privacy" components={{ b: <strong /> }} />
           </p>
         </div>
       </div>
@@ -172,12 +177,12 @@ export function Chat() {
       <div className="chat-main">
         <div className="chat-header">
           <button className="soft" onClick={() => void open(null)} disabled={!!status}>
-            New chat
+            {t('chat.newChat')}
           </button>
-          <button className={`icon ${panel === 'history' ? 'on' : ''}`} aria-label="History" title="History" onClick={() => setPanel(panel === 'history' ? null : 'history')}>
+          <button className={`icon ${panel === 'history' ? 'on' : ''}`} aria-label={t('chat.history.title')} title={t('chat.history.title')} onClick={() => setPanel(panel === 'history' ? null : 'history')}>
             <HistoryIcon size={14} />
           </button>
-          <button className={`icon ${panel === 'memory' ? 'on' : ''}`} aria-label="Memory" title="Memory" onClick={() => setPanel(panel === 'memory' ? null : 'memory')}>
+          <button className={`icon ${panel === 'memory' ? 'on' : ''}`} aria-label={t('chat.memory.title')} title={t('chat.memory.title')} onClick={() => setPanel(panel === 'memory' ? null : 'memory')}>
             <Brain size={14} />
           </button>
         </div>
@@ -196,7 +201,7 @@ export function Chat() {
                     const Icon = STATUS_ICON[status]
                     return <Icon size={13} color="var(--accent)" />
                   })()}
-                  {STATUS_TEXT[status]}
+                  {t(`chat.status.${status}`)}
                   <span className="dots" />
                   {toolNote && <div className="note">{toolNote}</div>}
                 </div>
@@ -204,7 +209,7 @@ export function Chat() {
               {error && <p className="error">{error}</p>}
               {suggestions.length > 0 && (
                 <div className="chat-suggestions">
-                  <span className="note">Follow up</span>
+                  <span className="note">{t('chat.followUp')}</span>
                   {suggestions.map((s) => (
                     // Upstream fills the composer instead of sending, so the question can be edited.
                     <button key={s} className="chip" onClick={() => setInput(s)}>
@@ -227,7 +232,7 @@ export function Chat() {
           <textarea
             value={input}
             rows={2}
-            placeholder="Ask about your Dayflow Electron data..."
+            placeholder={t('chat.placeholder')}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -238,7 +243,7 @@ export function Chat() {
           />
           <div className="chat-composer-tools">
             {providers.length > 1 && (
-              <div className="pills" role="radiogroup" aria-label="Provider">
+              <div className="pills" role="radiogroup" aria-label={t('chat.provider')}>
                 {providers.map((kind) => (
                   <button
                     key={kind}
@@ -253,7 +258,7 @@ export function Chat() {
                 ))}
               </div>
             )}
-            <button type="submit" className="send" aria-label="Send" disabled={!input.trim() || !!status}>
+            <button type="submit" className="send" aria-label={t('chat.send')} disabled={!input.trim() || !!status}>
               <ArrowUp size={16} strokeWidth={2.25} />
             </button>
           </div>
@@ -277,6 +282,7 @@ export function Chat() {
 }
 
 function Welcome({ onPick }: { onPick: (prompt: string) => void }) {
+  const { t } = useTranslation()
   return (
     <div className="chat-welcome">
       <div className="chat-welcome-head">
@@ -284,21 +290,24 @@ function Welcome({ onPick }: { onPick: (prompt: string) => void }) {
           <MessagesSquare size={18} />
         </span>
         <div>
-          <h2>Ask about your Dayflow Electron data</h2>
-          <p>Ask questions, analyze your timeline, and generate charts/graphs.</p>
-          <p className="note">I remember your response preferences, so feel free to teach me your style.</p>
+          <h2>{t('chat.welcome.title')}</h2>
+          <p>{t('chat.welcome.intro')}</p>
+          <p className="note">{t('chat.welcome.memory')}</p>
         </div>
       </div>
-      <p className="note">Try one of these</p>
-      {WELCOME_PROMPTS.map(({ text, icon: Icon }) => (
-        <button key={text} className="chat-prompt" onClick={() => onPick(text)}>
-          <span className="lead">
-            <Icon size={13} />
-          </span>
-          <span className="text">{text}</span>
-          <ArrowUpRight size={14} aria-hidden="true" />
-        </button>
-      ))}
+      <p className="note">{t('chat.welcome.try')}</p>
+      {WELCOME_PROMPTS.map(({ id, icon: Icon }) => {
+        const text = t(`chat.welcome.prompts.${id}`)
+        return (
+          <button key={id} className="chat-prompt" onClick={() => onPick(text)}>
+            <span className="lead">
+              <Icon size={13} />
+            </span>
+            <span className="text">{text}</span>
+            <ArrowUpRight size={14} aria-hidden="true" />
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -317,6 +326,7 @@ function Message({ message }: { message: ChatStoredMessage }) {
 
 /** Markdown with chart blocks; raw HTML in answers is shown as text, never rendered. */
 function AssistantText({ text, copyable }: { text: string; copyable?: boolean }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   return (
     <div className="chat-bubble assistant">
@@ -336,8 +346,8 @@ function AssistantText({ text, copyable }: { text: string; copyable?: boolean })
       {copyable && (
         <div className="chat-bubble-footer">
           <button
-            aria-label="Copy answer"
-            title="Copy"
+            aria-label={t('chat.copyAnswer')}
+            title={t('common.copy')}
             onClick={() =>
               void window.dayflow.copyText(text).then(() => {
                 setCopied(true)
@@ -355,23 +365,24 @@ function AssistantText({ text, copyable }: { text: string; copyable?: boolean })
 
 /** Conversations grouped like upstream: today, yesterday, this week, earlier. */
 function History(props: { conversations: ChatConversation[]; current: string | null; onOpen: (id: string) => void; onDelete: (id: string) => void }) {
+  const { t } = useTranslation()
   const groups = historyGroups(props.conversations, todayKey())
   return (
     <aside className="chat-side">
-      <h3>History</h3>
-      {groups.length === 0 && <p className="note">No saved chats yet</p>}
+      <h3>{t('chat.history.title')}</h3>
+      {groups.length === 0 && <p className="note">{t('chat.history.empty')}</p>}
       {groups.map((g) => (
         <section key={g.name}>
-          <h4>{g.name}</h4>
+          <h4>{t(`chat.history.groups.${GROUP_KEYS[g.name]}`)}</h4>
           {g.items.map((c) => (
             <div key={c.id} className={`chat-history-row ${c.id === props.current ? 'current' : ''}`}>
               <button className="link" onClick={() => props.onOpen(c.id)} title={c.title}>
                 <span className="title">{c.title}</span>
                 <span className="note">
-                  {formatClock(c.updatedAt)} · {providerLabel(c.provider)}
+                  {clockLabel(c.updatedAt)} · {providerLabel(c.provider)}
                 </span>
               </button>
-              <button className="delete" aria-label={`Delete ${c.title}`} onClick={() => props.onDelete(c.id)}>
+              <button className="delete" aria-label={t('chat.history.delete', { title: c.title })} onClick={() => props.onDelete(c.id)}>
                 <Trash2 size={13} />
               </button>
             </div>
@@ -384,6 +395,7 @@ function History(props: { conversations: ChatConversation[]; current: string | n
 
 /** What the assistant remembers about you; it updates this itself from its memory blocks. */
 function Memory() {
+  const { t } = useTranslation()
   const [memory, setMemory] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   useEffect(() => void window.dayflow.getChatMemory().then(setMemory), [])
@@ -396,16 +408,16 @@ function Memory() {
   }
   return (
     <aside className="chat-side memory">
-      <h3>Memory</h3>
-      <p className="note">Auto-updated from assistant replies. You can edit this manually.</p>
+      <h3>{t('chat.memory.title')}</h3>
+      <p className="note">{t('chat.memory.note')}</p>
       <textarea rows={8} maxLength={MEMORY_MAX} value={memory} placeholder="Profile: …&#10;Style: …" onChange={(e) => setMemory(e.target.value)} />
       <p className="note">
         {memory.length}/{MEMORY_MAX}
       </p>
       <div className="row">
-        <button onClick={() => void save(memory)}>{saved ? 'Saved' : 'Save'}</button>
+        <button onClick={() => void save(memory)}>{saved ? t('common.saved') : t('common.save')}</button>
         <button className="link" onClick={() => void save('')}>
-          Clear memory
+          {t('chat.memory.clear')}
         </button>
       </div>
     </aside>

@@ -7,6 +7,7 @@ import { dirname } from 'node:path'
 import { safeStorage } from 'electron'
 import { sanitizeCategories } from '../shared/categories'
 import { CAPTURE_INTERVALS, DEFAULT_SETTINGS, type ProviderKind, type Settings, THEMES, type Theme } from '../shared/types'
+import { sanitizeAppLanguage } from '../shared/languages'
 import { sanitizeUiStyle } from '../shared/ui-style'
 
 const KINDS: ProviderKind[] = ['anthropic', 'gemini', 'openai', 'claude-cli', 'codex-cli']
@@ -69,6 +70,7 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
     models,
     openaiBaseUrl: typeof r.openaiBaseUrl === 'string' && r.openaiBaseUrl.trim() ? r.openaiBaseUrl.trim() : DEFAULT_SETTINGS.openaiBaseUrl,
     outputLanguage: typeof r.outputLanguage === 'string' ? r.outputLanguage.trim().slice(0, 40) : '',
+    appLanguage: sanitizeAppLanguage(r.appLanguage),
     captureIntervalSec: (CAPTURE_INTERVALS as readonly number[]).includes(Number(r.captureIntervalSec))
       ? Number(r.captureIntervalSec)
       : DEFAULT_SETTINGS.captureIntervalSec,

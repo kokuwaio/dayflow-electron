@@ -2,13 +2,17 @@
 // Layout+TimelineHeader.swift): a Monday-first month grid; future days are disabled.
 
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { type Month, monthGrid, shiftMonth } from '@shared/calendar'
-import { parseKey } from '@shared/day'
+import { parseKey, shiftDay } from '@shared/day'
+import { dateLabel, monthLabel } from '@shared/i18n'
 
-const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+/** Monday to Sunday as one letter (or sign) in the app language; 2024-01-01 was a Monday. */
+const weekdays = () => Array.from({ length: 7 }, (_, i) => dateLabel(shiftDay('2024-01-01', i), { weekday: 'narrow' }))
 
 export function CalendarPopover(props: { day: string; today: string; mode: 'day' | 'week'; onPick: (day: string) => void; onClose: () => void }) {
+  const { t } = useTranslation()
   const d = parseKey(props.day)
   const [month, setMonth] = useState<Month>({ year: d.getFullYear(), month: d.getMonth() })
   const ref = useRef<HTMLDivElement>(null)
@@ -30,21 +34,21 @@ export function CalendarPopover(props: { day: string; today: string; mode: 'day'
 
   const weeks = monthGrid(month.year, month.month)
   const inMonth = (key: string) => parseKey(key).getMonth() === month.month
-  const title = new Date(month.year, month.month, 1).toLocaleDateString([], { month: 'long', year: 'numeric' })
+  const title = monthLabel(month.year, month.month)
 
   return (
-    <div className="cal-popover" ref={ref} role="dialog" aria-label="Pick a date">
+    <div className="cal-popover" ref={ref} role="dialog" aria-label={t('timeline.pickDate')}>
       <div className="cal-head">
         <span>{title}</span>
-        <button aria-label="Previous month" onClick={() => setMonth(shiftMonth(month, -1))}>
+        <button aria-label={t('calendar.previousMonth')} onClick={() => setMonth(shiftMonth(month, -1))}>
           <ChevronLeft size={16} />
         </button>
-        <button aria-label="Next month" onClick={() => setMonth(shiftMonth(month, 1))}>
+        <button aria-label={t('calendar.nextMonth')} onClick={() => setMonth(shiftMonth(month, 1))}>
           <ChevronRight size={16} />
         </button>
       </div>
       <div className="cal-weekdays" aria-hidden="true">
-        {WEEKDAYS.map((w, i) => (
+        {weekdays().map((w, i) => (
           <span key={i}>{w}</span>
         ))}
       </div>
@@ -63,7 +67,7 @@ export function CalendarPopover(props: { day: string; today: string; mode: 'day'
                     className={`${inMonth(key) && !future ? '' : 'dim'} ${selected ? 'selected' : ''}`}
                     disabled={future}
                     aria-selected={selected || selectedWeek}
-                    aria-label={parseKey(key).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+                    aria-label={dateLabel(key, { weekday: 'long', month: 'long', day: 'numeric' })}
                     onClick={() => props.onPick(key)}
                   >
                     {parseKey(key).getDate()}

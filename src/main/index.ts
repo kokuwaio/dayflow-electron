@@ -7,7 +7,9 @@ import { writeFile } from 'node:fs/promises'
 import { BrowserWindow, Menu, Tray, app, clipboard, desktopCapturer, dialog, ipcMain, nativeImage, nativeTheme, powerMonitor, screen, shell, systemPreferences } from 'electron'
 import { beforeBoundary, dayCount, dayRange, daysOf, shiftDay, todayKey } from '../shared/day'
 import { needsApiKey } from '../shared/providers'
-import { PAUSE_PRESETS, describeRecorder } from '../shared/status'
+import { PAUSE_PRESETS, describeRecorder, pauseLabel } from '../shared/status'
+import { currentLanguage, setLanguage, t } from '../shared/i18n'
+import { resolveLanguage } from '../shared/languages'
 import { renamedCategories } from '../shared/categories'
 import { PRIVATE_WINDOWS_RULE } from '../shared/blocklist'
 import { DEEP_LINK_SCHEME, deepLinkAction } from '../shared/deep-link'
@@ -109,6 +111,9 @@ async function main(): Promise<void> {
   // The window follows this; CSS sees it as prefers-color-scheme.
   nativeTheme.themeSource = settings.get().theme
   uiStyle = settings.get().uiStyle
+  // Tray, notifications and dialogs speak the app language; the window gets it in its URL and on changes.
+  const appLanguage = () => resolveLanguage(settings.get().appLanguage, app.getPreferredSystemLanguages())
+  await setLanguage(appLanguage())
   const backupDir = join(dataDir, 'backups')
   const { store, restoredFrom, damaged } = openWithRecovery(join(dataDir, 'dayflow.sqlite'), backupDir)
   log(`dayflow-electron ${app.getVersion()}`)
@@ -285,9 +290,9 @@ async function main(): Promise<void> {
   const chatSuggestions = new Map<string, string[]>()
   ipcMain.handle('chat:providers', () => configuredProviders().map((p) => p.kind))
   ipcMain.handle('chat:send', async (_e, conversationId: string | null, text: string, preferred?: ProviderKind) => {
-    if (chatBusy) return { ok: false, message: 'The assistant is still answering.' }
-    if (!access().chat.unlocked) return { ok: false, message: 'Chat unlocks after 10 hours of timeline data.' }
-    if (typeof text !== 'string' || !text.trim()) return { ok: false, message: 'Type a question first.' }
+    if (chatBusy) return { ok: false, message: t('chat.errors.busy') }
+    if (!access().chat.unlocked) return { ok: false, message: t('chat.errors.locked') }
+    if (typeof text !== 'string' || !text.trim()) return { ok: false, message: t('chat.errors.empty') }
     chatBusy = true
     try {
       const reply = await sendChatMessage(
@@ -380,21 +385,21 @@ async function main(): Promise<void> {
     clipboard.writeText(text)
   })
   ipcMain.handle('timeline:export', async (_e, from: string, to: string) => {
-    if (from > to) return { ok: false, message: 'Start must be on or before end.' }
-    if (dayCount(from, to) > 3660) return { ok: false, message: 'Choose at most ten years.' }
+    if (from > to) return { ok: false, message: t('settings.export.startAfterEnd') }
+    if (dayCount(from, to) > 3660) return { ok: false, message: t('settings.export.tooLong') }
     const target = await dialog.showSaveDialog({
       defaultPath: join(app.getPath('documents'), exportFileName(from, to)),
       filters: [{ name: 'Markdown', extensions: ['md'] }]
     })
-    if (target.canceled || !target.filePath) return { ok: false, message: 'Export canceled' }
+    if (target.canceled || !target.filePath) return { ok: false, message: t('settings.export.canceled') }
     const days = daysWithCards(daysOf(from, to))
     try {
       await writeFile(target.filePath, rangeMarkdown(days, { today: todayKey() }), 'utf8')
     } catch (err) {
-      return { ok: false, message: `Couldn't save file: ${errorMessage(err)}` }
+      return { ok: false, message: t('settings.export.saveFailed', { error: errorMessage(err) }) }
     }
     const activities = days.reduce((n, d) => n + d.cards.length, 0)
-    return { ok: true, message: `Saved to ${target.filePath}. Activities: ${activities}; days: ${days.length}.` }
+    return { ok: true, message: t('settings.export.saved', { path: target.filePath, activities, days: days.length }) }
   })
   ipcMain.handle('card:update', (_e, id: number, change: CardEdit) => {
     const card = store.updateCard(id, change)
@@ -504,6 +509,12 @@ async function main(): Promise<void> {
     const renames = renamedCategories(before.categories, saved.categories)
     for (const { from, to } of renames) store.renameCategory(from, to)
     if (renames.length) changed()
+    if (saved.appLanguage !== before.appLanguage) {
+      const language = appLanguage()
+      await setLanguage(language)
+      updateTray()
+      window?.webContents.send('language:changed', language)
+    }
     if (saved.captureIntervalSec !== before.captureIntervalSec || saved.captureHeight !== before.captureHeight) {
       recorder.reconfigure(captureOptions(saved))
     }
@@ -528,7 +539,7 @@ async function main(): Promise<void> {
       const reply = await provider.generate({
         turns: [{ role: 'user', parts: [{ type: 'text', text: 'Reply with the single word OK.' }] }]
       })
-      return { ok: true, message: `${reply.model} answered: ${reply.text.trim().slice(0, 80)}` }
+      return { ok: true, message: t('settings.providers.testAnswered', { model: reply.model, text: reply.text.trim().slice(0, 80) }) }
     } catch (err) {
       return { ok: false, message: errorMessage(err) }
     }
@@ -548,8 +559,8 @@ async function main(): Promise<void> {
     const configuredPath = settings.get().cliPaths[cli]
     const found = await findCli(nodeRunner, cli, { ...cliEnv, ...(configuredPath ? { configuredPath } : {}) })
     return found
-      ? { ok: true, message: `Found ${found.path}. Click "Test connection" to check that you are logged in.` }
-      : { ok: false, message: `Not found${configuredPath ? ` at ${configuredPath}` : ''}. Install it, or enter its full path.` }
+      ? { ok: true, message: t('settings.providers.cliFound', { path: found.path }) }
+      : { ok: false, message: configuredPath ? t('settings.providers.cliNotFoundAt', { path: configuredPath }) : t('settings.providers.cliNotFound') }
   })
   ipcMain.handle('analysis:run', () => pipeline.tick())
 
@@ -560,28 +571,28 @@ async function main(): Promise<void> {
     const paused = r.state === 'paused'
     const description = describeRecorder(r.state, r.until)
     const updateItem = updater?.menuItem()
-    tray.setToolTip(`Dayflow Electron: ${description}`)
+    tray.setToolTip(t('tray.tooltip', { status: description }))
     tray.setContextMenu(
       Menu.buildFromTemplate([
         { label: description, enabled: false },
         ...(updateItem ? [{ ...updateItem, enabled: !!updateItem.click }] : []),
         { type: 'separator' },
         paused
-          ? { label: 'Resume recording', click: () => (recorder.resume(), updateTray()) }
+          ? { label: t('tray.resume'), click: () => (recorder.resume(), updateTray()) }
           : {
-              label: 'Pause recording',
+              label: t('tray.pause'),
               submenu: PAUSE_PRESETS.map((p) => ({
-                label: p.label,
+                label: pauseLabel(p.seconds),
                 click: () => {
                   recorder.pause(p.seconds)
                   updateTray()
                 }
               }))
             },
-        { label: 'Open Dayflow Electron', click: () => showWindow() },
-        { label: 'Open recordings folder', click: () => void shell.openPath(recordingsDir) },
+        { label: t('tray.open'), click: () => showWindow() },
+        { label: t('tray.openRecordings'), click: () => void shell.openPath(recordingsDir) },
         { type: 'separator' },
-        { label: 'Quit', click: () => app.quit() }
+        { label: t('tray.quit'), click: () => app.quit() }
       ])
     )
   }
@@ -767,8 +778,8 @@ function showWindow(): void {
     event.preventDefault()
     if (/^https?:/.test(url)) void shell.openExternal(url)
   })
-  // The page sets its theme from the query before React renders, so it does not flash the other look.
-  const query = { uiStyle }
+  // The page sets its theme and language from the query before React renders, so it does not flash the other look.
+  const query = { uiStyle, lang: currentLanguage() }
   if (process.env.ELECTRON_RENDERER_URL) void window.loadURL(`${process.env.ELECTRON_RENDERER_URL}?${new URLSearchParams(query)}`)
   else void window.loadFile(join(here, '../renderer/index.html'), { query })
 }

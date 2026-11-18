@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Markdown from 'react-markdown'
 import { Image, Pencil, Play, RotateCw, ThumbsDown, ThumbsUp, X } from 'lucide-react'
 import { type Category, PRIVATE_CATEGORY, SYSTEM_CATEGORY } from '@shared/categories'
-import { formatClock } from '@shared/day'
+import { clockLabel } from '@shared/i18n'
 import type { Rating, TimelineCard } from '@shared/types'
 import { FramePlayer } from './FramePlayer'
 
 /** A button that asks "Confirm" on the first click and acts on the second; it resets after 3 s. */
 function ConfirmButton({ label, className, onConfirm }: { label: string; className?: string; onConfirm: () => void }) {
+  const { t } = useTranslation()
   const [armed, setArmed] = useState(false)
   useEffect(() => {
     if (!armed) return
@@ -16,7 +18,7 @@ function ConfirmButton({ label, className, onConfirm }: { label: string; classNa
   }, [armed])
   return armed ? (
     <button className="confirm" onClick={() => (setArmed(false), onConfirm())}>
-      Confirm
+      {t('common.confirm')}
     </button>
   ) : (
     <button className={`text-btn ${className ?? ''}`} onClick={() => setArmed(true)}>
@@ -39,6 +41,7 @@ export function CardDetail(props: {
   onDeleted: () => void
   onEditCategories: () => void
 }) {
+  const { t } = useTranslation()
   const { card, color, categories, rating } = props
   const [editingTitle, setEditingTitle] = useState(false)
   const [title, setTitle] = useState(card.title)
@@ -76,7 +79,7 @@ export function CardDetail(props: {
     card.batchId !== null &&
     void window.dayflow
       .reprocessBatch(card.batchId)
-      .then((ok) => setBusy(ok ? 'Queued for analysis.' : 'This batch is being analyzed right now; try again in a moment.'))
+      .then((ok) => setBusy(ok ? t('card.queued') : t('card.busy')))
   const names = [...new Set([...categories.map((c) => c.name), card.category])]
 
   return (
@@ -88,7 +91,7 @@ export function CardDetail(props: {
               <input
                 autoFocus
                 value={title}
-                aria-label="Title"
+                aria-label={t('card.title')}
                 onChange={(e) => setTitle(e.target.value)}
                 onBlur={saveTitle}
                 onKeyDown={(e) => {
@@ -100,23 +103,23 @@ export function CardDetail(props: {
                 }}
               />
             ) : (
-              <h2 onClick={() => setEditingTitle(true)} title="Click to edit">
+              <h2 onClick={() => setEditingTitle(true)} title={t('card.clickToEdit')}>
                 {card.title}
               </h2>
             )}
             {!editingTitle && (
-              <button className="icon-circle" aria-label="Edit title" onClick={() => setEditingTitle(true)}>
+              <button className="icon-circle" aria-label={t('card.editTitle')} onClick={() => setEditingTitle(true)}>
                 <Pencil size={12} />
               </button>
             )}
-            <button className="bare note" aria-label="Close" onClick={props.onClose}>
+            <button className="bare note" aria-label={t('common.close')} onClick={props.onClose}>
               <X size={16} />
             </button>
           </div>
 
           <div className="meta-row">
             <span className="meta-chip">
-              {formatClock(card.start)} - {formatClock(card.end)}
+              {t('card.timeRange', { start: clockLabel(card.start), end: clockLabel(card.end) })}
             </span>
             <span className="push-right" />
             <span className="meta-chip">
@@ -125,7 +128,7 @@ export function CardDetail(props: {
               {card.subcategory ? ` · ${card.subcategory}` : ''}
             </span>
             {!isFailed && (
-              <button className="icon-circle" aria-label="Change category" aria-expanded={picker} onClick={() => setPicker(!picker)}>
+              <button className="icon-circle" aria-label={t('card.changeCategory')} aria-expanded={picker} onClick={() => setPicker(!picker)}>
                 <Pencil size={12} />
               </button>
             )}
@@ -147,7 +150,7 @@ export function CardDetail(props: {
                   </button>
                 ))}
                 <button className="link" onClick={props.onEditCategories}>
-                  Edit categories…
+                  {t('card.editCategories')}
                 </button>
               </div>
             )}
@@ -156,7 +159,7 @@ export function CardDetail(props: {
           {isFailed && card.batchId !== null && (
             <button className="btn-primary" style={{ alignSelf: 'flex-start', padding: '8px 12px' }} onClick={reprocess}>
               <RotateCw size={13} />
-              Retry
+              {t('card.retry')}
             </button>
           )}
           {busy && <p className="note">{busy}</p>}
@@ -165,12 +168,12 @@ export function CardDetail(props: {
             (playing ? (
               <FramePlayer start={card.start} end={card.end} />
             ) : poster === null ? (
-              <p className="note">No screenshots kept for this card.</p>
+              <p className="note">{t('frames.none')}</p>
             ) : (
               <button
                 className="timelapse"
                 style={poster ? { backgroundImage: `url("${poster}")` } : undefined}
-                aria-label="Play screenshots as a timelapse"
+                aria-label={t('card.playTimelapse')}
                 onClick={() => setPlaying(true)}
               >
                 {poster === undefined ? (
@@ -185,7 +188,7 @@ export function CardDetail(props: {
 
           {card.summary && (
             <div>
-              <div className="label-caps">Summary</div>
+              <div className="label-caps">{t('card.summary')}</div>
               <div className="md">
                 <Markdown>{card.summary}</Markdown>
               </div>
@@ -193,7 +196,7 @@ export function CardDetail(props: {
           )}
           {card.detailedSummary && card.detailedSummary.trim() !== card.summary.trim() && (
             <div>
-              <div className="label-caps">Detailed summary</div>
+              <div className="label-caps">{t('card.detailedSummary')}</div>
               <div className="md">
                 <Markdown>{card.detailedSummary}</Markdown>
               </div>
@@ -201,7 +204,7 @@ export function CardDetail(props: {
           )}
           {card.distractions.length > 0 && (
             <div>
-              <div className="label-caps">Distractions</div>
+              <div className="label-caps">{t('card.distractions')}</div>
               <ul className="distraction-list">
                 {card.distractions.map((d, i) => (
                   <li key={i}>
@@ -215,18 +218,18 @@ export function CardDetail(props: {
               </ul>
             </div>
           )}
-          {rating?.feedback && feedback === null && <p className="note">Your note: {rating.feedback}</p>}
+          {rating?.feedback && feedback === null && <p className="note">{t('card.yourNote', { note: rating.feedback })}</p>}
         </div>
       </div>
 
       {feedback !== null && (
         <div className="feedback-card">
-          <strong style={{ fontSize: 13 }}>What was wrong?</strong>
-          <textarea rows={3} autoFocus placeholder="Optional" value={feedback} onChange={(e) => setFeedback(e.target.value)} />
+          <strong style={{ fontSize: 13 }}>{t('card.whatWasWrong')}</strong>
+          <textarea rows={3} autoFocus placeholder={t('common.optional')} value={feedback} onChange={(e) => setFeedback(e.target.value)} />
           <div className="row" style={{ justifyContent: 'flex-end' }}>
-            <button onClick={() => setFeedback(null)}>Cancel</button>
+            <button onClick={() => setFeedback(null)}>{t('common.cancel')}</button>
             <button className="btn-primary" onClick={() => void window.dayflow.rateCard(span, 'down', feedback).then(() => setFeedback(null))}>
-              Send
+              {t('card.send')}
             </button>
           </div>
         </div>
@@ -234,10 +237,10 @@ export function CardDetail(props: {
       <div className="rate-bar">
         {!isFailed && (
           <>
-            Rate this summary
+            {t('card.rateSummary')}
             <button
               className={`rate-thumb ${rating?.rating === 'up' ? 'on' : ''}`}
-              aria-label="Good card"
+              aria-label={t('card.goodCard')}
               aria-pressed={rating?.rating === 'up'}
               onClick={() => void window.dayflow.rateCard(span, 'up')}
             >
@@ -245,7 +248,7 @@ export function CardDetail(props: {
             </button>
             <button
               className={`rate-thumb ${rating?.rating === 'down' ? 'on' : ''}`}
-              aria-label="Bad card"
+              aria-label={t('card.badCard')}
               aria-pressed={rating?.rating === 'down'}
               onClick={() => setFeedback(rating?.feedback ?? '')}
             >
@@ -254,8 +257,8 @@ export function CardDetail(props: {
           </>
         )}
         <span className="push-right" />
-        {!isFailed && card.batchId !== null && !isPrivate && <ConfirmButton label="Reanalyze" className="neutral" onConfirm={reprocess} />}
-        <ConfirmButton label="Delete" onConfirm={() => void window.dayflow.deleteCard(card.id).then(props.onDeleted)} />
+        {!isFailed && card.batchId !== null && !isPrivate && <ConfirmButton label={t('card.reanalyze')} className="neutral" onConfirm={reprocess} />}
+        <ConfirmButton label={t('common.delete')} onConfirm={() => void window.dayflow.deleteCard(card.id).then(props.onDeleted)} />
       </div>
     </>
   )

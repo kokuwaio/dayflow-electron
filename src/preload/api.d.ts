@@ -3,6 +3,7 @@ import type { GoalPlan } from '../shared/day-summary'
 import type { GoalContext } from '../shared/goal-flow'
 import type { ReviewRating, ReviewSegment } from '../shared/review'
 import type { FrameRef } from '../shared/media'
+import type { Language } from '../shared/languages'
 import type { UpdateMode } from '../shared/updates'
 import type { ScreenPermission, WindowCheck } from '../shared/permissions'
 import type { DayCards, Week } from '../shared/week'
@@ -95,6 +96,8 @@ export interface DayflowApi {
   agentClient(client: AgentClient, action: 'status' | 'connect' | 'disconnect'): Promise<AgentClientState>
   onCardsChanged(cb: () => void): () => void
   onStatus(cb: (status: AppStatus) => void): () => void
+  /** The app language changed (Settings → Other → App language): the resolved language to show. */
+  onLanguage(cb: (language: Language) => void): () => void
 }
 
 declare global {

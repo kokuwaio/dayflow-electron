@@ -3,8 +3,8 @@
 // and the standup (Core/AI/DailyRecap*.swift).
 
 import { type Category, FALLBACK_COLOR, SYSTEM_CATEGORY, categoryKey, isDistractionName } from './categories'
-import { clockMinutes, parseKey, shiftDay, slotOverlap } from './day'
-import { formatMinutes } from './day-summary'
+import { clockMinutes, shiftDay, slotOverlap } from './day'
+import { dateLabel, durationLabel, t } from './i18n'
 import { jsonObject } from './json'
 import type { TimelineCard } from './types'
 
@@ -27,7 +27,7 @@ export function accessProgress(analyzedBatches: number): Record<Feature, Feature
   const minutes = analyzedBatches * BATCH_MINUTES
   const entry = (hours: number) => ({
     unlocked: minutes >= hours * 60,
-    label: `${minutes === 0 ? '0h' : formatMinutes(Math.min(minutes, hours * 60))} / ${hours}h`,
+    label: t('access.progress', { done: minutes === 0 ? t('format.hours', { h: 0 }) : durationLabel(Math.min(minutes, hours * 60)), total: t('format.hours', { h: hours }) }),
     progress: Math.round(Math.min(1, minutes / (hours * 60)) * 10_000) / 10_000
   })
   return { daily: entry(UNLOCK_HOURS.daily), chat: entry(UNLOCK_HOURS.chat), weekly: entry(UNLOCK_HOURS.weekly) }
@@ -80,13 +80,12 @@ export function parseRecap(reply: string): { highlights: string[]; next: string 
 
 /** "Today", "Yesterday", a weekday within the last week, else "Nov 12" (upstream standupDayLabelText). */
 export function dayLabel(day: string, today: string): string {
-  if (day === today) return 'Today'
-  if (day === shiftDay(today, -1)) return 'Yesterday'
-  const date = parseKey(day)
+  if (day === today) return t('daily.today')
+  if (day === shiftDay(today, -1)) return t('daily.yesterday')
   for (let back = 2; back <= 6; back++) {
-    if (day === shiftDay(today, -back)) return date.toLocaleDateString('en-US', { weekday: 'long' })
+    if (day === shiftDay(today, -back)) return dateLabel(day, { weekday: 'long' })
   }
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return dateLabel(day, { month: 'short', day: 'numeric' })
 }
 
 export interface StandupTitles {
@@ -98,26 +97,33 @@ export interface StandupTitles {
 /** Section titles for the current date, so "Yesterday" never goes stale (upstream standupSectionTitles). */
 export function standupTitles(target: string, sourceDay: string | null, today: string): StandupTitles {
   return {
-    highlights: sourceDay ? `Highlights from ${dayLabel(sourceDay, today)}` : 'Recent highlights',
-    tasks: `Tasks for ${dayLabel(target, today)}`,
-    blockers: 'Blockers'
+    highlights: !sourceDay
+      ? t('daily.recentHighlights')
+      : sourceDay === today
+        ? t('daily.highlightsFromToday')
+        : sourceDay === shiftDay(today, -1)
+          ? t('daily.highlightsFromYesterday')
+          : t('daily.highlightsFrom', { day: dayLabel(sourceDay, today) }),
+    // Today and yesterday have texts of their own: other languages inflect or lowercase them there.
+    tasks: target === today ? t('daily.tasksForToday') : target === shiftDay(today, -1) ? t('daily.tasksForYesterday') : t('daily.tasksFor', { day: dayLabel(target, today) }),
+    blockers: t('daily.blockers')
   }
 }
 
 /** An empty draft the user can fill in before anything was generated. */
 export const emptyStandup = (): StandupDraft => ({
-  highlightsTitle: "Yesterday's highlights",
+  highlightsTitle: t('daily.yesterdaysHighlights'),
   highlights: [],
-  tasksTitle: "Today's tasks",
+  tasksTitle: t('daily.todaysTasks'),
   tasks: [],
-  blockersTitle: 'Blockers',
+  blockersTitle: t('daily.blockers'),
   blockersBody: ''
 })
 
 /** Copy format (upstream standupClipboardText): titles, "- item" lines, a blank line between sections. */
 export function standupText(d: StandupDraft, titles: StandupTitles): string {
   const items = (list: string[]) => list.map((i) => i.trim()).filter(Boolean)
-  const section = (title: string, list: string[]) => [title, ...(list.length ? list.map((i) => `- ${i}`) : ['- None right now'])].join('\n')
+  const section = (title: string, list: string[]) => [title, ...(list.length ? list.map((i) => `- ${i}`) : [`- ${t('daily.noneRightNow')}`])].join('\n')
   return [
     section(titles.highlights, items(d.highlights)),
     section(titles.tasks, items(d.tasks)),

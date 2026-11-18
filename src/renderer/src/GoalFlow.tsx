@@ -5,9 +5,11 @@
 
 import { type DragEvent, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 import { Brain, Shapes, X } from 'lucide-react'
 import type { Category } from '@shared/categories'
-import { formatMinutes, type GoalPlan } from '@shared/day-summary'
+import type { GoalPlan } from '@shared/day-summary'
+import { durationLabel } from '@shared/i18n'
 import { type GoalContext, assignCategory, cycleCategory, referenceMinutes, spelledDuration, wheelMinutes } from '@shared/goal-flow'
 import { categoryKey } from '@shared/categories'
 
@@ -22,6 +24,7 @@ export function GoalFlow(props: {
   onSave: (plan: GoalPlan) => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const [step, setStep] = useState(props.start)
   const [draft, setDraft] = useState<GoalPlan>({ ...props.plan, skipped: false })
 
@@ -33,9 +36,9 @@ export function GoalFlow(props: {
 
   // On the body: the inspector's backdrop-filter would make it the containing block of a fixed element.
   return createPortal(
-    <div className="goal-flow-backdrop" role="dialog" aria-modal="true" aria-label="Daily goals">
+    <div className="goal-flow-backdrop" role="dialog" aria-modal="true" aria-label={t('goals.dialogLabel')}>
       <div className="goal-flow">
-        <button className="goal-flow-close" aria-label="Close without saving" onClick={props.onClose}>
+        <button className="goal-flow-close" aria-label={t('goals.closeWithoutSaving')} onClick={props.onClose}>
           <X size={14} />
         </button>
         {step === 'review' && props.context.yesterday ? (
@@ -57,27 +60,31 @@ export function GoalFlow(props: {
 }
 
 function GoalReview({ review, onNext }: { review: NonNullable<GoalContext['yesterday']>; onNext: () => void }) {
+  const { t } = useTranslation()
   const { plan } = review
-  const maxFocus = Math.max(1, ...review.focusTotals.map((t) => t.minutes))
+  const maxFocus = Math.max(1, ...review.focusTotals.map((total) => total.minutes))
   return (
     <div className="goal-review">
-      <h2>Yesterday’s review</h2>
+      <h2>{t('goals.yesterdaysReview')}</h2>
       <ReviewCard
         accent={FOCUS}
         icon={<Brain size={18} color={FOCUS} />}
-        lines={[`Focus target: ${spelledDuration(plan.focusTargetMinutes)}`, `Time spent: ${spelledDuration(review.focusMinutes)}`]}
+        lines={[
+          t('goals.focusTarget', { duration: spelledDuration(plan.focusTargetMinutes) }),
+          t('goals.timeSpent', { duration: spelledDuration(review.focusMinutes) })
+        ]}
         met={review.focusMinutes >= plan.focusTargetMinutes}
         ratio={plan.focusTargetMinutes ? review.focusMinutes / plan.focusTargetMinutes : 1}
       >
         <div className="goal-breakdown">
           {review.focusTotals.length === 0 ? (
-            <p className="note">No focus categories tracked</p>
+            <p className="note">{t('goals.noFocusCategories')}</p>
           ) : (
-            review.focusTotals.slice(0, 4).map((t) => (
-              <div key={t.category}>
-                <span className="name">{t.category}</span>
-                <span className="bar" style={{ width: Math.max(18, (t.minutes / maxFocus) * 86), background: t.color }} />
-                <span className="time">{formatMinutes(t.minutes)}</span>
+            review.focusTotals.slice(0, 4).map((total) => (
+              <div key={total.category}>
+                <span className="name">{total.category}</span>
+                <span className="bar" style={{ width: Math.max(18, (total.minutes / maxFocus) * 86), background: total.color }} />
+                <span className="time">{durationLabel(total.minutes)}</span>
               </div>
             ))
           )}
@@ -86,22 +93,26 @@ function GoalReview({ review, onNext }: { review: NonNullable<GoalContext['yeste
       <ReviewCard
         accent={DISTRACTION}
         icon={<Shapes size={18} color={DISTRACTION} />}
-        lines={[`Distraction limit: ${spelledDuration(plan.distractionLimitMinutes)}`, `Time spent distracted: ${spelledDuration(review.distractedMinutes)}`]}
+        lines={[
+          t('goals.distractionLimitLine', { duration: spelledDuration(plan.distractionLimitMinutes) }),
+          t('goals.timeSpentDistracted', { duration: spelledDuration(review.distractedMinutes) })
+        ]}
         met={review.distractedMinutes <= plan.distractionLimitMinutes}
         ratio={plan.distractionLimitMinutes ? review.distractedMinutes / plan.distractionLimitMinutes : 1}
         right
       />
       <button className="btn-primary goal-flow-btn" onClick={onNext}>
-        Set today’s goals
+        {t('goals.setTodaysGoals')}
       </button>
     </div>
   )
 }
 
 function ReviewCard(props: { accent: string; icon: React.ReactNode; lines: string[]; met: boolean; ratio: number; right?: boolean; children?: React.ReactNode }) {
+  const { t } = useTranslation()
   return (
     <div className="goal-review-card" style={{ '--accent': props.accent } as React.CSSProperties}>
-      <span className={`goal-badge ${props.met ? 'met' : 'missed'}`}>{props.met ? 'NAILED IT' : 'MISSED'}</span>
+      <span className={`goal-badge ${props.met ? 'met' : 'missed'}`}>{props.met ? t('goals.nailedIt') : t('goals.missed')}</span>
       {props.lines.map((l) => (
         <p key={l}>{l}</p>
       ))}
@@ -124,6 +135,7 @@ function GoalSetup(props: {
   onSkip: () => void
   onConfirm: () => void
 }) {
+  const { t } = useTranslation()
   const { draft, categories, context, onChange } = props
   const assigned = new Set([...draft.focusCategories, ...draft.distractionCategories].map(categoryKey))
   const pool = categories.filter((c) => !c.isIdle && !assigned.has(categoryKey(c.name)))
@@ -143,11 +155,11 @@ function GoalSetup(props: {
       <section className={`goal-panel ${kind}`} style={{ '--accent': isFocus ? FOCUS : DISTRACTION } as React.CSSProperties}>
         <header>
           {isFocus ? <Brain size={16} /> : <Shapes size={16} />}
-          {isFocus ? 'Focus goal' : 'Distraction limit'}
+          {isFocus ? t('goals.focusGoal') : t('goals.distractionLimit')}
         </header>
         <div className="goal-panel-body">
-          <div className="goal-drop" onDragOver={(e) => e.preventDefault()} onDrop={onDrop(kind)} aria-label={`${isFocus ? 'Focus' : 'Distraction'} categories`}>
-            <span className="goal-drop-title">Categories</span>
+          <div className="goal-drop" onDragOver={(e) => e.preventDefault()} onDrop={onDrop(kind)} aria-label={isFocus ? t('goals.focusCategories') : t('goals.distractionCategories')}>
+            <span className="goal-drop-title">{t('goals.categories')}</span>
             {names.map((n) => (
               <GoalChip key={n} name={n} color={colorOf(n)} removable onClick={() => onChange(assignCategory(draft, n, null))} />
             ))}
@@ -158,17 +170,17 @@ function GoalSetup(props: {
           />
         </div>
         <footer>
-          <Stat label={isFocus ? 'Yesterday’s focus' : 'Yesterday’s Distractions'} minutes={yesterday} max={Math.max(yesterday, week)} color={isFocus ? FOCUS : '#FF706B'} />
-          <Stat label={isFocus ? 'Last week’s Focus average' : 'Last week’s Distraction average'} minutes={week} max={Math.max(yesterday, week)} color={isFocus ? FOCUS : '#FF706B'} />
+          <Stat label={isFocus ? t('goals.yesterdaysFocus') : t('goals.yesterdaysDistractions')} minutes={yesterday} max={Math.max(yesterday, week)} color={isFocus ? FOCUS : '#FF706B'} />
+          <Stat label={isFocus ? t('goals.lastWeekFocus') : t('goals.lastWeekDistraction')} minutes={week} max={Math.max(yesterday, week)} color={isFocus ? FOCUS : '#FF706B'} />
         </footer>
       </section>
     )
   }
   return (
     <div className="goal-setup">
-      <h2>Where do you want to spend your time today?</h2>
+      <h2>{t('goals.whereToSpend')}</h2>
       <div className="goal-pool" onDragOver={(e) => e.preventDefault()} onDrop={onDrop(null)}>
-        <p className="note">Drag and drop to set the categories you want to track</p>
+        <p className="note">{t('goals.dragHint')}</p>
         <div className="goal-chips">
           {pool.map((c) => (
             <GoalChip key={c.id} name={c.name} color={c.color} onClick={() => onChange(cycleCategory(draft, c.name))} />
@@ -181,10 +193,10 @@ function GoalSetup(props: {
       </div>
       <div className="goal-flow-actions">
         <button className="btn-secondary" onClick={props.onSkip}>
-          Skip today
+          {t('goals.skipToday')}
         </button>
         <button className="btn-primary" onClick={props.onConfirm}>
-          Confirm
+          {t('common.confirm')}
         </button>
       </div>
     </div>
@@ -192,12 +204,13 @@ function GoalSetup(props: {
 }
 
 function GoalChip({ name, color, removable, onClick }: { name: string; color: string; removable?: boolean; onClick: () => void }) {
+  const { t } = useTranslation()
   return (
     <button
       className="goal-chip"
       draggable
       style={{ '--c': color } as React.CSSProperties}
-      title={removable ? 'Click to remove' : 'Drag into a goal panel, or click to cycle between Focus, Distraction, and untracked'}
+      title={removable ? t('goals.chipRemove') : t('goals.chipCycle')}
       onDragStart={(e) => e.dataTransfer.setData('text/plain', name)}
       onClick={onClick}
     >
@@ -213,7 +226,7 @@ function Stat({ label, minutes, max, color }: { label: string; minutes: number; 
     <div className="goal-stat">
       <span className="k">{label}</span>
       <span className="v" style={{ color }}>
-        {formatMinutes(minutes)}
+        {durationLabel(minutes)}
       </span>
       <span className="bar" style={{ width: minutes ? Math.max(12, (86 * minutes) / Math.max(1, max)) : 0, background: color }} />
     </div>
@@ -222,12 +235,13 @@ function Stat({ label, minutes, max, color }: { label: string; minutes: number; 
 
 /** Two wheels: hours 0-12 and minutes 0-55 in steps of 5 (upstream DayGoalDurationPicker). */
 function DurationPicker({ minutes, onChange }: { minutes: number; onChange: (m: number) => void }) {
+  const { t } = useTranslation()
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
   return (
     <div className="duration-picker">
-      <Wheel label="Hours" value={h} max={12} step={1} onChange={(v) => onChange(wheelMinutes(v, m))} />
-      <Wheel label="Mins" value={m} max={55} step={5} onChange={(v) => onChange(wheelMinutes(h, v))} />
+      <Wheel label={t('goals.hours')} value={h} max={12} step={1} onChange={(v) => onChange(wheelMinutes(v, m))} />
+      <Wheel label={t('goals.mins')} value={m} max={55} step={5} onChange={(v) => onChange(wheelMinutes(h, v))} />
     </div>
   )
 }

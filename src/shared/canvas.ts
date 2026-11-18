@@ -5,6 +5,7 @@
 
 import { SYSTEM_CATEGORY } from './categories'
 import { DAY_START_MINUTE, clockMinutes, dayKey, dayRange } from './day'
+import { currentLanguage, hourAxisLabel } from './i18n'
 
 /** Upstream's TimelineScale.hourHeight. */
 export const HOUR_HEIGHT = 168
@@ -47,7 +48,9 @@ export function hourMarks(day: string, now: number): HourMark[] {
   const nowIndex = dayKey(now) === day ? hourIndex(now) : Infinity
   return Array.from({ length: 24 }, (_, i) => {
     const h = (4 + i) % 24
-    return { label: `${h % 12 === 0 ? 12 : h % 12}:00 ${h < 12 ? 'AM' : 'PM'}`, top: i * HOUR_HEIGHT, future: i > nowIndex }
+    // English keeps upstream's "4:00 AM"; other languages their own clock ("04:00").
+    const label = currentLanguage() === 'en' ? `${h % 12 === 0 ? 12 : h % 12}:00 ${h < 12 ? 'AM' : 'PM'}` : hourAxisLabel(h * 60)
+    return { label, top: i * HOUR_HEIGHT, future: i > nowIndex }
   })
 }
 

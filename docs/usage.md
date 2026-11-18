@@ -68,7 +68,7 @@ which is stored in your keyring (KWallet or Secret Service).
 Click **Test connection** after saving. **Fallback provider** takes over a
 batch when the main provider fails (offline, rate limit, bad key).
 **Output language override** sets the language of titles and summaries (empty
-means English).
+means English). The app's own texts follow [App language](#app-language).
 
 ## The window
 
@@ -484,6 +484,24 @@ light, or to **System** to follow your desktop's light or dark setting.
 Both themes come in light and dark, so Appearance works with either. Your
 category colours stay the same in both. The first-run setup follows the theme
 too.
+
+## App language
+
+**Settings → Other → App language** sets the language of the app's menus,
+buttons, messages, the tray and notifications: English (the default),
+Deutsch, Français, Русский, 日本語, 한국어, 简体中文 or 繁體中文. **System
+default** follows your desktop's language, and English when it is none of
+these. The window, tray and notifications switch at once, no restart needed.
+Dates, times and durations follow the chosen language too.
+
+Some texts stay English: the card titles and summaries (set their language
+with **Output language override** under Providers), category names, the
+terminal command and MCP tools, and error messages from the AI providers.
+The Weekly view is translated in a later version.
+
+Many translations come from upstream Dayflow; the others are machine
+translations waiting for a native speaker's review (listed in
+`src/shared/locales/machine-translated.json`). Corrections are welcome.
 
 ## Pause, privacy and storage
 

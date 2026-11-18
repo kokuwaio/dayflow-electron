@@ -2,6 +2,8 @@
 // replace upstream's Sparkle with electron-updater and GitHub Releases. The
 // Flatpak updates through Flatpak; development builds never update.
 
+import { t } from './i18n'
+
 /** Where electron-builder's publish config points (electron-builder.yml). */
 export const RELEASES_REPO = 'kokuwaio/dayflow-electron'
 /** How often the app looks for a new release. */
@@ -82,12 +84,12 @@ export function updateMenuItem(state: UpdateState, mode: 'install' | 'notify'): 
       return null
     case 'available':
       return mode === 'notify'
-        ? { label: `Get version ${state.version}…`, action: 'open-release' }
-        : { label: `Download version ${state.version}`, action: 'download' }
+        ? { label: t('updates.menuGet', { version: state.version }), action: 'open-release' }
+        : { label: t('updates.menuDownload', { version: state.version }), action: 'download' }
     case 'downloading':
-      return { label: `Downloading version ${state.version} (${Math.round(state.percent)}%)`, action: null }
+      return { label: t('updates.menuDownloading', { version: state.version, percent: Math.round(state.percent) }), action: null }
     case 'ready':
-      return { label: `Restart to update to ${state.version}`, action: 'restart' }
+      return { label: t('updates.menuRestart', { version: state.version }), action: 'restart' }
   }
 }
 

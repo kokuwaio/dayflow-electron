@@ -5,6 +5,8 @@
 // Upstream asks for Accessibility too; our macOS window detection reads window
 // titles through the Screen Recording permission, so that row is left out.
 
+import { t } from './i18n'
+
 /** Whether screen capture may run without asking (macOS permission, Linux restore token). */
 export type ScreenAccess = 'granted' | 'not-granted'
 
@@ -79,18 +81,18 @@ const row = (r: Pick<PermissionRow, 'id' | 'title' | 'detail'> & Partial<Permiss
 })
 
 function macScreenRow(input: PermissionsInput): PermissionRow {
-  const base = { id: 'screen' as const, title: 'Screen Recording', detail: 'Periodic screenshots let Dayflow Electron write your timeline for you.' }
-  if (input.screen === null) return row({ ...base, status: { kind: 'neutral', label: 'Checking…' } })
-  if (input.screen === 'granted') return row({ ...base, status: { kind: 'good', label: 'Granted' } })
+  const base = { id: 'screen' as const, title: t('permissions.macScreen.title'), detail: t('permissions.macScreen.detail') }
+  if (input.screen === null) return row({ ...base, status: { kind: 'neutral', label: t('permissions.checking') } })
+  if (input.screen === 'granted') return row({ ...base, status: { kind: 'good', label: t('permissions.granted') } })
   return row({
     ...base,
-    status: { kind: 'warn', label: 'Not granted' },
+    status: { kind: 'warn', label: t('permissions.notGranted') },
     actions: input.requested ? ['grant', 'relaunch'] : ['grant'],
     busy: input.busy,
     note:
       input.error ??
       (input.requested
-        ? 'Turn on Dayflow Electron in System Settings → Privacy & Security → Screen Recording, then quit and reopen the app.'
+        ? t('permissions.macScreen.turnOn')
         : null)
   })
 }
@@ -98,15 +100,14 @@ function macScreenRow(input: PermissionsInput): PermissionRow {
 function linuxScreenRow(input: PermissionsInput): PermissionRow {
   const base = {
     id: 'screen' as const,
-    title: 'Screen sharing',
-    detail:
-      'Your desktop asks which screens to share. Choose all screens and allow restoring the permission, so it does not ask again. The app keeps only the screen under your mouse.'
+    title: t('permissions.linuxScreen.title'),
+    detail: t('permissions.linuxScreen.detail')
   }
-  if (input.screen === null) return row({ ...base, status: { kind: 'neutral', label: 'Checking…' } })
-  if (input.screen === 'granted') return row({ ...base, status: { kind: 'good', label: 'Allowed' } })
+  if (input.screen === null) return row({ ...base, status: { kind: 'neutral', label: t('permissions.checking') } })
+  if (input.screen === 'granted') return row({ ...base, status: { kind: 'good', label: t('permissions.allowed') } })
   return row({
     ...base,
-    status: { kind: 'warn', label: 'Not allowed yet' },
+    status: { kind: 'warn', label: t('permissions.notAllowedYet') },
     actions: ['grant'],
     busy: input.busy,
     note: input.error
@@ -116,24 +117,24 @@ function linuxScreenRow(input: PermissionsInput): PermissionRow {
 function linuxWindowRow({ window }: PermissionsInput): PermissionRow {
   const base = {
     id: 'window' as const,
-    title: 'Window detection (optional)',
-    detail: 'Blocked apps such as password managers are left out of recordings only where the app can see the active window.'
+    title: t('permissions.window.title'),
+    detail: t('permissions.window.detail')
   }
-  if (window.state === 'checking') return row({ ...base, status: { kind: 'neutral', label: 'Checking…' } })
-  if (window.state === 'ok') return row({ ...base, status: { kind: 'good', label: 'Works' } })
+  if (window.state === 'checking') return row({ ...base, status: { kind: 'neutral', label: t('permissions.checking') } })
+  if (window.state === 'ok') return row({ ...base, status: { kind: 'good', label: t('permissions.works') } })
   if (window.command) {
     return row({
       ...base,
-      detail: `${base.detail} In the Flatpak on KDE Plasma, run this command once, then restart the app.`,
-      status: { kind: 'warn', label: 'Needs permission' },
+      detail: t('permissions.window.detailFlatpak'),
+      status: { kind: 'warn', label: t('permissions.needsPermission') },
       actions: ['recheck'],
       command: window.command
     })
   }
   return row({
     ...base,
-    detail: `${base.detail} Where it is not available, pause recording before opening a password manager.`,
-    status: { kind: 'warn', label: 'Not available' },
+    detail: t('permissions.window.detailUnavailable'),
+    status: { kind: 'warn', label: t('permissions.notAvailable') },
     actions: ['recheck'],
     note: window.reason
   })
@@ -150,7 +151,7 @@ export function permissionsView(input: PermissionsInput): PermissionsView {
     return { rows: [linuxScreenRow(input), linuxWindowRow(input)], canContinue: true, skippable: false }
   }
   return {
-    rows: [row({ id: 'none', title: 'Nothing to allow', detail: 'Windows needs no permission for screenshots. Recording starts as soon as you launch.' })],
+    rows: [row({ id: 'none', title: t('permissions.windows.title'), detail: t('permissions.windows.detail') })],
     canContinue: true,
     skippable: false
   }

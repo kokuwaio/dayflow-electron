@@ -1,0 +1,795 @@
+{
+  "common": {
+    "dismiss": "忽略",
+    "copied": "已复制",
+    "confirm": "确认",
+    "back": "返回",
+    "next": "下一步",
+    "continue": "继续",
+    "copy": "复制",
+    "save": "保存",
+    "saved": "已保存",
+    "reset": "重置",
+    "open": "打开",
+    "retry": "重试",
+    "close": "关闭",
+    "optional": "可选",
+    "cancel": "取消",
+    "delete": "删除"
+  },
+  "app": {
+    "views": "视图",
+    "tabs": {
+      "timeline": "时间线",
+      "daily": "日报",
+      "weekly": "周报",
+      "chat": "聊天",
+      "settings": "设置"
+    },
+    "analysisFailed": "分析失败",
+    "captureFailed": "截屏失败",
+    "openSettings": "打开设置"
+  },
+  "providers": {
+    "anthropic": {
+      "hint": "通过 Anthropic API 使用 Claude 模型。"
+    },
+    "gemini": {
+      "hint": "Google Gemini API；画面以内联方式发送。"
+    },
+    "openai": {
+      "label": "兼容 OpenAI",
+      "hint": "OpenAI、OpenRouter，或本地 Ollama、LM Studio 服务器（无需密钥；分小步分析）。"
+    },
+    "claudeCli": {
+      "hint": "使用你的 claude CLI 及其订阅；无需 API 密钥。"
+    },
+    "codexCli": {
+      "hint": "使用你的 codex CLI 及其 ChatGPT 订阅；无需 API 密钥。"
+    }
+  },
+  "format": {
+    "hoursMinutes": "{{h}}小时 {{m}}分钟",
+    "hours": "{{h}}小时",
+    "minutes": "{{m}}分钟",
+    "spelledHours_other": "{{count}} 小时",
+    "spelledMinutes_other": "{{count}} 分钟",
+    "spelledHoursMinutes": "{{hours}}, {{minutes}}"
+  },
+  "access": {
+    "progress": "{{done}} / {{total}}"
+  },
+  "recorder": {
+    "recording": "录制",
+    "paused": "已暂停",
+    "pausedUntil": "已暂停至 {{time}}",
+    "locked": "锁屏时已暂停",
+    "sleeping": "睡眠时已暂停",
+    "backoff": "截屏失败",
+    "backoffUntil": "截屏失败，将于 {{time}} 重试",
+    "stopped": "已停止"
+  },
+  "pause": {
+    "forMinutes_other": "{{count}} 分钟",
+    "forHours_other": "{{count}} 小时",
+    "untilResumed": "直到我手动继续",
+    "chipMinutes_other": "暂停 {{count}} 分钟",
+    "chipHours_other": "暂停 {{count}} 小时",
+    "chipUntilResumed": "暂停，直到我手动继续",
+    "chipShortMinutes_other": "{{count}} 分钟",
+    "chipShortHours_other": "{{count}} 小时",
+    "pausedFor": "Dayflow Electron 已暂停 {{time}}",
+    "pausedIndefinitely": "Dayflow Electron 已无限期暂停",
+    "hiddenBlockedApp": "已隐藏：前台为已屏蔽的应用",
+    "resume": "继续",
+    "pause": "暂停",
+    "closeOptions": "关闭暂停选项",
+    "pauseRecording": "暂停录制"
+  },
+  "tray": {
+    "tooltip": "Dayflow Electron：{{status}}",
+    "resume": "继续录制",
+    "pause": "暂停录制",
+    "open": "打开 Dayflow Electron",
+    "openRecordings": "打开录制文件夹",
+    "quit": "退出"
+  },
+  "notifications": {
+    "standupReady": {
+      "title": "你昨天的每日回顾已就绪",
+      "body": "点按以在每日回顾视图中打开。"
+    },
+    "firstCards": {
+      "title": "你的首批 Dayflow Electron 卡片已准备好",
+      "body": "看看 Dayflow Electron 从你最近几分钟的工作中记录了什么。"
+    },
+    "weeklyUnlocked": {
+      "title": "每周回顾已就绪",
+      "body": "点按以打开每周回顾。"
+    },
+    "problem": {
+      "title": "Dayflow Electron 需要你的帮助",
+      "waiting": "有 {{time}} 的录制内容等待处理。"
+    },
+    "waitingMinutes_other": "{{count}} 分钟",
+    "waitingHours_other": "{{count}} 小时",
+    "waitingDay": "1 天"
+  },
+  "updates": {
+    "available": {
+      "title": "Dayflow Electron {{version}} 现已推出",
+      "bodyDownload": "点按即可下载。",
+      "bodyOpen": "此版本无法自行安装更新。点按以打开下载页面。"
+    },
+    "ready": {
+      "title": "Dayflow Electron {{version}} 已准备就绪",
+      "body": "重启 Dayflow Electron 即可更新，或在下次退出时自动更新。"
+    },
+    "menuGet": "获取版本 {{version}}…",
+    "menuDownload": "下载版本 {{version}}",
+    "menuDownloading": "正在下载版本 {{version}}（{{percent}}%）",
+    "menuRestart": "重启以更新到 {{version}}"
+  },
+  "permissions": {
+    "checking": "正在检查…",
+    "granted": "已授权",
+    "notGranted": "未授权",
+    "allowed": "已允许",
+    "notAllowedYet": "尚未允许",
+    "works": "正常",
+    "needsPermission": "需要权限",
+    "notAvailable": "不可用",
+    "macScreen": {
+      "title": "屏幕录制",
+      "detail": "通过定期截屏，Dayflow Electron 可以为你自动编写时间线。",
+      "turnOn": "在“系统设置 → 隐私与安全性 → 屏幕录制”中开启 Dayflow Electron，然后退出并重新打开应用。"
+    },
+    "linuxScreen": {
+      "title": "屏幕共享",
+      "detail": "桌面会询问要共享哪些屏幕。请选择所有屏幕并允许恢复此权限，这样就不会再次询问。应用只会保留鼠标所在的屏幕。"
+    },
+    "window": {
+      "title": "窗口检测（可选）",
+      "detail": "只有在应用能识别当前活动窗口时，密码管理器等已屏蔽的应用才会被排除在录制之外。",
+      "detailFlatpak": "只有在应用能识别当前活动窗口时，密码管理器等已屏蔽的应用才会被排除在录制之外。在 KDE Plasma 上使用 Flatpak 版本时，请运行一次以下命令，然后重启应用。",
+      "detailUnavailable": "只有在应用能识别当前活动窗口时，密码管理器等已屏蔽的应用才会被排除在录制之外。若此功能不可用，请在打开密码管理器之前暂停录制。"
+    },
+    "windows": {
+      "title": "无需授权",
+      "detail": "Windows 截屏无需任何权限。启动后即开始录制。"
+    }
+  },
+  "daily": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "highlightsFrom": "{{day}}的亮点",
+    "highlightsFromToday": "今天的亮点",
+    "highlightsFromYesterday": "昨天的亮点",
+    "recentHighlights": "近期亮点",
+    "tasksFor": "{{day}}的任务",
+    "tasksForToday": "今天的任务",
+    "tasksForYesterday": "昨天的任务",
+    "blockers": "阻碍事项",
+    "yesterdaysHighlights": "昨日亮点",
+    "todaysTasks": "今日任务",
+    "noneRightNow": "目前没有",
+    "todayDate": "今天，{{date}}",
+    "locked": {
+      "title": "Dayflow Electron 每日回顾",
+      "intro": "每日回顾以全新方式呈现你的一天，并快速生成站会进度更新。",
+      "unlock": "分析 5 小时时间线数据后即可解锁每日回顾。"
+    },
+    "headingToday": "今天截至目前。明天再来查看完整的一天。",
+    "headingYesterday": "你昨天的工作流程",
+    "headingOn": "你在 {{date}} 的工作流程",
+    "totalToday": "今天截至目前的总计",
+    "totalYesterday": "昨日总计",
+    "totalOn": "{{date}}的总计",
+    "previousDay": "前一天",
+    "nextDay": "后一天",
+    "distractions": "分心事项",
+    "distractionTooltip": "{{duration}}：{{title}}",
+    "noActivityYet": "尚未捕捉到任何活动。",
+    "noActivityDay": "上午 9 点至晚上 9 点之间未捕捉到任何活动",
+    "standupFor": "{{date}} 的站会",
+    "copyStandup": "复制站会更新",
+    "regenerate": "重新生成",
+    "regenerating": "正在重新生成…",
+    "notGenerated": "尚未生成每日回顾数据。点按“重新生成”立即生成，或自行填写。",
+    "blockersPlaceholder": "填写你遇到的任何阻碍",
+    "itemLabel": "{{title}}第 {{number}} 项",
+    "addItem": "添加项目"
+  },
+  "chat": {
+    "errors": {
+      "busy": "助手仍在回答。",
+      "locked": "获得 10 小时时间线数据后即可解锁聊天。",
+      "empty": "请先输入问题。"
+    },
+    "newChat": "新建聊天",
+    "followUp": "跟进",
+    "placeholder": "询问有关你的 Dayflow Electron 数据的问题...",
+    "provider": "提供商",
+    "send": "发送",
+    "copyAnswer": "复制回答",
+    "status": {
+      "thinking": "思考中",
+      "tools": "正在运行工具",
+      "answering": "正在回答"
+    },
+    "locked": {
+      "title": "解锁聊天",
+      "beta": "测试版",
+      "intro": "你可以在聊天中询问有关 Dayflow Electron 活动的问题，并获取摘要、比较和洞察。",
+      "dataRequired": "需要 10 小时的时间线数据",
+      "dataNote": "Dayflow Electron 分析了足够的活动后，聊天功能将解锁。{{progress}}",
+      "providerConfigured": "已配置 AI 提供商",
+      "providerRequired": "需要 AI 提供商",
+      "providerNote": "在“设置”中添加 AI 提供商即可解锁聊天。",
+      "progress": "聊天解锁进度",
+      "keepRecording": "继续录制以解锁",
+      "privacy": "<b>隐私说明：</b>你的问题和回答都保留在这台电脑上，只有你选择的提供商能看到。"
+    },
+    "welcome": {
+      "title": "询问你的 Dayflow Electron 数据",
+      "intro": "提问、分析你的时间线并生成图表。",
+      "memory": "我会记住你的回复偏好，尽管告诉我你喜欢的风格。",
+      "try": "试试其中一个",
+      "prompts": {
+        "standup": "生成昨天的站会笔记",
+        "lastWeek": "我上周完成了哪些事？",
+        "focused": "本周我什么时候最专注",
+        "compare": "将本周与上周进行比较"
+      }
+    },
+    "history": {
+      "title": "历史记录",
+      "empty": "尚无已保存的聊天",
+      "delete": "删除 {{title}}",
+      "groups": {
+        "today": "今天",
+        "yesterday": "昨天",
+        "thisWeek": "本周",
+        "earlier": "更早"
+      }
+    },
+    "memory": {
+      "title": "记忆",
+      "note": "根据助手回复自动更新。你可以手动编辑。",
+      "clear": "清除记忆"
+    }
+  },
+  "settings": {
+    "export": {
+      "startAfterEnd": "开始时间必须早于或等于结束时间。",
+      "tooLong": "最多只能选择十年。",
+      "canceled": "导出已取消",
+      "saveFailed": "无法保存文件：{{error}}",
+      "saved": "已保存到 {{path}}。活动数：{{activities}}；天数：{{days}}。",
+      "title": "导出",
+      "sub": "将某一日期范围内的时间线保存为 Markdown 文件。",
+      "range": "日期范围",
+      "from": "开始时间",
+      "to": "至",
+      "asMarkdown": "导出为 Markdown"
+    },
+    "providers": {
+      "testAnswered": "{{model}} 回答：{{text}}",
+      "cliFound": "已找到 {{path}}。点按“测试连接”以确认你已登录。",
+      "cliNotFound": "未找到。请安装，或输入其完整路径。",
+      "cliNotFoundAt": "在 {{path}} 未找到。请安装，或输入其完整路径。",
+      "title": "AI 提供商",
+      "sub": "截图只会发送给此处选择的提供商。其他任何数据都不会离开这台电脑。",
+      "provider": "提供商",
+      "inUse": "使用中",
+      "model": "模型",
+      "baseUrl": "基础 URL",
+      "baseUrlSub": "例如，Ollama 使用 http://localhost:11434/v1。",
+      "apiKey": "API 密钥",
+      "keyStored": "已存储在你的密钥环中",
+      "keyNotSet": "未设置",
+      "keySaved": "密钥已保存到你的密钥环中。",
+      "keyRemoved": "密钥已移除。",
+      "keyReplacePlaceholder": "输入新密钥以替换",
+      "keyPlaceholder": "粘贴你的 API 密钥",
+      "saveKey": "保存密钥",
+      "removeKey": "移除密钥",
+      "connection": "连接",
+      "asking": "正在询问模型…",
+      "connectionSub": "向模型发送一个小请求。",
+      "testConnection": "测试连接",
+      "fallback": "备用提供商",
+      "fallbackSub": "主提供商失败时接管该批次。在上方选择它即可设置其模型和密钥。",
+      "none": "无",
+      "fallbackOption": "{{provider}}（{{model}}）",
+      "fallbackOptionNoKey": "{{provider}}（{{model}}），尚无密钥",
+      "outputLanguage": "覆盖输出语言",
+      "outputLanguageSub": "模型编写卡片文本所用的语言。留空表示英语。应用自身的文本遵循“设置 → 其他 → 应用语言”。",
+      "outputLanguagePlaceholder": "英语",
+      "cliPath": "{{cli}} 的路径",
+      "cliPathSub": "可选；会自动查找。",
+      "cliPathPlaceholder": "例如 /home/you/.local/bin/{{cli}}",
+      "cliLabel": "{{cli}} CLI",
+      "looking": "正在查找…",
+      "cliSub": "使用你自己的 {{cli}} CLI 及其登录信息运行。图片和提示词将通过你的订阅发送给 {{vendor}}。在 Flatpak 中，需要一次性授权，因为这会允许应用在你的电脑上启动程序。",
+      "checkCli": "检查 {{cli}}"
+    },
+    "title": "设置",
+    "sections": "设置分区",
+    "tabs": {
+      "storage": "存储空间",
+      "privacy": "隐私",
+      "providers": "提供商",
+      "agents": "MCP / CLI",
+      "export": "导出",
+      "other": "其他"
+    },
+    "version": "Dayflow Electron v{{version}}",
+    "releaseNotes": "发布说明 ↗",
+    "prompt": {
+      "title": "提示词",
+      "sub": "替换模型在生成标题、摘要和详细日志时遵循的规则。字段留空则使用上游 Dayflow 的文本。",
+      "placeholder": "上游默认",
+      "fields": {
+        "title": "标题规则",
+        "summary": "摘要规则",
+        "detailedSummary": "详细日志规则"
+      }
+    },
+    "storage": {
+      "recording": "录制",
+      "recordingSub": "只录制鼠标所在的屏幕。锁屏期间录制会暂停。",
+      "frequency": "截屏频率",
+      "frequencySub": "截屏的频率。",
+      "everySeconds_other": "每 {{count}} 秒",
+      "resolution": "分辨率",
+      "title": "存储空间",
+      "sub": "达到上限时，会优先删除最旧的截图。卡片会保留。",
+      "limit": "存储上限",
+      "used": "截图占用 {{size}} GB。",
+      "limitAria": "存储上限（GB）",
+      "folder": "录制文件夹"
+    },
+    "privacy": {
+      "title": "已屏蔽的应用",
+      "sub": "当这些应用之一是焦点窗口时，不会保存任何内容，该时段显示为“私密”。每行一条规则：应用 ID（例如 <code>org.keepassxc.KeePassXC</code>），或 <code>title:</code> 后接窗口标题中的文字。",
+      "rules": "规则",
+      "detectionOff": "窗口检测已关闭，因此已屏蔽的应用会像其他窗口一样被录制。",
+      "detectionWorks": "窗口检测正常。",
+      "hidePrivate": "隐藏无痕浏览窗口",
+      "hidePrivateSub": "Chrome 无痕窗口和 Firefox 隐私窗口会以遮盖卡片代替截图。此功能通过窗口标题识别，因此也需要窗口检测。",
+      "hideSecrets": "隐藏截图中的敏感信息",
+      "hideSecretsSub": "读取发送给 AI 提供商的每一帧画面中的文字，并涂黑识别出的 API 密钥、密码、私钥、助记词和恢复码。识别基于模式匹配，因此会有遗漏，且每帧会增加几秒钟处理时间。"
+    },
+    "reprocess": {
+      "title": "重新处理",
+      "sub": "重新分析某一天。当天的卡片会被替换；录制内容会保留。",
+      "day": "天",
+      "dayAria": "要重新处理的日期",
+      "queued_other": "已将 {{count}} 个批次加入分析队列。",
+      "nothing": "当天没有任何录制内容。",
+      "confirm": "确认",
+      "button": "重新处理当天"
+    },
+    "other": {
+      "general": "通用",
+      "appLanguage": "应用语言",
+      "appLanguageSub": "应用菜单、按钮和消息的语言。卡片文本遵循“提供商”中的输出语言。",
+      "systemDefault": "系统默认",
+      "appearance": "外观",
+      "appearanceSub": "深色、浅色或跟随桌面设置。",
+      "dark": "深色",
+      "light": "浅色",
+      "system": "系统",
+      "theme": "主题",
+      "themeSub": "现代：扁平的中性灰色，搭配一种强调色。原版：上游 Dayflow 的暖色风格。",
+      "modern": "现代",
+      "original": "原版",
+      "launchAtLogin": "登录时启动 Dayflow Electron",
+      "launchAtLoginAria": "登录时启动",
+      "showIcons": "在时间线中显示应用/网站图标",
+      "showIconsSub": "图标直接从网站本身加载（例如 github.com/favicon.ico），这些网站会因此得知你的 IP 地址。",
+      "showIconsAria": "显示图标",
+      "goalPopups": "显示每日目标弹窗",
+      "goalPopupsSub": "关闭后，Dayflow Electron 不会在凌晨 4 点后自动打开目标设置或昨日回顾。"
+    },
+    "updates": {
+      "check": "检查更新",
+      "checkSub": "每隔几小时向 GitHub 查询新版本。这是除 AI 提供商之外唯一的请求；关闭后将不会发送任何更新请求。",
+      "autoInstall": "自动安装更新",
+      "autoInstallUnsigned": "此版本未使用 Developer ID 签名，因此 macOS 不允许它安装更新。有新版本时，Dayflow Electron 会通知你。",
+      "autoInstallSub": "在后台从 GitHub 下载新版本，并在 Dayflow Electron 重启时安装。关闭后：Dayflow Electron 只会通知你有新版本。"
+    },
+    "categories": {
+      "title": "类别",
+      "sub": "描述会告诉模型每个类别包含哪些内容。“空闲”用于离开电脑的时间。",
+      "colorOf": "{{name}} 的颜色",
+      "name": "名称",
+      "descriptionOf": "{{name}} 的描述",
+      "idlePlaceholder": "离开电脑的时间",
+      "placeholder": "此类别包含的内容",
+      "remove": "移除 {{name}}",
+      "addOrReplace": "添加或替换",
+      "newName": "类别 {{n}}",
+      "add": "添加类别",
+      "presetAria": "应用预设",
+      "presetPlaceholder": "使用预设…",
+      "replaceHint": "现有卡片保留原有名称。",
+      "replaceWith": "替换为 {{role}}",
+      "roles": {
+        "softwareEngineer": "软件工程师",
+        "founder": "创始人 / 高管",
+        "designer": "设计师",
+        "student": "学生",
+        "productManager": "产品经理",
+        "dataScientist": "数据科学家",
+        "other": "其他"
+      }
+    }
+  },
+  "summary": {
+    "status": {
+      "skipped": "设定今日目标以启用下方的进度条。",
+      "paused": "Dayflow Electron 已暂停。继续运行以持续跟踪你的进度。",
+      "stopped": "启动 Dayflow Electron 以继续追踪你的进度。",
+      "tracking": "根据你的专注和分心类别跟踪进度。"
+    },
+    "setTodaysGoals": "设定今日目标",
+    "todaysTargets": "今日目标",
+    "targets": "目标",
+    "setGoals": "设定目标",
+    "editGoals": "编辑目标",
+    "daySoFar": "今天到目前为止",
+    "noActivity": "暂无活动数据",
+    "yourFocus": "你的专注情况",
+    "yourFocusInfo": "根据目标中计为专注的类别计算",
+    "editCategoriesForFocus": "编辑类别以计算专注时间。",
+    "totalFocus": "专注总时长",
+    "longestFocus": "最长专注时长",
+    "distractionsSoFar": "目前的分心情况",
+    "totalCaptured": "捕捉的总时长",
+    "totalDistracted": "分心总时长",
+    "focus": "专注",
+    "focusFulfilled": "<b>{{done}}</b>/ {{target}} 小时已完成",
+    "distraction": "分心",
+    "distractionUsed": "<b>{{used}}</b>/ {{limit}}",
+    "distractionUsedOver": "<b>{{used}}</b>/ {{limit}} 已用",
+    "distractionBudget": "分心时间预算",
+    "donutLabel": "各类别用时，共 {{total}}",
+    "total": "总计",
+    "longestFocusRange": "最长专注时段：{{start}} 至 {{end}}",
+    "percentDistracted": "{{percent}}% 分心",
+    "yourReview": "你的回顾",
+    "lastReviewedAt": "上次回顾时间为 {{time}}。",
+    "noReviews": "暂无回顾。",
+    "reviewCards_other": " 回顾 {{count}} 张卡片以更新数据。"
+  },
+  "goals": {
+    "dialogLabel": "每日目标",
+    "closeWithoutSaving": "关闭且不保存",
+    "yesterdaysReview": "昨日回顾",
+    "focusTarget": "专注目标：{{duration}}",
+    "timeSpent": "用时：{{duration}}",
+    "noFocusCategories": "未跟踪专注类别",
+    "distractionLimitLine": "分心时限：{{duration}}",
+    "timeSpentDistracted": "分心时长：{{duration}}",
+    "setTodaysGoals": "设定今日目标",
+    "nailedIt": "搞定了",
+    "missed": "已错过",
+    "focusGoal": "专注目标",
+    "distractionLimit": "分心时限",
+    "focusCategories": "专注类别",
+    "distractionCategories": "分心类别",
+    "categories": "类别",
+    "yesterdaysFocus": "昨日的专注情况",
+    "yesterdaysDistractions": "昨日的分心活动",
+    "lastWeekFocus": "上周平均专注度",
+    "lastWeekDistraction": "上周平均分心程度",
+    "whereToSpend": "今天你想把时间花在哪里？",
+    "dragHint": "拖放以设置要跟踪的类别",
+    "skipToday": "今天跳过",
+    "chipRemove": "点按以移除",
+    "chipCycle": "拖入目标面板，或点按以在专注、分心和未跟踪之间切换",
+    "hours": "小时",
+    "mins": "分钟"
+  },
+  "agents": {
+    "messages": {
+      "runInTerminal": "或者在终端中运行以下命令来连接 {{client}}：",
+      "notFound": "未找到",
+      "couldNotAdd": "{{client}} 无法添加连接。",
+      "didNotKeep": "{{client}} 未保留 Dayflow Electron 连接。",
+      "keptConnection": "{{client}} 已保留连接。",
+      "addToConfig": "或者将以下内容添加到 {{path}} 中的 \"mcpServers\" 下，然后重启 Claude Desktop：",
+      "couldNotUpdate": "无法更新 {{file}}：{{error}}",
+      "couldNotOpen": "无法打开 {{client}}：{{error}}"
+    },
+    "copyConfig": "复制配置",
+    "connect": {
+      "title": "连接到 AI 工具",
+      "sub": "允许 Codex、Claude、Cursor 和其他 AI 工具读取你的 Dayflow Electron 时间线。连接会保存到各工具的用户配置中，因此这台电脑上的所有项目都可使用 Dayflow Electron。除了你在自己的对话中发送的内容外，任何数据都不会离开你的电脑。",
+      "otherApps": "其他应用",
+      "otherAppsSub": "将此内容粘贴到任意 MCP 客户端的配置中。"
+    },
+    "edits": {
+      "title": "允许编辑",
+      "sub": "关闭时，AI 工具只能读取你的时间线，无法更改。开启后，它们可以重命名活动、管理类别和设置每日目标。终端命令在删除任何内容前都会先询问，AI 工具也会被要求在删除前与你确认。每次编辑都会记录到数据文件夹中的 agent-writes.log。",
+      "on": "编辑已开启",
+      "off": "编辑已关闭",
+      "onSub": "Dayflow Electron 运行时，AI 工具可以通过 Dayflow Electron 进行更改。"
+    },
+    "terminal": {
+      "title": "终端命令",
+      "sub": "在 ~/.local/bin 中添加 dayflow-electron 命令，让你可从任意终端查看时间线。它会启动 Dayflow Electron 内置的 CLI，因此始终与应用保持一致。此过程不会下载任何内容，也不会修改你的 shell 配置。",
+      "install": "安装",
+      "installSub": "在终端中运行一次以下命令，然后试试 dayflow-electron timeline。",
+      "remove": "移除",
+      "removeSub": "运行以下命令即可移除该命令。",
+      "windows": "Windows 上不可用",
+      "windowsSub": "dayflow-electron 终端命令适用于 Linux 和 macOS。在 Windows 上，请在“设置 → MCP / CLI”中连接你的 AI 工具。"
+    },
+    "client": {
+      "connected": "已连接。请重启该应用以使连接生效。",
+      "connectedCodex": "已连接。请重启 Codex 以使连接生效。",
+      "notFound": "未找到",
+      "checking": "正在检查…",
+      "connecting": "正在连接…",
+      "disconnecting": "正在断开连接…",
+      "approve": "请在刚刚显示的安装对话框中批准。",
+      "connect": "连接",
+      "disconnect": "断开连接",
+      "finishIn": "在 {{name}} 中完成"
+    }
+  },
+  "onboarding": {
+    "dialogLabel": "设置 Dayflow Electron",
+    "skip": "暂时跳过",
+    "ringLabel": "设置已完成 {{percent}}%",
+    "intro": {
+      "title": "你的一天，化为时间线",
+      "body": "应用每隔几秒会截取鼠标所在屏幕的截图。每 15 分钟，你选择的 AI 模型会将这些截图整理成卡片，记录你做了什么。",
+      "privacy": "截图保留在这台电脑上，只有你选择的提供商能看到。没有任何遥测。你可以随时从托盘暂停。",
+      "start": "开始使用"
+    },
+    "role": {
+      "title": "帮助 Dayflow Electron 更好地了解你的工作模式。",
+      "question": "你的工作是什么？",
+      "why": "这将帮助 Dayflow Electron 生成对你最有用的类别。",
+      "preview": "类别：{{categories}}",
+      "roles": {
+        "softwareEngineer": "软件工程师",
+        "founder": "创始人 / 高管",
+        "designer": "设计师",
+        "student": "学生",
+        "productManager": "产品经理",
+        "dataScientist": "数据科学家",
+        "other": "其他"
+      }
+    },
+    "table": {
+      "title": "选择 Dayflow Electron 的运行方式",
+      "accuracy": "模型准确度",
+      "subscription": "订阅要求",
+      "ease": "设置便捷性",
+      "notes": "附加说明",
+      "select": "选择",
+      "ratings": {
+        "best": "最佳",
+        "medium": "中等",
+        "varies": "视情况而定",
+        "passable": "尚可",
+        "installCodex": "安装 Codex CLI",
+        "installClaude": "安装 Claude CLI",
+        "apiKey": "API 密钥",
+        "apiKeyAndModel": "API 密钥和模型",
+        "extensiveSetup": "复杂设置",
+        "cliInstalled": "CLI 已安装"
+      },
+      "columns": {
+        "chatgpt": {
+          "title": "ChatGPT",
+          "subscription": "ChatGPT 付费订阅",
+          "notes": "使用你的 ChatGPT 订阅，每日限额用量不到 1%。"
+        },
+        "claude": {
+          "title": "Claude",
+          "subscription": "Claude 付费订阅",
+          "notes": "使用你的 Claude 订阅，每日限额用量不到 1%。"
+        },
+        "anthropic": {
+          "title": "Anthropic API",
+          "subscription": "API 点数",
+          "notes": "通过 Anthropic API 使用 Claude 模型。"
+        },
+        "gemini": {
+          "title": "Gemini",
+          "subscription": "免费",
+          "notes": "使用 Gemini 免费层级。"
+        },
+        "custom": {
+          "title": "OpenRouter / 自定义",
+          "subscription": "API 点数",
+          "notes": "使用 OpenRouter 或任意兼容 OpenAI 的端点。"
+        },
+        "local": {
+          "title": "本地 AI",
+          "subscription": "免费",
+          "notes": "需要 16GB+ 内存和 4GB 可用磁盘空间。支持 Ollama 或 LM Studio。"
+        }
+      }
+    },
+    "wizard": {
+      "model": "模型",
+      "checking": "正在检查…",
+      "completeSetup": "完成设置",
+      "testRequired": "需要测试",
+      "titles": {
+        "chatgpt": "连接 ChatGPT",
+        "claude": "连接 Claude",
+        "anthropic": "连接 Anthropic API",
+        "gemini": "Gemini",
+        "custom": "连接 AI 端点",
+        "local": "使用本地 AI"
+      },
+      "steps": {
+        "getKey": "获取 API 密钥",
+        "enterKey": "输入 API 密钥",
+        "test": "测试连接",
+        "complete": "完成",
+        "beforeBegin": "开始之前",
+        "checkInstall": "检查安装",
+        "endpoint": "配置端点"
+      },
+      "gemini": {
+        "title": "获取 Gemini API 密钥",
+        "body": "通过 Google AI Studio，你可以免费运行 Dayflow Electron。只需一个 Google 账号，无需信用卡。",
+        "step1": "访问 Google AI Studio（aistudio.google.com）",
+        "step2": "点按“Get API key”",
+        "step3": "创建新的 API 密钥并复制",
+        "copyLink": "复制链接"
+      },
+      "enterKey": {
+        "title": "输入你的 API 密钥：",
+        "paste": "在下方粘贴你的 {{provider}} API 密钥"
+      },
+      "cli": {
+        "intro": "Dayflow Electron 通过你现有的 {{subscription}} 订阅使用 {{product}}。请在这台电脑上安装并登录，然后我们会验证连接。",
+        "flatpak": "在 Flatpak 中，应用还需要一次性权限才能启动它；下一步会显示相应命令。",
+        "checking": "正在检查这台电脑上的 {{cli}} CLI。",
+        "check": "检查"
+      },
+      "local": {
+        "title": "适合有经验的用户",
+        "body": "使用 Ollama 或 LM Studio 在这台电脑上运行模型。应用每张截图会发送一个小请求，因此最好使用视觉模型和性能较好的电脑。质量会低于托管模型。"
+      },
+      "endpoint": {
+        "baseUrl": "基础 URL",
+        "baseUrlHint": "（例如 Ollama 为 http://localhost:11434/v1，LM Studio 为 http://localhost:1234/v1）",
+        "apiKey": "API 密钥",
+        "apiKeyHint": "（本地服务器无需填写）"
+      },
+      "test": {
+        "title": "测试连接",
+        "cli": "我们会通过你的 CLI 提一个简单问题，以确认它运行正常且已登录。",
+        "api": "点按下方按钮，验证 {{provider}} 能否正常工作。",
+        "testing": "正在测试…",
+        "button": "测试连接",
+        "success": "连接成功。"
+      },
+      "complete": {
+        "title": "一切就绪！",
+        "body": "{{provider}} 已配置完毕，可与 Dayflow Electron 配合使用。"
+      }
+    },
+    "permissions": {
+      "lastStep": "最后一步！",
+      "title": "权限",
+      "intro": "Dayflow Electron 可以帮助你了解自己的一天。",
+      "privateTitle": "Dayflow Electron 从设计之初就注重隐私与安全。",
+      "privateLocal": "Dayflow Electron 将所有录制内容存储在你的电脑本地，且只会将截图发送给你选择的 AI 提供商。",
+      "privateControl": "一切尽在你的掌控之中。你可以随时暂停或关闭 Dayflow Electron。",
+      "mockBrowser": "浏览器",
+      "mockTerminal": "终端",
+      "mockCaption": "示例：系统设置 → 隐私与安全性 → 屏幕录制",
+      "waiting": "正在等待…",
+      "grant": "授权",
+      "checkAgain": "重新检查",
+      "quitReopen": "退出并重新打开"
+    },
+    "done": {
+      "title": "一切准备就绪！",
+      "body": "要获得有用的分析，请让 Dayflow Electron 在后台运行一两个小时，以收集足够的上下文，然后再回来查看。",
+      "launch": "启动 Dayflow Electron"
+    }
+  },
+  "locked": {
+    "beta": "测试版",
+    "progress": "{{feature}}：解锁进度"
+  },
+  "timeline": {
+    "todayDate": "今天，{{date}}",
+    "weekRange": "{{from}} - {{to}}",
+    "previousDay": "前一天",
+    "previousWeek": "上一周",
+    "nextDay": "后一天",
+    "nextWeek": "下一周",
+    "pickDate": "选择日期",
+    "view": "视图",
+    "day": "天",
+    "week": "周",
+    "today": "今天",
+    "editCategories": "编辑类别",
+    "cardsToReview_other": "{{count}} 张待回顾卡片",
+    "reviewCards": "审阅卡片",
+    "copyTimeline": "复制时间线",
+    "trackedThisWeek_other": "本周已追踪 <b>{{count}} 小时</b>",
+    "trackedActivitiesThisWeek_other": "本周已追踪 <b>{{count}} 小时</b>的活动",
+    "cardDetails": "卡片详情",
+    "daySummary": "当日摘要",
+    "nothingRecorded": "这一天没有任何录制内容。",
+    "statusPaused": "Dayflow Electron 已暂停。点按“继续”以生成新的活动卡片。",
+    "statusStopped": "Dayflow Electron 未在录制。点按“继续”以生成新的活动卡片。",
+    "generating": "正在生成下一张卡片",
+    "weekPaused": "已暂停",
+    "weekResume": "继续",
+    "weekNextCard": "下一张卡片..."
+  },
+  "card": {
+    "timeRange": "{{start}} - {{end}}",
+    "timeTitle": "{{time}}：{{title}}",
+    "processingFailed": "处理失败",
+    "processingFailedIntervals_other": "处理失败 · {{count}} 个时段",
+    "queued": "已加入分析队列。",
+    "busy": "该批次正在分析中，请稍后再试。",
+    "title": "标题",
+    "clickToEdit": "点按以编辑",
+    "editTitle": "编辑标题",
+    "changeCategory": "更改类别",
+    "editCategories": "编辑类别…",
+    "retry": "重试",
+    "playTimelapse": "以延时视频播放截图",
+    "summary": "摘要",
+    "detailedSummary": "详细摘要",
+    "distractions": "分心事项",
+    "yourNote": "你的备注：{{note}}",
+    "whatWasWrong": "哪里有问题？",
+    "send": "发送",
+    "rateSummary": "为此摘要评分",
+    "goodCard": "好卡片",
+    "badCard": "差卡片",
+    "reanalyze": "重新分析"
+  },
+  "filter": {
+    "categories": "类别",
+    "show": "显示 {{name}}",
+    "dim": "淡化 {{name}}",
+    "showMovable": "显示 {{name}} · 拖动或按 Alt+←/→ 移动",
+    "dimMovable": "淡化 {{name}} · 拖动或按 Alt+←/→ 移动"
+  },
+  "calendar": {
+    "previousMonth": "上个月",
+    "nextMonth": "下个月"
+  },
+  "frames": {
+    "none": "此卡片未保留任何截图。",
+    "screenshotAt": "{{time}} 的截图",
+    "position": "位置",
+    "previous": "上一张截图",
+    "next": "下一张截图",
+    "pause": "暂停"
+  },
+  "review": {
+    "ratings": {
+      "distracted": "分心",
+      "neutral": "中性",
+      "focused": "专注"
+    },
+    "swipeHint": "在时间线的每张卡片上滑动，回顾你的一天。",
+    "undo": "撤销",
+    "spaceToPlay": "按空格键播放",
+    "nothingYet": "暂无可回顾的内容",
+    "comeBack": "时间线上出现几张卡片后再回来。",
+    "allCaughtUp": "已全部处理完毕！",
+    "allReviewed": "你已回顾目前所有的活动。<br/>时间线右侧面板将根据你的评分更新。"
+  }
+}

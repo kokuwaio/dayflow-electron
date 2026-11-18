@@ -1,0 +1,812 @@
+{
+  "common": {
+    "dismiss": "Dismiss",
+    "copied": "Copied",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "continue": "Continue",
+    "copy": "Copy",
+    "save": "Save",
+    "saved": "Saved",
+    "reset": "Reset",
+    "open": "Open",
+    "retry": "Retry",
+    "close": "Close",
+    "optional": "Optional",
+    "cancel": "Cancel",
+    "delete": "Delete"
+  },
+  "app": {
+    "views": "Views",
+    "tabs": {
+      "timeline": "Timeline",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "chat": "Chat",
+      "settings": "Settings"
+    },
+    "analysisFailed": "Analysis failed",
+    "captureFailed": "Capture failed",
+    "openSettings": "Open settings"
+  },
+  "providers": {
+    "anthropic": {
+      "hint": "Claude models through the Anthropic API."
+    },
+    "gemini": {
+      "hint": "Google Gemini API; frames are sent inline."
+    },
+    "openai": {
+      "label": "OpenAI-compatible",
+      "hint": "OpenAI, OpenRouter, or a local Ollama or LM Studio server (no key needed; analyzed in small steps)."
+    },
+    "claudeCli": {
+      "hint": "Your claude CLI and its subscription; no API key."
+    },
+    "codexCli": {
+      "hint": "Your codex CLI and its ChatGPT subscription; no API key."
+    }
+  },
+  "format": {
+    "hoursMinutes": "{{h}}h {{m}}m",
+    "hours": "{{h}}h",
+    "minutes": "{{m}}m",
+    "spelledHours_one": "{{count}} hour",
+    "spelledHours_other": "{{count}} hours",
+    "spelledMinutes_one": "{{count}} minute",
+    "spelledMinutes_other": "{{count}} minutes",
+    "spelledHoursMinutes": "{{hours}}, {{minutes}}"
+  },
+  "access": {
+    "progress": "{{done}} / {{total}}"
+  },
+  "recorder": {
+    "recording": "Recording",
+    "paused": "Paused",
+    "pausedUntil": "Paused until {{time}}",
+    "locked": "Paused while locked",
+    "sleeping": "Paused while asleep",
+    "backoff": "Capture failed",
+    "backoffUntil": "Capture failed, retrying at {{time}}",
+    "stopped": "Stopped"
+  },
+  "pause": {
+    "forMinutes_one": "For {{count}} minute",
+    "forMinutes_other": "For {{count}} minutes",
+    "forHours_one": "For {{count}} hour",
+    "forHours_other": "For {{count}} hours",
+    "untilResumed": "Until I resume",
+    "chipMinutes_one": "Pause for {{count}} minute",
+    "chipMinutes_other": "Pause for {{count}} minutes",
+    "chipHours_one": "Pause for {{count}} hour",
+    "chipHours_other": "Pause for {{count}} hours",
+    "chipUntilResumed": "Pause until I resume",
+    "chipShortMinutes_one": "{{count}}m",
+    "chipShortMinutes_other": "{{count}}m",
+    "chipShortHours_one": "{{count}}h",
+    "chipShortHours_other": "{{count}}h",
+    "pausedFor": "Dayflow Electron paused for {{time}}",
+    "pausedIndefinitely": "Dayflow Electron paused indefinitely",
+    "hiddenBlockedApp": "Hidden: blocked app in front",
+    "resume": "Resume",
+    "pause": "Pause",
+    "closeOptions": "Close pause options",
+    "pauseRecording": "Pause recording"
+  },
+  "tray": {
+    "tooltip": "Dayflow Electron: {{status}}",
+    "resume": "Resume recording",
+    "pause": "Pause recording",
+    "open": "Open Dayflow Electron",
+    "openRecordings": "Open recordings folder",
+    "quit": "Quit"
+  },
+  "notifications": {
+    "standupReady": {
+      "title": "Your daily recap for yesterday is ready",
+      "body": "Tap to open it in Daily view."
+    },
+    "firstCards": {
+      "title": "Your first Dayflow Electron cards are ready",
+      "body": "Take a look at what Dayflow Electron picked up from your last few minutes of work."
+    },
+    "weeklyUnlocked": {
+      "title": "Weekly view is ready",
+      "body": "Tap to open your weekly review."
+    },
+    "problem": {
+      "title": "Dayflow Electron needs a hand",
+      "waiting": "{{time}} of recording is waiting."
+    },
+    "waitingMinutes_one": "{{count}} min",
+    "waitingMinutes_other": "{{count}} min",
+    "waitingHours_one": "{{count}} hr",
+    "waitingHours_other": "{{count}} hrs",
+    "waitingDay": "1 day"
+  },
+  "updates": {
+    "available": {
+      "title": "Dayflow Electron {{version}} is available",
+      "bodyDownload": "Click to download it.",
+      "bodyOpen": "This copy can't install updates itself. Click to open the download page."
+    },
+    "ready": {
+      "title": "Dayflow Electron {{version}} is ready",
+      "body": "Restart Dayflow Electron to update, or it updates the next time you quit."
+    },
+    "menuGet": "Get version {{version}}…",
+    "menuDownload": "Download version {{version}}",
+    "menuDownloading": "Downloading version {{version}} ({{percent}}%)",
+    "menuRestart": "Restart to update to {{version}}"
+  },
+  "permissions": {
+    "checking": "Checking…",
+    "granted": "Granted",
+    "notGranted": "Not granted",
+    "allowed": "Allowed",
+    "notAllowedYet": "Not allowed yet",
+    "works": "Works",
+    "needsPermission": "Needs permission",
+    "notAvailable": "Not available",
+    "macScreen": {
+      "title": "Screen Recording",
+      "detail": "Periodic screenshots let Dayflow Electron write your timeline for you.",
+      "turnOn": "Turn on Dayflow Electron in System Settings → Privacy & Security → Screen Recording, then quit and reopen the app."
+    },
+    "linuxScreen": {
+      "title": "Screen sharing",
+      "detail": "Your desktop asks which screens to share. Choose all screens and allow restoring the permission, so it does not ask again. The app keeps only the screen under your mouse."
+    },
+    "window": {
+      "title": "Window detection (optional)",
+      "detail": "Blocked apps such as password managers are left out of recordings only where the app can see the active window.",
+      "detailFlatpak": "Blocked apps such as password managers are left out of recordings only where the app can see the active window. In the Flatpak on KDE Plasma, run this command once, then restart the app.",
+      "detailUnavailable": "Blocked apps such as password managers are left out of recordings only where the app can see the active window. Where it is not available, pause recording before opening a password manager."
+    },
+    "windows": {
+      "title": "Nothing to allow",
+      "detail": "Windows needs no permission for screenshots. Recording starts as soon as you launch."
+    }
+  },
+  "daily": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "highlightsFrom": "Highlights from {{day}}",
+    "highlightsFromToday": "Highlights from Today",
+    "highlightsFromYesterday": "Highlights from Yesterday",
+    "recentHighlights": "Recent highlights",
+    "tasksFor": "Tasks for {{day}}",
+    "tasksForToday": "Tasks for Today",
+    "tasksForYesterday": "Tasks for Yesterday",
+    "blockers": "Blockers",
+    "yesterdaysHighlights": "Yesterday's highlights",
+    "todaysTasks": "Today's tasks",
+    "noneRightNow": "None right now",
+    "todayDate": "Today, {{date}}",
+    "locked": {
+      "title": "Dayflow Electron Daily",
+      "intro": "Daily is a new way to visualize your day and turn it into a standup update fast.",
+      "unlock": "Daily unlocks after 5 hours of analyzed timeline data."
+    },
+    "headingToday": "Today so far. Come back tomorrow for the full day view.",
+    "headingYesterday": "Your workflow yesterday",
+    "headingOn": "Your workflow on {{date}}",
+    "totalToday": "Today's total so far",
+    "totalYesterday": "Yesterday's total",
+    "totalOn": "Total for {{date}}",
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "distractions": "Distractions",
+    "distractionTooltip": "{{duration}}: {{title}}",
+    "noActivityYet": "No captured activity yet.",
+    "noActivityDay": "No captured activity during 9am-9pm",
+    "standupFor": "Standup for {{date}}",
+    "copyStandup": "Copy standup update",
+    "regenerate": "Regenerate",
+    "regenerating": "Regenerating…",
+    "notGenerated": "Daily data has not been generated yet. Click Regenerate to write it now, or fill it in yourself.",
+    "blockersPlaceholder": "Fill in any blockers you may have",
+    "itemLabel": "{{title}} item {{number}}",
+    "addItem": "Add item"
+  },
+  "chat": {
+    "errors": {
+      "busy": "The assistant is still answering.",
+      "locked": "Chat unlocks after 10 hours of timeline data.",
+      "empty": "Type a question first."
+    },
+    "newChat": "New chat",
+    "followUp": "Follow up",
+    "placeholder": "Ask about your Dayflow Electron data...",
+    "provider": "Provider",
+    "send": "Send",
+    "copyAnswer": "Copy answer",
+    "status": {
+      "thinking": "Thinking",
+      "tools": "Running tools",
+      "answering": "Answering"
+    },
+    "locked": {
+      "title": "Unlock Chat",
+      "beta": "BETA",
+      "intro": "Chat lets you ask questions about your Dayflow Electron activity and get summaries, comparisons, and insights.",
+      "dataRequired": "10 hours of timeline data required",
+      "dataNote": "Chat unlocks after Dayflow Electron has analyzed enough activity. {{progress}}",
+      "providerConfigured": "AI provider configured",
+      "providerRequired": "AI provider required",
+      "providerNote": "Unlock chat by adding an AI provider in Settings.",
+      "progress": "Chat unlock progress",
+      "keepRecording": "Keep recording to unlock",
+      "privacy": "<b>Privacy note:</b> your questions and the answers stay on this computer; only the provider you chose sees them."
+    },
+    "welcome": {
+      "title": "Ask about your Dayflow Electron data",
+      "intro": "Ask questions, analyze your timeline, and generate charts/graphs.",
+      "memory": "I remember your response preferences, so feel free to teach me your style.",
+      "try": "Try one of these",
+      "prompts": {
+        "standup": "Generate standup notes for yesterday",
+        "lastWeek": "What did I get done last week?",
+        "focused": "When was I most focused this week",
+        "compare": "Compare this week to last week"
+      }
+    },
+    "history": {
+      "title": "History",
+      "empty": "No saved chats yet",
+      "delete": "Delete {{title}}",
+      "groups": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "thisWeek": "This week",
+        "earlier": "Earlier"
+      }
+    },
+    "memory": {
+      "title": "Memory",
+      "note": "Auto-updated from assistant replies. You can edit this manually.",
+      "clear": "Clear memory"
+    }
+  },
+  "settings": {
+    "export": {
+      "startAfterEnd": "Start must be on or before end.",
+      "tooLong": "Choose at most ten years.",
+      "canceled": "Export canceled",
+      "saveFailed": "Couldn't save file: {{error}}",
+      "saved": "Saved to {{path}}. Activities: {{activities}}; days: {{days}}.",
+      "title": "Export",
+      "sub": "Save the timeline of a date range as a Markdown file.",
+      "range": "Date range",
+      "from": "From",
+      "to": "To",
+      "asMarkdown": "Export as Markdown"
+    },
+    "providers": {
+      "testAnswered": "{{model}} answered: {{text}}",
+      "cliFound": "Found {{path}}. Click \"Test connection\" to check that you are logged in.",
+      "cliNotFound": "Not found. Install it, or enter its full path.",
+      "cliNotFoundAt": "Not found at {{path}}. Install it, or enter its full path.",
+      "title": "AI provider",
+      "sub": "Screenshots go only to the providers chosen here. Nothing else leaves this computer.",
+      "provider": "Provider",
+      "inUse": "In use",
+      "model": "Model",
+      "baseUrl": "Base URL",
+      "baseUrlSub": "For example http://localhost:11434/v1 for Ollama.",
+      "apiKey": "API key",
+      "keyStored": "Stored in your keyring",
+      "keyNotSet": "Not set",
+      "keySaved": "Key saved in your keyring.",
+      "keyRemoved": "Key removed.",
+      "keyReplacePlaceholder": "Enter a new key to replace it",
+      "keyPlaceholder": "Paste your API key",
+      "saveKey": "Save key",
+      "removeKey": "Remove key",
+      "connection": "Connection",
+      "asking": "Asking the model…",
+      "connectionSub": "Sends a small request to the model.",
+      "testConnection": "Test connection",
+      "fallback": "Fallback provider",
+      "fallbackSub": "Takes over a batch when the main provider fails. Select it above to set its model and key.",
+      "none": "None",
+      "fallbackOption": "{{provider}} ({{model}})",
+      "fallbackOptionNoKey": "{{provider}} ({{model}}), no key yet",
+      "outputLanguage": "Output language override",
+      "outputLanguageSub": "Language for card text written by the model. Empty means English. The app's own texts follow Settings → Other → App language.",
+      "outputLanguagePlaceholder": "English",
+      "cliPath": "Path to {{cli}}",
+      "cliPathSub": "Optional; found automatically.",
+      "cliPathPlaceholder": "e.g. /home/you/.local/bin/{{cli}}",
+      "cliLabel": "{{cli}} CLI",
+      "looking": "Looking…",
+      "cliSub": "Runs your own {{cli}} CLI with its login. Images and prompts go to {{vendor}} under your subscription. In the Flatpak this needs a one-time opt-in, because it lets the app start programs on your computer.",
+      "checkCli": "Check {{cli}}"
+    },
+    "title": "Settings",
+    "sections": "Settings sections",
+    "tabs": {
+      "storage": "Storage",
+      "privacy": "Privacy",
+      "providers": "Providers",
+      "agents": "MCP / CLI",
+      "export": "Export",
+      "other": "Other"
+    },
+    "version": "Dayflow Electron v{{version}}",
+    "releaseNotes": "Release notes ↗",
+    "prompt": {
+      "title": "Prompt",
+      "sub": "Replace the rules the model follows for titles, summaries and the detailed log. Leave a field empty to use upstream Dayflow's text.",
+      "placeholder": "Upstream default",
+      "fields": {
+        "title": "Title rules",
+        "summary": "Summary rules",
+        "detailedSummary": "Detailed log rules"
+      }
+    },
+    "storage": {
+      "recording": "Recording",
+      "recordingSub": "Only the screen under the mouse is recorded. Recording pauses while the screen is locked.",
+      "frequency": "Capture frequency",
+      "frequencySub": "How often a screenshot is taken.",
+      "everySeconds_one": "Every {{count}} s",
+      "everySeconds_other": "Every {{count}} s",
+      "resolution": "Resolution",
+      "title": "Storage",
+      "sub": "When the limit is reached, the oldest screenshots are deleted first. Cards stay.",
+      "limit": "Storage limit",
+      "used": "Screenshots use {{size}} GB.",
+      "limitAria": "Storage limit in GB",
+      "folder": "Recordings folder"
+    },
+    "privacy": {
+      "title": "Blocked apps",
+      "sub": "While one of these apps is the focused window, nothing is saved and the time shows as \"Private\". One rule per line: an app ID (e.g. <code>org.keepassxc.KeePassXC</code>) or <code>title:</code> followed by text in the window title.",
+      "rules": "Rules",
+      "detectionOff": "Window detection is off, so blocked apps are recorded like any other window.",
+      "detectionWorks": "Window detection works.",
+      "hidePrivate": "Hide private browsing windows",
+      "hidePrivateSub": "Chrome incognito and Firefox private windows get a redaction card instead of a screenshot. Detected from the window title, so it needs window detection too.",
+      "hideSecrets": "Hide secrets in screenshots",
+      "hideSecretsSub": "Reads the text on each frame sent to the AI provider and blacks out API keys, passwords, private keys, seed phrases and recovery codes it recognizes. It recognizes these by pattern, so it misses some, and it adds a few seconds per frame."
+    },
+    "reprocess": {
+      "title": "Reprocess",
+      "sub": "Analyze a day again. Its cards are replaced; your recordings stay.",
+      "day": "Day",
+      "dayAria": "Day to reprocess",
+      "queued_one": "{{count}} batch queued for analysis.",
+      "queued_other": "{{count}} batches queued for analysis.",
+      "nothing": "Nothing recorded on that day.",
+      "confirm": "Confirm",
+      "button": "Reprocess day"
+    },
+    "other": {
+      "general": "General",
+      "appLanguage": "App language",
+      "appLanguageSub": "Language of the app's menus, buttons and messages. Card text follows the output language under Providers.",
+      "systemDefault": "System default",
+      "appearance": "Appearance",
+      "appearanceSub": "Dark, light, or follow your desktop's setting.",
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System",
+      "theme": "Theme",
+      "themeSub": "Modern: flat neutral greys with one accent. Original: upstream Dayflow's warm look.",
+      "modern": "Modern",
+      "original": "Original",
+      "launchAtLogin": "Launch Dayflow Electron at login",
+      "launchAtLoginAria": "Launch at login",
+      "showIcons": "Show app/website icons in timeline",
+      "showIconsSub": "Icons are loaded from the websites themselves (e.g. github.com/favicon.ico), which tells those sites your IP address.",
+      "showIconsAria": "Show icons",
+      "goalPopups": "Show daily goal popups",
+      "goalPopupsSub": "When off, Dayflow Electron won't automatically open goal setup or yesterday's review after 4am."
+    },
+    "updates": {
+      "check": "Check for updates",
+      "checkSub": "Asks GitHub for new versions every few hours. It is the only request besides your AI provider; off means no update requests at all.",
+      "autoInstall": "Install updates automatically",
+      "autoInstallUnsigned": "This copy isn't signed with a Developer ID, so macOS won't let it install updates. Dayflow Electron tells you when a new version is out.",
+      "autoInstallSub": "Downloads new versions from GitHub in the background and installs them when Dayflow Electron restarts. Off: Dayflow Electron only tells you about them."
+    },
+    "categories": {
+      "title": "Categories",
+      "sub": "The description tells the model what belongs in each category. Idle is used for time away.",
+      "colorOf": "Color of {{name}}",
+      "name": "Name",
+      "descriptionOf": "Description of {{name}}",
+      "idlePlaceholder": "Time away from the computer",
+      "placeholder": "What belongs here",
+      "remove": "Remove {{name}}",
+      "addOrReplace": "Add or replace",
+      "newName": "Category {{n}}",
+      "add": "Add category",
+      "presetAria": "Apply a preset",
+      "presetPlaceholder": "Use a preset for…",
+      "replaceHint": "Existing cards keep their names.",
+      "replaceWith": "Replace with {{role}}",
+      "roles": {
+        "softwareEngineer": "Software Engineer",
+        "founder": "Founder / Executive",
+        "designer": "Designer",
+        "student": "Student",
+        "productManager": "Product Manager",
+        "dataScientist": "Data Scientist",
+        "other": "Other"
+      }
+    }
+  },
+  "summary": {
+    "status": {
+      "skipped": "Set your goals for today to activate the progress bars below.",
+      "paused": "Dayflow Electron is paused. Resume to continue tracking your progress.",
+      "stopped": "Start Dayflow Electron to continue tracking your progress.",
+      "tracking": "Tracking progress from your focus and distraction categories."
+    },
+    "setTodaysGoals": "Set today's goals",
+    "todaysTargets": "Today's targets",
+    "targets": "Targets",
+    "setGoals": "Set goals",
+    "editGoals": "Edit goals",
+    "daySoFar": "Your day so far",
+    "noActivity": "No activity data yet",
+    "yourFocus": "Your focus",
+    "yourFocusInfo": "From the categories counted as focus in your goals",
+    "editCategoriesForFocus": "Edit categories to calculate focus.",
+    "totalFocus": "Total focus time",
+    "longestFocus": "Longest focus duration",
+    "distractionsSoFar": "Distractions so far",
+    "totalCaptured": "Total time captured",
+    "totalDistracted": "Total time distracted",
+    "focus": "Focus",
+    "focusFulfilled": "<b>{{done}}</b>/ {{target}} hr fulfilled",
+    "distraction": "Distraction",
+    "distractionUsed": "<b>{{used}}</b>/ {{limit}}",
+    "distractionUsedOver": "<b>{{used}}</b>/ {{limit}} used",
+    "distractionBudget": "Distraction budget",
+    "donutLabel": "Time per category, {{total}} in total",
+    "total": "TOTAL",
+    "longestFocusRange": "Longest focus from {{start}} to {{end}}",
+    "percentDistracted": "{{percent}}% distracted",
+    "yourReview": "Your review",
+    "lastReviewedAt": "Last reviewed at {{time}}.",
+    "noReviews": "No reviews yet.",
+    "reviewCards_one": "Review {{count}} card to update your data.",
+    "reviewCards_other": "Review {{count}} cards to update your data."
+  },
+  "goals": {
+    "dialogLabel": "Daily goals",
+    "closeWithoutSaving": "Close without saving",
+    "yesterdaysReview": "Yesterday’s review",
+    "focusTarget": "Focus target: {{duration}}",
+    "timeSpent": "Time spent: {{duration}}",
+    "noFocusCategories": "No focus categories tracked",
+    "distractionLimitLine": "Distraction limit: {{duration}}",
+    "timeSpentDistracted": "Time spent distracted: {{duration}}",
+    "setTodaysGoals": "Set today’s goals",
+    "nailedIt": "NAILED IT",
+    "missed": "MISSED",
+    "focusGoal": "Focus goal",
+    "distractionLimit": "Distraction limit",
+    "focusCategories": "Focus categories",
+    "distractionCategories": "Distraction categories",
+    "categories": "Categories",
+    "yesterdaysFocus": "Yesterday’s focus",
+    "yesterdaysDistractions": "Yesterday’s Distractions",
+    "lastWeekFocus": "Last week’s Focus average",
+    "lastWeekDistraction": "Last week’s Distraction average",
+    "whereToSpend": "Where do you want to spend your time today?",
+    "dragHint": "Drag and drop to set the categories you want to track",
+    "skipToday": "Skip today",
+    "chipRemove": "Click to remove",
+    "chipCycle": "Drag into a goal panel, or click to cycle between Focus, Distraction, and untracked",
+    "hours": "Hours",
+    "mins": "Mins"
+  },
+  "agents": {
+    "messages": {
+      "runInTerminal": "Or run this in a terminal to connect {{client}}:",
+      "notFound": "Not found",
+      "couldNotAdd": "{{client}} could not add the connection.",
+      "didNotKeep": "{{client}} didn't keep the Dayflow Electron connection.",
+      "keptConnection": "{{client}} kept the connection.",
+      "addToConfig": "Or add this under \"mcpServers\" in {{path}}, then restart Claude Desktop:",
+      "couldNotUpdate": "Could not update {{file}}: {{error}}",
+      "couldNotOpen": "Could not open {{client}}: {{error}}"
+    },
+    "copyConfig": "Copy config",
+    "connect": {
+      "title": "Connect to AI tools",
+      "sub": "Let Codex, Claude, Cursor, and other AI tools read your Dayflow Electron timeline. Connections are saved to each tool's user configuration, so Dayflow Electron is available across projects on this computer. Nothing leaves your computer except what you send in your own conversations.",
+      "otherApps": "Other apps",
+      "otherAppsSub": "Paste this into any MCP client's configuration."
+    },
+    "edits": {
+      "title": "Allow edits",
+      "sub": "Off means AI tools can read your timeline but never change it. On lets them rename activities, manage categories, and set day goals. The terminal command asks before deleting anything, and AI tools are told to confirm deletes with you. Every edit is logged to agent-writes.log in the data folder.",
+      "on": "Edits are on",
+      "off": "Edits are off",
+      "onSub": "AI tools can make changes through Dayflow Electron while it's running."
+    },
+    "terminal": {
+      "title": "Terminal command",
+      "sub": "Adds a dayflow-electron command to ~/.local/bin so you can see your timeline from any terminal. It starts the CLI already inside Dayflow Electron, so it always matches the app. Nothing is downloaded and your shell configuration isn't touched.",
+      "install": "Install",
+      "installSub": "Run this once in a terminal, then try dayflow-electron timeline.",
+      "remove": "Remove",
+      "removeSub": "Run this to take the command away again.",
+      "windows": "Not available on Windows",
+      "windowsSub": "The dayflow-electron terminal command is available on Linux and macOS. On Windows, connect your AI tools under Settings → MCP / CLI."
+    },
+    "client": {
+      "connected": "Connected. Restart it to pick up the connection.",
+      "connectedCodex": "Connected. Restart Codex to pick up the connection.",
+      "notFound": "Not found",
+      "checking": "Checking…",
+      "connecting": "Connecting…",
+      "disconnecting": "Disconnecting…",
+      "approve": "Approve the install dialog it just showed.",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "finishIn": "Finish in {{name}}"
+    }
+  },
+  "onboarding": {
+    "dialogLabel": "Set up Dayflow Electron",
+    "skip": "Skip for now",
+    "ringLabel": "Setup {{percent}}% done",
+    "intro": {
+      "title": "Your day, as a timeline",
+      "body": "Every few seconds the app takes a screenshot of the screen under your mouse. Every 15 minutes an AI model you choose turns them into cards that say what you did.",
+      "privacy": "Screenshots stay on this computer. Only the provider you pick sees them. There is no telemetry. You can pause any time from the tray.",
+      "start": "Get started"
+    },
+    "role": {
+      "title": "Help Dayflow Electron understand your work patterns better.",
+      "question": "What do you do for work?",
+      "why": "This will help Dayflow Electron generate categories that are most helpful to you.",
+      "preview": "Categories: {{categories}}",
+      "roles": {
+        "softwareEngineer": "Software Engineer",
+        "founder": "Founder / Executive",
+        "designer": "Designer",
+        "student": "Student",
+        "productManager": "Product Manager",
+        "dataScientist": "Data Scientist",
+        "other": "Other"
+      }
+    },
+    "table": {
+      "title": "Choose a way to run Dayflow Electron",
+      "accuracy": "Model accuracy",
+      "subscription": "Subscription requirements",
+      "ease": "Ease of set up",
+      "notes": "Additional notes",
+      "select": "Select",
+      "ratings": {
+        "best": "Best",
+        "medium": "Medium",
+        "varies": "Varies",
+        "passable": "Passable",
+        "installCodex": "Install Codex CLI",
+        "installClaude": "Install Claude CLI",
+        "apiKey": "API key",
+        "apiKeyAndModel": "API key and model",
+        "extensiveSetup": "Extensive setup",
+        "cliInstalled": "CLI installed"
+      },
+      "columns": {
+        "chatgpt": {
+          "title": "ChatGPT",
+          "subscription": "ChatGPT paid subscription",
+          "notes": "Uses your ChatGPT subscription and less than 1% of your daily limit."
+        },
+        "claude": {
+          "title": "Claude",
+          "subscription": "Claude paid subscription",
+          "notes": "Uses your Claude subscription and less than 1% of your daily limit."
+        },
+        "anthropic": {
+          "title": "Anthropic API",
+          "subscription": "API credits",
+          "notes": "Claude models through the Anthropic API."
+        },
+        "gemini": {
+          "title": "Gemini",
+          "subscription": "Free",
+          "notes": "Uses Gemini free tier."
+        },
+        "custom": {
+          "title": "OpenRouter / Custom",
+          "subscription": "API credits",
+          "notes": "Uses OpenRouter or any OpenAI-compatible endpoint."
+        },
+        "local": {
+          "title": "Local AI",
+          "subscription": "Free",
+          "notes": "Requires 16GB+ RAM and 4GB free disk space. Ollama or LM Studio."
+        }
+      }
+    },
+    "wizard": {
+      "model": "Model",
+      "checking": "Checking…",
+      "completeSetup": "Complete setup",
+      "testRequired": "Test Required",
+      "titles": {
+        "chatgpt": "Connect ChatGPT",
+        "claude": "Connect Claude",
+        "anthropic": "Connect the Anthropic API",
+        "gemini": "Gemini",
+        "custom": "Connect an AI endpoint",
+        "local": "Use local AI"
+      },
+      "steps": {
+        "getKey": "Get API key",
+        "enterKey": "Enter API key",
+        "test": "Test connection",
+        "complete": "Complete",
+        "beforeBegin": "Before you begin",
+        "checkInstall": "Check installation",
+        "endpoint": "Configure endpoint"
+      },
+      "gemini": {
+        "title": "Get your Gemini API key",
+        "body": "Google AI Studio allows you to run Dayflow Electron for free. All you need is a Google account - no credit card required.",
+        "step1": "Visit Google AI Studio (aistudio.google.com)",
+        "step2": "Click \"Get API key\"",
+        "step3": "Create a new API key and copy it",
+        "copyLink": "Copy link"
+      },
+      "enterKey": {
+        "title": "Enter your API key:",
+        "paste": "Paste your {{provider}} API key below"
+      },
+      "cli": {
+        "intro": "Dayflow Electron uses {{product}} through your existing {{subscription}} subscription. Install it and sign in on this computer, then we'll verify the connection.",
+        "flatpak": "In the Flatpak, the app also needs a one-time permission to start it; the next step shows the command.",
+        "checking": "Checking for the {{cli}} CLI on this computer.",
+        "check": "Check"
+      },
+      "local": {
+        "title": "For experienced users",
+        "body": "Run a model on this computer with Ollama or LM Studio. The app sends one small request per screenshot, so a vision model and a fast machine help. Expect lower quality than the hosted models."
+      },
+      "endpoint": {
+        "baseUrl": "Base URL",
+        "baseUrlHint": "(e.g. http://localhost:11434/v1 for Ollama, http://localhost:1234/v1 for LM Studio)",
+        "apiKey": "API key",
+        "apiKeyHint": "(not needed for local servers)"
+      },
+      "test": {
+        "title": "Test Connection",
+        "cli": "We'll ask your CLI a simple question to verify it's working and signed in.",
+        "api": "Click the button below to verify that {{provider}} works.",
+        "testing": "Testing…",
+        "button": "Test connection",
+        "success": "Connection successful."
+      },
+      "complete": {
+        "title": "All set!",
+        "body": "{{provider}} is now configured and ready to use with Dayflow Electron."
+      }
+    },
+    "permissions": {
+      "lastStep": "Last step!",
+      "title": "Permissions",
+      "intro": "Dayflow Electron can help understand your day.",
+      "privateTitle": "Dayflow Electron is built to be private and secure.",
+      "privateLocal": "Dayflow Electron stores all recordings locally on your computer and sends screenshots only to the AI provider you chose.",
+      "privateControl": "You are always in control. You can pause or turn off Dayflow Electron whenever you like.",
+      "mockBrowser": "Browser",
+      "mockTerminal": "Terminal",
+      "mockCaption": "Example: System Settings → Privacy & Security → Screen Recording",
+      "waiting": "Waiting…",
+      "grant": "Grant",
+      "checkAgain": "Check again",
+      "quitReopen": "Quit and Reopen"
+    },
+    "done": {
+      "title": "You are ready to go!",
+      "body": "To get useful insights, let Dayflow Electron run in the background for an hour or two to gather enough context, then check back in.",
+      "launch": "Launch Dayflow Electron"
+    }
+  },
+  "locked": {
+    "beta": "BETA",
+    "progress": "{{feature}}: unlock progress"
+  },
+  "timeline": {
+    "todayDate": "Today, {{date}}",
+    "weekRange": "{{from}} - {{to}}",
+    "previousDay": "Previous day",
+    "previousWeek": "Previous week",
+    "nextDay": "Next day",
+    "nextWeek": "Next week",
+    "pickDate": "Pick a date",
+    "view": "View",
+    "day": "Day",
+    "week": "Week",
+    "today": "Today",
+    "editCategories": "Edit categories",
+    "cardsToReview_one": "{{count}} card to review",
+    "cardsToReview_other": "{{count}} cards to review",
+    "reviewCards": "Review cards",
+    "copyTimeline": "Copy timeline",
+    "trackedThisWeek_one": "<b>{{count}} hour</b> tracked this week",
+    "trackedThisWeek_other": "<b>{{count}} hours</b> tracked this week",
+    "trackedActivitiesThisWeek_one": "<b>{{count}} hour</b> of activities tracked this week",
+    "trackedActivitiesThisWeek_other": "<b>{{count}} hours</b> of activities tracked this week",
+    "cardDetails": "Card details",
+    "daySummary": "Day summary",
+    "nothingRecorded": "Nothing was recorded on this day.",
+    "statusPaused": "Dayflow Electron is paused. Click 'Resume' to generate new activity cards.",
+    "statusStopped": "Dayflow Electron isn't recording. Click 'Resume' to generate new activity cards.",
+    "generating": "Generating your next card",
+    "weekPaused": "Paused",
+    "weekResume": "Resume",
+    "weekNextCard": "Next card..."
+  },
+  "card": {
+    "timeRange": "{{start}} - {{end}}",
+    "timeTitle": "{{time}}: {{title}}",
+    "processingFailed": "Processing failed",
+    "processingFailedIntervals_one": "Processing failed · {{count}} interval",
+    "processingFailedIntervals_other": "Processing failed · {{count}} intervals",
+    "queued": "Queued for analysis.",
+    "busy": "This batch is being analyzed right now; try again in a moment.",
+    "title": "Title",
+    "clickToEdit": "Click to edit",
+    "editTitle": "Edit title",
+    "changeCategory": "Change category",
+    "editCategories": "Edit categories…",
+    "retry": "Retry",
+    "playTimelapse": "Play screenshots as a timelapse",
+    "summary": "Summary",
+    "detailedSummary": "Detailed summary",
+    "distractions": "Distractions",
+    "yourNote": "Your note: {{note}}",
+    "whatWasWrong": "What was wrong?",
+    "send": "Send",
+    "rateSummary": "Rate this summary",
+    "goodCard": "Good card",
+    "badCard": "Bad card",
+    "reanalyze": "Reanalyze"
+  },
+  "filter": {
+    "categories": "Categories",
+    "show": "Show {{name}}",
+    "dim": "Dim {{name}}",
+    "showMovable": "Show {{name}} · drag or Alt+←/→ to move",
+    "dimMovable": "Dim {{name}} · drag or Alt+←/→ to move"
+  },
+  "calendar": {
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
+  },
+  "frames": {
+    "none": "No screenshots kept for this card.",
+    "screenshotAt": "Screenshot at {{time}}",
+    "position": "Position",
+    "previous": "Previous screenshot",
+    "next": "Next screenshot",
+    "pause": "Pause"
+  },
+  "review": {
+    "ratings": {
+      "distracted": "Distracted",
+      "neutral": "Neutral",
+      "focused": "Focused"
+    },
+    "swipeHint": "Swipe on each card on your Timeline to review your day.",
+    "undo": "Undo",
+    "spaceToPlay": "Space to play",
+    "nothingYet": "Nothing to review yet",
+    "comeBack": "Come back after a few timeline cards appear.",
+    "allCaughtUp": "All caught up!",
+    "allReviewed": "You've reviewed all your activities so far.<br/>The Timeline right panel will be updated with your rating."
+  }
+}

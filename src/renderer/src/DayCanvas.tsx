@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Pause, Play } from 'lucide-react'
 import { DAY_HEIGHT, HOUR_HEIGHT, cardTextMode, dayCardBox, hourMarks, nowScrollTop, recordingProjection } from '@shared/canvas'
 import { SYSTEM_CATEGORY } from '@shared/categories'
-import { formatClock } from '@shared/day'
+import { clockLabel } from '@shared/i18n'
 import type { RecorderState, TimelineCard } from '@shared/types'
 import { mergeFailed, resolveOverlaps } from '@shared/week'
 import { AppIcon } from './AppIcon'
@@ -40,6 +41,7 @@ export function DayCanvas(props: {
   /** Whether a card sits under the footer, which then hides its text. */
   onFooterOverlap: (overlaps: boolean) => void
 }) {
+  const { t } = useTranslation()
   const { day, now } = props
   const scroller = useRef<HTMLDivElement>(null)
   const segments = resolveOverlaps(mergeFailed(props.cards))
@@ -79,7 +81,7 @@ export function DayCanvas(props: {
           const failed = c.category === SYSTEM_CATEGORY
           const count = failed ? failedCount(c) : 0
           // From the shown span: merged and trimmed cards no longer match their stored labels.
-          const time = `${formatClock(c.start)} - ${formatClock(c.end)}`
+          const time = t('card.timeRange', { start: clockLabel(c.start), end: clockLabel(c.end) })
           return (
             <button
               key={c.id}
@@ -87,7 +89,7 @@ export function DayCanvas(props: {
                 props.muted.has(muteKey(c.category)) ? 'muted' : ''
               }`}
               style={{ top: box.top, height: box.height, '--cat': props.colorOf(c.category), animationDelay: `${i * 30}ms` } as React.CSSProperties}
-              title={`${time}: ${c.title}`}
+              title={t('card.timeTitle', { time, title: c.title })}
               onClick={(e) => {
                 e.stopPropagation()
                 props.onSelect(c.id === props.selected ? null : c.id)
@@ -96,7 +98,7 @@ export function DayCanvas(props: {
               {mode !== 'hidden' &&
                 (failed ? (
                   <span className="head">
-                    <span className="title">{count > 1 ? `Processing failed · ${count} intervals` : 'Processing failed'}</span>
+                    <span className="title">{count > 1 ? t('card.processingFailedIntervals', { count }) : t('card.processingFailed')}</span>
                     <span className="time">{time}</span>
                   </span>
                 ) : (
@@ -110,7 +112,7 @@ export function DayCanvas(props: {
           )
         })}
         {projection && <StatusCard box={dayCardBox(projection)} recorder={props.recorder!} onResume={props.onResume} />}
-        {segments.length === 0 && !projection && <p className="tl-empty empty">Nothing was recorded on this day.</p>}
+        {segments.length === 0 && !projection && <p className="tl-empty empty">{t('timeline.nothingRecorded')}</p>}
       </div>
     </div>
   )
@@ -118,6 +120,7 @@ export function DayCanvas(props: {
 
 /** "Generating your next card", or the paused / stopped card that resumes on click. */
 function StatusCard({ box, recorder, onResume }: { box: { top: number; height: number }; recorder: RecorderState; onResume: () => void }) {
+  const { t } = useTranslation()
   const style = { top: box.top, height: box.height }
   if (recorder === 'paused' || recorder === 'stopped') {
     const Icon = recorder === 'paused' ? Pause : Play
@@ -132,9 +135,7 @@ function StatusCard({ box, recorder, onResume }: { box: { top: number; height: n
       >
         <Icon size={11} fill="currentColor" strokeWidth={0} />
         <span>
-          {recorder === 'paused'
-            ? "Dayflow Electron is paused. Click 'Resume' to generate new activity cards."
-            : "Dayflow Electron isn't recording. Click 'Resume' to generate new activity cards."}
+          {recorder === 'paused' ? t('timeline.statusPaused') : t('timeline.statusStopped')}
         </span>
       </button>
     )
@@ -144,7 +145,7 @@ function StatusCard({ box, recorder, onResume }: { box: { top: number; height: n
       {box.height >= 24 && (
         <>
           <span className="spinner" />
-          <span>Generating your next card</span>
+          <span>{t('timeline.generating')}</span>
         </>
       )}
     </div>

@@ -3,6 +3,7 @@
 // commands to copy.
 
 import { type ReactNode, cloneElement, isValidElement, useId, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 /** A section without a card: 17/600 title, 12 px subtitle, then rows. */
 export function Section({ title, sub, children, id }: { title: string; sub?: ReactNode; children?: ReactNode; id?: string }) {
@@ -47,7 +48,8 @@ export function StatusDot({ kind, children }: { kind: 'good' | 'warn' | 'bad' | 
 }
 
 /** A command or config to copy, shown as is. */
-export function CommandBlock({ text, label = 'Copy' }: { text: string; label?: string }) {
+export function CommandBlock({ text, label }: { text: string; label?: string }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   return (
     <div className="command-block">
@@ -60,7 +62,7 @@ export function CommandBlock({ text, label = 'Copy' }: { text: string; label?: s
           setTimeout(() => setCopied(false), 2000)
         }}
       >
-        {copied ? 'Copied' : label}
+        {copied ? t('common.copied') : (label ?? t('common.copy'))}
       </button>
     </div>
   )

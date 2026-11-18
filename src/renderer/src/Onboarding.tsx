@@ -4,6 +4,7 @@
 // Upstream's intro video, referral survey, personal goal and hosted plan are left out.
 
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, ChevronLeft, ChevronRight, Shield, Sun } from 'lucide-react'
 import { CATEGORY_PRESETS, presetCategories } from '@shared/categories'
 import { OLLAMA_BASE_URL, OLLAMA_MODEL, cliOf, providerChoice } from '@shared/providers'
@@ -16,41 +17,45 @@ type Step = 'intro' | 'role' | 'provider' | 'setup' | 'permissions' | 'done'
 const RING: Record<Step, number | null> = { intro: null, role: 1, provider: null, setup: 3, permissions: 4, done: 6 }
 
 type Level = 'best' | 'medium' | 'basic'
+/** A rating dot and the key of its label (onboarding.table.ratings.*). */
+type Rating = [Level, 'best' | 'medium' | 'varies' | 'passable' | 'installCodex' | 'installClaude' | 'apiKey' | 'apiKeyAndModel' | 'extensiveSetup' | 'cliInstalled']
+/** A column of the table; its texts are onboarding.table.columns.<id>.* (title, subscription, notes) and onboarding.wizard.titles.<id>. */
 interface Column {
-  id: string
-  title: string
+  id: 'chatgpt' | 'claude' | 'anthropic' | 'gemini' | 'custom' | 'local'
   kind: ProviderKind
   flavor: 'api' | 'gemini' | 'cli' | 'local' | 'endpoint'
-  accuracy: [Level, string]
-  subscription: string
-  ease: [Level, string]
-  notes: string
+  accuracy: Rating
+  ease: Rating
 }
 
 /** Upstream's comparison table and column order, with columns for the providers this app has. */
 const COLUMNS: Column[] = [
-  { id: 'codex-cli', title: 'ChatGPT', kind: 'codex-cli', flavor: 'cli', accuracy: ['best', 'Best'], subscription: 'ChatGPT paid subscription', ease: ['medium', 'Install Codex CLI'], notes: 'Uses your ChatGPT subscription and less than 1% of your daily limit.' },
-  { id: 'claude-cli', title: 'Claude', kind: 'claude-cli', flavor: 'cli', accuracy: ['best', 'Best'], subscription: 'Claude paid subscription', ease: ['medium', 'Install Claude CLI'], notes: 'Uses your Claude subscription and less than 1% of your daily limit.' },
-  { id: 'anthropic', title: 'Anthropic API', kind: 'anthropic', flavor: 'api', accuracy: ['best', 'Best'], subscription: 'API credits', ease: ['medium', 'API key'], notes: 'Claude models through the Anthropic API.' },
-  { id: 'gemini', title: 'Gemini', kind: 'gemini', flavor: 'gemini', accuracy: ['medium', 'Medium'], subscription: 'Free', ease: ['medium', 'API key'], notes: 'Uses Gemini free tier.' },
-  { id: 'openai', title: 'OpenRouter / Custom', kind: 'openai', flavor: 'endpoint', accuracy: ['medium', 'Varies'], subscription: 'API credits', ease: ['medium', 'API key and model'], notes: 'Uses OpenRouter or any OpenAI-compatible endpoint.' },
-  { id: 'local', title: 'Local AI', kind: 'openai', flavor: 'local', accuracy: ['basic', 'Passable'], subscription: 'Free', ease: ['basic', 'Extensive setup'], notes: 'Requires 16GB+ RAM and 4GB free disk space. Ollama or LM Studio.' }
+  { id: 'chatgpt', kind: 'codex-cli', flavor: 'cli', accuracy: ['best', 'best'], ease: ['medium', 'installCodex'] },
+  { id: 'claude', kind: 'claude-cli', flavor: 'cli', accuracy: ['best', 'best'], ease: ['medium', 'installClaude'] },
+  { id: 'anthropic', kind: 'anthropic', flavor: 'api', accuracy: ['best', 'best'], ease: ['medium', 'apiKey'] },
+  { id: 'gemini', kind: 'gemini', flavor: 'gemini', accuracy: ['medium', 'medium'], ease: ['medium', 'apiKey'] },
+  { id: 'custom', kind: 'openai', flavor: 'endpoint', accuracy: ['medium', 'varies'], ease: ['medium', 'apiKeyAndModel'] },
+  { id: 'local', kind: 'openai', flavor: 'local', accuracy: ['basic', 'passable'], ease: ['basic', 'extensiveSetup'] }
 ]
 
-const WIZARD: Record<Column['flavor'], string[]> = {
-  api: ['Enter API key', 'Test connection', 'Complete'],
-  gemini: ['Get API key', 'Enter API key', 'Test connection', 'Complete'],
-  cli: ['Before you begin', 'Check installation', 'Test connection', 'Complete'],
-  local: ['Before you begin', 'Configure endpoint', 'Test connection', 'Complete'],
-  endpoint: ['Configure endpoint', 'Test connection', 'Complete']
+/** The wizard's steps; their names are onboarding.wizard.steps.*. */
+type WizardStep = 'getKey' | 'enterKey' | 'test' | 'complete' | 'beforeBegin' | 'checkInstall' | 'endpoint'
+const WIZARD: Record<Column['flavor'], WizardStep[]> = {
+  api: ['enterKey', 'test', 'complete'],
+  gemini: ['getKey', 'enterKey', 'test', 'complete'],
+  cli: ['beforeBegin', 'checkInstall', 'test', 'complete'],
+  local: ['beforeBegin', 'endpoint', 'test', 'complete'],
+  endpoint: ['endpoint', 'test', 'complete']
 }
-const WIZARD_TITLE: Record<string, string> = {
-  'claude-cli': 'Connect Claude',
-  'codex-cli': 'Connect ChatGPT',
-  anthropic: 'Connect the Anthropic API',
-  gemini: 'Gemini',
-  openai: 'Connect an AI endpoint',
-  local: 'Use local AI'
+/** The role presets (English keys of CATEGORY_PRESETS, which stay the stored data) and their text keys. */
+const ROLE_KEYS: Record<string, 'softwareEngineer' | 'founder' | 'designer' | 'student' | 'productManager' | 'dataScientist' | 'other'> = {
+  'Software Engineer': 'softwareEngineer',
+  'Founder / Executive': 'founder',
+  Designer: 'designer',
+  Student: 'student',
+  'Product Manager': 'productManager',
+  'Data Scientist': 'dataScientist',
+  Other: 'other'
 }
 const CLI_INSTALL: Record<CliName, { install: string; login: string; product: string; subscription: string }> = {
   claude: { install: 'npm install -g @anthropic-ai/claude-code', login: 'claude login', product: 'Claude Code', subscription: 'Claude' },
@@ -58,6 +63,7 @@ const CLI_INSTALL: Record<CliName, { install: string; login: string; product: st
 }
 
 export function Onboarding({ settings, platform, onDone }: { settings: Settings; platform: string; onDone: () => void }) {
+  const { t } = useTranslation()
   const [step, setStep] = useState<Step>(resumeStep)
   const [role, setRole] = useState<string | null>(null)
   const [draft, setDraft] = useState(settings)
@@ -67,41 +73,39 @@ export function Onboarding({ settings, platform, onDone }: { settings: Settings;
   const ring = RING[step]
 
   return (
-    <div className="onboarding" role="dialog" aria-modal="true" aria-label="Set up Dayflow Electron">
+    <div className="onboarding" role="dialog" aria-modal="true" aria-label={t('onboarding.dialogLabel')}>
       <div className="onb-step" key={step}>
         {step === 'intro' && (
           <div className="onb-center">
-            <h2>Your day, as a timeline</h2>
+            <h2>{t('onboarding.intro.title')}</h2>
             <div className="onb-text">
-              <p>
-                Every few seconds the app takes a screenshot of the screen under your mouse. Every 15 minutes an AI model you choose turns them
-                into cards that say what you did.
-              </p>
-              <p className="note">
-                Screenshots stay on this computer. Only the provider you pick sees them. There is no telemetry. You can pause any time from the
-                tray.
-              </p>
+              <p>{t('onboarding.intro.body')}</p>
+              <p className="note">{t('onboarding.intro.privacy')}</p>
             </div>
-            <Pill onClick={() => setStep('role')}>Get started</Pill>
+            <Pill onClick={() => setStep('role')}>{t('onboarding.intro.start')}</Pill>
           </div>
         )}
         {step === 'role' && (
           <div className="onb-center">
-            <h2 className="role-title">Help Dayflow Electron understand your work patterns better.</h2>
+            <h2 className="role-title">{t('onboarding.role.title')}</h2>
             <div className="onb-text">
-              <p className="lead">What do you do for work?</p>
-              <p className="lead">This will help Dayflow Electron generate categories that are most helpful to you.</p>
+              <p className="lead">{t('onboarding.role.question')}</p>
+              <p className="lead">{t('onboarding.role.why')}</p>
             </div>
             <div className="role-chips">
               {Object.keys(CATEGORY_PRESETS).map((r) => (
                 <button key={r} className={`role-chip ${role === r ? 'active' : ''}`} aria-pressed={role === r} onClick={() => setRole(r)}>
-                  {r}
+                  {ROLE_KEYS[r] ? t(`onboarding.role.roles.${ROLE_KEYS[r]}`) : r}
                 </button>
               ))}
             </div>
-            {role && <p className="note role-preview">Categories: {presetCategories(role).filter((c) => !c.isIdle).map((c) => c.name).join(', ')}</p>}
+            {role && (
+              <p className="note role-preview">
+                {t('onboarding.role.preview', { categories: presetCategories(role).filter((c) => !c.isIdle).map((c) => c.name).join(', ') })}
+              </p>
+            )}
             <Pill disabled={!role} onClick={() => role && void save({ categories: presetCategories(role) }).then(() => setStep('provider'))}>
-              Continue
+              {t('common.continue')}
             </Pill>
             <BackLink onClick={() => setStep('intro')} />
           </div>
@@ -124,17 +128,15 @@ export function Onboarding({ settings, platform, onDone }: { settings: Settings;
             <span className="onb-logo" aria-hidden="true">
               <Sun size={36} color="#fff" />
             </span>
-            <h2 className="done-title">You are ready to go!</h2>
-            <p className="onb-done-text">
-              To get useful insights, let Dayflow Electron run in the background for an hour or two to gather enough context, then check back in.
-            </p>
+            <h2 className="done-title">{t('onboarding.done.title')}</h2>
+            <p className="onb-done-text">{t('onboarding.done.body')}</p>
             <Pill
               onClick={async () => {
                 await window.dayflow.completeOnboarding()
                 onDone()
               }}
             >
-              Launch Dayflow Electron
+              {t('onboarding.done.launch')}
             </Pill>
             <BackLink onClick={() => setStep('permissions')} />
           </div>
@@ -154,68 +156,70 @@ function Pill({ children, onClick, disabled }: { children: React.ReactNode; onCl
 }
 
 function BackLink({ onClick }: { onClick: () => void }) {
+  const { t } = useTranslation()
   return (
     <button className="onb-back" onClick={onClick}>
-      <ChevronLeft size={14} /> Back
+      <ChevronLeft size={14} /> {t('common.back')}
     </button>
   )
 }
 
 /** "Choose a way to run Dayflow": providers side by side (upstream OnboardingPrototypeChooseProviderStep). */
 function ProviderTable({ onSelect, onBack }: { onSelect: (c: Column) => void; onBack: () => void }) {
+  const { t } = useTranslation()
   const [installed, setInstalled] = useState<Record<string, boolean>>({})
   useEffect(() => {
     // Like upstream: a CLI that is already there makes that column easy to set up.
     for (const cli of ['claude', 'codex'] as const) void window.dayflow.checkCli(cli).then((r) => setInstalled((m) => ({ ...m, [cli]: r.ok })))
   }, [])
-  const ease = (c: Column): [Level, string] => {
+  const ease = (c: Column): Rating => {
     const cli = cliOf(c.kind)
-    return cli && installed[cli] ? ['best', 'CLI installed'] : c.ease
+    return cli && installed[cli] ? ['best', 'cliInstalled'] : c.ease
   }
-  const Rated = ({ value }: { value: [Level, string] }) => (
+  const Rated = ({ value }: { value: Rating }) => (
     <span className="rated">
       <span className={`rating-dot ${value[0]}`} />
-      {value[1]}
+      {t(`onboarding.table.ratings.${value[1]}`)}
     </span>
   )
   return (
     <div className="onb-table-step">
-      <h2>Choose a way to run Dayflow Electron</h2>
+      <h2>{t('onboarding.table.title')}</h2>
       <div className="onb-table-wrap">
         <div className="onb-table" style={{ gridTemplateColumns: `140px repeat(${COLUMNS.length}, minmax(120px, 1fr))` }}>
           <span />
           {COLUMNS.map((c) => (
             <span key={c.id} className="col-head">
-              {c.title}
+              {t(`onboarding.table.columns.${c.id}.title`)}
             </span>
           ))}
-          <span className="row-label">Model accuracy</span>
+          <span className="row-label">{t('onboarding.table.accuracy')}</span>
           {COLUMNS.map((c) => (
             <Rated key={c.id} value={c.accuracy} />
           ))}
           <hr />
-          <span className="row-label">Subscription requirements</span>
+          <span className="row-label">{t('onboarding.table.subscription')}</span>
           {COLUMNS.map((c) => (
             <span key={c.id} className="plain">
-              {c.subscription}
+              {t(`onboarding.table.columns.${c.id}.subscription`)}
             </span>
           ))}
           <hr />
-          <span className="row-label">Ease of set up</span>
+          <span className="row-label">{t('onboarding.table.ease')}</span>
           {COLUMNS.map((c) => (
             <Rated key={c.id} value={ease(c)} />
           ))}
           <hr />
-          <span className="row-label">Additional notes</span>
+          <span className="row-label">{t('onboarding.table.notes')}</span>
           {COLUMNS.map((c) => (
             <span key={c.id} className="notes">
-              {c.notes}
+              {t(`onboarding.table.columns.${c.id}.notes`)}
             </span>
           ))}
           <span />
           {COLUMNS.map((c) => (
             <button key={c.id} className="select-pill" onClick={() => onSelect(c)}>
-              Select
+              {t('onboarding.table.select')}
             </button>
           ))}
         </div>
@@ -229,7 +233,9 @@ type TestResult = { ok: boolean; message: string } | 'running' | null
 
 /** The setup wizard: a step list on the left, one step at a time on the right (upstream LLMProviderSetupView). */
 function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Partial<Settings>) => Promise<void>; onBack: () => void; onDone: () => void }) {
+  const { t } = useTranslation()
   const { column, draft, save } = props
+  const title = t(`onboarding.table.columns.${column.id}.title`)
   const steps = WIZARD[column.flavor]
   const [index, setIndex] = useState(0)
   const [done, setDone] = useState<Set<number>>(new Set())
@@ -241,7 +247,7 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
   const local = column.flavor === 'local'
   const cli = cliOf(provider)
   const current = steps[index]!
-  const isTest = current === 'Test connection'
+  const isTest = current === 'test'
 
   const runCliCheck = () => {
     if (!cli) return
@@ -249,7 +255,7 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
     void window.dayflow.checkCli(cli).then(setCliCheck)
   }
   useEffect(() => {
-    if (current === 'Check installation') runCliCheck()
+    if (current === 'checkInstall') runCliCheck()
     if (isTest) setTest(null)
     // Only when the step changes.
   }, [index])
@@ -273,10 +279,10 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
   }
 
   const canContinue =
-    current === 'Enter API key' ? key.trim().length > 20 : current === 'Check installation' ? cliCheck !== 'running' && !!cliCheck?.ok : isTest ? test !== 'running' && !!test?.ok : true
+    current === 'enterKey' ? key.trim().length > 20 : current === 'checkInstall' ? cliCheck !== 'running' && !!cliCheck?.ok : isTest ? test !== 'running' && !!test?.ok : true
   const last = index === steps.length - 1
   const next = async () => {
-    if (current === 'Enter API key' && !(await storeKey())) return
+    if (current === 'enterKey' && !(await storeKey())) return
     setDone(new Set(done).add(index))
     if (last) props.onDone()
     else setIndex(index + 1)
@@ -284,7 +290,7 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
 
   const modelField = (
     <label className="onb-field">
-      Model
+      {t('onboarding.wizard.model')}
       <input
         key={provider}
         defaultValue={draft.models[provider]}
@@ -297,92 +303,86 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
     <div className="onb-wizard">
       <aside className="onb-steps">
         <button className="onb-back" onClick={props.onBack}>
-          <ChevronLeft size={14} /> Back
+          <ChevronLeft size={14} /> {t('common.back')}
         </button>
         <ol>
           {steps.map((s, i) => (
             <li key={s} className={i === index ? 'current' : done.has(i) ? 'done' : 'upcoming'}>
               <button className="bare" onClick={() => setIndex(i)}>
                 {i === index ? <ChevronRight size={14} /> : done.has(i) ? <Check size={14} color="#21A638" /> : null}
-                {s}
+                {t(`onboarding.wizard.steps.${s}`)}
               </button>
             </li>
           ))}
         </ol>
         <button className="onb-skip" onClick={async () => (await storeKey()) && props.onDone()}>
-          Skip for now
+          {t('onboarding.skip')}
         </button>
       </aside>
       <section className="onb-wizard-main">
-        <h3>{WIZARD_TITLE[column.id]}</h3>
+        <h3>{t(`onboarding.wizard.titles.${column.id}`)}</h3>
         <div className="onb-wizard-body">
-          {current === 'Get API key' && (
+          {current === 'getKey' && (
             <>
-              <h4>Get your Gemini API key</h4>
-              <p>Google AI Studio allows you to run Dayflow Electron for free. All you need is a Google account - no credit card required.</p>
+              <h4>{t('onboarding.wizard.gemini.title')}</h4>
+              <p>{t('onboarding.wizard.gemini.body')}</p>
               <ol className="onb-numbered">
-                <li>Visit Google AI Studio (aistudio.google.com)</li>
-                <li>Click "Get API key"</li>
-                <li>Create a new API key and copy it</li>
+                <li>{t('onboarding.wizard.gemini.step1')}</li>
+                <li>{t('onboarding.wizard.gemini.step2')}</li>
+                <li>{t('onboarding.wizard.gemini.step3')}</li>
               </ol>
-              <CommandBlock text="https://aistudio.google.com/apikey" label="Copy link" />
+              <CommandBlock text="https://aistudio.google.com/apikey" label={t('onboarding.wizard.gemini.copyLink')} />
             </>
           )}
-          {current === 'Enter API key' && (
+          {current === 'enterKey' && (
             <>
-              <h4>Enter your API key:</h4>
+              <h4>{t('onboarding.wizard.enterKey.title')}</h4>
               <label className="onb-field">
-                Paste your {column.title} API key below
+                {t('onboarding.wizard.enterKey.paste', { provider: title })}
                 <input type="password" autoComplete="off" placeholder={provider === 'gemini' ? 'AQ...' : 'sk-...'} value={key} onChange={(e) => setKey(e.target.value)} />
               </label>
               {modelField}
               {keyError && <p className="error">{keyError}</p>}
             </>
           )}
-          {current === 'Before you begin' && cli && (
+          {current === 'beforeBegin' && cli && (
             <>
-              <p>
-                Dayflow Electron uses {CLI_INSTALL[cli].product} through your existing {CLI_INSTALL[cli].subscription} subscription. Install it and sign in
-                on this computer, then we'll verify the connection.
-              </p>
+              <p>{t('onboarding.wizard.cli.intro', { product: CLI_INSTALL[cli].product, subscription: CLI_INSTALL[cli].subscription })}</p>
               <CommandBlock text={CLI_INSTALL[cli].install} />
               <CommandBlock text={CLI_INSTALL[cli].login} />
-              <p className="note">In the Flatpak, the app also needs a one-time permission to start it; the next step shows the command.</p>
+              <p className="note">{t('onboarding.wizard.cli.flatpak')}</p>
             </>
           )}
-          {current === 'Before you begin' && !cli && (
+          {current === 'beforeBegin' && !cli && (
             <>
-              <h4>For experienced users</h4>
-              <p>
-                Run a model on this computer with Ollama or LM Studio. The app sends one small request per screenshot, so a vision model and a
-                fast machine help. Expect lower quality than the hosted models.
-              </p>
+              <h4>{t('onboarding.wizard.local.title')}</h4>
+              <p>{t('onboarding.wizard.local.body')}</p>
               <CommandBlock text={`ollama pull ${OLLAMA_MODEL}`} />
             </>
           )}
-          {current === 'Check installation' && cli && (
+          {current === 'checkInstall' && cli && (
             <>
-              <p>Checking for the {cli} CLI on this computer.</p>
+              <p>{t('onboarding.wizard.cli.checking', { cli })}</p>
               <p className={`onb-status ${cliCheck === 'running' || !cliCheck ? '' : cliCheck.ok ? 'ok' : 'bad'}`}>
                 <span className="dot" />
-                {cliCheck === 'running' || !cliCheck ? 'Checking…' : cliCheck.message}
+                {cliCheck === 'running' || !cliCheck ? t('onboarding.wizard.checking') : cliCheck.message}
               </p>
               {modelField}
               <button className="btn-ink" onClick={runCliCheck} disabled={cliCheck === 'running'}>
-                Check
+                {t('onboarding.wizard.cli.check')}
               </button>
             </>
           )}
-          {current === 'Configure endpoint' && (
+          {current === 'endpoint' && (
             <>
               <label className="onb-field">
-                Base URL <em>(e.g. http://localhost:11434/v1 for Ollama, http://localhost:1234/v1 for LM Studio)</em>
+                {t('onboarding.wizard.endpoint.baseUrl')} <em>{t('onboarding.wizard.endpoint.baseUrlHint')}</em>
                 <input defaultValue={draft.openaiBaseUrl} onBlur={(e) => void save({ openaiBaseUrl: e.target.value.trim() || (local ? OLLAMA_BASE_URL : DEFAULT_SETTINGS.openaiBaseUrl) })} />
               </label>
               {modelField}
               {column.flavor === 'endpoint' && (
                 <label className="onb-field">
-                  API key <em>(not needed for local servers)</em>
+                  {t('onboarding.wizard.endpoint.apiKey')} <em>{t('onboarding.wizard.endpoint.apiKeyHint')}</em>
                   <input type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} />
                 </label>
               )}
@@ -391,30 +391,30 @@ function ProviderWizard(props: { column: Column; draft: Settings; save: (s: Part
           )}
           {isTest && (
             <>
-              <h4>Test Connection</h4>
-              <p>{cli ? "We'll ask your CLI a simple question to verify it's working and signed in." : `Click the button below to verify that ${column.title} works.`}</p>
+              <h4>{t('onboarding.wizard.test.title')}</h4>
+              <p>{cli ? t('onboarding.wizard.test.cli') : t('onboarding.wizard.test.api', { provider: title })}</p>
               <button className="btn-ink" disabled={test === 'running'} onClick={() => void runTest()}>
-                {test === 'running' ? 'Testing…' : 'Test connection'}
+                {test === 'running' ? t('onboarding.wizard.test.testing') : t('onboarding.wizard.test.button')}
               </button>
               {test && test !== 'running' && (
                 <p className={`onb-status ${test.ok ? 'ok' : 'bad'}`}>
                   <span className="dot" />
-                  {test.ok ? 'Connection successful.' : test.message}
+                  {test.ok ? t('onboarding.wizard.test.success') : test.message}
                 </p>
               )}
             </>
           )}
-          {current === 'Complete' && (
+          {current === 'complete' && (
             <>
-              <h4>All set!</h4>
-              <p>{column.title} is now configured and ready to use with Dayflow Electron.</p>
+              <h4>{t('onboarding.wizard.complete.title')}</h4>
+              <p>{t('onboarding.wizard.complete.body', { provider: title })}</p>
             </>
           )}
         </div>
         <button className="onb-next" disabled={!canContinue} onClick={() => void next()}>
-          {last ? 'Complete setup' : isTest && !(test && test !== 'running' && test.ok) ? 'Test Required' : (
+          {last ? t('onboarding.wizard.completeSetup') : isTest && !(test && test !== 'running' && test.ok) ? t('onboarding.wizard.testRequired') : (
             <>
-              Next <ChevronRight size={14} />
+              {t('common.next')} <ChevronRight size={14} />
             </>
           )}
         </button>
@@ -443,6 +443,7 @@ function resumeStep(): Step {
  * permissionsView (src/shared/permissions.ts).
  */
 function Permissions({ platform, onBack, onNext }: { platform: string; onBack: () => void; onNext: () => void }) {
+  const { t } = useTranslation()
   const [screen, setScreen] = useState<ScreenPermission | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -492,15 +493,15 @@ function Permissions({ platform, onBack, onNext }: { platform: string; onBack: (
   return (
     <div className={`onb-perms ${platform === 'darwin' ? '' : 'single'}`}>
       <div className="onb-perms-left">
-        <span className="last-step">Last step!</span>
-        <h3>Permissions</h3>
-        <p className="muted">Dayflow Electron can help understand your day.</p>
+        <span className="last-step">{t('onboarding.permissions.lastStep')}</span>
+        <h3>{t('onboarding.permissions.title')}</h3>
+        <p className="muted">{t('onboarding.permissions.intro')}</p>
         <div className="privacy-box">
           <b>
-            <Shield size={14} /> Dayflow Electron is built to be private and secure.
+            <Shield size={14} /> {t('onboarding.permissions.privateTitle')}
           </b>
-          <p>Dayflow Electron stores all recordings locally on your computer and sends screenshots only to the AI provider you chose.</p>
-          <p>You are always in control. You can pause or turn off Dayflow Electron whenever you like.</p>
+          <p>{t('onboarding.permissions.privateLocal')}</p>
+          <p>{t('onboarding.permissions.privateControl')}</p>
         </div>
         {view.rows.map((r) => (
           <PermissionCard key={r.id} row={r} onGrant={() => void grant()} onRelaunch={relaunch} onRecheck={() => setWindowRun((n) => n + 1)} />
@@ -522,29 +523,29 @@ function Permissions({ platform, onBack, onNext }: { platform: string; onBack: (
             </div>
             <div className="mock-row">
               <span className="mock-icon" />
-              Browser
+              {t('onboarding.permissions.mockBrowser')}
               <span className="mock-toggle" />
             </div>
             <div className="mock-row">
               <span className="mock-icon" />
-              Terminal
+              {t('onboarding.permissions.mockTerminal')}
               <span className="mock-toggle" />
             </div>
           </div>
-          <figcaption>Example: System Settings → Privacy &amp; Security → Screen Recording</figcaption>
+          <figcaption>{t('onboarding.permissions.mockCaption')}</figcaption>
         </figure>
       )}
       <div className="onb-perms-actions">
         {view.skippable && (
           <button className="onb-skip" onClick={onNext}>
-            Skip for now
+            {t('onboarding.skip')}
           </button>
         )}
         <button className="onb-secondary" onClick={onBack}>
-          Back
+          {t('common.back')}
         </button>
         <button className="onb-next static" disabled={!view.canContinue} onClick={onNext}>
-          Next <ChevronRight size={14} />
+          {t('common.next')} <ChevronRight size={14} />
         </button>
       </div>
     </div>
@@ -555,6 +556,7 @@ const CHECKING_WINDOW: WindowCheck = { state: 'checking', reason: null, command:
 
 /** One permission: title, detail and state, with Grant (and Quit and Reopen) on the right (upstream SystemPermissionRow). */
 function PermissionCard({ row, onGrant, onRelaunch, onRecheck }: { row: PermissionRow; onGrant: () => void; onRelaunch: () => void; onRecheck: () => void }) {
+  const { t } = useTranslation()
   const hasControls = !!row.status || row.actions.length > 0
   return (
     <div className="perm-row">
@@ -568,17 +570,17 @@ function PermissionCard({ row, onGrant, onRelaunch, onRecheck }: { row: Permissi
           {row.status && <StatusDot kind={row.status.kind}>{row.status.label}</StatusDot>}
           {row.actions.includes('grant') && (
             <button className="perm-grant" disabled={row.busy} onClick={onGrant}>
-              {row.busy ? 'Waiting…' : 'Grant'}
+              {row.busy ? t('onboarding.permissions.waiting') : t('onboarding.permissions.grant')}
             </button>
           )}
           {row.actions.includes('recheck') && (
             <button className="perm-grant" onClick={onRecheck}>
-              Check again
+              {t('onboarding.permissions.checkAgain')}
             </button>
           )}
           {row.actions.includes('relaunch') && (
             <button className="perm-link" onClick={onRelaunch}>
-              Quit and Reopen
+              {t('onboarding.permissions.quitReopen')}
             </button>
           )}
         </div>
@@ -590,12 +592,13 @@ function PermissionCard({ row, onGrant, onRelaunch, onRecheck }: { row: Permissi
 
 /** Six segments filling up with the steps, the share in the middle (upstream ProgressRingView). */
 function ProgressRing({ filled }: { filled: number }) {
+  const { t } = useTranslation()
   const total = 6
   const r = 34
   const c = 2 * Math.PI * r
   const seg = ((1 - 0.035 * total) / total) * c
   return (
-    <div className="onb-ring" aria-label={`Setup ${Math.round((filled / total) * 100)}% done`} role="img">
+    <div className="onb-ring" aria-label={t('onboarding.ringLabel', { percent: Math.round((filled / total) * 100) })} role="img">
       <svg width="76" height="76" viewBox="0 0 76 76">
         {Array.from({ length: total }, (_, i) => (
           <circle

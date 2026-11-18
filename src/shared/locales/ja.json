@@ -1,0 +1,795 @@
+{
+  "common": {
+    "dismiss": "閉じる",
+    "copied": "コピーしました",
+    "confirm": "確認",
+    "back": "戻る",
+    "next": "次へ",
+    "continue": "続ける",
+    "copy": "コピー",
+    "save": "保存",
+    "saved": "保存済み",
+    "reset": "リセット",
+    "open": "開く",
+    "retry": "再試行",
+    "close": "閉じる",
+    "optional": "任意",
+    "cancel": "キャンセル",
+    "delete": "削除"
+  },
+  "app": {
+    "views": "ビュー",
+    "tabs": {
+      "timeline": "タイムライン",
+      "daily": "日次",
+      "weekly": "週間レポート",
+      "chat": "チャット",
+      "settings": "設定"
+    },
+    "analysisFailed": "分析に失敗しました",
+    "captureFailed": "キャプチャに失敗しました",
+    "openSettings": "設定を開く"
+  },
+  "providers": {
+    "anthropic": {
+      "hint": "Anthropic API経由のClaudeモデル。"
+    },
+    "gemini": {
+      "hint": "Google Gemini API。フレームはインラインで送信されます。"
+    },
+    "openai": {
+      "label": "OpenAI互換",
+      "hint": "OpenAI、OpenRouter、またはローカルのOllama／LM Studioサーバー（キー不要。小さなステップで分析します）。"
+    },
+    "claudeCli": {
+      "hint": "お使いのclaude CLIとそのサブスクリプションを使用。APIキーは不要です。"
+    },
+    "codexCli": {
+      "hint": "お使いのcodex CLIとChatGPTサブスクリプションを使用。APIキーは不要です。"
+    }
+  },
+  "format": {
+    "hoursMinutes": "{{h}}時間{{m}}分",
+    "hours": "{{h}}時間",
+    "minutes": "{{m}}分",
+    "spelledHours_other": "{{count}}時間",
+    "spelledMinutes_other": "{{count}}分",
+    "spelledHoursMinutes": "{{hours}}, {{minutes}}"
+  },
+  "access": {
+    "progress": "{{done}} / {{total}}"
+  },
+  "recorder": {
+    "recording": "記録",
+    "paused": "一時停止中",
+    "pausedUntil": "{{time}}まで一時停止中",
+    "locked": "ロック中のため一時停止",
+    "sleeping": "スリープ中のため一時停止",
+    "backoff": "キャプチャに失敗しました",
+    "backoffUntil": "キャプチャに失敗しました。{{time}}に再試行します",
+    "stopped": "停止中"
+  },
+  "pause": {
+    "forMinutes_other": "{{count}}分間",
+    "forHours_other": "{{count}}時間",
+    "untilResumed": "再開するまで",
+    "chipMinutes_other": "{{count}}分間一時停止",
+    "chipHours_other": "{{count}}時間一時停止",
+    "chipUntilResumed": "再開するまで一時停止",
+    "chipShortMinutes_other": "{{count}}分",
+    "chipShortHours_other": "{{count}}時間",
+    "pausedFor": "Dayflow Electronをあと{{time}}一時停止中",
+    "pausedIndefinitely": "Dayflow Electronを無期限に一時停止",
+    "hiddenBlockedApp": "非表示：ブロック中のアプリが前面にあります",
+    "resume": "再開",
+    "pause": "一時停止",
+    "closeOptions": "一時停止オプションを閉じる",
+    "pauseRecording": "記録を一時停止"
+  },
+  "tray": {
+    "tooltip": "Dayflow Electron：{{status}}",
+    "resume": "記録を再開",
+    "pause": "記録を一時停止",
+    "open": "Dayflow Electronを開く",
+    "openRecordings": "録画フォルダを開く",
+    "quit": "終了"
+  },
+  "notifications": {
+    "standupReady": {
+      "title": "昨日のデイリー振り返りができました",
+      "body": "クリックしてデイリー振り返りで開きます。"
+    },
+    "firstCards": {
+      "title": "最初の Dayflow Electron カードの準備ができました",
+      "body": "直近数分間の作業から Dayflow Electron が記録した内容を見てみましょう。"
+    },
+    "weeklyUnlocked": {
+      "title": "週間レポートの準備ができました",
+      "body": "クリックして週間レポートを開きます。"
+    },
+    "problem": {
+      "title": "Dayflow Electronで対応が必要です",
+      "waiting": "未処理の記録が{{time}}あります。"
+    },
+    "waitingMinutes_other": "{{count}}分",
+    "waitingHours_other": "{{count}}時間",
+    "waitingDay": "1日"
+  },
+  "updates": {
+    "available": {
+      "title": "Dayflow Electron {{version}}が利用可能です",
+      "bodyDownload": "クリックしてダウンロードします。",
+      "bodyOpen": "このコピーは自動でアップデートできません。クリックしてダウンロードページを開きます。"
+    },
+    "ready": {
+      "title": "Dayflow Electron {{version}}の準備ができました",
+      "body": "Dayflow Electronを再起動してアップデートしてください。次回終了時にもアップデートされます。"
+    },
+    "menuGet": "バージョン{{version}}を入手…",
+    "menuDownload": "バージョン{{version}}をダウンロード",
+    "menuDownloading": "バージョン{{version}}をダウンロード中（{{percent}}%）",
+    "menuRestart": "再起動して{{version}}にアップデート"
+  },
+  "permissions": {
+    "checking": "確認中…",
+    "granted": "許可済み",
+    "notGranted": "未許可",
+    "allowed": "許可済み",
+    "notAllowedYet": "まだ許可されていません",
+    "works": "動作中",
+    "needsPermission": "許可が必要",
+    "notAvailable": "利用不可",
+    "macScreen": {
+      "title": "画面収録",
+      "detail": "定期的なスクリーンショットをもとに、Dayflow Electronがタイムラインを自動で作成します。",
+      "turnOn": "「システム設定 → プライバシーとセキュリティ → 画面収録」でDayflow Electronをオンにしてから、アプリを終了して再度開いてください。"
+    },
+    "linuxScreen": {
+      "title": "画面共有",
+      "detail": "共有する画面をデスクトップが尋ねてきます。すべての画面を選び、権限の復元を許可すると、次回から尋ねられなくなります。アプリはマウスがある画面だけを保持します。"
+    },
+    "window": {
+      "title": "ウィンドウ検出（任意）",
+      "detail": "パスワードマネージャーなどのブロック中のアプリが記録から除外されるのは、アプリがアクティブなウィンドウを認識できる場合のみです。",
+      "detailFlatpak": "パスワードマネージャーなどのブロック中のアプリが記録から除外されるのは、アプリがアクティブなウィンドウを認識できる場合のみです。KDE PlasmaのFlatpak版では、このコマンドを一度実行してからアプリを再起動してください。",
+      "detailUnavailable": "パスワードマネージャーなどのブロック中のアプリが記録から除外されるのは、アプリがアクティブなウィンドウを認識できる場合のみです。認識できない環境では、パスワードマネージャーを開く前に記録を一時停止してください。"
+    },
+    "windows": {
+      "title": "許可は不要です",
+      "detail": "Windowsではスクリーンショットに許可は必要ありません。起動するとすぐに記録が始まります。"
+    }
+  },
+  "daily": {
+    "today": "今日",
+    "yesterday": "昨日",
+    "highlightsFrom": "{{day}}のハイライト",
+    "highlightsFromToday": "今日のハイライト",
+    "highlightsFromYesterday": "昨日のハイライト",
+    "recentHighlights": "最近のハイライト",
+    "tasksFor": "{{day}}のタスク",
+    "tasksForToday": "今日のタスク",
+    "tasksForYesterday": "昨日のタスク",
+    "blockers": "障害要因",
+    "yesterdaysHighlights": "昨日のハイライト",
+    "todaysTasks": "今日のタスク",
+    "noneRightNow": "現在はありません",
+    "todayDate": "今日、{{date}}",
+    "locked": {
+      "title": "Dayflow Electron デイリー振り返り",
+      "intro": "デイリー振り返りは、1日を可視化し、スタンドアップ用の進捗報告にすばやくまとめる新しい方法です。",
+      "unlock": "5時間分のタイムラインデータが分析されると、デイリー振り返りが利用可能になります。"
+    },
+    "headingToday": "今日ここまでの内容です。明日、1日全体を確認できます。",
+    "headingYesterday": "昨日のワークフロー",
+    "headingOn": "{{date}}のワークフロー",
+    "totalToday": "今日ここまでの合計",
+    "totalYesterday": "昨日の合計",
+    "totalOn": "{{date}}の合計",
+    "previousDay": "前日",
+    "nextDay": "翌日",
+    "distractions": "注意散漫",
+    "distractionTooltip": "{{duration}}：{{title}}",
+    "noActivityYet": "まだアクティビティは記録されていません。",
+    "noActivityDay": "9時から21時までに記録されたアクティビティはありません",
+    "standupFor": "{{date}}のスタンドアップ",
+    "copyStandup": "スタンドアップ更新をコピー",
+    "regenerate": "再生成",
+    "regenerating": "再生成中…",
+    "notGenerated": "デイリーデータはまだ生成されていません。「再生成」をクリックして今すぐ作成するか、自分で入力してください。",
+    "blockersPlaceholder": "作業を妨げている問題があれば入力してください",
+    "itemLabel": "{{title}}の項目{{number}}",
+    "addItem": "項目を追加"
+  },
+  "chat": {
+    "errors": {
+      "busy": "アシスタントはまだ回答中です。",
+      "locked": "10時間分のタイムラインデータが集まると、チャットが利用可能になります。",
+      "empty": "先に質問を入力してください。"
+    },
+    "newChat": "新しいチャット",
+    "followUp": "フォローアップ",
+    "placeholder": "Dayflow Electron のデータについて質問...",
+    "provider": "プロバイダー",
+    "send": "送信",
+    "copyAnswer": "回答をコピー",
+    "status": {
+      "thinking": "思考中",
+      "tools": "ツールを実行中",
+      "answering": "回答中"
+    },
+    "locked": {
+      "title": "チャットをロック解除",
+      "beta": "ベータ",
+      "intro": "チャットでは、Dayflow Electronのアクティビティについて質問し、要約、比較、分析を得られます。",
+      "dataRequired": "10時間分のタイムラインデータが必要です",
+      "dataNote": "Dayflow Electronが十分なアクティビティを分析すると、チャットが利用可能になります。{{progress}}",
+      "providerConfigured": "AIプロバイダー設定済み",
+      "providerRequired": "AIプロバイダーが必要です",
+      "providerNote": "設定でAIプロバイダーを追加すると、チャットを利用できます。",
+      "progress": "チャットのアンロック進捗",
+      "keepRecording": "録画を続けてアンロック",
+      "privacy": "<b>プライバシーに関する注意：</b>質問と回答はこのコンピューターに保存され、選択したプロバイダーだけがそれらを参照します。"
+    },
+    "welcome": {
+      "title": "Dayflow Electronのデータについて質問",
+      "intro": "質問したり、タイムラインを分析したり、チャートやグラフを生成したりできます。",
+      "memory": "回答の好みを覚えるので、お好みのスタイルを気軽に教えてください。",
+      "try": "いずれかを試してみてください",
+      "prompts": {
+        "standup": "昨日のスタンドアップノートを生成",
+        "lastWeek": "先週は何を終わらせましたか？",
+        "focused": "今週、最も集中していたのはいつ？",
+        "compare": "今週と先週を比較"
+      }
+    },
+    "history": {
+      "title": "履歴",
+      "empty": "保存済みのチャットはまだありません",
+      "delete": "{{title}}を削除",
+      "groups": {
+        "today": "今日",
+        "yesterday": "昨日",
+        "thisWeek": "今週",
+        "earlier": "それ以前"
+      }
+    },
+    "memory": {
+      "title": "記憶",
+      "note": "アシスタントの返信から自動更新されます。手動で編集することもできます。",
+      "clear": "記憶を消去"
+    }
+  },
+  "settings": {
+    "export": {
+      "startAfterEnd": "開始は終了以前に設定してください。",
+      "tooLong": "期間は10年以内で選択してください。",
+      "canceled": "書き出しをキャンセルしました",
+      "saveFailed": "ファイルを保存できませんでした：{{error}}",
+      "saved": "{{path}}に保存しました。アクティビティ：{{activities}}件、日数：{{days}}日。",
+      "title": "書き出す",
+      "sub": "指定した期間のタイムラインをMarkdownファイルとして保存します。",
+      "range": "期間",
+      "from": "開始",
+      "to": "終了",
+      "asMarkdown": "Markdownとして書き出す"
+    },
+    "providers": {
+      "testAnswered": "{{model}}の回答：{{text}}",
+      "cliFound": "{{path}}が見つかりました。「接続をテスト」をクリックして、ログイン済みか確認してください。",
+      "cliNotFound": "見つかりません。インストールするか、フルパスを入力してください。",
+      "cliNotFoundAt": "{{path}}に見つかりません。インストールするか、フルパスを入力してください。",
+      "title": "AIプロバイダー",
+      "sub": "スクリーンショットは、ここで選択したプロバイダーにのみ送信されます。それ以外のデータがこのコンピューターの外に出ることはありません。",
+      "provider": "プロバイダー",
+      "inUse": "使用中",
+      "model": "モデル",
+      "baseUrl": "ベース URL",
+      "baseUrlSub": "例：Ollamaの場合は http://localhost:11434/v1",
+      "apiKey": "APIキー",
+      "keyStored": "キーリングに保存済み",
+      "keyNotSet": "未設定",
+      "keySaved": "キーをキーリングに保存しました。",
+      "keyRemoved": "キーを削除しました。",
+      "keyReplacePlaceholder": "置き換える新しいキーを入力",
+      "keyPlaceholder": "APIキーを貼り付け",
+      "saveKey": "キーを保存",
+      "removeKey": "キーを削除",
+      "connection": "接続",
+      "asking": "モデルに問い合わせ中…",
+      "connectionSub": "モデルに小さなリクエストを送信します。",
+      "testConnection": "接続をテスト",
+      "fallback": "フォールバックプロバイダー",
+      "fallbackSub": "メインのプロバイダーが失敗したときにバッチを引き継ぎます。モデルとキーを設定するには、上で選択してください。",
+      "none": "なし",
+      "fallbackOption": "{{provider}}（{{model}}）",
+      "fallbackOptionNoKey": "{{provider}}（{{model}}）、キー未設定",
+      "outputLanguage": "出力言語を上書き",
+      "outputLanguageSub": "モデルが書くカードのテキストの言語。空欄の場合は英語です。アプリ自体のテキストは「設定 → その他 → アプリの言語」に従います。",
+      "outputLanguagePlaceholder": "英語",
+      "cliPath": "{{cli}}のパス",
+      "cliPathSub": "任意。自動的に検出されます。",
+      "cliPathPlaceholder": "例：/home/you/.local/bin/{{cli}}",
+      "cliLabel": "{{cli}} CLI",
+      "looking": "検索中…",
+      "cliSub": "ログイン済みの{{cli}} CLIを実行します。画像とプロンプトは、ご利用のサブスクリプションで{{vendor}}に送信されます。Flatpak版では、アプリがコンピューター上でプログラムを起動できるようになるため、一度だけ許可が必要です。",
+      "checkCli": "{{cli}}を確認"
+    },
+    "title": "設定",
+    "sections": "設定のセクション",
+    "tabs": {
+      "storage": "ストレージ",
+      "privacy": "プライバシー",
+      "providers": "プロバイダー",
+      "agents": "MCP / CLI",
+      "export": "書き出す",
+      "other": "その他"
+    },
+    "version": "Dayflow Electron v{{version}}",
+    "releaseNotes": "リリースノート ↗",
+    "prompt": {
+      "title": "プロンプト",
+      "sub": "タイトル、要約、詳細ログについてモデルが従うルールを置き換えます。空欄の項目には本家Dayflowのテキストが使われます。",
+      "placeholder": "本家のデフォルト",
+      "fields": {
+        "title": "タイトルのルール",
+        "summary": "要約のルール",
+        "detailedSummary": "詳細ログのルール"
+      }
+    },
+    "storage": {
+      "recording": "記録",
+      "recordingSub": "マウスがある画面だけが記録されます。画面のロック中は記録を一時停止します。",
+      "frequency": "キャプチャ頻度",
+      "frequencySub": "スクリーンショットを撮る間隔。",
+      "everySeconds_other": "{{count}}秒ごと",
+      "resolution": "解像度",
+      "title": "ストレージ",
+      "sub": "上限に達すると、古いスクリーンショットから順に削除されます。カードは残ります。",
+      "limit": "ストレージの上限",
+      "used": "スクリーンショットの使用量：{{size}} GB",
+      "limitAria": "ストレージの上限（GB）",
+      "folder": "録画フォルダ"
+    },
+    "privacy": {
+      "title": "ブロック中のアプリ",
+      "sub": "これらのアプリがフォーカスされている間は何も保存されず、その時間は「Private」と表示されます。1行に1つのルールを記述します：アプリID（例：<code>org.keepassxc.KeePassXC</code>）、または<code>title:</code>に続けてウィンドウタイトルに含まれるテキスト。",
+      "rules": "ルール",
+      "detectionOff": "ウィンドウ検出がオフのため、ブロック中のアプリも他のウィンドウと同様に記録されます。",
+      "detectionWorks": "ウィンドウ検出は動作しています。",
+      "hidePrivate": "プライベートブラウジングのウィンドウを隠す",
+      "hidePrivateSub": "Chromeのシークレットウィンドウと Firefoxのプライベートウィンドウは、スクリーンショットの代わりに伏せ字のカードになります。ウィンドウタイトルから検出するため、ウィンドウ検出も必要です。",
+      "hideSecrets": "スクリーンショット内の機密情報を隠す",
+      "hideSecretsSub": "AIプロバイダーに送る各フレームのテキストを読み取り、認識したAPIキー、パスワード、秘密鍵、シードフレーズ、リカバリーコードを黒塗りします。パターンで認識するため一部を見逃すことがあり、1フレームあたり数秒かかります。"
+    },
+    "reprocess": {
+      "title": "再処理",
+      "sub": "1日分を再分析します。その日のカードは置き換えられますが、録画は残ります。",
+      "day": "日",
+      "dayAria": "再処理する日",
+      "queued_other": "{{count}}件のバッチを分析キューに追加しました。",
+      "nothing": "その日には何も記録されていません。",
+      "confirm": "確認",
+      "button": "この日を再処理"
+    },
+    "other": {
+      "general": "一般",
+      "appLanguage": "アプリの言語",
+      "appLanguageSub": "アプリのメニュー、ボタン、メッセージの言語。カードのテキストは「プロバイダー」の出力言語に従います。",
+      "systemDefault": "システム設定に従う",
+      "appearance": "外観",
+      "appearanceSub": "ダーク、ライト、またはデスクトップの設定に従います。",
+      "dark": "ダーク",
+      "light": "ライト",
+      "system": "システム",
+      "theme": "テーマ",
+      "themeSub": "モダン：フラットなニュートラルグレーと1色のアクセント。オリジナル：本家Dayflowの温かみのある外観。",
+      "modern": "モダン",
+      "original": "オリジナル",
+      "launchAtLogin": "ログイン時に Dayflow Electron を起動",
+      "launchAtLoginAria": "ログイン時に起動",
+      "showIcons": "タイムラインにアプリ／Webサイトのアイコンを表示",
+      "showIconsSub": "アイコンは各Webサイトから直接読み込まれます（例：github.com/favicon.ico）。そのため、これらのサイトにIPアドレスが伝わります。",
+      "showIconsAria": "アイコンを表示",
+      "goalPopups": "毎日の目標のポップアップを表示",
+      "goalPopupsSub": "オフにすると、午前4時以降にDayflow Electronが目標設定や昨日の振り返りを自動的に開くことはありません。"
+    },
+    "updates": {
+      "check": "アップデートを確認",
+      "checkSub": "数時間ごとにGitHubに新しいバージョンを問い合わせます。AIプロバイダー以外への唯一のリクエストです。オフにすると、アップデートのリクエストは一切行われません。",
+      "autoInstall": "アップデートを自動でインストール",
+      "autoInstallUnsigned": "このコピーはDeveloper IDで署名されていないため、macOSはアップデートのインストールを許可しません。新しいバージョンが出ると、Dayflow Electronがお知らせします。",
+      "autoInstallSub": "新しいバージョンをGitHubからバックグラウンドでダウンロードし、Dayflow Electronの再起動時にインストールします。オフの場合は、Dayflow Electronがお知らせするだけです。"
+    },
+    "categories": {
+      "title": "カテゴリー",
+      "sub": "説明は、各カテゴリーに何が含まれるかをモデルに伝えます。「Idle」はコンピューターから離れていた時間に使われます。",
+      "colorOf": "{{name}}の色",
+      "name": "名前",
+      "descriptionOf": "{{name}}の説明",
+      "idlePlaceholder": "コンピューターから離れていた時間",
+      "placeholder": "ここに含まれるもの",
+      "remove": "{{name}}を削除",
+      "addOrReplace": "追加または置き換え",
+      "newName": "カテゴリー{{n}}",
+      "add": "カテゴリーを追加",
+      "presetAria": "プリセットを適用",
+      "presetPlaceholder": "プリセットを使用…",
+      "replaceHint": "既存のカードは名前をそのまま保持します。",
+      "replaceWith": "{{role}}で置き換え",
+      "roles": {
+        "softwareEngineer": "ソフトウェアエンジニア",
+        "founder": "創業者 / 経営幹部",
+        "designer": "デザイナー",
+        "student": "学生",
+        "productManager": "プロダクトマネージャー",
+        "dataScientist": "データサイエンティスト",
+        "other": "その他"
+      }
+    }
+  },
+  "summary": {
+    "status": {
+      "skipped": "今日の目標を設定して、下の進捗バーを有効にしましょう。",
+      "paused": "Dayflow Electronは一時停止中です。進捗の追跡を続けるには再開してください。",
+      "stopped": "進捗の追跡を続けるにはDayflow Electronを起動してください。",
+      "tracking": "集中と注意散漫のカテゴリーに基づいて進捗を追跡しています。"
+    },
+    "setTodaysGoals": "今日の目標を設定",
+    "todaysTargets": "今日の目標",
+    "targets": "目標",
+    "setGoals": "目標を設定",
+    "editGoals": "目標を編集",
+    "daySoFar": "今日ここまで",
+    "noActivity": "アクティビティデータはまだありません",
+    "yourFocus": "集中したこと",
+    "yourFocusInfo": "目標で集中としてカウントしたカテゴリーから算出",
+    "editCategoriesForFocus": "カテゴリーを編集して、集中時間を算出します。",
+    "totalFocus": "合計集中時間",
+    "longestFocus": "最長集中時間",
+    "distractionsSoFar": "これまでの注意散漫",
+    "totalCaptured": "記録された合計時間",
+    "totalDistracted": "注意散漫だった合計時間",
+    "focus": "集中",
+    "focusFulfilled": "<b>{{done}}</b>/ {{target}}時間達成",
+    "distraction": "注意散漫",
+    "distractionUsed": "<b>{{used}}</b>/ {{limit}}",
+    "distractionUsedOver": "<b>{{used}}</b>/ {{limit}}使用",
+    "distractionBudget": "注意散漫の許容時間",
+    "donutLabel": "カテゴリー別の時間（合計{{total}}）",
+    "total": "合計",
+    "longestFocusRange": "最長集中時間：{{start}}〜{{end}}",
+    "percentDistracted": "注意散漫 {{percent}}%",
+    "yourReview": "振り返り",
+    "lastReviewedAt": "最終確認時刻：{{time}}。",
+    "noReviews": "振り返りはまだありません。",
+    "reviewCards_other": " {{count}}件のカードを確認してデータを更新してください。"
+  },
+  "goals": {
+    "dialogLabel": "毎日の目標",
+    "closeWithoutSaving": "保存せずに閉じる",
+    "yesterdaysReview": "昨日の振り返り",
+    "focusTarget": "集中目標：{{duration}}",
+    "timeSpent": "費やした時間：{{duration}}",
+    "noFocusCategories": "集中カテゴリは記録されていません",
+    "distractionLimitLine": "注意散漫時間の上限：{{duration}}",
+    "timeSpentDistracted": "注意が散漫だった時間：{{duration}}",
+    "setTodaysGoals": "今日の目標を設定",
+    "nailedIt": "完璧",
+    "missed": "未達成",
+    "focusGoal": "集中目標",
+    "distractionLimit": "注意散漫時間の上限",
+    "focusCategories": "集中カテゴリー",
+    "distractionCategories": "注意散漫カテゴリー",
+    "categories": "カテゴリー",
+    "yesterdaysFocus": "昨日の集中度",
+    "yesterdaysDistractions": "昨日の注意散漫",
+    "lastWeekFocus": "先週の集中度の平均",
+    "lastWeekDistraction": "先週の注意散漫度の平均",
+    "whereToSpend": "今日は何に時間を使いたいですか？",
+    "dragHint": "ドラッグ＆ドロップして追跡するカテゴリーを設定",
+    "skipToday": "今日はスキップ",
+    "chipRemove": "クリックして削除",
+    "chipCycle": "目標パネルにドラッグするか、クリックして集中、注意散漫、未追跡を切り替え",
+    "hours": "時間",
+    "mins": "分"
+  },
+  "agents": {
+    "messages": {
+      "runInTerminal": "または、ターミナルでこれを実行して{{client}}を接続します：",
+      "notFound": "見つかりません",
+      "couldNotAdd": "{{client}}は接続を追加できませんでした。",
+      "didNotKeep": "{{client}}はDayflow Electronとの接続を保持しませんでした。",
+      "keptConnection": "{{client}}は接続を保持しました。",
+      "addToConfig": "または、{{path}}の\"mcpServers\"の下にこれを追加してから、Claude Desktopを再起動してください：",
+      "couldNotUpdate": "{{file}}を更新できませんでした：{{error}}",
+      "couldNotOpen": "{{client}}を開けませんでした：{{error}}"
+    },
+    "copyConfig": "設定をコピー",
+    "connect": {
+      "title": "AI ツールに接続",
+      "sub": "Codex、Claude、CursorなどのAIツールがDayflow Electronのタイムラインを読み取れるようにします。接続は各ツールのユーザー設定に保存されるため、このコンピューター上のどのプロジェクトでもDayflow Electronを利用できます。自分の会話で送信した内容以外は、コンピューターの外部に送られません。",
+      "otherApps": "その他のアプリ",
+      "otherAppsSub": "これを任意のMCPクライアントの設定に貼り付けてください。"
+    },
+    "edits": {
+      "title": "編集を許可",
+      "sub": "オフの場合、AIツールはタイムラインを読み取れますが、変更はできません。オンにすると、アクティビティの名前変更、カテゴリーの管理、日ごとの目標設定ができます。ターミナルコマンドは削除の前に確認し、AIツールには削除前にあなたに確認するよう指示されます。すべての編集はデータフォルダ内のagent-writes.logに記録されます。",
+      "on": "編集はオン",
+      "off": "編集はオフ",
+      "onSub": "Dayflow Electronの実行中、AIツールはDayflow Electronを通じて変更を加えることができます。"
+    },
+    "terminal": {
+      "title": "ターミナルコマンド",
+      "sub": "~/.local/binにdayflow-electronコマンドを追加し、任意のターミナルからタイムラインを確認できるようにします。Dayflow Electronに内蔵されたCLIを起動するため、常にアプリと一致します。何もダウンロードされず、シェルの設定も変更されません。",
+      "install": "インストール",
+      "installSub": "ターミナルでこれを一度実行してから、dayflow-electron timeline を試してください。",
+      "remove": "削除",
+      "removeSub": "コマンドを削除するには、これを実行します。",
+      "windows": "Windowsでは利用できません",
+      "windowsSub": "dayflow-electronターミナルコマンドはLinuxとmacOSで利用できます。Windowsでは「設定 → MCP / CLI」でAIツールを接続してください。"
+    },
+    "client": {
+      "connected": "接続しました。接続を反映するには再起動してください。",
+      "connectedCodex": "接続しました。接続を反映するにはCodexを再起動してください。",
+      "notFound": "見つかりません",
+      "checking": "確認中…",
+      "connecting": "接続中…",
+      "disconnecting": "接続を解除中…",
+      "approve": "表示されたインストールダイアログで承認してください。",
+      "connect": "接続",
+      "disconnect": "接続を解除",
+      "finishIn": "{{name}}で完了"
+    }
+  },
+  "onboarding": {
+    "dialogLabel": "Dayflow Electronのセットアップ",
+    "skip": "今はスキップ",
+    "ringLabel": "セットアップ{{percent}}%完了",
+    "intro": {
+      "title": "あなたの1日をタイムラインに",
+      "body": "アプリは数秒ごとに、マウスがある画面のスクリーンショットを撮ります。15分ごとに、選択したAIモデルがそれらを、何をしたかがわかるカードにまとめます。",
+      "privacy": "スクリーンショットはこのコンピューターに保存され、参照するのは選択したプロバイダーだけです。テレメトリーはありません。トレイからいつでも一時停止できます。",
+      "start": "始める"
+    },
+    "role": {
+      "title": "Dayflow Electron があなたの作業パターンをより深く理解できるようにします。",
+      "question": "どのようなお仕事をしていますか？",
+      "why": "Dayflow Electronがあなたに最も役立つカテゴリーを生成するために使用されます。",
+      "preview": "カテゴリー：{{categories}}",
+      "roles": {
+        "softwareEngineer": "ソフトウェアエンジニア",
+        "founder": "創業者 / 経営幹部",
+        "designer": "デザイナー",
+        "student": "学生",
+        "productManager": "プロダクトマネージャー",
+        "dataScientist": "データサイエンティスト",
+        "other": "その他"
+      }
+    },
+    "table": {
+      "title": "Dayflow Electronの実行方法を選択",
+      "accuracy": "モデルの精度",
+      "subscription": "サブスクリプション要件",
+      "ease": "設定のしやすさ",
+      "notes": "追加メモ",
+      "select": "選択",
+      "ratings": {
+        "best": "最高",
+        "medium": "中",
+        "varies": "状況により異なる",
+        "passable": "まあまあ",
+        "installCodex": "Codex CLI をインストール",
+        "installClaude": "Claude CLI をインストール",
+        "apiKey": "APIキー",
+        "apiKeyAndModel": "APIキーとモデル",
+        "extensiveSetup": "多くの設定が必要",
+        "cliInstalled": "CLIインストール済み"
+      },
+      "columns": {
+        "chatgpt": {
+          "title": "ChatGPT",
+          "subscription": "ChatGPTの有料サブスクリプション",
+          "notes": "ChatGPTサブスクリプションを使用し、1日の上限の1%未満を消費します。"
+        },
+        "claude": {
+          "title": "Claude",
+          "subscription": "Claudeの有料サブスクリプション",
+          "notes": "Claudeサブスクリプションを使用し、1日の上限の1%未満を消費します。"
+        },
+        "anthropic": {
+          "title": "Anthropic API",
+          "subscription": "APIクレジット",
+          "notes": "Anthropic API経由のClaudeモデル。"
+        },
+        "gemini": {
+          "title": "Gemini",
+          "subscription": "無料",
+          "notes": "Gemini の無料枠を使用します。"
+        },
+        "custom": {
+          "title": "OpenRouter / カスタム",
+          "subscription": "APIクレジット",
+          "notes": "OpenRouter または OpenAI 互換のエンドポイントを使用します。"
+        },
+        "local": {
+          "title": "ローカル AI",
+          "subscription": "無料",
+          "notes": "16GB以上のRAMと4GBの空きディスク容量が必要です。OllamaまたはLM Studio。"
+        }
+      }
+    },
+    "wizard": {
+      "model": "モデル",
+      "checking": "確認中…",
+      "completeSetup": "セットアップを完了",
+      "testRequired": "テストが必要です",
+      "titles": {
+        "chatgpt": "ChatGPT に接続",
+        "claude": "Claude に接続",
+        "anthropic": "Anthropic APIに接続",
+        "gemini": "Gemini",
+        "custom": "AI エンドポイントに接続",
+        "local": "ローカルAIを使用"
+      },
+      "steps": {
+        "getKey": "APIキーを取得",
+        "enterKey": "APIキーを入力",
+        "test": "接続をテスト",
+        "complete": "完了",
+        "beforeBegin": "始める前に",
+        "checkInstall": "インストールを確認",
+        "endpoint": "エンドポイントを設定"
+      },
+      "gemini": {
+        "title": "Gemini API キーを取得",
+        "body": "Google AI Studioを使えば、Dayflow Electronを無料で利用できます。必要なのはGoogleアカウントだけで、クレジットカードは不要です。",
+        "step1": "Google AI Studio（aistudio.google.com）にアクセス",
+        "step2": "「Get API key」をクリック",
+        "step3": "新しいAPIキーを作成してコピー",
+        "copyLink": "リンクをコピー"
+      },
+      "enterKey": {
+        "title": "APIキーを入力してください：",
+        "paste": "{{provider}}のAPIキーを下に貼り付けてください"
+      },
+      "cli": {
+        "intro": "Dayflow Electronは、既存の{{subscription}}サブスクリプションを通じて{{product}}を使用します。このコンピューターにインストールしてサインインしたら、接続を確認します。",
+        "flatpak": "Flatpak版では、アプリがそれを起動するために一度だけ許可が必要です。次のステップでコマンドが表示されます。",
+        "checking": "このコンピューター上の{{cli}} CLIを確認しています。",
+        "check": "確認"
+      },
+      "local": {
+        "title": "上級者向け",
+        "body": "OllamaまたはLM Studioを使って、このコンピューター上でモデルを実行します。アプリはスクリーンショットごとに小さなリクエストを1件送信するため、ビジョンモデルと高速なマシンがあると快適です。ホスト型のモデルより品質は低くなります。"
+      },
+      "endpoint": {
+        "baseUrl": "ベース URL",
+        "baseUrlHint": "（例：Ollamaは http://localhost:11434/v1、LM Studioは http://localhost:1234/v1）",
+        "apiKey": "APIキー",
+        "apiKeyHint": "（ローカルサーバーでは不要）"
+      },
+      "test": {
+        "title": "接続をテスト",
+        "cli": "CLIに簡単な質問をして、正常に動作し、サインイン済みであることを確認します。",
+        "api": "下のボタンをクリックして、{{provider}}が動作することを確認してください。",
+        "testing": "テスト中…",
+        "button": "接続をテスト",
+        "success": "接続しました。"
+      },
+      "complete": {
+        "title": "準備完了です！",
+        "body": "{{provider}}の設定が完了し、Dayflow Electronで使用できるようになりました。"
+      }
+    },
+    "permissions": {
+      "lastStep": "最後のステップ！",
+      "title": "権限",
+      "intro": "Dayflow Electronは一日を振り返るのに役立ちます。",
+      "privateTitle": "Dayflow Electronはプライバシーとセキュリティを重視して設計されています。",
+      "privateLocal": "Dayflow Electronはすべての録画をコンピューター上にローカル保存し、スクリーンショットは選択したAIプロバイダーにのみ送信します。",
+      "privateControl": "主導権は常にあなたにあります。Dayflow Electronはいつでも一時停止またはオフにできます。",
+      "mockBrowser": "ブラウザ",
+      "mockTerminal": "ターミナル",
+      "mockCaption": "例：システム設定 → プライバシーとセキュリティ → 画面収録",
+      "waiting": "待機中…",
+      "grant": "許可",
+      "checkAgain": "再確認",
+      "quitReopen": "終了して再度開く"
+    },
+    "done": {
+      "title": "準備が整いました！",
+      "body": "役立つインサイトを得るには、Dayflow Electronをバックグラウンドで1〜2時間実行して十分なコンテキストを収集してから、もう一度確認してください。",
+      "launch": "Dayflow Electron を起動"
+    }
+  },
+  "locked": {
+    "beta": "ベータ",
+    "progress": "{{feature}}：アンロックの進捗"
+  },
+  "timeline": {
+    "todayDate": "今日、{{date}}",
+    "weekRange": "{{from}} - {{to}}",
+    "previousDay": "前日",
+    "previousWeek": "前の週",
+    "nextDay": "翌日",
+    "nextWeek": "次の週",
+    "pickDate": "日付を選択",
+    "view": "表示",
+    "day": "日",
+    "week": "週",
+    "today": "今日",
+    "editCategories": "カテゴリを編集",
+    "cardsToReview_other": "確認するカード{{count}}件",
+    "reviewCards": "カードを確認",
+    "copyTimeline": "タイムラインをコピー",
+    "trackedThisWeek_other": "今週の記録：<b>{{count}}時間</b>",
+    "trackedActivitiesThisWeek_other": "今週記録したアクティビティ：<b>{{count}}時間</b>",
+    "cardDetails": "カードの詳細",
+    "daySummary": "1日のまとめ",
+    "nothingRecorded": "この日は何も記録されていません。",
+    "statusPaused": "Dayflow Electronは一時停止中です。新しいアクティビティカードを生成するには「再開」をクリックしてください。",
+    "statusStopped": "Dayflow Electronは録画していません。「再開」をクリックすると、新しいアクティビティカードが生成されます。",
+    "generating": "次のカードを生成中",
+    "weekPaused": "一時停止中",
+    "weekResume": "再開",
+    "weekNextCard": "次のカード..."
+  },
+  "card": {
+    "timeRange": "{{start}} - {{end}}",
+    "timeTitle": "{{time}}：{{title}}",
+    "processingFailed": "処理に失敗しました",
+    "processingFailedIntervals_other": "処理に失敗しました · {{count}}区間",
+    "queued": "分析待ちです。",
+    "busy": "このバッチは現在分析中です。しばらくしてから再度お試しください。",
+    "title": "タイトル",
+    "clickToEdit": "クリックして編集",
+    "editTitle": "タイトルを編集",
+    "changeCategory": "カテゴリーを変更",
+    "editCategories": "カテゴリーを編集…",
+    "retry": "再試行",
+    "playTimelapse": "スクリーンショットをタイムラプスで再生",
+    "summary": "要約",
+    "detailedSummary": "詳細な要約",
+    "distractions": "注意散漫",
+    "yourNote": "あなたのメモ：{{note}}",
+    "whatWasWrong": "何が問題でしたか？",
+    "send": "送信",
+    "rateSummary": "この要約を評価",
+    "goodCard": "良いカード",
+    "badCard": "悪いカード",
+    "reanalyze": "再分析"
+  },
+  "filter": {
+    "categories": "カテゴリー",
+    "show": "{{name}}を表示",
+    "dim": "{{name}}を薄く表示",
+    "showMovable": "{{name}}を表示 · ドラッグまたはAlt+←/→で移動",
+    "dimMovable": "{{name}}を薄く表示 · ドラッグまたはAlt+←/→で移動"
+  },
+  "calendar": {
+    "previousMonth": "前の月",
+    "nextMonth": "次の月"
+  },
+  "frames": {
+    "none": "このカードに保存されたスクリーンショットはありません。",
+    "screenshotAt": "{{time}}のスクリーンショット",
+    "position": "位置",
+    "previous": "前のスクリーンショット",
+    "next": "次のスクリーンショット",
+    "pause": "一時停止"
+  },
+  "review": {
+    "ratings": {
+      "distracted": "注意散漫",
+      "neutral": "ニュートラル",
+      "focused": "集中"
+    },
+    "swipeHint": "タイムラインの各カードをスワイプして、1日を振り返りましょう。",
+    "undo": "取り消す",
+    "spaceToPlay": "スペースキーで再生",
+    "nothingYet": "まだ振り返る内容はありません",
+    "comeBack": "タイムラインカードがいくつか表示されたら、もう一度確認してください。",
+    "allCaughtUp": "すべて確認しました！",
+    "allReviewed": "これまでのすべてのアクティビティを確認しました。<br/>評価はタイムラインの右パネルに反映されます。"
+  }
+}

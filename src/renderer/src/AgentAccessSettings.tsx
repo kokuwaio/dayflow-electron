@@ -5,82 +5,75 @@
 // its config file, Cursor and VS Code through their install links.
 
 import { useEffect, useState } from 'react'
-import { AGENT_CLIENT_NAMES, TERMINAL_COMMAND_UNSUPPORTED } from '@shared/agent-clients'
+import { useTranslation } from 'react-i18next'
+import { AGENT_CLIENT_NAMES } from '@shared/agent-clients'
 import type { AgentAccessInfo, AgentClient, AgentClientState, Settings } from '@shared/types'
 import { CommandBlock, Row, Section, StatusDot } from './SettingsLayout'
 
 // Upstream's order and texts (AgentClient in AgentClientRegistration.swift).
-const RESTART = 'Restart it to pick up the connection.'
-const CLIENTS: Array<{ client: AgentClient; restart: string }> = [
-  { client: 'codex', restart: 'Restart Codex to pick up the connection.' },
-  { client: 'claude', restart: RESTART },
-  { client: 'claude-desktop', restart: RESTART },
-  { client: 'cursor', restart: RESTART },
-  { client: 'vscode', restart: RESTART }
-]
+const CLIENTS: AgentClient[] = ['codex', 'claude', 'claude-desktop', 'cursor', 'vscode']
 
 type RowState = AgentClientState | { state: 'checking' | 'connecting' | 'disconnecting' }
 
 export function AgentAccessSettings({ settings, save }: { settings: Settings; save: (next: Partial<Settings>) => void }) {
+  const { t } = useTranslation()
   const [info, setInfo] = useState<AgentAccessInfo | null>(null)
   useEffect(() => void window.dayflow.getAgentAccess().then(setInfo), [])
 
   return (
     <>
       <Section
-        title="Connect to AI tools"
-        sub="Let Codex, Claude, Cursor, and other AI tools read your Dayflow Electron timeline. Connections are saved to each tool's user configuration, so Dayflow Electron is available across projects on this computer. Nothing leaves your computer except what you send in your own conversations."
+        title={t('agents.connect.title')}
+        sub={t('agents.connect.sub')}
       >
-        {CLIENTS.map((c) => (
-          <ClientRow key={c.client} {...c} />
+        {CLIENTS.map((client) => (
+          <ClientRow key={client} client={client} />
         ))}
         {info && (
-          <Row label="Other apps" sub="Paste this into any MCP client's configuration." stack>
-            <CommandBlock text={info.configSnippet} label="Copy config" />
+          <Row label={t('agents.connect.otherApps')} sub={t('agents.connect.otherAppsSub')} stack>
+            <CommandBlock text={info.configSnippet} label={t('agents.copyConfig')} />
           </Row>
         )}
       </Section>
 
       <Section
-        title="Allow edits"
-        sub="Off means AI tools can read your timeline but never change it. On lets them rename activities, manage categories, and set day goals. The terminal command asks before deleting anything, and AI tools are told to confirm deletes with you. Every edit is logged to agent-writes.log in the data folder."
+        title={t('agents.edits.title')}
+        sub={t('agents.edits.sub')}
       >
-        <Row
-          label={settings.allowEdits ? 'Edits are on' : 'Edits are off'}
-          sub={settings.allowEdits ? "AI tools can make changes through Dayflow Electron while it's running." : undefined}
-        >
+        <Row label={settings.allowEdits ? t('agents.edits.on') : t('agents.edits.off')} sub={settings.allowEdits ? t('agents.edits.onSub') : undefined}>
           <input
             type="checkbox"
             className="switch"
             checked={settings.allowEdits}
             onChange={(e) => save({ allowEdits: e.target.checked })}
-            aria-label="Allow edits"
+            aria-label={t('agents.edits.title')}
           />
         </Row>
       </Section>
 
       <Section
-        title="Terminal command"
-        sub="Adds a dayflow-electron command to ~/.local/bin so you can see your timeline from any terminal. It starts the CLI already inside Dayflow Electron, so it always matches the app. Nothing is downloaded and your shell configuration isn't touched."
+        title={t('agents.terminal.title')}
+        sub={t('agents.terminal.sub')}
       >
         {info?.terminal ? (
           <>
-            <Row label="Install" sub="Run this once in a terminal, then try dayflow-electron timeline." stack>
+            <Row label={t('agents.terminal.install')} sub={t('agents.terminal.installSub')} stack>
               <CommandBlock text={info.terminal.install} />
             </Row>
-            <Row label="Remove" sub="Run this to take the command away again." stack>
+            <Row label={t('agents.terminal.remove')} sub={t('agents.terminal.removeSub')} stack>
               <CommandBlock text={info.terminal.remove} />
             </Row>
           </>
         ) : (
-          info && <Row label="Not available on Windows" sub={TERMINAL_COMMAND_UNSUPPORTED} />
+          info && <Row label={t('agents.terminal.windows')} sub={t('agents.terminal.windowsSub')} />
         )}
       </Section>
     </>
   )
 }
 
-function ClientRow({ client, restart }: { client: AgentClient; restart: string }) {
+function ClientRow({ client }: { client: AgentClient }) {
+  const { t } = useTranslation()
   const name = AGENT_CLIENT_NAMES[client]
   const [row, setRow] = useState<RowState>({ state: 'checking' })
   useEffect(() => void window.dayflow.agentClient(client, 'status').then(setRow), [client])
@@ -91,42 +84,42 @@ function ClientRow({ client, restart }: { client: AgentClient; restart: string }
 
   const status =
     row.state === 'connected' ? (
-      <StatusDot kind="good">Connected. {restart}</StatusDot>
+      <StatusDot kind="good">{client === 'codex' ? t('agents.client.connectedCodex') : t('agents.client.connected')}</StatusDot>
     ) : row.state === 'failed' ? (
       <StatusDot kind="bad">{row.message}</StatusDot>
     ) : row.state === 'notFound' ? (
-      <StatusDot kind="neutral">Not found</StatusDot>
+      <StatusDot kind="neutral">{t('agents.client.notFound')}</StatusDot>
     ) : row.state === 'checking' ? (
-      'Checking…'
+      t('agents.client.checking')
     ) : row.state === 'connecting' ? (
-      'Connecting…'
+      t('agents.client.connecting')
     ) : row.state === 'disconnecting' ? (
-      'Disconnecting…'
+      t('agents.client.disconnecting')
     ) : row.state === 'manual' ? (
       row.message
     ) : row.state === 'openedInstaller' ? (
-      'Approve the install dialog it just showed.'
+      t('agents.client.approve')
     ) : undefined
 
   return (
     <Row label={name} sub={status} stack={row.state === 'manual'}>
       {row.state === 'available' && (
         <button className="btn-ink" onClick={() => act('connect')}>
-          Connect
+          {t('agents.client.connect')}
         </button>
       )}
       {row.state === 'connected' && (
         <button className="btn-subtle" onClick={() => act('disconnect')}>
-          Disconnect
+          {t('agents.client.disconnect')}
         </button>
       )}
       {row.state === 'failed' && (
         <button className="btn-subtle" onClick={() => act('connect')}>
-          Retry
+          {t('common.retry')}
         </button>
       )}
-      {row.state === 'openedInstaller' && <StatusDot kind="neutral">Finish in {name}</StatusDot>}
-      {row.state === 'manual' && <CommandBlock text={row.command} label={client === 'claude-desktop' ? 'Copy config' : 'Copy'} />}
+      {row.state === 'openedInstaller' && <StatusDot kind="neutral">{t('agents.client.finishIn', { name })}</StatusDot>}
+      {row.state === 'manual' && <CommandBlock text={row.command} label={client === 'claude-desktop' ? t('agents.copyConfig') : t('common.copy')} />}
     </Row>
   )
 }
