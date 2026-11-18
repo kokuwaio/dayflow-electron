@@ -1,0 +1,18 @@
+{
+  "name": "dayflow-electron",
+  "owner": {
+    "name": "kokuwaio",
+    "url": "https://github.com/kokuwaio"
+  },
+  "metadata": {
+    "description": "Agent workflows for Dayflow Electron's timeline: ask where your time went, draft standups and weekly reviews."
+  },
+  "plugins": [
+    {
+      "name": "dayflow-electron",
+      "source": "./plugins/dayflow-electron",
+      "description": "Ask about your day. Dayflow Electron's timeline of what you worked on, read locally from your computer.",
+      "category": "productivity"
+    }
+  ]
+}

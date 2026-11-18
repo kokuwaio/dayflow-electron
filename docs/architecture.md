@@ -313,6 +313,7 @@ flowchart LR
 | `src/renderer/src/` | React views: Timeline, Daily, Weekly, Chat, Settings, Onboarding |
 | `src/shared/` | Pure logic used by both sides: days, categories, day canvas geometry (`canvas.ts`), Daily and Weekly math, export, failure kinds |
 | `helper/linux/` | Go helper: `portal/`, `pipewire/`, `wayland/`, `frames/`, commands in `cmd/` |
+| `plugins/dayflow-electron/` | Agent plugin for Codex and Claude Code: MCP launcher and skills (marketplaces in `.agents/plugins/` and `.claude-plugin/`) |
 | `packaging/` | Flatpak manifest, desktop file and metainfo (`flatpak/`) |
 | `scripts/` | Build version, metainfo release entry, merging the Windows update feeds |
 

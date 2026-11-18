@@ -250,6 +250,13 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   registrations at launch (outside the Flatpak; not in development builds).
   The CLI's `ELECTRON_RUN_AS_NODE` travels in the entry's `env`, so the
   registrations work on Windows too.
+- [x] Agent workflows (upstream `plugins/dayflow`): a plugin in
+  `plugins/dayflow-electron/` with the skills `dayflow-electron`, `standup`,
+  `weekly-review` and `onboarding`, a launcher that finds the terminal
+  command, the Flatpak or the macOS app, and manifests and marketplaces for
+  Codex (`.codex-plugin/`, `.agents/plugins/`) and Claude Code
+  (`.claude-plugin/`). Upstream's artwork stays out; the plugin uses our icon.
+  Open: Windows has no launcher.
 
 ### M5 Privacy, polish and release
 

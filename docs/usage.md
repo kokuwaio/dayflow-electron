@@ -385,6 +385,46 @@ goes after `=`, as in `--title=--draft`. `--json` prints stable JSON with
 yet, 6 the app is not running (for edits). `timeline delete` and
 `categories remove` ask first; in scripts, pass `--yes`.
 
+### Agent workflows (plugin)
+
+The repository has a plugin for Codex and Claude Code in
+`plugins/dayflow-electron/`, ported from upstream's `plugins/dayflow`. It
+starts the MCP server and adds four skills:
+
+| Skill | What it does |
+| --- | --- |
+| `dayflow-electron` | Answers "what did I work on", "how long did I spend on", "when did I last", and picks the right tool for it. |
+| `standup` | Drafts a standup from the Daily, or from the day's activities: done, next, blockers. |
+| `weekly-review` | Compares a week with the one before: time per category, main projects, one or two observations. |
+| `onboarding` | Checks that the app records and is reachable, then summarizes your day so far. |
+
+The plugin carries no copy of the server. Its launcher
+(`bin/dayflow-electron-mcp`) uses, in this order: the command in
+`DAYFLOW_ELECTRON_CLI`, the terminal command from
+[above](#the-terminal-command), the Flatpak, or the macOS app in
+`/Applications` or `~/Applications`. Windows is not covered yet; connect the
+tools in **Settings → MCP / CLI** there. If the tools already have the
+`dayflow-electron` server from **Connect**, disconnect it there first, or they
+see it twice.
+
+Claude Code:
+
+```sh
+claude plugin marketplace add kokuwaio/dayflow-electron
+claude plugin install dayflow-electron@dayflow-electron
+```
+
+Codex:
+
+```sh
+codex plugin marketplace add kokuwaio/dayflow-electron
+```
+
+then open `/plugins` in Codex and install **Dayflow Electron**. Both take a
+path to a local clone of the repository instead of `kokuwaio/dayflow-electron`.
+Restart the tool afterwards and ask, for example, "Write my standup from
+yesterday" or "How did my week go?".
+
 ## Keep password managers out
 
 While one of the apps under **Settings → Privacy → Blocked apps** is the focused window,

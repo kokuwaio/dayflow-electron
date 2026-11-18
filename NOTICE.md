@@ -10,6 +10,8 @@ copyright notices are kept here as the MIT license requires.
 - Used: prompts, feature design, data model ideas, and the translations of
   its string catalog (`Localizable.xcstrings`), which the UI translations in
   `src/shared/locales` start from.
+- Also used: its Codex plugin (`plugins/dayflow`, MIT), whose skills and MCP
+  launcher `plugins/dayflow-electron/` adapts.
 
 ## dayflow-windows
 
