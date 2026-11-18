@@ -58,7 +58,8 @@ const READ_TOOLS: Tool[] = [
   },
   {
     name: 'get_daily',
-    description: 'The Daily standup document Dayflow Electron generated: highlights, tasks, blockers. Use for standups and status updates.',
+    description:
+      "The Daily standup document Dayflow Electron generated for a date: highlights of the previous activity day (its date is highlights_day), the date's planned tasks, and blockers. For what happened on a given day, read get_timeline for that day instead.",
     inputSchema: schema({ date: dateProperty }),
     annotations: READ
   },

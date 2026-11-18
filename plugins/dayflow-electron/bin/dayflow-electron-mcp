@@ -30,9 +30,11 @@ if command -v flatpak >/dev/null 2>&1 && flatpak info "$flatpak_id" >/dev/null 2
 fi
 
 for app in "/Applications/Dayflow Electron.app" "$HOME/Applications/Dayflow Electron.app"; do
-  script="$app/Contents/Resources/app.asar/out/main/cli.js"
+  # app.asar is an archive file: the shell cannot see into it, Electron can.
+  archive="$app/Contents/Resources/app.asar"
+  script="$archive/out/main/cli.js"
   for exe in "$app"/Contents/MacOS/*; do
-    if [ -f "$exe" ] && [ -x "$exe" ] && [ -e "$script" ]; then
+    if [ -f "$exe" ] && [ -x "$exe" ] && [ -f "$archive" ]; then
       ELECTRON_RUN_AS_NODE=1
       export ELECTRON_RUN_AS_NODE
       exec "$exe" "$script" mcp

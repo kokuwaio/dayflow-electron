@@ -19,7 +19,9 @@ app's database on this computer.
   Fetch detail only for the few activities that matter to the question.
 - Finding something by name ("when did I work on the pricing page"):
   `search_activities`.
-- Standups and status updates: `get_daily`. Week summaries: `get_weekly`.
+- Standups and status updates: `get_timeline` for the day you report, and
+  `get_daily` for the day after (its highlights cover the day before it, see
+  `highlights_day`). Week summaries: `get_weekly`.
 - The user's categories and their colors: `list_categories`.
 
 ## Things to know

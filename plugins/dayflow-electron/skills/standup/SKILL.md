@@ -7,10 +7,12 @@ description: Draft a standup or daily status update from the user's Dayflow Elec
 
 1. Work out which day the user means. "Yesterday" on a Monday usually means
    Friday; ask only if it is unclear.
-2. Call `get_daily` for that date. If Dayflow Electron already wrote a Daily,
-   use its highlights, tasks, and blockers as the starting point.
-3. If there is no Daily, call `get_timeline` for the day and build the update
-   from the activities, skipping `Idle`, `System`, and distraction entries.
+2. Call `get_timeline` for that day and build "what got done" from its
+   activities, skipping `Idle`, `System`, and distraction entries.
+3. Call `get_daily` for the day after. A Daily lists the highlights of the
+   activity day before it (`highlights_day`) and the tasks planned next: when
+   `highlights_day` is the day you are reporting, use its highlights to sharpen
+   "what got done" and its tasks and blockers for the other two sections.
 4. Call `get_activity_detail` for at most three activities where the one-line
    summary is too thin to describe the work.
 

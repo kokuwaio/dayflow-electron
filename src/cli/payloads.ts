@@ -128,7 +128,8 @@ export function weekly(day: string, cards: TimelineCard[], categories: Category[
 }
 
 export function daily(day: string, entry: StandupEntry): Json {
-  return { date: day, highlights: entry.draft.highlights, tasks: entry.draft.tasks, blockers: entry.draft.blockersBody }
+  // highlights_day: the activity day the highlights summarize (usually the day before `date`).
+  return { date: day, highlights_day: entry.sourceDay, highlights: entry.draft.highlights, tasks: entry.draft.tasks, blockers: entry.draft.blockersBody }
 }
 
 export function categoriesJson(categories: Category[]): Json {

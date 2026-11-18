@@ -182,6 +182,8 @@ describe('dayflow-electron CLI: reads', () => {
     expect(json((await run('daily', '2026-11-17', '--json')).out)).toEqual({
       schema_version: 1,
       date: '2026-11-17',
+      // The highlights cover the activity day before the Daily's date.
+      highlights_day: '2026-11-16',
       highlights: ['Shipped login fix'],
       tasks: ['Review PRs'],
       blockers: ''
