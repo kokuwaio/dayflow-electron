@@ -90,6 +90,13 @@ export interface DayflowApi {
   openRecordings(): Promise<string>
   runAnalysis(): Promise<void>
   checkCli(cli: CliName): Promise<{ ok: boolean; message: string }>
+  /** Starts the CLI's own sign-in on the host (it opens the browser); progress shows in status.analysis.signIn. */
+  signIn(cli: CliName): Promise<void>
+  cancelSignIn(): Promise<void>
+  /** Makes another set-up provider the fallback and sends what waits (the problem card's "Use X as backup"). */
+  useBackup(kind: ProviderKind): Promise<void>
+  /** The tray or a notification asked to show the provider problem's card again. */
+  onShowProblem(cb: () => void): () => void
   /** How AI tools and terminals start the bundled CLI. */
   getAgentAccess(): Promise<AgentAccessInfo>
   /** Looks up, adds or removes the "dayflow-electron" MCP server in an AI tool; for Cursor and VS Code "connect" opens their install link. */

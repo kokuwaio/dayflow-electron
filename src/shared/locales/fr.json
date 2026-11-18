@@ -928,6 +928,54 @@
       "coverage": "Environ {{percent}} % du temps d’app enregistré a été passé dans ces applications."
     }
   },
+  "waiting": {
+    "card": {
+      "titleProvider": "En attente de {{provider}}",
+      "titleInternet": "En attente d’Internet",
+      "offline": "Enregistré et sauvegardé. Cet ordinateur était hors ligne : Dayflow Electron créera ces cartes dès qu’Internet sera de retour.",
+      "transient": "Enregistré et sauvegardé. {{provider}} était surchargé ou injoignable : Dayflow Electron réessaiera de lui-même.",
+      "loginExpired": "Enregistré et sauvegardé. {{provider}} est déconnecté. Reconnectez-vous et Dayflow Electron rattrapera le retard de lui-même.",
+      "usageLimit": "Enregistré et sauvegardé. Vous avez épuisé pour l’instant le quota de votre forfait {{provider}}. Dayflow Electron rattrapera le retard automatiquement dès que votre limite sera réinitialisée.",
+      "localOffline": "Enregistré et sauvegardé. Dayflow Electron n’a pas pu joindre Ollama ou LM Studio sur cet ordinateur. Ouvrez-le, et les cartes suivront d’elles-mêmes.",
+      "tryNow": "Essayer maintenant"
+    },
+    "problem": {
+      "loginTitle": "{{provider}} est déconnecté",
+      "loginBody": "Votre connexion à {{provider}} a expiré : l’activité récente n’a pas encore été transformée en cartes.",
+      "usageTitle": "Vous avez atteint la limite d’utilisation de {{provider}}",
+      "usageBody": "Dayflow Electron rattrapera le retard de lui-même dès que votre limite sera réinitialisée. Pour continuer dès maintenant, ajoutez un fournisseur de secours.",
+      "localTitle": "Ollama ou LM Studio ne fonctionne pas",
+      "localBody": "Dayflow Electron ne parvient pas à joindre votre modèle local.",
+      "keyTitle": "Votre clé API {{provider}} ne fonctionne pas",
+      "keyBody": "Elle est peut-être manquante, expirée ou suspendue. Ajoutez une nouvelle clé dans les réglages du fournisseur.",
+      "creditsTitle": "{{provider}} n’a plus de crédits",
+      "creditsBody": "Rechargez votre compte ou passez à un autre fournisseur."
+    },
+    "signIn": {
+      "button": "Se connecter à {{provider}}",
+      "finishTitle": "Terminez la connexion",
+      "finishBody": "Votre navigateur vient de s’ouvrir. Connectez-vous à {{provider}} puis revenez. Dayflow Electron reprendra là où il s’était arrêté.",
+      "waiting": "En attente de la connexion…",
+      "tryAgain": "Le navigateur ne s’est pas ouvert ? Réessayer",
+      "openPage": "Ouvrir la page de connexion",
+      "failed": "La connexion n’a pas abouti. Réessayez, ou connectez-vous plutôt depuis un terminal.",
+      "command": "Exécutez ceci dans un terminal :"
+    },
+    "backup": "Utiliser {{provider}} en secours",
+    "notNow": "Pas maintenant",
+    "footer": {
+      "time": "{{time}} en attente de traitement",
+      "catchesUp": "Dayflow Electron rattrape le retard automatiquement",
+      "afterSignIn": "Rattrape le retard après la connexion",
+      "onItsOwn": "Réessaie de lui-même",
+      "rightAway": "Démarre tout de suite"
+    },
+    "tray": {
+      "time": "{{time}} en attente",
+      "clickToFix": "Cliquer pour corriger",
+      "clickToSignIn": "Cliquer pour se connecter"
+    }
+  },
   "geminiModels": {
     "custom": "Modèle personnalisé…",
     "customId": "ID du modèle",

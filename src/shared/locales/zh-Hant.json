@@ -882,6 +882,54 @@
       "coverage": "已記錄的 App 時間中約 {{percent}}% 用在這些 App 上。"
     }
   },
+  "waiting": {
+    "card": {
+      "titleProvider": "正在等待 {{provider}}",
+      "titleInternet": "正在等待網路連線",
+      "offline": "已錄製並儲存。這台電腦處於離線狀態，網路恢復後 Dayflow Electron 會產生這些卡片。",
+      "transient": "已錄製並儲存。{{provider}} 忙碌中或無法連線，Dayflow Electron 會自動重試。",
+      "loginExpired": "已錄製並儲存。{{provider}} 已登出。重新登入後，Dayflow Electron 會自動補上。",
+      "usageLimit": "已錄製並儲存。你的 {{provider}} 方案用量暫時已用完。額度重設後，Dayflow Electron 會自動補上。",
+      "localOffline": "已錄製並儲存。Dayflow Electron 無法連線到這台電腦上的 Ollama 或 LM Studio。開啟它後，卡片會自動產生。",
+      "tryNow": "立即嘗試"
+    },
+    "problem": {
+      "loginTitle": "{{provider}} 已登出",
+      "loginBody": "你的 {{provider}} 登入已過期，最近的活動尚未轉換成卡片。",
+      "usageTitle": "你已達到 {{provider}} 的用量上限",
+      "usageBody": "額度重設後，Dayflow Electron 會自動補上。如要現在繼續，請新增一個備用服務供應商。",
+      "localTitle": "Ollama 或 LM Studio 未執行",
+      "localBody": "Dayflow Electron 無法連線到你的本機模型。",
+      "keyTitle": "你的 {{provider}} API 金鑰無法使用",
+      "keyBody": "金鑰可能遺失、過期或已遭停用。請在服務供應商設定中新增金鑰。",
+      "creditsTitle": "{{provider}} 的額度已用完",
+      "creditsBody": "請為帳戶儲值，或改用其他服務供應商。"
+    },
+    "signIn": {
+      "button": "登入 {{provider}}",
+      "finishTitle": "完成登入",
+      "finishBody": "瀏覽器剛剛已開啟。請在其中登入 {{provider}}，然後回到這裡。Dayflow Electron 會從中斷處繼續。",
+      "waiting": "正在等待登入…",
+      "tryAgain": "瀏覽器沒有開啟？重試",
+      "openPage": "開啟登入頁面",
+      "failed": "登入未完成。請重試，或改在終端機中登入。",
+      "command": "在終端機中執行："
+    },
+    "backup": "使用 {{provider}} 作為備用",
+    "notNow": "稍後再說",
+    "footer": {
+      "time": "{{time}} 等待處理",
+      "catchesUp": "Dayflow Electron 會自動補上",
+      "afterSignIn": "登入後自動補上",
+      "onItsOwn": "會自動重試",
+      "rightAway": "立即開始"
+    },
+    "tray": {
+      "time": "{{time}} 等待中",
+      "clickToFix": "點一下以修正",
+      "clickToSignIn": "點一下以登入"
+    }
+  },
   "geminiModels": {
     "custom": "自訂模型…",
     "customId": "模型 ID",

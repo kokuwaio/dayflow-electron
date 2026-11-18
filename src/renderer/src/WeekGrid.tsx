@@ -5,6 +5,7 @@ import { recordingProjection } from '@shared/canvas'
 import { SYSTEM_CATEGORY } from '@shared/categories'
 import { parseKey } from '@shared/day'
 import { clockLabel, currentLanguage, dateLabel, hourAxisLabel } from '@shared/i18n'
+import { WAITING_SUBCATEGORY } from '@shared/provider-problem'
 import type { RecorderState } from '@shared/types'
 import { type DayCards, PX_PER_MIN, cardBox, mergeFailed, resolveOverlaps } from '@shared/week'
 import { underFooter } from './DayCanvas'
@@ -74,12 +75,13 @@ export function WeekGrid(props: {
                 {segments.map((card) => {
                   const box = cardBox(card, day)
                   const failed = card.category === SYSTEM_CATEGORY
+                  const waiting = failed && card.subcategory === WAITING_SUBCATEGORY
                   const short = box.height < 24
                   const lines = Math.max(1, Math.floor((box.height - (short ? 4 : 8)) / LINE))
                   return (
                     <button
                       key={card.id}
-                      className={`week-card ${failed ? 'failed' : ''} ${short ? 'short' : ''} ${card.id === props.selected ? 'selected' : ''} ${
+                      className={`week-card ${failed ? 'failed' : ''} ${waiting ? 'waiting' : ''} ${short ? 'short' : ''} ${card.id === props.selected ? 'selected' : ''} ${
                         props.muted.has(muteKey(card.category)) ? 'muted' : ''
                       }`}
                       style={{ top: box.top, height: box.height, '--h': `${box.height}px`, '--cat': props.colorOf(card.category) } as React.CSSProperties}
@@ -90,7 +92,7 @@ export function WeekGrid(props: {
                       }}
                     >
                       <span className="text" style={{ WebkitLineClamp: lines }}>
-                        {failed ? t('card.processingFailed') : card.title}
+                        {failed && !waiting ? t('card.processingFailed') : card.title}
                       </span>
                     </button>
                   )

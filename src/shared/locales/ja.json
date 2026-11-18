@@ -882,6 +882,54 @@
       "coverage": "記録されたアプリ時間の約{{percent}}%がこれらのアプリで使われました。"
     }
   },
+  "waiting": {
+    "card": {
+      "titleProvider": "{{provider}} を待っています",
+      "titleInternet": "インターネット接続を待っています",
+      "offline": "記録して保存しました。このコンピューターがオフラインだったため、インターネットが戻り次第 Dayflow Electron がカードを作成します。",
+      "transient": "記録して保存しました。{{provider}} が混雑しているか接続できなかったため、Dayflow Electron が自動で再試行します。",
+      "loginExpired": "記録して保存しました。{{provider}} からサインアウトしています。もう一度サインインすると、Dayflow Electron が自動で追いつきます。",
+      "usageLimit": "記録して保存しました。{{provider}} プランの利用枠を使い切りました。上限がリセットされると Dayflow Electron が自動で追いつきます。",
+      "localOffline": "記録して保存しました。Dayflow Electron はこのコンピューターの Ollama または LM Studio に接続できませんでした。アプリを開くと、カードは自動で作成されます。",
+      "tryNow": "今すぐ試す"
+    },
+    "problem": {
+      "loginTitle": "{{provider}} からサインアウトしています",
+      "loginBody": "{{provider}} のログインの有効期限が切れたため、最近のアクティビティはまだカードになっていません。",
+      "usageTitle": "{{provider}} の利用上限に達しました",
+      "usageBody": "上限がリセットされると Dayflow Electron が自動で追いつきます。今すぐ続けるには、バックアップのプロバイダを追加してください。",
+      "localTitle": "Ollama または LM Studio が起動していません",
+      "localBody": "Dayflow Electron がローカルモデルに接続できません。",
+      "keyTitle": "{{provider}} の API キーが機能していません",
+      "keyBody": "キーがないか、期限切れか、停止されている可能性があります。プロバイダ設定で新しいキーを追加してください。",
+      "creditsTitle": "{{provider}} のクレジットがなくなりました",
+      "creditsBody": "アカウントにチャージするか、別のプロバイダに切り替えてください。"
+    },
+    "signIn": {
+      "button": "{{provider}} にサインイン",
+      "finishTitle": "サインインを完了してください",
+      "finishBody": "ブラウザが開きました。そこで {{provider}} にサインインしてから戻ってください。Dayflow Electron は中断したところから再開します。",
+      "waiting": "サインインを待っています…",
+      "tryAgain": "ブラウザが開かない場合は再試行",
+      "openPage": "サインインページを開く",
+      "failed": "サインインが完了しませんでした。もう一度試すか、ターミナルからサインインしてください。",
+      "command": "ターミナルで次を実行してください:"
+    },
+    "backup": "{{provider}} をバックアップに使う",
+    "notNow": "今はしない",
+    "footer": {
+      "time": "処理待ち: {{time}}",
+      "catchesUp": "Dayflow Electron が自動で追いつきます",
+      "afterSignIn": "サインイン後に追いつきます",
+      "onItsOwn": "自動で再試行します",
+      "rightAway": "すぐに始まります"
+    },
+    "tray": {
+      "time": "{{time}} 待機中",
+      "clickToFix": "クリックして解決",
+      "clickToSignIn": "クリックしてサインイン"
+    }
+  },
   "geminiModels": {
     "custom": "カスタムモデル…",
     "customId": "モデル ID",

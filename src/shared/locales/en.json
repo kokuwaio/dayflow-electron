@@ -905,6 +905,54 @@
       "coverage": "About {{percent}}% of recorded app time was spent using these applications."
     }
   },
+  "waiting": {
+    "card": {
+      "titleProvider": "Waiting for {{provider}}",
+      "titleInternet": "Waiting for internet",
+      "offline": "Recorded and saved. This computer was offline, so Dayflow Electron will make these cards when the internet is back.",
+      "transient": "Recorded and saved. {{provider}} was busy or out of reach, so Dayflow Electron will try again on its own.",
+      "loginExpired": "Recorded and saved. {{provider}} is signed out. Sign in again and Dayflow Electron catches up on its own.",
+      "usageLimit": "Recorded and saved. You've used up your {{provider}} plan's usage for now. Dayflow Electron will catch up automatically once your limit resets.",
+      "localOffline": "Recorded and saved. Dayflow Electron couldn't reach Ollama or LM Studio on this computer. Open it, and the cards follow on their own.",
+      "tryNow": "Try now"
+    },
+    "problem": {
+      "loginTitle": "{{provider}} is signed out",
+      "loginBody": "Your {{provider}} login expired, so recent activity hasn't been turned into cards yet.",
+      "usageTitle": "You've hit {{provider}}'s usage limit",
+      "usageBody": "Dayflow Electron will catch up on its own when your limit resets. To keep going now, add a backup provider.",
+      "localTitle": "Ollama or LM Studio isn't running",
+      "localBody": "Dayflow Electron can't reach your local model.",
+      "keyTitle": "Your {{provider}} API key isn't working",
+      "keyBody": "It may be missing, expired, or suspended. Add a new key in provider settings.",
+      "creditsTitle": "{{provider}} is out of credits",
+      "creditsBody": "Top up your account, or switch to another provider."
+    },
+    "signIn": {
+      "button": "Sign in to {{provider}}",
+      "finishTitle": "Finish signing in",
+      "finishBody": "Your browser just opened. Sign in to {{provider}} there and come back. Dayflow Electron will pick up where it left off.",
+      "waiting": "Waiting for sign-in…",
+      "tryAgain": "Browser didn't open? Try again",
+      "openPage": "Open the sign-in page",
+      "failed": "The sign-in didn't finish. Try again, or sign in from a terminal instead.",
+      "command": "Run this in a terminal:"
+    },
+    "backup": "Use {{provider}} as backup",
+    "notNow": "Not now",
+    "footer": {
+      "time": "{{time}} waiting to process",
+      "catchesUp": "Dayflow Electron catches up automatically",
+      "afterSignIn": "Catches up after you sign in",
+      "onItsOwn": "Retries on its own",
+      "rightAway": "Starts right away"
+    },
+    "tray": {
+      "time": "{{time}} waiting",
+      "clickToFix": "Click to fix",
+      "clickToSignIn": "Click to sign in"
+    }
+  },
   "geminiModels": {
     "custom": "Custom model…",
     "customId": "Model ID",

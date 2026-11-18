@@ -63,6 +63,14 @@ const api: DayflowApi = {
   openRecordings: () => ipcRenderer.invoke('recordings:open'),
   runAnalysis: () => ipcRenderer.invoke('analysis:run'),
   checkCli: (cli) => ipcRenderer.invoke('cli:check', cli),
+  signIn: (cli) => ipcRenderer.invoke('provider:signIn', cli),
+  cancelSignIn: () => ipcRenderer.invoke('provider:signInCancel'),
+  useBackup: (kind) => ipcRenderer.invoke('provider:useBackup', kind),
+  onShowProblem: (cb) => {
+    const listener = () => cb()
+    ipcRenderer.on('problem:show', listener)
+    return () => ipcRenderer.off('problem:show', listener)
+  },
   getAgentAccess: () => ipcRenderer.invoke('agent:info'),
   agentClient: (cli, action) => ipcRenderer.invoke('agent:client', cli, action),
   onCardsChanged: (cb) => {

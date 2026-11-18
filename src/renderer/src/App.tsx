@@ -5,6 +5,7 @@ import type { AppStatus, Settings, Tab } from '@shared/types'
 import { Chat } from './Chat'
 import { Daily } from './Daily'
 import { Onboarding } from './Onboarding'
+import { ProblemToast } from './ProblemCard'
 import { type SettingsTab, SettingsView } from './Settings'
 import { Timeline } from './Timeline'
 import { dueGoalPrompt } from './goal-prompt'
@@ -29,6 +30,8 @@ export function App() {
   const [status, setStatus] = useState<AppStatus | null>(null)
   const [settings, setSettings] = useState<Settings | null>(null)
   const [dismissed, setDismissed] = useState<string[]>([])
+  /** The provider problem put away with "Not now"; the tray's "Click to fix" brings it back. */
+  const [problemDismissed, setProblemDismissed] = useState<string | null>(null)
   const [goalPromptDay, setGoalPromptDay] = useState<string | null>(null)
 
   useEffect(() => {
@@ -39,9 +42,11 @@ export function App() {
     })
     const offNavigate = window.dayflow.onNavigate((tab) => TABS.some((t) => t.id === tab) && setView(tab as View))
     const offStatus = window.dayflow.onStatus(setStatus)
+    const offProblem = window.dayflow.onShowProblem(() => setProblemDismissed(null))
     return () => {
       offNavigate()
       offStatus()
+      offProblem()
     }
   }, [])
 
@@ -84,8 +89,12 @@ export function App() {
     setSettingsTab(tab)
     setView('settings')
   }
+  const problem = status?.analysis.problem ?? null
+  const problemKey = problem && `${problem.kind}:${problem.provider}`
+  const showProblem = !!problem && problemKey !== problemDismissed
   const toasts = [
-    status?.analysis.lastError && { key: `analysis:${status.analysis.lastError}`, title: t('app.analysisFailed'), body: status.analysis.lastError, settings: true },
+    // The problem card says it better when there is one.
+    !problem && status?.analysis.lastError && { key: `analysis:${status.analysis.lastError}`, title: t('app.analysisFailed'), body: status.analysis.lastError, settings: true },
     status?.recorder.state === 'backoff' &&
       status.recorder.lastError && { key: `capture:${status.recorder.lastError}`, title: t('app.captureFailed'), body: status.recorder.lastError, settings: false }
   ].filter((x): x is { key: string; title: string; body: string; settings: boolean } => !!x && !dismissed.includes(x.key))
@@ -125,8 +134,16 @@ export function App() {
         {view === 'chat' && <Chat />}
         {view === 'settings' && <SettingsView status={status} tab={settingsTab} onTab={setSettingsTab} />}
       </main>
-      {toasts.length > 0 && (
+      {(toasts.length > 0 || showProblem) && (
         <div className="toasts" role="status">
+          {showProblem && status && (
+            <ProblemToast
+              status={status}
+              baseUrl={settings?.openaiBaseUrl ?? ''}
+              onOpenSettings={() => openSettings('providers')}
+              onDismiss={() => setProblemDismissed(problemKey)}
+            />
+          )}
           {toasts.map((toast) => (
             <div key={toast.key} className="toast">
               <div className="toast-body">

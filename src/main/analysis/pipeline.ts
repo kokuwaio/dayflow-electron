@@ -1,6 +1,9 @@
 // The analysis loop, after upstream AnalysisManager.swift and LLMService.swift:
 // every minute, group new screenshots into batches and turn each batch into
-// timeline cards. Card generation runs one batch at a time.
+// timeline cards. Card generation runs one batch at a time. A batch whose
+// providers are offline, busy or signed out waits instead of failing
+// (upstream ProviderAvailability.swift, see ./availability.ts) and goes out
+// again by itself.
 
 import { readFile } from 'node:fs/promises'
 import type { PromptOverrides } from '../../shared/types'
@@ -13,6 +16,10 @@ import { type Category, PRIVATE_CATEGORY, idleCategory } from '../../shared/cate
 import { type PromptFrame, buildCardRequest, sampleEvenly, withCorrection } from './prompt'
 import { cardFromObservations, transcribe } from './two-step'
 import { errorMessage } from '../../shared/errors'
+import { type FailureKind, needsUser } from '../../shared/failures'
+import { providerLabel, waitingCardTexts } from '../../shared/provider-problem'
+import type { ProviderKind } from '../../shared/types'
+import { type BatchOutcome, type ProviderFailure, ProviderHolds, batchOutcome, classifyFailure, waits } from './availability'
 
 const TICK_MS = 60_000
 /** Screenshots older than this are never batched; failed batches older than this are not retried. */
@@ -37,12 +44,38 @@ export interface PipelineDeps {
    * out unfiltered.
    */
   prepareFrame?(jpeg: Uint8Array): Promise<Uint8Array>
+  /** False while the computer has no network; batches for cloud providers wait then. */
+  online?(): boolean
+  /** A provider's name on waiting cards, e.g. "Claude Code". */
+  providerLabel?(kind: ProviderKind): string
+}
+
+/** A provider problem the user can fix, before the app adds what it can offer. */
+export interface PipelineProblem {
+  kind: FailureKind
+  provider: ProviderKind
+  message: string
+  /** Batches wait for it (true) or the backup works around it (false). */
+  waiting: boolean
 }
 
 export interface PipelineStatus {
   busy: boolean
   lastRunAt: number | null
   lastError: string | null
+  problem: PipelineProblem | null
+}
+
+type Wait = Extract<BatchOutcome, { action: 'wait' }>
+
+/** Every provider failed this batch; one entry per provider, primary first. */
+class AllProvidersFailed extends Error {
+  constructor(
+    readonly failures: ProviderFailure[],
+    models: string[]
+  ) {
+    super(failures.map((f, i) => `${models[i]}: ${f.message}`).join(' · '))
+  }
 }
 
 const nowSec = () => Math.floor(Date.now() / 1000)
@@ -53,6 +86,8 @@ export class Pipeline {
   private runAgain = false
   private lastRunAt: number | null = null
   private lastError: string | null = null
+  private problem: PipelineProblem | null = null
+  private readonly holds = new ProviderHolds()
 
   constructor(private readonly deps: PipelineDeps) {}
 
@@ -68,7 +103,22 @@ export class Pipeline {
   }
 
   status(): PipelineStatus {
-    return { busy: this.busy, lastRunAt: this.lastRunAt, lastError: this.lastError }
+    return { busy: this.busy, lastRunAt: this.lastRunAt, lastError: this.lastError, problem: this.problem }
+  }
+
+  /**
+   * Lets waiting batches go out now: the internet or the computer is back, the
+   * window came to the front. `fixed` also forgets the holds and the problem
+   * (a sign-in, changed provider settings).
+   */
+  resume(fixed = false): Promise<void> {
+    if (fixed) {
+      this.holds.clearAll()
+      this.problem = null
+    } else {
+      this.holds.allowNow(nowSec())
+    }
+    return this.tick()
   }
 
   /** Plans new batches and analyzes pending ones. A call while busy runs again right after. */
@@ -85,7 +135,11 @@ export class Pipeline {
         store.createBatch(plan)
       }
       let succeeded = false
-      for (const batch of store.pendingBatches()) {
+      // Waiting batches go out with the new ones, oldest first.
+      const batches = [...store.waitingBatches(), ...store.pendingBatches()].sort((a, b) => a.start - b.start)
+      for (const batch of batches) {
+        // A batch that still has nothing to go to keeps its waiting card as it is.
+        if (batch.status === 'waiting' && this.blocked() !== null) continue
         if ((await this.process(batch)) === 'completed') succeeded = true
       }
       if (succeeded) await this.retryFailed()
@@ -115,6 +169,8 @@ export class Pipeline {
     const last = shots[shots.length - 1]
     if (!first || !last) {
       store.finishBatch(batch.id, 'failed_empty')
+      // Its frames went (storage limit) while it waited: the waiting card would stay forever.
+      if (batch.status === 'waiting') store.writeErrorCard(batch.id, { start: batch.start, end: batch.end }, 'The screenshots were removed before they could be analyzed.')
       return 'failed_empty'
     }
     if (last.capturedAt - first.capturedAt < BATCHING.minDurationSec) {
@@ -156,16 +212,35 @@ export class Pipeline {
       return 'pending'
     }
 
+    const blocked = this.blocked(providers)
+    if (blocked) {
+      // Nothing to send to: the batch waits without a request (upstream waitReason).
+      this.wait(batch, span, blocked, false)
+      return 'waiting'
+    }
+    const ready = this.readyProviders(providers)
+
     store.startAttempt(batch.id)
     try {
-      await this.generateWithFailover(batch, providers, visible)
+      const used = await this.generateWithFailover(batch, ready, visible)
       for (const span of blockedEdges(shots, visible)) store.addCards(batch.id, [privateCard(span)])
       store.finishBatch(batch.id, 'completed')
       this.lastError = null
+      this.holds.clear(used.kind)
+      // The primary works again. When the backup did the work, the primary's problem stays.
+      if (used.kind === providers[0]!.kind) this.problem = null
       return 'completed'
     } catch (err) {
+      const failures: ProviderFailure[] =
+        err instanceof AllProvidersFailed ? err.failures : [{ provider: ready[0]!.kind, message: errorMessage(err), local: ready[0]!.local }]
+      const outcome = batchOutcome(failures, this.online())
+      if (outcome.action === 'wait') {
+        this.wait(batch, span, outcome, true)
+        return 'waiting'
+      }
       const message = errorMessage(err)
       this.lastError = message
+      if (needsUser(outcome.kind)) this.problem = { kind: outcome.kind, provider: outcome.provider, message: failures[0]!.message, waiting: false }
       this.deps.log(`batch ${batch.id} failed: ${message}`)
       store.finishBatch(batch.id, 'failed', message)
       store.replaceObservations(batch.id, [], '')
@@ -176,20 +251,73 @@ export class Pipeline {
     }
   }
 
-  /** Tries each provider in turn; throws with every provider's error when all fail. */
-  private async generateWithFailover(batch: Batch, providers: Provider[], shots: Screenshot[]): Promise<void> {
+  private online(): boolean {
+    return this.deps.online?.() ?? true
+  }
+
+  /** The providers a batch may go to now: not held back, and only local ones while offline. */
+  private readyProviders(providers: Provider[]): Provider[] {
+    const now = nowSec()
+    const online = this.online()
+    return providers.filter((p) => this.holds.ready(p.kind, now) && (online || p.local))
+  }
+
+  /** Why no batch can go out right now, or null when one can (or no provider is set up). */
+  private blocked(providers = this.deps.providers()): Wait | null {
+    if (typeof providers === 'string' || providers.length === 0) return null
+    if (this.readyProviders(providers).length > 0) return null
+    const primary = providers[0]!
+    if (!this.online() && providers.some((p) => !p.local)) return { action: 'wait', reason: 'offline', provider: primary.kind, kind: 'transient' }
+    const held = providers.find((p) => this.holds.hold(p.kind)) ?? primary
+    return { action: 'wait', reason: 'provider', provider: held.kind, kind: this.holds.hold(held.kind)?.kind ?? 'transient' }
+  }
+
+  /** Marks a batch as waiting, with a card that says for what; a started attempt does not count. */
+  private wait(batch: Batch, span: { start: number; end: number }, outcome: Wait, attempted: boolean): void {
+    const { store } = this.deps
+    const label = this.deps.providerLabel?.(outcome.provider) ?? providerLabel(outcome.provider, '')
+    const texts = waitingCardTexts(outcome.reason, outcome.kind, label)
+    const what = outcome.reason === 'offline' ? 'offline' : `${outcome.provider} ${outcome.kind}`
+    this.deps.log(`batch ${batch.id} waits: ${what}`)
+    if (outcome.reason === 'provider' && needsUser(outcome.kind)) {
+      const message = this.problem?.provider === outcome.provider ? this.problem.message : texts.summary
+      this.problem = { kind: outcome.kind, provider: outcome.provider, message, waiting: true }
+    }
+    store.holdBatch(batch.id, `waiting: ${what}`, attempted)
+    store.replaceObservations(batch.id, [], '')
+    store.writeWaitingCard(batch.id, span, texts.title, texts.summary)
+  }
+
+  /**
+   * Tries each provider in turn and returns the one that made the cards.
+   * Providers that failed in a way the next batch would hit too are held
+   * back for a while. Throws with every provider's error when all fail.
+   */
+  private async generateWithFailover(batch: Batch, providers: Provider[], shots: Screenshot[]): Promise<Provider> {
     const frames = await this.readFrames(shots)
-    const errors: string[] = []
+    const failures: ProviderFailure[] = []
     for (const provider of providers) {
       try {
         await this.generateCards(batch, provider, frames)
-        return
+        return provider
       } catch (err) {
-        errors.push(`${provider.model}: ${errorMessage(err)}`)
-        this.deps.log(`batch ${batch.id}: ${errors[errors.length - 1]}`)
+        const failure: ProviderFailure = {
+          provider: provider.kind,
+          message: errorMessage(err),
+          local: provider.local,
+          ...(err instanceof ProviderError && err.status ? { status: err.status } : {})
+        }
+        failures.push(failure)
+        this.deps.log(`batch ${batch.id}: ${provider.model}: ${failure.message}`)
+        const kind = classifyFailure(failure)
+        // Offline, every provider fails alike; the batch waits for the internet, not for them.
+        if (waits(kind) && this.online()) {
+          this.holds.record(provider.kind, kind, nowSec())
+          if (needsUser(kind)) this.problem = { kind, provider: provider.kind, message: failure.message, waiting: false }
+        }
       }
     }
-    throw new Error(errors.join(' · '))
+    throw new AllProvidersFailed(failures, providers.map((p) => p.model))
   }
 
   /**
