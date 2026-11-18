@@ -7,9 +7,11 @@ import { formatMinutes } from '@shared/day-summary'
 import { escapeHtml } from '@shared/html'
 import type { TimelineCard } from '@shared/types'
 import type { Week } from '@shared/week'
+import { appInteractions, weeklyHighlights, weeklyOverview } from '@shared/weekly-insights'
 import { type FocusHeatmap, WEEKLY_MIN_TRACKED_MINUTES, contextShifts, donutItems, focusHeatmap, heatmapColor, sankeyLinks, trackedMinutes, treemap, workflowHeatmap } from '@shared/weekly'
 import { Chart, cssToken, useDark } from './Chart'
 import { LockedFeature, ProgressBar } from './LockedFeature'
+import { HighlightsCard, InteractionsCard, OverviewCard } from './WeeklyInsights'
 
 /** "#RRGGBB" at the given alpha, for ECharts (which cannot mix CSS colours). */
 function withAlpha(hex: string, alpha: number): string {
@@ -55,7 +57,10 @@ export function Weekly() {
       heatmap: workflowHeatmap(cards, categories, week.days),
       focus: focusHeatmap(cards, categories, week.days),
       tree: treemap(cards, previous, categories),
-      sankey: sankeyLinks(cards, categories)
+      sankey: sankeyLinks(cards, categories),
+      overview: weeklyOverview(cards, categories, week.days),
+      highlights: weeklyHighlights(cards, categories),
+      interactions: appInteractions(cards, categories)
     }
   }, [data, categories])
 
@@ -185,6 +190,8 @@ export function Weekly() {
               />
               <p className="insight">{charts.shifts.insight}</p>
             </section>
+            <HighlightsCard highlights={charts.highlights} />
+            <OverviewCard overview={charts.overview} />
             <section className="w-card wide">
               <h3>Your workflow this week</h3>
               <div className="heat" style={{ gridTemplateColumns: `48px repeat(${charts.heatmap.slots}, 1fr)` }}>
@@ -267,6 +274,7 @@ export function Weekly() {
                 }}
               />
             </section>
+            <InteractionsCard data={charts.interactions} />
           </div>
         )}
       </div>
