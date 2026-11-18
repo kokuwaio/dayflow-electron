@@ -449,6 +449,10 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
 | Accessibility recorder (keystrokes, clicks) | Never by default | Off upstream too; high privacy risk |
 | Gemini video upload (Files API) | Later, optional | Inline frames work with every provider; video needs an encoder (Chromium's WebCodecs and a JS muxer would do without `ffmpeg`) |
 | Frames stored as video segments | Later, optional | Changes how every recording is stored and read back (playback, retention, the Linux helper); 720p JPEGs use only about 25 MB per hour |
+| CLI auto-update (`Core/AI/CLIAutoUpdater.swift`) | Never | Updating the user's Claude Code and Codex on its own is not the app's business |
+| "Show Dock icon" and soft quit (`SettingsOtherTabView.swift`, `AppDelegate.swift`) | Never | macOS only; the tray covers background use |
+| In-app "What's New" (`WhatsNewView.swift`) | Later, optional | Release notes are on GitHub, linked from Settings; upstream's version carries a feedback survey |
+| Launch at login turned on by setup | Never | Off by default; the user turns it on in Settings → Other |
 
 ## Open questions
 
