@@ -35,7 +35,7 @@ jobs:
           fi
           gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[]' > files.jsonl
           installers=false
-          if jq -r '.filename' files.jsonl | grep -E '^(electron-builder\.yml|\.github/workflows/|resources/|scripts/)'; then
+          if jq -r '.filename, (.previous_filename // empty)' files.jsonl | grep -E '^(electron-builder\.yml|\.github/workflows/|resources/|scripts/)'; then
             installers=true
           fi
           if jq -r 'select(.filename == "package.json") | .patch // ""' files.jsonl | grep -E '^[-+][[:space:]]*"electron'; then
