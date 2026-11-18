@@ -32,12 +32,17 @@ export function Chart({ option, height = 280 }: { option: Option; height?: numbe
     if (!el.current) return
     // Dayflow keeps ECharts' own light and dark themes; Modern takes its colours from the CSS tokens.
     const theme = uiStyle === 'modern' ? tokenTheme(dark) : dark ? 'dark' : undefined
-    chart.current = echarts.init(el.current, theme, { renderer: 'svg' })
-    const resize = new ResizeObserver(() => chart.current?.resize())
+    const instance = echarts.init(el.current, theme, { renderer: 'svg' })
+    chart.current = instance
+    // A container leaving the page reports 0×0 last; the Sankey chart cannot lay out at that size.
+    const resize = new ResizeObserver(([entry]) => {
+      if (entry && entry.contentRect.width > 0 && entry.contentRect.height > 0 && !instance.isDisposed()) instance.resize()
+    })
     resize.observe(el.current)
     return () => {
       resize.disconnect()
-      chart.current?.dispose()
+      instance.dispose()
+      if (chart.current === instance) chart.current = null
     }
   }, [dark, uiStyle])
   useEffect(() => {
