@@ -96,7 +96,10 @@ export function Chat() {
       }),
     []
   )
-  useEffect(() => bottom.current?.scrollIntoView({ block: 'end' }), [messages, streaming, status, toolNote])
+  // A block body: Chromium's scrollIntoView returns a Promise, which React would call as the cleanup and crash.
+  useEffect(() => {
+    bottom.current?.scrollIntoView({ block: 'end' })
+  }, [messages, streaming, status, toolNote])
 
   const open = async (id: string | null) => {
     setConversationId(id)

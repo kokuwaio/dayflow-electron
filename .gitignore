@@ -8,8 +8,9 @@ coverage/
 core
 core.[0-9]*
 
-# Local tool state: Claude Code settings and agent worktrees, flatpak-builder cache
+# Local tool state: Claude Code settings and agent worktrees, VS Code settings, flatpak-builder cache
 .claude/
+.vscode/
 .flatpak-builder/
 
 # Data of `make dev-clean`
