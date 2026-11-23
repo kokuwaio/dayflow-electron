@@ -15,6 +15,19 @@ Windows (NSIS installer) and macOS (dmg) builds come from CI with capture,
 window detection and autostart implemented, but are not yet tested on real
 machines and not signed.
 
+## Install
+
+On Linux with [mise](https://mise.jdx.dev); the first start installs the app
+as a Flatpak for your user:
+
+```sh
+mise use -g github:kokuwaio/dayflow-electron
+dayflow-electron
+```
+
+The Flatpak bundle by hand, the Windows installer and the macOS disk image:
+[docs/installation.md](docs/installation.md).
+
 ## Screenshots
 
 Invented data from `make screenshots`.

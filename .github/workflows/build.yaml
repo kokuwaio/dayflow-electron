@@ -2,7 +2,8 @@ name: Build
 
 # Tests and builds everything for x86_64 and aarch64; CI and releases call
 # this workflow. The Flatpak job packs the app and helper built by the other
-# two jobs, like `npm run flatpak` does locally. The installers job tests on
+# two jobs, like `npm run flatpak` does locally, and wraps the bundle in the
+# tarball that mise installs, like `make dist-linux`. The installers job tests on
 # Windows and macOS and builds their installers and the update feeds that
 # electron-updater reads (one job per OS: macOS minutes cost ten times as
 # much in private repositories); with `installers: false` it only tests,
@@ -193,6 +194,17 @@ jobs:
           bundle: dayflow-electron.flatpak
           arch: ${{ matrix.arch }}
           artifact-name: dayflow-electron-flatpak-${{ matrix.arch }}
+
+      - name: Tarball for mise
+        # The bundle with a launcher that installs it on first start (scripts/linux-tarball.sh); releases attach it.
+        run: scripts/linux-tarball.sh dayflow-electron.flatpak "${{ matrix.arch == 'x86_64' && 'x64' || 'arm64' }}" .
+
+      - name: Upload tarball for mise
+        uses: actions/upload-artifact@v7
+        with:
+          name: dayflow-electron-linux-${{ matrix.arch }}
+          path: dayflow-electron-linux-*.tar.gz
+          retention-days: 7
 
   installers:
     name: Installers (${{ matrix.os }})

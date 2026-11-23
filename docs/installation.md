@@ -10,6 +10,7 @@ closing the window keeps it recording; quit from the tray.
 | System | Package | File |
 | --- | --- | --- |
 | Linux x86_64 / ARM64 | Flatpak bundle | `dayflow-electron-<version>-x86_64.flatpak`, `-aarch64.flatpak` |
+| Linux x86_64 / ARM64 | The Flatpak bundle for [mise](#with-mise) | `dayflow-electron-<version>-linux-x64.tar.gz`, `-linux-arm64.tar.gz` |
 | Windows x64 / ARM64 | Installer | `dayflow-electron-<version>-win-x64.exe`, `-win-arm64.exe` |
 | macOS Apple silicon / Intel | Disk image | `dayflow-electron-<version>-mac-arm64.dmg`, `-mac-x64.dmg` |
 
@@ -17,6 +18,22 @@ After installing, [usage.md](usage.md) covers the first start, choosing an AI
 provider and everything else.
 
 ## Linux
+
+### With mise
+
+[mise](https://mise.jdx.dev) fetches the release for your architecture and
+puts a `dayflow-electron` launcher on your PATH:
+
+```sh
+mise use -g github:kokuwaio/dayflow-electron
+dayflow-electron
+```
+
+The launcher installs the Flatpak bundle that comes with it for your user
+(adding the Flathub remote for the runtime), then starts the app. Later starts
+only start it; after `mise up` the next start installs the new version. The app
+is the same Flatpak as below, with its menu entry, so you can also start it
+from the desktop. It needs Flatpak installed.
 
 ### Flatpak bundle
 
@@ -105,6 +122,7 @@ Your data lives in `~/Library/Application Support/dayflow-electron`.
 | Package | How it updates |
 | --- | --- |
 | Flatpak | Through Flatpak: install the newer bundle over the old one (later from a Flatpak repository, with `flatpak update`). The app does not update itself. |
+| mise | `mise up`, then start `dayflow-electron` once: it installs the new bundle. |
 | Windows | The app checks GitHub Releases at start and every 6 hours, downloads a newer version in the background and installs it the next time you quit. The tray menu then offers **Restart to update to …**, and a notification says the update is ready. |
 | macOS | Same as Windows once the app is signed with an Apple Developer ID. Until then macOS won't let it replace itself: it only tells you that a version is out (notification and **Get version …** in the tray), and you install the new disk image by hand. |
 

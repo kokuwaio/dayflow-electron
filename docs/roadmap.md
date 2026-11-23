@@ -413,6 +413,9 @@ Port of upstream `tools/dayflow-cli` and `Core/AgentAccess/`.
   `electron-updater` from GitHub Releases; signing for Windows and macOS.
   Done: Flatpak for x86_64 and aarch64, NSIS installers (x64, arm64) and dmg
   images (arm64, x64), all built in CI and attached to releases;
+  the Flatpak bundles also in tarballs for mise
+  (`mise use -g github:kokuwaio/dayflow-electron`; a launcher installs the
+  bundle on first start, `make dist-linux` builds one locally);
   `electron-updater` (check at start and every 6 hours, background download,
   "Install updates automatically" in Settings → Other, restart from the tray
   or a notification; unsigned macOS only notifies; "Check for updates…" in
