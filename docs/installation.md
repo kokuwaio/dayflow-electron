@@ -29,11 +29,17 @@ mise use -g github:kokuwaio/dayflow-electron
 dayflow-electron
 ```
 
-The launcher installs the Flatpak bundle that comes with it for your user
-(adding the Flathub remote for the runtime), then starts the app. Later starts
-only start it; after `mise up` the next start installs the new version. The app
-is the same Flatpak as below, with its menu entry, so you can also start it
-from the desktop. It needs Flatpak installed.
+The launcher installs the Flatpak bundle that comes with it for your user,
+then starts the app. Before installing, it adds the Flathub remote to your
+user installation (`flatpak remote-add --user --if-not-exists flathub`): the
+app comes from the bundle, but its runtime (Freedesktop Platform with the
+Electron base app) comes from Flathub, and `flatpak update` keeps that runtime
+up to date separately.
+
+Later starts only start the app; after `mise up` the next start installs the
+new version. The app is the same Flatpak as below, with its menu entry, so you
+can also start it from the desktop. It needs Flatpak installed.
+
 With arguments, the launcher is the [command-line tool](#the-command-line-tool)
 (`dayflow-electron today`, `dayflow-electron mcp`), run inside the Flatpak.
 

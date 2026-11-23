@@ -18,7 +18,7 @@ machines and not signed.
 ## Install
 
 On Linux with [mise](https://mise.jdx.dev); the first start installs the app
-as a Flatpak for your user:
+as a Flatpak for your user and adds the Flathub remote for its runtime:
 
 ```sh
 mise use -g github:kokuwaio/dayflow-electron

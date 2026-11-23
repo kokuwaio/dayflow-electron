@@ -50,7 +50,7 @@ fi
 commit=$(flatpak info --user --show-commit "$app" 2>/dev/null || true)
 if [ -z "$commit" ] || [ ! -f "$stamp" ] || [ "$(cat "$stamp")" != "$commit" ]; then
   echo "Installing the Dayflow Electron Flatpak for this user..." >&2
-  # The runtime comes from Flathub.
+  # The runtime comes from Flathub; with the remote, `flatpak update` updates it independently of the app.
   flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
   flatpak install --user --noninteractive --reinstall "$dir/dayflow-electron.flatpak"
   flatpak info --user --show-commit "$app" > "$stamp" 2>/dev/null || true
