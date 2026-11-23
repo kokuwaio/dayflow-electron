@@ -915,7 +915,8 @@ async function main(): Promise<void> {
     hasCards: () => store.hasTimelineCards(),
     changed: (guide) => window?.webContents.send('gettingStarted:changed', guide)
   })
-  if (settings.get().onboarded) recorder.start()
+  // DAYFLOW_NO_CAPTURE: the README screenshots run on invented data and must never record the real screen.
+  if (settings.get().onboarded && !process.env.DAYFLOW_NO_CAPTURE) recorder.start()
 
   // The onboarding's Permissions step (src/shared/permissions.ts): ask before recording starts.
   let screenRequested = false

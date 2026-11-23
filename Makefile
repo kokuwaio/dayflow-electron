@@ -10,7 +10,7 @@ HELPER_SRC = $(shell find $(HELPER) -name '*.go' -o -name go.mod -o -name go.sum
 # On Linux the app needs the helper; dev rebuilds it when its sources changed.
 DEV_HELPER = $(if $(filter Linux,$(shell uname -s)),$(HELPER_BIN))
 
-.PHONY: help install dev dev-clean bench-models check typecheck test test-helper lint build helper pack flatpak dist-win dist-mac icons version clean
+.PHONY: help install dev dev-clean bench-models screenshots check typecheck test test-helper lint build helper pack flatpak dist-win dist-mac icons version clean
 
 help:
 	@echo "make install      install npm dependencies (npm ci)"
@@ -18,6 +18,7 @@ help:
 	@echo "make dev-clean    like dev, with empty data, so the first-run setup shows again"
 	@echo "make check        typecheck, test and lint everything (run before a PR)"
 	@echo "make bench-models MODELS=\"a b\"  speed of local Ollama models on recorded screenshots"
+	@echo "make screenshots  the README screenshots, from invented data, into out/screenshots"
 	@echo "make typecheck    TypeScript typecheck of main and renderer"
 	@echo "make test         Vitest"
 	@echo "make test-helper  Go tests of the Linux helper, inside the Flatpak SDK"
@@ -69,6 +70,11 @@ test-helper:
 
 lint:
 	$(MAKE) -C $(HELPER) lint
+
+# The README screenshots (scripts/screenshots.ts): invented data in a temporary folder, capture off,
+# no AI provider reachable; the PNGs land in out/screenshots.
+screenshots: build
+	npx jiti scripts/screenshots.ts
 
 build:
 	npm run build
