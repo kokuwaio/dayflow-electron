@@ -34,7 +34,9 @@ cat > "$root/bin/dayflow-electron" <<'EOF'
 #!/bin/sh
 # Dayflow Electron runs as a Flatpak on Linux. This launcher (what mise puts on
 # PATH) installs the bundle next to it for the current user, unless that exact
-# build is already installed, then starts the app with the given arguments.
+# build is already installed. Without arguments (or with a deep link) it starts
+# the app; with arguments it is the `dayflow-electron` CLI, like the terminal
+# command from Settings → MCP / CLI.
 set -eu
 app=io.github.kokuwaio.DayflowElectron
 dir=$(cd "$(dirname "$0")/.." && pwd -P)
@@ -53,7 +55,10 @@ if [ -z "$commit" ] || [ ! -f "$stamp" ] || [ "$(cat "$stamp")" != "$commit" ]; 
   flatpak install --user --noninteractive --reinstall "$dir/dayflow-electron.flatpak"
   flatpak info --user --show-commit "$app" > "$stamp" 2>/dev/null || true
 fi
-exec flatpak run "$app" "$@"
+case "${1:-}" in
+  '' | dayflow-electron:*) exec flatpak run "$app" "$@" ;;
+  *) exec flatpak run --command=dayflow-electron-cli "$app" "$@" ;;
+esac
 EOF
 chmod 755 "$root/bin/dayflow-electron"
 

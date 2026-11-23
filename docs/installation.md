@@ -34,6 +34,8 @@ The launcher installs the Flatpak bundle that comes with it for your user
 only start it; after `mise up` the next start installs the new version. The app
 is the same Flatpak as below, with its menu entry, so you can also start it
 from the desktop. It needs Flatpak installed.
+With arguments, the launcher is the [command-line tool](#the-command-line-tool)
+(`dayflow-electron today`, `dayflow-electron mcp`), run inside the Flatpak.
 
 ### Flatpak bundle
 
@@ -142,6 +144,8 @@ package. **Settings → MCP / CLI** shows the command that adds `dayflow-electro
 `~/.local/bin` on Linux and to `/usr/local/bin` on macOS, and connects Claude Code, Codex, Claude
 Desktop, Cursor, VS Code or other MCP clients; [usage.md](usage.md) explains
 the commands.
+After [mise](#with-mise), `dayflow-electron` with arguments already is this
+command.
 
 ## Which version is installed
 

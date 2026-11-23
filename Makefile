@@ -86,9 +86,11 @@ helper:
 $(HELPER_BIN): $(HELPER_SRC)
 	$(MAKE) -C $(HELPER) build VERSION=$(VERSION)
 
+# dist/linux-unpacked, which the Flatpak manifest reads (electron-builder calls it linux-arm64-unpacked on arm64).
 pack:
 	npx electron-vite build
 	npx electron-builder --linux dir --publish never -c.extraMetadata.version=$(VERSION)
+	if [ -d dist/linux-arm64-unpacked ]; then rm -rf dist/linux-unpacked && mv dist/linux-arm64-unpacked dist/linux-unpacked; fi
 
 flatpak: pack helper
 	flatpak-builder --user --install --force-clean packaging/flatpak/build packaging/flatpak/io.github.kokuwaio.DayflowElectron.yml
