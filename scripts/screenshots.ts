@@ -237,6 +237,15 @@ class Page {
     return r.result.value
   }
 
+  /** Polls until the expression is truthy, for up to 10 seconds. */
+  async waitFor(expression: string, what: string): Promise<void> {
+    for (let i = 0; i < 40; i++) {
+      if (await this.run(`!!(${expression})`)) return
+      await sleep(250)
+    }
+    throw new Error(`Timed out waiting for ${what}.`)
+  }
+
   async shot(file: string): Promise<void> {
     await sleep(1500)
     const { data } = await this.send<{ data: string }>('Page.captureScreenshot', { format: 'png' })
@@ -272,20 +281,25 @@ async function capture(page: Page, outDir: string, lastWorkday: string): Promise
 
   await page.run(click('.nav-item', 'Weekly'))
   // Weekly opens on the newest week with enough hours; go to the current week, then one back.
-  await sleep(500)
-  while (await page.run("document.querySelectorAll('.nav-arrow')[1]?.disabled === false")) {
-    await page.run("document.querySelectorAll('.nav-arrow')[1].click()")
-    await sleep(300)
+  // Each step waits until the heading shows the new week, which renders once its data has loaded.
+  const arrows = "document.querySelectorAll('.weekly .date-row .nav-arrow')"
+  const range = "document.querySelector('.weekly .date-row h1')?.textContent"
+  await page.waitFor(`${arrows}.length === 2`, 'the Weekly arrows')
+  const step = async (arrow: 0 | 1) => {
+    const before = JSON.stringify(await page.run(range))
+    await page.run(`${arrows}[${arrow}].click()`)
+    await page.waitFor(`${range} !== ${before}`, 'the next week in Weekly')
   }
-  await page.run("document.querySelectorAll('.nav-arrow')[0].click()")
+  while (await page.run(`${arrows}[1].disabled === false`)) await step(1)
+  await step(0)
   await page.shot(join(outDir, 'weekly.png'))
 
   await page.run(click('.nav-item', 'Chat'))
-  await sleep(500)
+  await page.waitFor("document.querySelector('.chat-header .icon')", 'the Chat header')
   await page.run(click('.chat-header .icon'))
-  await sleep(500)
+  await page.waitFor("document.querySelector('.chat-history-row .link')", 'the chat history')
   await page.run(click('.chat-history-row .link'))
-  await sleep(500)
+  await page.waitFor("document.querySelector('.chat-bubble.assistant')", 'the chat answer')
   await page.run(click('.chat-header .icon'))
   await page.shot(join(outDir, 'chat.png'))
   page.close()
