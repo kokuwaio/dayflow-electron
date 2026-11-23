@@ -301,7 +301,9 @@ async function main(): Promise<void> {
     const { lastWorkday } = seed(dataDir)
     const electron = createRequire(join(root, 'package.json'))('electron') as unknown as string
     const env: NodeJS.ProcessEnv = { ...process.env, DAYFLOW_DATA_DIR: dataDir, DAYFLOW_NO_CAPTURE: '1', LANG: 'en_US.UTF-8' }
+    // Electron as an app (not Node), on the renderer just built (not a dev server).
     delete env.ELECTRON_RUN_AS_NODE
+    delete env.ELECTRON_RENDERER_URL
     // Port 0: Chromium picks a free port and writes it to DevToolsActivePort, so no other running app can answer.
     app = spawn(electron, [root, '--remote-debugging-port=0', `--window-size=${WIDTH},${HEIGHT}`], { env, stdio: 'ignore' })
     await capture(await Page.connect(app, dataDir), outDir, lastWorkday)
