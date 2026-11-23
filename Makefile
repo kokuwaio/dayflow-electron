@@ -10,7 +10,7 @@ HELPER_SRC = $(shell find $(HELPER) -name '*.go' -o -name go.mod -o -name go.sum
 # On Linux the app needs the helper; dev rebuilds it when its sources changed.
 DEV_HELPER = $(if $(filter Linux,$(shell uname -s)),$(HELPER_BIN))
 
-.PHONY: help install dev dev-clean bench-models screenshots check typecheck test test-helper lint build helper pack flatpak dist-win dist-mac icons version clean
+.PHONY: help install dev dev-clean bench-models screenshots check typecheck test test-helper lint build helper pack flatpak dist-linux dist-win dist-mac icons version clean
 
 help:
 	@echo "make install      install npm dependencies (npm ci)"
@@ -29,6 +29,7 @@ help:
 	@echo "make flatpak      pack, build the helper and install the Flatpak for this user"
 	@echo "make icons        render the PNG icons in resources/ from their SVGs (needs rsvg-convert)"
 	@echo "make version      print the version builds get (VERSION=... overrides it)"
+	@echo "make dist-linux   Flatpak bundle and the mise tarball for this architecture in dist/"
 	@echo "make dist-win     Windows NSIS installers (x64, arm64) and latest.yml in dist/; run on Windows"
 	@echo "make dist-mac     macOS dmg images and update zips (arm64, x64) in dist/; run on macOS"
 	@echo "make clean        remove build output"
@@ -85,9 +86,15 @@ helper:
 $(HELPER_BIN): $(HELPER_SRC)
 	$(MAKE) -C $(HELPER) build VERSION=$(VERSION)
 
+# The host architecture, in electron-builder's words.
+LINUX_ARCH = $(if $(filter aarch64 arm64,$(shell uname -m)),arm64,x64)
+
+# dist/linux-unpacked, which the Flatpak manifest reads; on arm64 electron-builder calls it
+# linux-arm64-unpacked, so this build is moved there (never a leftover from a cross-build).
 pack:
 	npx electron-vite build
 	npx electron-builder --linux dir --publish never -c.extraMetadata.version=$(VERSION)
+	if [ "$(LINUX_ARCH)" = arm64 ]; then rm -rf dist/linux-unpacked && mv dist/linux-arm64-unpacked dist/linux-unpacked; fi
 
 flatpak: pack helper
 	flatpak-builder --user --install --force-clean packaging/flatpak/build packaging/flatpak/io.github.kokuwaio.DayflowElectron.yml
@@ -98,6 +105,13 @@ icons:
 
 version:
 	@echo $(VERSION)
+
+# The Flatpak bundle (dist/dayflow-electron.flatpak) and the tarball for mise around it
+# (scripts/linux-tarball.sh), for the host architecture, like the releases carry.
+dist-linux: pack helper
+	flatpak-builder --user --force-clean --repo=packaging/flatpak/repo packaging/flatpak/build packaging/flatpak/io.github.kokuwaio.DayflowElectron.yml
+	flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo packaging/flatpak/repo dist/dayflow-electron.flatpak io.github.kokuwaio.DayflowElectron
+	scripts/linux-tarball.sh dist/dayflow-electron.flatpak $(LINUX_ARCH) dist
 
 dist-win:
 	npx electron-vite build

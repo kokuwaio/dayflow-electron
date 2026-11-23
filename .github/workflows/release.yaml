@@ -1,7 +1,8 @@
 name: Release
 
 # Publishing the release that Release Drafter prepared builds the app and
-# attaches the Flatpak bundles (x86_64, aarch64), the Windows installers
+# attaches the Flatpak bundles (x86_64, aarch64), the same bundles
+# in tarballs for mise (x64, arm64; a launcher installs the bundle on first start), the Windows installers
 # (x64, arm64) and the macOS disk images (arm64, x64), with SHA256SUMS. The
 # update feeds (latest.yml, latest-mac.yml), the macOS update zips and the
 # blockmaps are for electron-updater in the installed apps.
@@ -34,13 +35,15 @@ jobs:
           path: artifacts
 
       - name: Collect release files
-        # The Flatpak bundle per architecture, renamed to carry the tag. The
+        # The Flatpak bundle and its tarball for mise per architecture, renamed to carry the tag. The
         # installers already carry it (electron-builder's artifactName) and
         # keep their names: the update feeds point at them by name.
         run: |
           for arch in x86_64 aarch64; do
             cp "artifacts/dayflow-electron-flatpak-$arch/dayflow-electron.flatpak" "dayflow-electron-$TAG-$arch.flatpak"
           done
+          cp artifacts/dayflow-electron-linux-x86_64/dayflow-electron-linux-x64.tar.gz "dayflow-electron-$TAG-linux-x64.tar.gz"
+          cp artifacts/dayflow-electron-linux-aarch64/dayflow-electron-linux-arm64.tar.gz "dayflow-electron-$TAG-linux-arm64.tar.gz"
           for file in artifacts/installers-windows/* artifacts/installers-macos/*; do
             name="${file##*/}"
             case "$name" in
