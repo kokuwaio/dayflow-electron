@@ -8,7 +8,7 @@
 // provider, then saves one PNG per view through the DevTools protocol.
 
 import { type ChildProcess, spawn } from 'node:child_process'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -16,7 +16,6 @@ import { Store } from '../src/main/db/store'
 import { dayCount, dayRange, parseKey, shiftDay, todayKey } from '../src/shared/day'
 import type { AppSites, Distraction } from '../src/shared/types'
 
-const PORT = 9339
 const WIDTH = 1280
 const HEIGHT = 820
 
@@ -99,13 +98,12 @@ const WEEK: Activity[][] = [
 
 const clock = (ts: number) => new Date(ts * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
-function seedDay(store: Store, day: string, plan: Activity[], until: number): void {
+function seedDay(store: Store, day: string, plan: Activity[]): void {
   let at = dayRange(day).start + 5 * 3600 // 9:00
   for (const a of plan) {
     const start = at
     const end = start + a.minutes * 60
     at = end
-    if (end > until) return
     // One analyzed batch per 15 minutes, so Daily, Chat and Weekly unlock.
     let batchId = 0
     for (let t = start; t < end; t += 900) {
@@ -146,7 +144,8 @@ function seed(dataDir: string): { lastWorkday: string } {
 
   const store = Store.open(join(dataDir, 'dayflow.sqlite'))
   const now = Math.floor(Date.now() / 1000)
-  days.forEach((day, i) => seedDay(store, day, WEEK[i % WEEK.length]!, day === today ? now : Number.POSITIVE_INFINITY))
+  // Today gets a whole day too, so Daily looks the same whatever the hour of the run.
+  days.forEach((day, i) => seedDay(store, day, WEEK[i % WEEK.length]!))
   const lastWorkday = days[days.length - 2]!
 
   store.saveStandup(today, {
@@ -201,10 +200,13 @@ class Page {
     }
   }
 
-  static async connect(): Promise<Page> {
+  /** The spawned app's window: its own port, from the DevToolsActivePort file in its temporary profile. */
+  static async connect(app: ChildProcess, dataDir: string): Promise<Page> {
     for (let i = 0; i < 60; i++) {
+      if (app.exitCode !== null || app.signalCode !== null) throw new Error('The app exited before its window opened.')
       try {
-        const list = (await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()) as Array<{ type: string; webSocketDebuggerUrl: string }>
+        const port = Number(readFileSync(join(dataDir, 'DevToolsActivePort'), 'utf8').split('\n')[0])
+        const list = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()) as Array<{ type: string; webSocketDebuggerUrl: string }>
         const page = list.find((p) => p.type === 'page')
         if (page) {
           const ws = new WebSocket(page.webSocketDebuggerUrl)
@@ -251,8 +253,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 const click = (selector: string, text?: string) =>
   `(() => { const el = [...document.querySelectorAll(${JSON.stringify(selector)})].find((e) => ${text ? `e.textContent.includes(${JSON.stringify(text)})` : 'true'}); if (!el) throw new Error('no ${selector}'); el.click() })()`
 
-async function capture(outDir: string, lastWorkday: string): Promise<void> {
-  const page = await Page.connect()
+async function capture(page: Page, outDir: string, lastWorkday: string): Promise<void> {
   await page.send('Page.enable')
   await page.send('Emulation.setDeviceMetricsOverride', { width: WIDTH, height: HEIGHT, deviceScaleFactor: 2, mobile: false })
   await page.run("new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r)))")
@@ -270,7 +271,13 @@ async function capture(outDir: string, lastWorkday: string): Promise<void> {
   await page.shot(join(outDir, 'daily.png'))
 
   await page.run(click('.nav-item', 'Weekly'))
-  // Weekly opens on the last full week.
+  // Weekly opens on the newest week with enough hours; go to the current week, then one back.
+  await sleep(500)
+  while (await page.run("document.querySelectorAll('.nav-arrow')[1]?.disabled === false")) {
+    await page.run("document.querySelectorAll('.nav-arrow')[1].click()")
+    await sleep(300)
+  }
+  await page.run("document.querySelectorAll('.nav-arrow')[0].click()")
   await page.shot(join(outDir, 'weekly.png'))
 
   await page.run(click('.nav-item', 'Chat'))
@@ -295,8 +302,9 @@ async function main(): Promise<void> {
     const electron = createRequire(join(root, 'package.json'))('electron') as unknown as string
     const env: NodeJS.ProcessEnv = { ...process.env, DAYFLOW_DATA_DIR: dataDir, DAYFLOW_NO_CAPTURE: '1', LANG: 'en_US.UTF-8' }
     delete env.ELECTRON_RUN_AS_NODE
-    app = spawn(electron, [root, `--remote-debugging-port=${PORT}`, `--window-size=${WIDTH},${HEIGHT}`], { env, stdio: 'ignore' })
-    await capture(outDir, lastWorkday)
+    // Port 0: Chromium picks a free port and writes it to DevToolsActivePort, so no other running app can answer.
+    app = spawn(electron, [root, '--remote-debugging-port=0', `--window-size=${WIDTH},${HEIGHT}`], { env, stdio: 'ignore' })
+    await capture(await Page.connect(app, dataDir), outDir, lastWorkday)
   } finally {
     app?.kill()
     await sleep(1000)
