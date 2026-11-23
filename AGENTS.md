@@ -56,5 +56,10 @@ follows its own decisions; upstream's code is a source of ideas, not the spec.
   builds the release notes from the PR titles.
 - With a feature change, update its checkbox in `docs/roadmap.md`, and
   `docs/usage.md` or `docs/architecture.md` where they describe it.
+- README screenshots come from `make screenshots` (`scripts/screenshots.ts`):
+  invented data only, so no real activity is published; extend its seed for a
+  new view. The PNGs live as attachments in a PR description
+  (`gh pr edit --attach`), and the README links their `user-attachments` URLs,
+  so image files stay out of git.
 - Before a PR: `make check` (typecheck, Vitest, golangci-lint and the Go
   tests); the root `Makefile` lists every task (`make help`).

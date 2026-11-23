@@ -186,6 +186,10 @@ async function main(): Promise<void> {
       return s.hidePrivateWindows ? [...s.blockedApps, PRIVATE_WINDOWS_RULE] : s.blockedApps
     }
   )
+  // DAYFLOW_NO_CAPTURE: the README screenshots run on invented data and must never record the real screen.
+  const startRecording = () => {
+    if (!process.env.DAYFLOW_NO_CAPTURE) recorder.start()
+  }
 
   const inFlatpak = !!process.env.FLATPAK_ID
   const cliEnv = { inFlatpak, home: homedir(), scratchDir: join(dataDir, 'cli-frames'), appId: process.env.FLATPAK_ID ?? '' }
@@ -898,7 +902,7 @@ async function main(): Promise<void> {
     if (settings.get().onboarded) return // a second click must not start a second recorder
     // The first-day guide starts here (upstream GettingStarted.begin): tour, then the checklist.
     await settings.save({ onboarded: true, gettingStarted: beginGuide(Math.floor(Date.now() / 1000)) })
-    recorder.start()
+    startRecording()
     updateTray()
   })
   // Upstream's "Reset Onboarding": back through setup, keeping data and settings; recording waits for the end of it.
@@ -915,7 +919,7 @@ async function main(): Promise<void> {
     hasCards: () => store.hasTimelineCards(),
     changed: (guide) => window?.webContents.send('gettingStarted:changed', guide)
   })
-  if (settings.get().onboarded) recorder.start()
+  if (settings.get().onboarded) startRecording()
 
   // The onboarding's Permissions step (src/shared/permissions.ts): ask before recording starts.
   let screenRequested = false

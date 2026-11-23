@@ -15,6 +15,16 @@ Windows (NSIS installer) and macOS (dmg) builds come from CI with capture,
 window detection and autostart implemented, but are not yet tested on real
 machines and not signed.
 
+## Screenshots
+
+Invented data from `make screenshots`.
+
+| Timeline | Daily |
+| --- | --- |
+| ![Timeline: a day of cards with targets and a day summary](https://github.com/user-attachments/assets/28edbcad-a9f1-402f-9dc2-7a431529da72) | ![Daily: activity grid and the standup](https://github.com/user-attachments/assets/454c9d7e-e563-4fc7-a29c-f4d4dd60ec89) |
+| **Weekly** | **Chat** |
+| ![Weekly: distribution, context shifts and highlights](https://github.com/user-attachments/assets/dc014dbd-d0f1-407b-af91-616e74a220ac) | ![Chat: an answer with a chart](https://github.com/user-attachments/assets/ffe4670a-3e51-42df-8a2f-1614417a9a21) |
+
 ## Documentation
 
 | Document | What |
