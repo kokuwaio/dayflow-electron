@@ -86,11 +86,15 @@ helper:
 $(HELPER_BIN): $(HELPER_SRC)
 	$(MAKE) -C $(HELPER) build VERSION=$(VERSION)
 
-# dist/linux-unpacked, which the Flatpak manifest reads (electron-builder calls it linux-arm64-unpacked on arm64).
+# The host architecture, in electron-builder's words.
+LINUX_ARCH = $(if $(filter aarch64 arm64,$(shell uname -m)),arm64,x64)
+
+# dist/linux-unpacked, which the Flatpak manifest reads; on arm64 electron-builder calls it
+# linux-arm64-unpacked, so this build is moved there (never a leftover from a cross-build).
 pack:
 	npx electron-vite build
 	npx electron-builder --linux dir --publish never -c.extraMetadata.version=$(VERSION)
-	if [ -d dist/linux-arm64-unpacked ]; then rm -rf dist/linux-unpacked && mv dist/linux-arm64-unpacked dist/linux-unpacked; fi
+	if [ "$(LINUX_ARCH)" = arm64 ]; then rm -rf dist/linux-unpacked && mv dist/linux-arm64-unpacked dist/linux-unpacked; fi
 
 flatpak: pack helper
 	flatpak-builder --user --install --force-clean packaging/flatpak/build packaging/flatpak/io.github.kokuwaio.DayflowElectron.yml
@@ -104,7 +108,6 @@ version:
 
 # The Flatpak bundle (dist/dayflow-electron.flatpak) and the tarball for mise around it
 # (scripts/linux-tarball.sh), for the host architecture, like the releases carry.
-LINUX_ARCH = $(if $(filter aarch64 arm64,$(shell uname -m)),arm64,x64)
 dist-linux: pack helper
 	flatpak-builder --user --force-clean --repo=packaging/flatpak/repo packaging/flatpak/build packaging/flatpak/io.github.kokuwaio.DayflowElectron.yml
 	flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo packaging/flatpak/repo dist/dayflow-electron.flatpak io.github.kokuwaio.DayflowElectron
